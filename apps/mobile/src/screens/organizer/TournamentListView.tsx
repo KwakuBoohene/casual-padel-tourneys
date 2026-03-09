@@ -8,6 +8,7 @@ interface TournamentListViewProps {
   errorText: string;
   onRefresh: () => void;
   onCreateNew: () => void;
+  onOpenEstimator: () => void;
   onOpenTournament: (id: string) => void;
   onOpenOptions: (id: string) => void;
 }
@@ -21,6 +22,7 @@ export function TournamentListView(props: TournamentListViewProps) {
       <Text style={{ fontSize: 24, fontWeight: "700" }}>Live Tournaments</Text>
       <Button title="Pull Live Tournaments" onPress={props.onRefresh} />
       <Button title="Create New Tournament" onPress={props.onCreateNew} />
+      <Button title="Game Estimator" onPress={props.onOpenEstimator} />
 
       {props.tournaments.length === 0 ? <Text>No tournaments loaded yet.</Text> : null}
 

@@ -13,6 +13,7 @@ interface LiveTournamentViewProps {
   scoreInputs: Record<string, { scoreA: string; scoreB: string }>;
   playerNameById: Map<string, string>;
   showEditConfirmModal: boolean;
+  showLiveOptionsModal: boolean;
   showAdjustCourtsConfirmModal: boolean;
   tournamentNameDraft: string;
   roundsLeft: number;
@@ -31,6 +32,8 @@ interface LiveTournamentViewProps {
   onOpenEditConfirm: () => void;
   onCloseEditConfirm: () => void;
   onConfirmEditGame: () => void;
+  onOpenLiveOptions: () => void;
+  onCloseLiveOptions: () => void;
   onOpenAdjustCourtsConfirm: () => void;
   onCloseAdjustCourtsConfirm: () => void;
   onConfirmAdjustCourts: () => void;
@@ -46,6 +49,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
       <Text style={{ fontSize: 24, fontWeight: "700" }}>Live Tournament</Text>
       <Button title="Back To Tournament List" onPress={props.onBackToList} />
       <Button title="View Leaderboard" onPress={props.onViewLeaderboard} />
+      <Button title="Options" onPress={props.onOpenLiveOptions} />
       {props.isEditingCompletedTournament ? (
         <>
           <Text>Edit Tournament Name</Text>
@@ -61,18 +65,6 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
       <Text>Rounds Left: {props.roundsLeft}</Text>
       <Text>Estimated Time Left: {props.estimatedMinutesLeft} minutes</Text>
       <Button title="Refresh" onPress={props.onRefresh} />
-      {props.canAdjustCourts ? (
-        <View style={{ borderWidth: 1, padding: 10, gap: 8 }}>
-          <Text style={{ fontWeight: "700" }}>Adjust Courts</Text>
-          <Text>Current courts: {props.currentCourts}</Text>
-          <Text>Proposed courts: {props.proposedCourts}</Text>
-          <View style={{ flexDirection: "row", gap: 10 }}>
-            <Button title="-" onPress={() => props.onChangeProposedCourts(Math.max(props.currentCourts + 1, props.proposedCourts - 1))} />
-            <Button title="+" onPress={() => props.onChangeProposedCourts(Math.min(props.maxCourts, props.proposedCourts + 1))} />
-          </View>
-          <Button title="Add/Adjust Courts" onPress={props.onOpenAdjustCourtsConfirm} />
-        </View>
-      ) : null}
 
       <Text style={{ fontSize: 18, fontWeight: "700" }}>{props.activeRound ? `Round ${props.activeRound.roundNumber}` : "No active round"}</Text>
       {props.isTournamentCompleted ? <Text style={{ fontWeight: "700" }}>Tournament Completed</Text> : null}
@@ -146,6 +138,38 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
               <Button title="Cancel" onPress={props.onCloseAdjustCourtsConfirm} />
               <Button title="Yes, Reassign Games" onPress={props.onConfirmAdjustCourts} />
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal transparent visible={props.showLiveOptionsModal} animationType="fade" onRequestClose={props.onCloseLiveOptions}>
+        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <View style={{ backgroundColor: "white", width: "100%", maxWidth: 420, padding: 16, gap: 12 }}>
+            <Text style={{ fontSize: 18, fontWeight: "700" }}>Live Options</Text>
+            {props.canAdjustCourts ? (
+              <>
+                <Text style={{ fontWeight: "700" }}>Adjust Courts</Text>
+                <Text>Current courts: {props.currentCourts}</Text>
+                <Text>Proposed courts: {props.proposedCourts}</Text>
+                <Text>Allowed range: 1 - {props.maxCourts}</Text>
+                <View style={{ flexDirection: "row", gap: 10 }}>
+                  <Button
+                    title="-"
+                    disabled={props.proposedCourts <= 1}
+                    onPress={() => props.onChangeProposedCourts(Math.max(1, props.proposedCourts - 1))}
+                  />
+                  <Button
+                    title="+"
+                    disabled={props.proposedCourts >= props.maxCourts}
+                    onPress={() => props.onChangeProposedCourts(Math.min(props.maxCourts, props.proposedCourts + 1))}
+                  />
+                </View>
+                <Button title="Apply Court Change" onPress={props.onOpenAdjustCourtsConfirm} />
+              </>
+            ) : (
+              <Text>No court adjustment options available right now.</Text>
+            )}
+            <Button title="Close" onPress={props.onCloseLiveOptions} />
           </View>
         </View>
       </Modal>

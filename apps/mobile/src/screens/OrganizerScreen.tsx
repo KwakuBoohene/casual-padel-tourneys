@@ -41,6 +41,7 @@ export function OrganizerScreen() {
   const [scoreInputs, setScoreInputs] = useState<Record<string, { scoreA: string; scoreB: string }>>({});
   const [isEditingCompletedTournament, setIsEditingCompletedTournament] = useState(false);
   const [showEditConfirmModal, setShowEditConfirmModal] = useState(false);
+  const [showLiveOptionsModal, setShowLiveOptionsModal] = useState(false);
   const [showAdjustCourtsConfirmModal, setShowAdjustCourtsConfirmModal] = useState(false);
   const [proposedCourts, setProposedCourts] = useState(2);
   const [estimatorMode, setEstimatorMode] = useState<TournamentMode>("AMERICANO");
@@ -151,7 +152,7 @@ export function OrganizerScreen() {
     if (!liveTournament || isTournamentCompleted) {
       return false;
     }
-    return maxCourts > liveTournament.config.courts;
+    return liveTournament.config.courts > 1 || maxCourts > liveTournament.config.courts;
   }, [isTournamentCompleted, liveTournament, maxCourts]);
 
   const leaderboardRows = useMemo(() => (liveTournament ? buildLeaderboardRows(liveTournament) : []), [liveTournament]);
@@ -204,7 +205,9 @@ export function OrganizerScreen() {
       const response = await apiPost<CreateTournamentResponse>("/tournaments", payload);
       setResponseText(`Created ${response.data.id}\nShare token: ${response.data.publicToken}`);
       setLiveTournament(response.data);
-      setProposedCourts(Math.min(Math.max(response.data.config.courts + 1, response.data.config.courts), Math.max(1, Math.floor(response.data.players.length / 4))));
+      setProposedCourts(
+        Math.min(Math.max(1, response.data.config.courts), Math.max(1, Math.floor(response.data.players.length / 4)))
+      );
       setLiveTournamentNameDraft(response.data.config.name);
       setTournaments((previous) => [response.data, ...previous.filter((item) => item.id !== response.data.id)]);
       setIsEditingCompletedTournament(false);
@@ -232,7 +235,9 @@ export function OrganizerScreen() {
       setErrorText("");
       const response = await apiGet<TournamentResponse>(`/tournaments/${tournamentId}`);
       setLiveTournament(response.data);
-      setProposedCourts(Math.min(Math.max(response.data.config.courts + 1, response.data.config.courts), Math.max(1, Math.floor(response.data.players.length / 4))));
+      setProposedCourts(
+        Math.min(Math.max(1, response.data.config.courts), Math.max(1, Math.floor(response.data.players.length / 4)))
+      );
       setLiveTournamentNameDraft(response.data.config.name);
       setIsEditingCompletedTournament(editMode);
       setStep("LIVE");
@@ -250,7 +255,7 @@ export function OrganizerScreen() {
       setLiveTournament(response.data);
       setProposedCourts((previous) => {
         const nextMax = Math.max(1, Math.floor(response.data.players.length / 4));
-        return Math.min(Math.max(response.data.config.courts + 1, previous), nextMax);
+        return Math.min(Math.max(1, previous), nextMax);
       });
       setLiveTournamentNameDraft(response.data.config.name);
       if (!response.data.rounds.every((round) => round.matches.every((match) => match.completed))) {
@@ -345,8 +350,9 @@ export function OrganizerScreen() {
       setLiveTournament(response.data);
       setProposedCourts((previous) => {
         const nextMax = Math.max(1, Math.floor(response.data.players.length / 4));
-        return Math.min(Math.max(response.data.config.courts + 1, previous), nextMax);
+        return Math.min(Math.max(1, previous), nextMax);
       });
+      setShowLiveOptionsModal(false);
       setShowAdjustCourtsConfirmModal(false);
     } catch (error) {
       setErrorText((error as Error).message);
@@ -522,6 +528,7 @@ export function OrganizerScreen() {
         isLastRound={isLastRound}
         isTournamentCompleted={isTournamentCompleted}
         isEditingCompletedTournament={isEditingCompletedTournament}
+        showLiveOptionsModal={showLiveOptionsModal}
         showAdjustCourtsConfirmModal={showAdjustCourtsConfirmModal}
         tournamentNameDraft={liveTournamentNameDraft}
         roundsLeft={liveTimeStatus.roundsLeft}
@@ -546,7 +553,12 @@ export function OrganizerScreen() {
           setShowEditConfirmModal(false);
           setIsEditingCompletedTournament(true);
         }}
-        onOpenAdjustCourtsConfirm={() => setShowAdjustCourtsConfirmModal(true)}
+        onOpenLiveOptions={() => setShowLiveOptionsModal(true)}
+        onCloseLiveOptions={() => setShowLiveOptionsModal(false)}
+        onOpenAdjustCourtsConfirm={() => {
+          setShowLiveOptionsModal(false);
+          setShowAdjustCourtsConfirmModal(true);
+        }}
         onCloseAdjustCourtsConfirm={() => setShowAdjustCourtsConfirmModal(false)}
         onConfirmAdjustCourts={() => void adjustTournamentCourts()}
         onSaveGameEdits={() => setIsEditingCompletedTournament(false)}

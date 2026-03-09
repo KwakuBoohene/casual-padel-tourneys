@@ -11,12 +11,19 @@ export function computeEstimate(input: {
 }): Estimate | null {
   const courts = Number(input.courtsText);
   const pointsPerMatch = Number(input.pointsText);
-  if (!Number.isFinite(courts) || !Number.isFinite(pointsPerMatch) || courts < 1 || pointsPerMatch < 1) {
+  if (
+    !Number.isFinite(courts) ||
+    !Number.isFinite(pointsPerMatch) ||
+    !Number.isInteger(courts) ||
+    !Number.isInteger(pointsPerMatch) ||
+    courts < 1 ||
+    pointsPerMatch < 1
+  ) {
     return null;
   }
   const playersPerRound = courts * 4;
   const matchTime = (pointsPerMatch * 35) / 60;
-  if (playersPerRound <= 0 || input.playersCount === 0) {
+  if (playersPerRound <= 0 || input.playersCount === 0 || !Number.isInteger(input.playersCount) || input.playersCount < 1) {
     return null;
   }
   if (input.playersCount < playersPerRound) {
@@ -28,13 +35,13 @@ export function computeEstimate(input: {
     rounds = Math.max(1, input.playersCount - 1);
   } else if (input.schedulingMode === "TARGET_GAMES") {
     const targetGames = Number(input.targetGamesText);
-    if (!Number.isFinite(targetGames) || targetGames < 1) {
+    if (!Number.isFinite(targetGames) || !Number.isInteger(targetGames) || targetGames < 1) {
       return null;
     }
     rounds = Math.ceil((input.playersCount * targetGames) / playersPerRound);
   } else {
     const tournamentTime = Number(input.tournamentTimeText);
-    if (!Number.isFinite(tournamentTime) || tournamentTime < 10) {
+    if (!Number.isFinite(tournamentTime) || !Number.isInteger(tournamentTime) || tournamentTime < 10) {
       return null;
     }
     rounds = Math.ceil(tournamentTime / matchTime);

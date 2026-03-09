@@ -16,6 +16,7 @@ import type { CreateTournamentResponse, SetupStep, TournamentListResponse, Tourn
 import { buildLeaderboardRows, buildPlayerGameRows, computeEstimate, computeLiveTimeStatus } from "./organizer/utils";
 
 export function OrganizerScreen() {
+  const sanitizeWholeNumberInput = (value: string) => value.replace(/[^0-9]/g, "");
   const [step, setStep] = useState<SetupStep>("LIST");
   const [name, setName] = useState("");
   const [players, setPlayers] = useState<string[]>(["", "", "", ""]);
@@ -186,9 +187,39 @@ export function OrganizerScreen() {
   const updatePlayerGender = (index: number, value: PlayerGender) =>
     setPlayerGenders((previous) => previous.map((item, itemIndex) => (itemIndex === index ? value : item)));
 
+  const onChangeCourtsValue = (value: string) => setCourtsText(sanitizeWholeNumberInput(value));
+  const onChangePointsValue = (value: string) => setPointsText(sanitizeWholeNumberInput(value));
+  const onChangeTargetGamesValue = (value: string) => setTargetGamesText(sanitizeWholeNumberInput(value));
+  const onChangeTournamentTimeValue = (value: string) => setTournamentTimeText(sanitizeWholeNumberInput(value));
+  const onChangeEstimatorUsersValue = (value: string) => setEstimatorUsersText(sanitizeWholeNumberInput(value));
+  const onChangeEstimatorCourtsValue = (value: string) => setEstimatorCourtsText(sanitizeWholeNumberInput(value));
+  const onChangeEstimatorPointsValue = (value: string) => setEstimatorPointsText(sanitizeWholeNumberInput(value));
+  const onChangeEstimatorTargetGamesValue = (value: string) => setEstimatorTargetGamesText(sanitizeWholeNumberInput(value));
+  const onChangeEstimatorTournamentTimeValue = (value: string) => setEstimatorTournamentTimeText(sanitizeWholeNumberInput(value));
+
   const createTournament = async () => {
     try {
       setErrorText("");
+      const courts = Number(courtsText);
+      const pointsPerMatch = Number(pointsText);
+      const targetGames = Number(targetGamesText);
+      const tournamentTime = Number(tournamentTimeText);
+      if (!Number.isInteger(courts) || courts < 1) {
+        setErrorText("Courts must be a whole number greater than 0.");
+        return;
+      }
+      if (!Number.isInteger(pointsPerMatch) || pointsPerMatch < 1) {
+        setErrorText("Points per match must be a whole number greater than 0.");
+        return;
+      }
+      if (effectiveSchedulingMode === "TARGET_GAMES" && (!Number.isInteger(targetGames) || targetGames < 1)) {
+        setErrorText("Target games must be a whole number greater than 0.");
+        return;
+      }
+      if (effectiveSchedulingMode === "TOTAL_TIME" && (!Number.isInteger(tournamentTime) || tournamentTime < 10)) {
+        setErrorText("Tournament time must be a whole number of at least 10 minutes.");
+        return;
+      }
       const payload = {
         name: name.trim(),
         mode,
@@ -200,10 +231,10 @@ export function OrganizerScreen() {
             gender: variant === "MIXED" ? playerGenders[index] : undefined
           }))
           .filter((item) => item.name.length > 0),
-        courts: Number(courtsText),
-        pointsPerMatch: Number(pointsText),
-        targetGamesPerPlayer: effectiveSchedulingMode === "TARGET_GAMES" ? Number(targetGamesText) : undefined,
-        tournamentTimeMinutes: effectiveSchedulingMode === "TOTAL_TIME" ? Number(tournamentTimeText) : undefined
+        courts,
+        pointsPerMatch,
+        targetGamesPerPlayer: effectiveSchedulingMode === "TARGET_GAMES" ? targetGames : undefined,
+        tournamentTimeMinutes: effectiveSchedulingMode === "TOTAL_TIME" ? tournamentTime : undefined
       };
       const response = await apiPost<CreateTournamentResponse>("/tournaments", payload);
       setResponseText(`Created ${response.data.id}\nShare token: ${response.data.publicToken}`);
@@ -525,11 +556,11 @@ export function OrganizerScreen() {
         onChangeMode={setEstimatorMode}
         onChangeVariant={setEstimatorVariant}
         onChangeSchedulingMode={setEstimatorSchedulingMode}
-        onChangeUsers={setEstimatorUsersText}
-        onChangeCourts={setEstimatorCourtsText}
-        onChangePoints={setEstimatorPointsText}
-        onChangeTargetGames={setEstimatorTargetGamesText}
-        onChangeTournamentTime={setEstimatorTournamentTimeText}
+        onChangeUsers={onChangeEstimatorUsersValue}
+        onChangeCourts={onChangeEstimatorCourtsValue}
+        onChangePoints={onChangeEstimatorPointsValue}
+        onChangeTargetGames={onChangeEstimatorTargetGamesValue}
+        onChangeTournamentTime={onChangeEstimatorTournamentTimeValue}
         onBack={() => setStep("LIST")}
       />
     );
@@ -659,10 +690,10 @@ export function OrganizerScreen() {
       estimate={estimate}
       responseText={responseText}
       errorText={errorText}
-      onChangeCourts={setCourtsText}
-      onChangePoints={setPointsText}
-      onChangeTargetGames={setTargetGamesText}
-      onChangeTournamentTime={setTournamentTimeText}
+      onChangeCourts={onChangeCourtsValue}
+      onChangePoints={onChangePointsValue}
+      onChangeTargetGames={onChangeTargetGamesValue}
+      onChangeTournamentTime={onChangeTournamentTimeValue}
       onBack={() => setStep("PLAYERS")}
       onCreate={() => void createTournament()}
     />

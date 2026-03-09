@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Button, Modal, ScrollView, Text, TextInput, View } from "react-native";
 
 import type { LiveTournamentState } from "./types";
@@ -22,6 +23,8 @@ interface LiveTournamentViewProps {
   proposedCourts: number;
   maxCourts: number;
   canAdjustCourts: boolean;
+  scorePicker: { matchId: string; side: "scoreA" | "scoreB" } | null;
+  focusSubmitMatchId: string | null;
   onChangeTournamentName: (value: string) => void;
   onChangeProposedCourts: (value: number) => void;
   onSaveTournamentName: () => void;
@@ -38,12 +41,27 @@ interface LiveTournamentViewProps {
   onCloseAdjustCourtsConfirm: () => void;
   onConfirmAdjustCourts: () => void;
   onSaveGameEdits: () => void;
+  onOpenScorePicker: (matchId: string, side: "scoreA" | "scoreB") => void;
+  onCloseScorePicker: () => void;
+  onSelectScoreFromPicker: (value: number) => void;
+  onSubmitFocusHandled: () => void;
   onUpdateScoreInput: (matchId: string, side: "scoreA" | "scoreB", value: string) => void;
   onSubmitMatchScore: (matchId: string) => void;
 }
 
 export function LiveTournamentView(props: LiveTournamentViewProps) {
   const canEditScores = !props.isTournamentCompleted || props.isEditingCompletedTournament;
+  const submitAnchorRefs = useRef<Record<string, { focus?: () => void } | null>>({});
+
+  useEffect(() => {
+    if (!props.focusSubmitMatchId) {
+      return;
+    }
+    const target = submitAnchorRefs.current[props.focusSubmitMatchId];
+    target?.focus?.();
+    props.onSubmitFocusHandled();
+  }, [props.focusSubmitMatchId, props]);
+
   return (
     <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
       <Text style={{ fontSize: 24, fontWeight: "700" }}>Live Tournament</Text>
@@ -88,6 +106,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
                   placeholder="Team A"
                   keyboardType="numeric"
                   value={props.scoreInputs[match.id]?.scoreA ?? (match.scoreA?.toString() ?? "")}
+                  onFocus={() => props.onOpenScorePicker(match.id, "scoreA")}
                   onChangeText={(value) => props.onUpdateScoreInput(match.id, "scoreA", value)}
                   style={{ borderWidth: 1, padding: 8, flex: 1 }}
                 />
@@ -95,11 +114,18 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
                   placeholder="Team B"
                   keyboardType="numeric"
                   value={props.scoreInputs[match.id]?.scoreB ?? (match.scoreB?.toString() ?? "")}
+                  onFocus={() => props.onOpenScorePicker(match.id, "scoreB")}
                   onChangeText={(value) => props.onUpdateScoreInput(match.id, "scoreB", value)}
                   style={{ borderWidth: 1, padding: 8, flex: 1 }}
                 />
               </View>
-              <Button title={match.completed ? "Update Score" : "Submit Score"} onPress={() => props.onSubmitMatchScore(match.id)} />
+              <View
+                ref={(node) => {
+                  submitAnchorRefs.current[match.id] = node;
+                }}
+              >
+                <Button title={match.completed ? "Update Score" : "Submit Score"} onPress={() => props.onSubmitMatchScore(match.id)} />
+              </View>
             </>
           ) : (
             <Text>
@@ -170,6 +196,21 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
               <Text>No court adjustment options available right now.</Text>
             )}
             <Button title="Close" onPress={props.onCloseLiveOptions} />
+          </View>
+        </View>
+      </Modal>
+
+      <Modal transparent visible={Boolean(props.scorePicker)} animationType="slide" onRequestClose={props.onCloseScorePicker}>
+        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.3)" }}>
+          <View style={{ backgroundColor: "white", padding: 16, borderTopLeftRadius: 16, borderTopRightRadius: 16, gap: 10, maxHeight: "45%" }}>
+            <Text style={{ fontSize: 18, fontWeight: "700" }}>Select Score</Text>
+            <Text>Possible scores (1 to {props.tournament.config.pointsPerMatch})</Text>
+            <ScrollView contentContainerStyle={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {Array.from({ length: props.tournament.config.pointsPerMatch }, (_, index) => index + 1).map((score) => (
+                <Button key={`score-${score}`} title={`${score}`} onPress={() => props.onSelectScoreFromPicker(score)} />
+              ))}
+            </ScrollView>
+            <Button title="Close" onPress={props.onCloseScorePicker} />
           </View>
         </View>
       </Modal>

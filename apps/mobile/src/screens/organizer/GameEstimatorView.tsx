@@ -25,6 +25,12 @@ interface GameEstimatorViewProps {
 }
 
 export function GameEstimatorView(props: GameEstimatorViewProps) {
+  const playersCount = Number(props.usersText);
+  const courts = Number(props.courtsText);
+  const minPlayersForCourts = Number.isFinite(courts) && courts > 0 ? courts * 4 : 0;
+  const hasEnoughPlayersForCourts =
+    Number.isFinite(playersCount) && Number.isFinite(courts) && playersCount >= minPlayersForCourts;
+
   const renderChoice = (label: string, active: boolean, onPress: () => void) => (
     <Pressable onPress={onPress} style={{ borderWidth: 1, borderColor: active ? "#0a7" : "#999", backgroundColor: active ? "#d9fff3" : "#fff", padding: 10 }}>
       <Text>{label}</Text>
@@ -63,6 +69,11 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
 
       <Text>Courts</Text>
       <TextInput value={props.courtsText} onChangeText={props.onChangeCourts} keyboardType="numeric" style={{ borderWidth: 1, padding: 8 }} />
+      {!hasEnoughPlayersForCourts && minPlayersForCourts > 0 ? (
+        <Text style={{ color: "red" }}>
+          {courts} court{courts === 1 ? "" : "s"} need at least {minPlayersForCourts} players.
+        </Text>
+      ) : null}
 
       <Text>Points per match</Text>
       <TextInput value={props.pointsText} onChangeText={props.onChangePoints} keyboardType="numeric" style={{ borderWidth: 1, padding: 8 }} />
@@ -88,7 +99,7 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
 
       <View style={{ borderWidth: 1, padding: 10, gap: 4 }}>
         <Text style={{ fontWeight: "700" }}>Estimated Duration</Text>
-        {props.estimate ? (
+        {props.estimate && hasEnoughPlayersForCourts ? (
           <>
             <Text>Rounds: {props.estimate.rounds}</Text>
             <Text>Approx games per player: {props.estimate.gamesPerPlayer}</Text>

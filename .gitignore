@@ -8,3 +8,4 @@ coverage
 *.log
 apps/api/generated
 apps/web/tsconfig.tsbuildinfo
+.idea/

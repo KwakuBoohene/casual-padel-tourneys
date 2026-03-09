@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
-import { Button, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Button, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
 import type { TournamentMode, TournamentVariant } from "@padel/shared";
 
 import { apiGet, apiPost } from "../api/client";
 
-type SetupStep = "NAME" | "PLAYERS" | "RULES" | "LIVE";
+type SetupStep = "LIST" | "NAME" | "PLAYERS" | "RULES" | "LIVE";
 
 interface Estimate {
   rounds: number;
@@ -20,6 +20,7 @@ interface LiveTournamentState {
   id: string;
   publicToken: string;
   version: number;
+  updatedAt: string;
   config: { name: string; mode: TournamentMode; variant: TournamentVariant };
   players: Array<{ id: string; name: string }>;
   rounds: Array<{
@@ -42,8 +43,12 @@ interface TournamentResponse {
   data: LiveTournamentState;
 }
 
+interface TournamentListResponse {
+  data: LiveTournamentState[];
+}
+
 export function OrganizerScreen() {
-  const [step, setStep] = useState<SetupStep>("NAME");
+  const [step, setStep] = useState<SetupStep>("LIST");
   const [name, setName] = useState("");
   const [players, setPlayers] = useState<string[]>(["", "", "", ""]);
   const [mode, setMode] = useState<TournamentMode>("AMERICANO");
@@ -55,6 +60,8 @@ export function OrganizerScreen() {
   const [responseText, setResponseText] = useState("No tournament created yet.");
   const [errorText, setErrorText] = useState("");
   const [liveTournament, setLiveTournament] = useState<LiveTournamentState | null>(null);
+  const [tournaments, setTournaments] = useState<LiveTournamentState[]>([]);
+  const [listRefreshing, setListRefreshing] = useState(false);
   const [scoreInputs, setScoreInputs] = useState<Record<string, { scoreA: string; scoreB: string }>>({});
 
   const sanitizedPlayers = useMemo(
@@ -148,6 +155,31 @@ export function OrganizerScreen() {
       const response = await apiPost<CreateTournamentResponse>("/tournaments", payload);
       setResponseText(`Created ${response.data.id}\nShare token: ${response.data.publicToken}`);
       setLiveTournament(response.data);
+      setTournaments((previous) => [response.data, ...previous.filter((item) => item.id !== response.data.id)]);
+      setStep("LIVE");
+    } catch (error) {
+      setErrorText((error as Error).message);
+    }
+  };
+
+  const loadTournaments = async () => {
+    try {
+      setErrorText("");
+      setListRefreshing(true);
+      const response = await apiGet<TournamentListResponse>("/tournaments");
+      setTournaments(response.data);
+    } catch (error) {
+      setErrorText((error as Error).message);
+    } finally {
+      setListRefreshing(false);
+    }
+  };
+
+  const openTournament = async (tournamentId: string) => {
+    try {
+      setErrorText("");
+      const response = await apiGet<TournamentResponse>(`/tournaments/${tournamentId}`);
+      setLiveTournament(response.data);
       setStep("LIVE");
     } catch (error) {
       setErrorText((error as Error).message);
@@ -203,6 +235,38 @@ export function OrganizerScreen() {
     }));
   };
 
+  if (step === "LIST") {
+    return (
+      <ScrollView
+        contentContainerStyle={{ padding: 20, gap: 12 }}
+        refreshControl={<RefreshControl refreshing={listRefreshing} onRefresh={() => void loadTournaments()} />}
+      >
+        <Text style={{ fontSize: 24, fontWeight: "700" }}>Live Tournaments</Text>
+        <Button title="Pull Live Tournaments" onPress={() => void loadTournaments()} />
+        <Button title="Create New Tournament" onPress={() => setStep("NAME")} />
+
+        {tournaments.length === 0 ? <Text>No tournaments loaded yet.</Text> : null}
+
+        {tournaments.map((tournament) => (
+          <Pressable
+            key={tournament.id}
+            onPress={() => void openTournament(tournament.id)}
+            style={{ borderWidth: 1, padding: 10, gap: 4 }}
+          >
+            <Text style={{ fontWeight: "700" }}>{tournament.config.name}</Text>
+            <Text>
+              {tournament.config.mode}/{tournament.config.variant}
+            </Text>
+            <Text>Players: {tournament.players.length}</Text>
+            <Text>Updated: {new Date(tournament.updatedAt).toLocaleString()}</Text>
+          </Pressable>
+        ))}
+
+        {errorText ? <Text style={{ color: "red" }}>Error: {errorText}</Text> : null}
+      </ScrollView>
+    );
+  }
+
   if (step === "NAME") {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 12 }}>
@@ -213,7 +277,10 @@ export function OrganizerScreen() {
           placeholder="Friday Americano"
           style={{ borderWidth: 1, padding: 10, width: "90%", maxWidth: 420 }}
         />
-        <Button title="Next" disabled={!canContinueFromName} onPress={() => setStep("PLAYERS")} />
+        <View style={{ flexDirection: "row", gap: 10 }}>
+          <Button title="Back" onPress={() => setStep("LIST")} />
+          <Button title="Next" disabled={!canContinueFromName} onPress={() => setStep("PLAYERS")} />
+        </View>
       </View>
     );
   }
@@ -250,6 +317,7 @@ export function OrganizerScreen() {
     return (
       <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
         <Text style={{ fontSize: 24, fontWeight: "700" }}>Live Tournament</Text>
+        <Button title="Back To Tournament List" onPress={() => setStep("LIST")} />
         <Text>
           {liveTournament.config.name} ({liveTournament.config.mode}/{liveTournament.config.variant})
         </Text>

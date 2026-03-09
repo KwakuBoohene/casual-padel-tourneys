@@ -3,6 +3,7 @@ import {
   adjustCourtsSchema,
   createTournamentSchema,
   renamePlayerSchema,
+  renameTournamentSchema,
   submitScoreSchema,
   substitutePlayerSchema
 } from "@padel/shared";
@@ -11,10 +12,12 @@ import {
   adjustCourts,
   assertVersion,
   createTournament,
+  deleteTournament,
   getTournament,
   getTournamentByPublicToken,
   listTournaments,
   renamePlayer,
+  renameTournament,
   submitScore,
   substitutePlayer
 } from "../lib/store.js";
@@ -97,6 +100,24 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     }
   });
 
+  server.post("/tournaments/rename", { preHandler: requireOrganizerAuth }, async (request, reply) => {
+    const parsed = renameTournamentSchema.safeParse(request.body);
+    if (!parsed.success) {
+      reply.status(400);
+      return { errors: parsed.error.flatten() };
+    }
+    try {
+      const tournament = renameTournament(parsed.data.tournamentId, parsed.data.newName);
+      const event = { type: "TOURNAMENT_RENAMED" as const, tournamentId: tournament.id, payload: tournament };
+      await publishEvent(server.redis, event);
+      broadcastToTournament(server.subscriptions, tournament.id, event);
+      return { data: tournament };
+    } catch (error) {
+      reply.status(404);
+      return { message: (error as Error).message };
+    }
+  });
+
   server.post("/tournaments/adjust-courts", { preHandler: requireOrganizerAuth }, async (request, reply) => {
     const parsed = adjustCourtsSchema.safeParse(request.body);
     if (!parsed.success) {
@@ -128,6 +149,20 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       await publishEvent(server.redis, event);
       broadcastToTournament(server.subscriptions, tournament.id, event);
       return { data: tournament };
+    } catch (error) {
+      reply.status(404);
+      return { message: (error as Error).message };
+    }
+  });
+
+  server.delete("/tournaments/:id", { preHandler: requireOrganizerAuth }, async (request, reply) => {
+    const params = request.params as { id: string };
+    try {
+      deleteTournament(params.id);
+      const event = { type: "TOURNAMENT_DELETED" as const, tournamentId: params.id, payload: { id: params.id } };
+      await publishEvent(server.redis, event);
+      broadcastToTournament(server.subscriptions, params.id, event);
+      return { ok: true };
     } catch (error) {
       reply.status(404);
       return { message: (error as Error).message };

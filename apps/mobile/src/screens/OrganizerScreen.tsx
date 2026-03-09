@@ -3,6 +3,7 @@ import { Button, Modal, Text, View } from "react-native";
 import type { PlayerGender, SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 import { apiDelete, apiGet, apiPost } from "../api/client";
+import { GameEstimatorView } from "./organizer/GameEstimatorView";
 import { LeaderboardView } from "./organizer/LeaderboardView";
 import { LiveTournamentView } from "./organizer/LiveTournamentView";
 import { MatchSettingsStepView } from "./organizer/MatchSettingsStepView";
@@ -40,9 +41,18 @@ export function OrganizerScreen() {
   const [scoreInputs, setScoreInputs] = useState<Record<string, { scoreA: string; scoreB: string }>>({});
   const [isEditingCompletedTournament, setIsEditingCompletedTournament] = useState(false);
   const [showEditConfirmModal, setShowEditConfirmModal] = useState(false);
+  const [estimatorMode, setEstimatorMode] = useState<TournamentMode>("AMERICANO");
+  const [estimatorVariant, setEstimatorVariant] = useState<TournamentVariant>("CLASSIC");
+  const [estimatorSchedulingMode, setEstimatorSchedulingMode] = useState<SchedulingMode>("TARGET_GAMES");
+  const [estimatorUsersText, setEstimatorUsersText] = useState("8");
+  const [estimatorCourtsText, setEstimatorCourtsText] = useState("2");
+  const [estimatorPointsText, setEstimatorPointsText] = useState("24");
+  const [estimatorTargetGamesText, setEstimatorTargetGamesText] = useState("4");
+  const [estimatorTournamentTimeText, setEstimatorTournamentTimeText] = useState("90");
 
   const viewerBaseUrl = process.env.EXPO_PUBLIC_VIEWER_BASE_URL ?? "http://localhost:3000";
   const effectiveSchedulingMode: SchedulingMode = mode === "MEXICANO" ? "TOTAL_TIME" : schedulingMode;
+  const effectiveEstimatorSchedulingMode: SchedulingMode = estimatorMode === "MEXICANO" ? "TOTAL_TIME" : estimatorSchedulingMode;
 
   const sanitizedPlayers = useMemo(() => players.map((value) => value.trim()).filter(Boolean), [players]);
   const estimate = useMemo(
@@ -57,6 +67,28 @@ export function OrganizerScreen() {
         playersCount: sanitizedPlayers.length
       }),
     [courtsText, effectiveSchedulingMode, mode, pointsText, sanitizedPlayers.length, targetGamesText, tournamentTimeText]
+  );
+  const estimatorUsers = Number(estimatorUsersText);
+  const estimator = useMemo(
+    () =>
+      computeEstimate({
+        courtsText: estimatorCourtsText,
+        pointsText: estimatorPointsText,
+        mode: estimatorMode,
+        schedulingMode: effectiveEstimatorSchedulingMode,
+        targetGamesText: estimatorTargetGamesText,
+        tournamentTimeText: estimatorTournamentTimeText,
+        playersCount: Number.isFinite(estimatorUsers) ? estimatorUsers : 0
+      }),
+    [
+      effectiveEstimatorSchedulingMode,
+      estimatorCourtsText,
+      estimatorMode,
+      estimatorPointsText,
+      estimatorTargetGamesText,
+      estimatorTournamentTimeText,
+      estimatorUsers
+    ]
   );
 
   const canContinueFromName = name.trim().length >= 2;
@@ -322,6 +354,7 @@ export function OrganizerScreen() {
           errorText={errorText}
           onRefresh={() => void loadTournaments()}
           onCreateNew={() => setStep("NAME")}
+          onOpenEstimator={() => setStep("ESTIMATOR")}
           onOpenTournament={(id) => void openTournament(id)}
           onOpenOptions={openTournamentOptions}
         />
@@ -370,6 +403,31 @@ export function OrganizerScreen() {
         onChangeName={setName}
         onBack={() => setStep("LIST")}
         onNext={() => setStep("OPTIONS")}
+      />
+    );
+  }
+
+  if (step === "ESTIMATOR") {
+    return (
+      <GameEstimatorView
+        mode={estimatorMode}
+        variant={estimatorVariant}
+        schedulingMode={effectiveEstimatorSchedulingMode}
+        usersText={estimatorUsersText}
+        courtsText={estimatorCourtsText}
+        pointsText={estimatorPointsText}
+        targetGamesText={estimatorTargetGamesText}
+        tournamentTimeText={estimatorTournamentTimeText}
+        estimate={estimator}
+        onChangeMode={setEstimatorMode}
+        onChangeVariant={setEstimatorVariant}
+        onChangeSchedulingMode={setEstimatorSchedulingMode}
+        onChangeUsers={setEstimatorUsersText}
+        onChangeCourts={setEstimatorCourtsText}
+        onChangePoints={setEstimatorPointsText}
+        onChangeTargetGames={setEstimatorTargetGamesText}
+        onChangeTournamentTime={setEstimatorTournamentTimeText}
+        onBack={() => setStep("LIST")}
       />
     );
   }

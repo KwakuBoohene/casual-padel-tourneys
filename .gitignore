@@ -1,0 +1,9 @@
+node_modules
+dist
+.next
+coverage
+.expo
+.env
+.env.local
+*.log
+apps/api/generated

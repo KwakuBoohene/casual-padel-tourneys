@@ -5,6 +5,8 @@ const channelName = "tournament:events";
 export interface TournamentEvent<T = unknown> {
   type:
     | "TOURNAMENT_CREATED"
+    | "TOURNAMENT_RENAMED"
+    | "TOURNAMENT_DELETED"
     | "SCORE_SUBMITTED"
     | "PLAYER_RENAMED"
     | "COURTS_ADJUSTED"

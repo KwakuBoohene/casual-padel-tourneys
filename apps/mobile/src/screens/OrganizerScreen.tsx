@@ -1,72 +1,16 @@
 import { useMemo, useState } from "react";
-import { Button, Modal, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
 import type { TournamentMode, TournamentVariant } from "@padel/shared";
 
 import { apiGet, apiPost } from "../api/client";
-
-type SetupStep = "LIST" | "NAME" | "PLAYERS" | "RULES" | "LIVE" | "LEADERBOARD" | "PLAYER_GAMES";
-
-interface Estimate {
-  rounds: number;
-  gamesPerPlayer: number;
-  durationMinutes: number;
-}
-
-interface CreateTournamentResponse {
-  data: LiveTournamentState;
-}
-
-interface LiveTournamentState {
-  id: string;
-  publicToken: string;
-  version: number;
-  updatedAt: string;
-  config: { name: string; mode: TournamentMode; variant: TournamentVariant };
-  players: Array<{ id: string; name: string }>;
-  leaderboard: Array<{ playerId: string; name: string; totalPoints: number; gamesPlayed: number; rank: number }>;
-  rounds: Array<{
-    id: string;
-    roundNumber: number;
-    isLocked: boolean;
-    matches: Array<{
-      id: string;
-      court: number;
-      teamA: [string, string];
-      teamB: [string, string];
-      scoreA?: number;
-      scoreB?: number;
-      completed: boolean;
-    }>;
-  }>;
-}
-
-interface TournamentResponse {
-  data: LiveTournamentState;
-}
-
-interface TournamentListResponse {
-  data: LiveTournamentState[];
-}
-
-interface LeaderboardRow {
-  playerId: string;
-  name: string;
-  wins: number;
-  losses: number;
-  draws: number;
-  gamesPlayed: number;
-  totalPoints: number;
-}
-
-interface PlayerGameRow {
-  matchId: string;
-  roundNumber: number;
-  court: number;
-  partner: string;
-  opponents: [string, string];
-  scoreText: string;
-  result: "WIN" | "LOSS" | "DRAW" | "PENDING";
-}
+import { LeaderboardView } from "./organizer/LeaderboardView";
+import { LiveTournamentView } from "./organizer/LiveTournamentView";
+import { NameStepView } from "./organizer/NameStepView";
+import { PlayerGamesView } from "./organizer/PlayerGamesView";
+import { PlayersStepView } from "./organizer/PlayersStepView";
+import { RulesStepView } from "./organizer/RulesStepView";
+import { TournamentListView } from "./organizer/TournamentListView";
+import type { CreateTournamentResponse, SetupStep, TournamentListResponse, TournamentResponse } from "./organizer/types";
+import { buildLeaderboardRows, buildPlayerGameRows, computeEstimate } from "./organizer/utils";
 
 export function OrganizerScreen() {
   const [step, setStep] = useState<SetupStep>("LIST");
@@ -80,55 +24,33 @@ export function OrganizerScreen() {
   const [tournamentTimeText, setTournamentTimeText] = useState("90");
   const [responseText, setResponseText] = useState("No tournament created yet.");
   const [errorText, setErrorText] = useState("");
-  const [liveTournament, setLiveTournament] = useState<LiveTournamentState | null>(null);
-  const [tournaments, setTournaments] = useState<LiveTournamentState[]>([]);
+  const [liveTournament, setLiveTournament] = useState<TournamentResponse["data"] | null>(null);
+  const [tournaments, setTournaments] = useState<TournamentListResponse["data"]>([]);
   const [listRefreshing, setListRefreshing] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [scoreInputs, setScoreInputs] = useState<Record<string, { scoreA: string; scoreB: string }>>({});
   const [isEditingCompletedTournament, setIsEditingCompletedTournament] = useState(false);
   const [showEditConfirmModal, setShowEditConfirmModal] = useState(false);
 
-  const sanitizedPlayers = useMemo(
-    () =>
-      players
-        .map((value) => value.trim())
-        .filter(Boolean),
-    [players]
-  );
+  const viewerBaseUrl = process.env.EXPO_PUBLIC_VIEWER_BASE_URL ?? "http://localhost:3000";
 
-  const estimate = useMemo<Estimate | null>(() => {
-    const courts = Number(courtsText);
-    const pointsPerMatch = Number(pointsText);
-    if (!Number.isFinite(courts) || !Number.isFinite(pointsPerMatch) || courts < 1 || pointsPerMatch < 1) {
-      return null;
-    }
-    const playersPerRound = courts * 4;
-    const matchTime = (pointsPerMatch * 35) / 60;
-    if (playersPerRound <= 0 || sanitizedPlayers.length === 0) {
-      return null;
-    }
-    let rounds = 0;
-    if (mode === "AMERICANO") {
-      const targetGames = Number(targetGamesText);
-      if (!Number.isFinite(targetGames) || targetGames < 1) {
-        return null;
-      }
-      rounds = Math.ceil((sanitizedPlayers.length * targetGames) / playersPerRound);
-    } else {
-      const tournamentTime = Number(tournamentTimeText);
-      if (!Number.isFinite(tournamentTime) || tournamentTime < 10) {
-        return null;
-      }
-      rounds = Math.ceil(tournamentTime / matchTime);
-    }
-    const durationMinutes = Math.ceil(rounds * matchTime);
-    const gamesPerPlayer = Math.max(1, Math.round((rounds * playersPerRound) / sanitizedPlayers.length));
-    return { rounds, gamesPerPlayer, durationMinutes };
-  }, [courtsText, mode, pointsText, sanitizedPlayers.length, targetGamesText, tournamentTimeText]);
+  const sanitizedPlayers = useMemo(() => players.map((value) => value.trim()).filter(Boolean), [players]);
+
+  const estimate = useMemo(
+    () =>
+      computeEstimate({
+        courtsText,
+        pointsText,
+        mode,
+        targetGamesText,
+        tournamentTimeText,
+        playersCount: sanitizedPlayers.length
+      }),
+    [courtsText, mode, pointsText, sanitizedPlayers.length, targetGamesText, tournamentTimeText]
+  );
 
   const canContinueFromName = name.trim().length >= 2;
   const canContinueFromPlayers = sanitizedPlayers.length >= 4;
-  const viewerBaseUrl = process.env.EXPO_PUBLIC_VIEWER_BASE_URL ?? "http://localhost:3000";
 
   const playerNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -164,119 +86,34 @@ export function OrganizerScreen() {
     return activeRound.roundNumber === highestRound;
   }, [activeRound, liveTournament]);
 
-  const leaderboardRows = useMemo<LeaderboardRow[]>(() => {
-    if (!liveTournament) {
-      return [];
-    }
-    const stats = new Map<string, LeaderboardRow>();
-    for (const entry of liveTournament.leaderboard ?? []) {
-      stats.set(entry.playerId, {
-        playerId: entry.playerId,
-        name: entry.name,
-        wins: 0,
-        losses: 0,
-        draws: 0,
-        gamesPlayed: entry.gamesPlayed,
-        totalPoints: entry.totalPoints
-      });
-    }
+  const leaderboardRows = useMemo(() => (liveTournament ? buildLeaderboardRows(liveTournament) : []), [liveTournament]);
 
-    for (const player of liveTournament.players) {
-      if (!stats.has(player.id)) {
-        stats.set(player.id, {
-          playerId: player.id,
-          name: player.name,
-          wins: 0,
-          losses: 0,
-          draws: 0,
-          gamesPlayed: 0,
-          totalPoints: 0
-        });
-      }
-    }
-
-    for (const round of liveTournament.rounds) {
-      for (const match of round.matches) {
-        if (!match.completed || match.scoreA === undefined || match.scoreB === undefined) {
-          continue;
-        }
-        const teamAResult = match.scoreA === match.scoreB ? "DRAW" : match.scoreA > match.scoreB ? "WIN" : "LOSS";
-        const teamBResult = match.scoreA === match.scoreB ? "DRAW" : match.scoreB > match.scoreA ? "WIN" : "LOSS";
-        for (const playerId of match.teamA) {
-          bumpResult(stats, playerId, teamAResult);
-        }
-        for (const playerId of match.teamB) {
-          bumpResult(stats, playerId, teamBResult);
-        }
-      }
-    }
-
-    return [...stats.values()].sort((a, b) => b.totalPoints - a.totalPoints);
-  }, [liveTournament]);
-
-  const selectedPlayerGames = useMemo<PlayerGameRow[]>(() => {
+  const selectedPlayerGames = useMemo(() => {
     if (!liveTournament || !selectedPlayerId) {
       return [];
     }
-    const rows: PlayerGameRow[] = [];
-    for (const round of liveTournament.rounds) {
-      for (const match of round.matches) {
-        const inTeamA = match.teamA.includes(selectedPlayerId);
-        const inTeamB = match.teamB.includes(selectedPlayerId);
-        if (!inTeamA && !inTeamB) {
-          continue;
-        }
-        const myTeam = inTeamA ? match.teamA : match.teamB;
-        const otherTeam = inTeamA ? match.teamB : match.teamA;
-        const partnerId = myTeam.find((playerId) => playerId !== selectedPlayerId) ?? selectedPlayerId;
-        const myScore = inTeamA ? match.scoreA : match.scoreB;
-        const theirScore = inTeamA ? match.scoreB : match.scoreA;
-        let result: PlayerGameRow["result"] = "PENDING";
-        if (match.completed && myScore !== undefined && theirScore !== undefined) {
-          result = myScore === theirScore ? "DRAW" : myScore > theirScore ? "WIN" : "LOSS";
-        }
-        rows.push({
-          matchId: match.id,
-          roundNumber: round.roundNumber,
-          court: match.court,
-          partner: playerNameById.get(partnerId) ?? partnerId,
-          opponents: [
-            playerNameById.get(otherTeam[0]) ?? otherTeam[0],
-            playerNameById.get(otherTeam[1]) ?? otherTeam[1]
-          ],
-          scoreText:
-            myScore !== undefined && theirScore !== undefined ? `${myScore}-${theirScore}` : "Pending",
-          result
-        });
-      }
-    }
-    return rows.sort((a, b) => a.roundNumber - b.roundNumber);
+    return buildPlayerGameRows({
+      tournament: liveTournament,
+      selectedPlayerId,
+      playerNameById
+    });
   }, [liveTournament, playerNameById, selectedPlayerId]);
 
-  const addPlayerInput = () => {
-    setPlayers((previous) => [...previous, ""]);
-  };
-
-  const removePlayerInput = (index: number) => {
-    setPlayers((previous) => previous.filter((_, itemIndex) => itemIndex !== index));
-  };
-
-  const updatePlayerName = (index: number, value: string) => {
+  const addPlayerInput = () => setPlayers((previous) => [...previous, ""]);
+  const removePlayerInput = (index: number) => setPlayers((previous) => previous.filter((_, itemIndex) => itemIndex !== index));
+  const updatePlayerName = (index: number, value: string) =>
     setPlayers((previous) => previous.map((item, itemIndex) => (itemIndex === index ? value : item)));
-  };
 
   const createTournament = async () => {
     try {
       setErrorText("");
-      const courts = Number(courtsText);
-      const pointsPerMatch = Number(pointsText);
       const payload = {
         name: name.trim(),
         mode,
         variant,
         players: sanitizedPlayers,
-        courts,
-        pointsPerMatch,
+        courts: Number(courtsText),
+        pointsPerMatch: Number(pointsText),
         targetGamesPerPlayer: mode === "AMERICANO" ? Number(targetGamesText) : undefined,
         tournamentTimeMinutes: mode === "MEXICANO" ? Number(tournamentTimeText) : undefined
       };
@@ -379,313 +216,112 @@ export function OrganizerScreen() {
 
   if (step === "LIST") {
     return (
-      <ScrollView
-        contentContainerStyle={{ padding: 20, gap: 12 }}
-        refreshControl={<RefreshControl refreshing={listRefreshing} onRefresh={() => void loadTournaments()} />}
-      >
-        <Text style={{ fontSize: 24, fontWeight: "700" }}>Live Tournaments</Text>
-        <Button title="Pull Live Tournaments" onPress={() => void loadTournaments()} />
-        <Button title="Create New Tournament" onPress={() => setStep("NAME")} />
-
-        {tournaments.length === 0 ? <Text>No tournaments loaded yet.</Text> : null}
-
-        {tournaments.map((tournament) => (
-          <Pressable
-            key={tournament.id}
-            onPress={() => void openTournament(tournament.id)}
-            style={{ borderWidth: 1, padding: 10, gap: 4 }}
-          >
-            <Text style={{ fontWeight: "700" }}>{tournament.config.name}</Text>
-            <Text>
-              {tournament.config.mode}/{tournament.config.variant}
-            </Text>
-            <Text>Players: {tournament.players.length}</Text>
-            <Text>Updated: {new Date(tournament.updatedAt).toLocaleString()}</Text>
-          </Pressable>
-        ))}
-
-        {errorText ? <Text style={{ color: "red" }}>Error: {errorText}</Text> : null}
-      </ScrollView>
+      <TournamentListView
+        tournaments={tournaments}
+        refreshing={listRefreshing}
+        errorText={errorText}
+        onRefresh={() => void loadTournaments()}
+        onCreateNew={() => setStep("NAME")}
+        onOpenTournament={(id) => void openTournament(id)}
+      />
     );
   }
 
   if (step === "NAME") {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 12 }}>
-        <Text style={{ fontSize: 28, fontWeight: "700" }}>Tournament Name</Text>
-        <TextInput
-          value={name}
-          onChangeText={setName}
-          placeholder="Friday Americano"
-          style={{ borderWidth: 1, padding: 10, width: "90%", maxWidth: 420 }}
-        />
-        <View style={{ flexDirection: "row", gap: 10 }}>
-          <Button title="Back" onPress={() => setStep("LIST")} />
-          <Button title="Next" disabled={!canContinueFromName} onPress={() => setStep("PLAYERS")} />
-        </View>
-      </View>
+      <NameStepView
+        name={name}
+        canContinue={canContinueFromName}
+        onChangeName={setName}
+        onBack={() => setStep("LIST")}
+        onNext={() => setStep("PLAYERS")}
+      />
     );
   }
 
   if (step === "PLAYERS") {
     return (
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
-        <Text style={{ fontSize: 24, fontWeight: "700" }}>Add Players</Text>
-        <Text>Players added: {sanitizedPlayers.length}</Text>
-        {players.map((playerName, index) => (
-          <View key={`player-${index}`} style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-            <TextInput
-              value={playerName}
-              onChangeText={(value) => updatePlayerName(index, value)}
-              placeholder={`Player ${index + 1}`}
-              style={{ borderWidth: 1, padding: 8, flex: 1 }}
-            />
-            <Pressable onPress={() => removePlayerInput(index)} style={{ padding: 8, borderWidth: 1 }}>
-              <Text>Remove</Text>
-            </Pressable>
-          </View>
-        ))}
-        <Button title="Add Player" onPress={addPlayerInput} />
-        <Text>Names: {sanitizedPlayers.length > 0 ? sanitizedPlayers.join(", ") : "None yet"}</Text>
-        <View style={{ flexDirection: "row", gap: 10 }}>
-          <Button title="Back" onPress={() => setStep("NAME")} />
-          <Button title="Next" disabled={!canContinueFromPlayers} onPress={() => setStep("RULES")} />
-        </View>
-      </ScrollView>
+      <PlayersStepView
+        players={players}
+        sanitizedPlayers={sanitizedPlayers}
+        canContinue={canContinueFromPlayers}
+        onUpdatePlayer={updatePlayerName}
+        onRemovePlayer={removePlayerInput}
+        onAddPlayer={addPlayerInput}
+        onBack={() => setStep("NAME")}
+        onNext={() => setStep("RULES")}
+      />
     );
   }
 
   if (step === "LIVE" && liveTournament) {
-    const canEditScores = !isTournamentCompleted || isEditingCompletedTournament;
     return (
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
-        <Text style={{ fontSize: 24, fontWeight: "700" }}>Live Tournament</Text>
-        <Button title="Back To Tournament List" onPress={() => setStep("LIST")} />
-        <Button title="View Leaderboard" onPress={() => setStep("LEADERBOARD")} />
-        <Text>
-          {liveTournament.config.name} ({liveTournament.config.mode}/{liveTournament.config.variant})
-        </Text>
-        <Text>Current Version: {liveTournament.version}</Text>
-        <Button title="Refresh" onPress={() => void refreshTournament()} />
-
-        <Text style={{ fontSize: 18, fontWeight: "700" }}>
-          {activeRound ? `Round ${activeRound.roundNumber}` : "No active round"}
-        </Text>
-        {isTournamentCompleted ? <Text style={{ fontWeight: "700" }}>Tournament Completed</Text> : null}
-        {isLastRound ? (
-          <Button title="Finish Tournament" onPress={finishTournament} />
-        ) : null}
-        {isTournamentCompleted && !isEditingCompletedTournament ? (
-          <Button title="Edit Game" onPress={() => setShowEditConfirmModal(true)} />
-        ) : null}
-        {isTournamentCompleted && isEditingCompletedTournament ? (
-          <Button title="Save Game Edits" onPress={() => setIsEditingCompletedTournament(false)} />
-        ) : null}
-
-        {(activeRound?.matches ?? []).map((match) => (
-          <View key={match.id} style={{ borderWidth: 1, padding: 10, gap: 8 }}>
-            <Text style={{ fontWeight: "700" }}>Court {match.court}</Text>
-            <Text>
-              {playerNameById.get(match.teamA[0]) ?? match.teamA[0]} / {playerNameById.get(match.teamA[1]) ?? match.teamA[1]}
-            </Text>
-            <Text>
-              vs {playerNameById.get(match.teamB[0]) ?? match.teamB[0]} / {playerNameById.get(match.teamB[1]) ?? match.teamB[1]}
-            </Text>
-            {canEditScores ? (
-              <>
-                <View style={{ flexDirection: "row", gap: 8 }}>
-                  <TextInput
-                    placeholder="Team A"
-                    keyboardType="numeric"
-                    value={scoreInputs[match.id]?.scoreA ?? (match.scoreA?.toString() ?? "")}
-                    onChangeText={(value) => updateScoreInput(match.id, "scoreA", value)}
-                    style={{ borderWidth: 1, padding: 8, flex: 1 }}
-                  />
-                  <TextInput
-                    placeholder="Team B"
-                    keyboardType="numeric"
-                    value={scoreInputs[match.id]?.scoreB ?? (match.scoreB?.toString() ?? "")}
-                    onChangeText={(value) => updateScoreInput(match.id, "scoreB", value)}
-                    style={{ borderWidth: 1, padding: 8, flex: 1 }}
-                  />
-                </View>
-                <Button title={match.completed ? "Update Score" : "Submit Score"} onPress={() => void submitMatchScore(match.id)} />
-              </>
-            ) : (
-              <Text>
-                Final Score: {match.scoreA ?? "-"} - {match.scoreB ?? "-"}
-              </Text>
-            )}
-          </View>
-        ))}
-
-        <View style={{ marginTop: 10, borderTopWidth: 1, paddingTop: 10, gap: 4 }}>
-          <Text style={{ fontWeight: "700" }}>Shareable Link</Text>
-          <Text>{`${viewerBaseUrl}/tournament/${liveTournament.publicToken}`}</Text>
-        </View>
-
-        <Modal transparent visible={showEditConfirmModal} animationType="fade" onRequestClose={() => setShowEditConfirmModal(false)}>
-          <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center", padding: 24 }}>
-            <View style={{ backgroundColor: "white", width: "100%", maxWidth: 420, padding: 16, gap: 12 }}>
-              <Text style={{ fontSize: 18, fontWeight: "700" }}>Edit Completed Tournament?</Text>
-              <Text>Are you sure you want to unlock this tournament and edit round scores?</Text>
-              <View style={{ flexDirection: "row", gap: 10 }}>
-                <Button title="Cancel" onPress={() => setShowEditConfirmModal(false)} />
-                <Button
-                  title="Yes, Edit Game"
-                  onPress={() => {
-                    setShowEditConfirmModal(false);
-                    setIsEditingCompletedTournament(true);
-                  }}
-                />
-              </View>
-            </View>
-          </View>
-        </Modal>
-
-        {errorText ? <Text style={{ color: "red" }}>Error: {errorText}</Text> : null}
-      </ScrollView>
+      <LiveTournamentView
+        tournament={liveTournament}
+        viewerBaseUrl={viewerBaseUrl}
+        errorText={errorText}
+        activeRound={activeRound}
+        isLastRound={isLastRound}
+        isTournamentCompleted={isTournamentCompleted}
+        isEditingCompletedTournament={isEditingCompletedTournament}
+        scoreInputs={scoreInputs}
+        playerNameById={playerNameById}
+        showEditConfirmModal={showEditConfirmModal}
+        onBackToList={() => setStep("LIST")}
+        onViewLeaderboard={() => setStep("LEADERBOARD")}
+        onRefresh={() => void refreshTournament()}
+        onFinishTournament={finishTournament}
+        onOpenEditConfirm={() => setShowEditConfirmModal(true)}
+        onCloseEditConfirm={() => setShowEditConfirmModal(false)}
+        onConfirmEditGame={() => {
+          setShowEditConfirmModal(false);
+          setIsEditingCompletedTournament(true);
+        }}
+        onSaveGameEdits={() => setIsEditingCompletedTournament(false)}
+        onUpdateScoreInput={updateScoreInput}
+        onSubmitMatchScore={(matchId) => void submitMatchScore(matchId)}
+      />
     );
   }
 
   if (step === "LEADERBOARD" && liveTournament) {
     return (
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
-        <Text style={{ fontSize: 24, fontWeight: "700" }}>Leaderboard</Text>
-        <Button title="Back" onPress={() => setStep("LIVE")} />
-        <Text>{liveTournament.config.name}</Text>
-
-        {leaderboardRows.map((row, index) => (
-          <Pressable
-            key={row.playerId}
-            onPress={() => {
-              setSelectedPlayerId(row.playerId);
-              setStep("PLAYER_GAMES");
-            }}
-            style={{ borderWidth: 1, padding: 10, gap: 4 }}
-          >
-            <Text style={{ fontWeight: "700" }}>
-              {index + 1}. {row.name}
-            </Text>
-            <Text>Points: {row.totalPoints}</Text>
-            <Text>Games: {row.gamesPlayed}</Text>
-            <Text>
-              W/L/D: {row.wins}/{row.losses}/{row.draws}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
+      <LeaderboardView
+        tournament={liveTournament}
+        rows={leaderboardRows}
+        onBack={() => setStep("LIVE")}
+        onOpenPlayer={(playerId) => {
+          setSelectedPlayerId(playerId);
+          setStep("PLAYER_GAMES");
+        }}
+      />
     );
   }
 
-  if (step === "PLAYER_GAMES" && liveTournament && selectedPlayerId) {
+  if (step === "PLAYER_GAMES" && selectedPlayerId) {
     const playerName = playerNameById.get(selectedPlayerId) ?? selectedPlayerId;
-    return (
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
-        <Text style={{ fontSize: 24, fontWeight: "700" }}>{playerName} - Games</Text>
-        <Button title="Back" onPress={() => setStep("LEADERBOARD")} />
-
-        {selectedPlayerGames.length === 0 ? <Text>No games yet for this player.</Text> : null}
-
-        {selectedPlayerGames.map((game) => (
-          <View key={game.matchId} style={{ borderWidth: 1, padding: 10, gap: 4 }}>
-            <Text style={{ fontWeight: "700" }}>
-              Round {game.roundNumber} - Court {game.court}
-            </Text>
-            <Text>Partner: {game.partner}</Text>
-            <Text>
-              Opponents: {game.opponents[0]} / {game.opponents[1]}
-            </Text>
-            <Text>Score: {game.scoreText}</Text>
-            <Text>Result: {game.result}</Text>
-          </View>
-        ))}
-      </ScrollView>
-    );
+    return <PlayerGamesView playerName={playerName} games={selectedPlayerGames} onBack={() => setStep("LEADERBOARD")} />;
   }
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
-      <Text style={{ fontSize: 24, fontWeight: "700" }}>Tournament Rules</Text>
-      <Text>Mode</Text>
-      <View style={{ flexDirection: "row", gap: 10 }}>
-        <Button title="Americano" onPress={() => setMode("AMERICANO")} />
-        <Button title="Mexicano" onPress={() => setMode("MEXICANO")} />
-      </View>
-
-      <Text>Variant</Text>
-      <View style={{ flexDirection: "row", gap: 10 }}>
-        <Button title="Classic" onPress={() => setVariant("CLASSIC")} />
-        <Button title="Mixed" onPress={() => setVariant("MIXED")} />
-        <Button title="Team" onPress={() => setVariant("TEAM")} />
-      </View>
-
-      <Text>Courts</Text>
-      <TextInput value={courtsText} onChangeText={setCourtsText} keyboardType="numeric" style={{ borderWidth: 1, padding: 8 }} />
-      <Text>Points Per Match</Text>
-      <TextInput value={pointsText} onChangeText={setPointsText} keyboardType="numeric" style={{ borderWidth: 1, padding: 8 }} />
-
-      {mode === "AMERICANO" ? (
-        <>
-          <Text>Target Games Per Player</Text>
-          <TextInput
-            value={targetGamesText}
-            onChangeText={setTargetGamesText}
-            keyboardType="numeric"
-            style={{ borderWidth: 1, padding: 8 }}
-          />
-        </>
-      ) : (
-        <>
-          <Text>Tournament Time (minutes)</Text>
-          <TextInput
-            value={tournamentTimeText}
-            onChangeText={setTournamentTimeText}
-            keyboardType="numeric"
-            style={{ borderWidth: 1, padding: 8 }}
-          />
-        </>
-      )}
-
-      <View style={{ borderWidth: 1, padding: 10, gap: 4 }}>
-        <Text style={{ fontWeight: "700" }}>Estimated Duration</Text>
-        {estimate ? (
-          <>
-            <Text>Rounds: {estimate.rounds}</Text>
-            <Text>Approx games per player: {estimate.gamesPerPlayer}</Text>
-            <Text>Estimated total time: {estimate.durationMinutes} minutes</Text>
-          </>
-        ) : (
-          <Text>Fill in valid numeric values to see the estimate.</Text>
-        )}
-      </View>
-
-      <View style={{ flexDirection: "row", gap: 10 }}>
-        <Button title="Back" onPress={() => setStep("PLAYERS")} />
-        <Button title="Create Tournament" onPress={() => void createTournament()} />
-      </View>
-      <View>
-        <Text>{responseText}</Text>
-        {errorText ? <Text style={{ color: "red" }}>Error: {errorText}</Text> : null}
-      </View>
-    </ScrollView>
+    <RulesStepView
+      mode={mode}
+      variant={variant}
+      courtsText={courtsText}
+      pointsText={pointsText}
+      targetGamesText={targetGamesText}
+      tournamentTimeText={tournamentTimeText}
+      estimate={estimate}
+      responseText={responseText}
+      errorText={errorText}
+      onChangeMode={setMode}
+      onChangeVariant={setVariant}
+      onChangeCourts={setCourtsText}
+      onChangePoints={setPointsText}
+      onChangeTargetGames={setTargetGamesText}
+      onChangeTournamentTime={setTournamentTimeText}
+      onBack={() => setStep("PLAYERS")}
+      onCreate={() => void createTournament()}
+    />
   );
-}
-
-function bumpResult(
-  stats: Map<string, LeaderboardRow>,
-  playerId: string,
-  result: "WIN" | "LOSS" | "DRAW"
-): void {
-  const row = stats.get(playerId);
-  if (!row) {
-    return;
-  }
-  if (result === "WIN") {
-    row.wins += 1;
-  } else if (result === "LOSS") {
-    row.losses += 1;
-  } else {
-    row.draws += 1;
-  }
 }

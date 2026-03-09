@@ -7,12 +7,12 @@ export interface BuildRoundInput {
   players: Player[];
   teammateMatrix: Map<string, number>;
   opponentMatrix: Map<string, number>;
+  coPlayerMatrix: Map<string, number>;
 }
 
 export function buildRound(input: BuildRoundInput): Round {
   const playersPerRound = input.courts * 4;
-  const sorted = [...input.players].sort((a, b) => a.gamesPlayed - b.gamesPlayed);
-  const active = sorted.slice(0, playersPerRound);
+  const active = selectPlayersForRound(input.players, playersPerRound, input.coPlayerMatrix);
   const matches: Match[] = [];
 
   for (let index = 0; index < active.length; index += 4) {
@@ -30,7 +30,7 @@ export function buildRound(input: BuildRoundInput): Round {
       completed: false
     };
     matches.push(match);
-    bumpMatrices(match, input.teammateMatrix, input.opponentMatrix);
+    bumpMatrices(match, input.teammateMatrix, input.opponentMatrix, input.coPlayerMatrix);
   }
 
   return {
@@ -39,6 +39,28 @@ export function buildRound(input: BuildRoundInput): Round {
     matches,
     isLocked: false
   };
+}
+
+function selectPlayersForRound(players: Player[], count: number, coPlayerMatrix: Map<string, number>): Player[] {
+  const selected: Player[] = [];
+  const remaining = [...players];
+
+  while (selected.length < count && remaining.length > 0) {
+    let bestIndex = 0;
+    let bestScore = Number.POSITIVE_INFINITY;
+    for (let index = 0; index < remaining.length; index += 1) {
+      const candidate = remaining[index];
+      const diversityPenalty = selected.reduce((sum, chosen) => sum + (coPlayerMatrix.get(pairKey(candidate.id, chosen.id)) ?? 0), 0);
+      const score = candidate.gamesPlayed * 100 + diversityPenalty * 10;
+      if (score < bestScore) {
+        bestScore = score;
+        bestIndex = index;
+      }
+    }
+    const [chosen] = remaining.splice(bestIndex, 1);
+    selected.push(chosen);
+  }
+  return selected;
 }
 
 function bestTeams(
@@ -81,9 +103,20 @@ function opponentCost(candidate: [string, string, string, string], matrix: Map<s
   );
 }
 
-function bumpMatrices(match: Match, teammateMatrix: Map<string, number>, opponentMatrix: Map<string, number>): void {
+function bumpMatrices(
+  match: Match,
+  teammateMatrix: Map<string, number>,
+  opponentMatrix: Map<string, number>,
+  coPlayerMatrix: Map<string, number>
+): void {
   bump(teammateMatrix, match.teamA[0], match.teamA[1]);
   bump(teammateMatrix, match.teamB[0], match.teamB[1]);
+  const allPlayers = [...match.teamA, ...match.teamB];
+  for (let i = 0; i < allPlayers.length; i += 1) {
+    for (let j = i + 1; j < allPlayers.length; j += 1) {
+      bump(coPlayerMatrix, allPlayers[i], allPlayers[j]);
+    }
+  }
   for (const playerA of match.teamA) {
     for (const playerB of match.teamB) {
       bump(opponentMatrix, playerA, playerB);

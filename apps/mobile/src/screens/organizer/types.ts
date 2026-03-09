@@ -1,4 +1,4 @@
-import type { TournamentMode, TournamentVariant } from "@padel/shared";
+import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 export type SetupStep = "LIST" | "NAME" | "PLAYERS" | "RULES" | "LIVE" | "LEADERBOARD" | "PLAYER_GAMES";
 
@@ -13,7 +13,7 @@ export interface LiveTournamentState {
   publicToken: string;
   version: number;
   updatedAt: string;
-  config: { name: string; mode: TournamentMode; variant: TournamentVariant };
+  config: { name: string; mode: TournamentMode; variant: TournamentVariant; schedulingMode: SchedulingMode };
   players: Array<{ id: string; name: string }>;
   leaderboard: Array<{ playerId: string; name: string; totalPoints: number; gamesPlayed: number; rank: number }>;
   rounds: Array<{

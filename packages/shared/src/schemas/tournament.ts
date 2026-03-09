@@ -2,12 +2,14 @@ import { z } from "zod";
 
 export const modeSchema = z.enum(["AMERICANO", "MEXICANO"]);
 export const variantSchema = z.enum(["CLASSIC", "MIXED", "TEAM"]);
+export const schedulingModeSchema = z.enum(["TARGET_GAMES", "TOTAL_TIME", "ROUND_ROBIN"]);
 
 export const createTournamentSchema = z
   .object({
     name: z.string().min(2),
     mode: modeSchema,
     variant: variantSchema,
+    schedulingMode: schedulingModeSchema,
     players: z.array(z.string().min(1)).min(4),
     courts: z.number().int().min(1),
     pointsPerMatch: z.number().int().min(1),
@@ -15,10 +17,22 @@ export const createTournamentSchema = z
     tournamentTimeMinutes: z.number().int().min(10).optional()
   })
   .superRefine((value, ctx) => {
-    if (!value.targetGamesPerPlayer && !value.tournamentTimeMinutes) {
+    if (value.schedulingMode === "TARGET_GAMES" && !value.targetGamesPerPlayer) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Provide targetGamesPerPlayer or tournamentTimeMinutes."
+        message: "Provide targetGamesPerPlayer for TARGET_GAMES mode."
+      });
+    }
+    if (value.schedulingMode === "TOTAL_TIME" && !value.tournamentTimeMinutes) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Provide tournamentTimeMinutes for TOTAL_TIME mode."
+      });
+    }
+    if (value.mode === "MEXICANO" && value.schedulingMode !== "TOTAL_TIME") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Mexicano currently supports TOTAL_TIME scheduling mode."
       });
     }
   });

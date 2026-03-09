@@ -12,6 +12,7 @@ test("create tournament and fetch public view", async () => {
       name: "Friday Social",
       mode: "AMERICANO",
       variant: "CLASSIC",
+      schedulingMode: "TARGET_GAMES",
       players: ["A", "B", "C", "D", "E", "F", "G", "H"],
       courts: 2,
       pointsPerMatch: 24,

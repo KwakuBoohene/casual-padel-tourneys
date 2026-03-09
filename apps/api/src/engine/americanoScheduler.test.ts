@@ -9,6 +9,7 @@ test("americano generator keeps fair play count", () => {
     name: "Weeknight Americano",
     mode: "AMERICANO",
     variant: "CLASSIC",
+    schedulingMode: "TARGET_GAMES",
     players: Array.from({ length: 16 }, (_, index) => `Player ${index + 1}`),
     courts: 3,
     pointsPerMatch: 24,

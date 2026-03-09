@@ -4,6 +4,7 @@ export function computeEstimate(input: {
   courtsText: string;
   pointsText: string;
   mode: "AMERICANO" | "MEXICANO";
+  schedulingMode: "TARGET_GAMES" | "TOTAL_TIME" | "ROUND_ROBIN";
   targetGamesText: string;
   tournamentTimeText: string;
   playersCount: number;
@@ -20,7 +21,9 @@ export function computeEstimate(input: {
   }
 
   let rounds = 0;
-  if (input.mode === "AMERICANO") {
+  if (input.schedulingMode === "ROUND_ROBIN") {
+    rounds = Math.max(1, input.playersCount - 1);
+  } else if (input.schedulingMode === "TARGET_GAMES") {
     const targetGames = Number(input.targetGamesText);
     if (!Number.isFinite(targetGames) || targetGames < 1) {
       return null;

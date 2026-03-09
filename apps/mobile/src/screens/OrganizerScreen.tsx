@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Button, Modal, Text, View } from "react-native";
-import type { TournamentMode, TournamentVariant } from "@padel/shared";
+import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 import { apiDelete, apiGet, apiPost } from "../api/client";
 import { LeaderboardView } from "./organizer/LeaderboardView";
@@ -19,6 +19,7 @@ export function OrganizerScreen() {
   const [players, setPlayers] = useState<string[]>(["", "", "", ""]);
   const [mode, setMode] = useState<TournamentMode>("AMERICANO");
   const [variant, setVariant] = useState<TournamentVariant>("CLASSIC");
+  const [schedulingMode, setSchedulingMode] = useState<SchedulingMode>("TARGET_GAMES");
   const [courtsText, setCourtsText] = useState("2");
   const [pointsText, setPointsText] = useState("24");
   const [targetGamesText, setTargetGamesText] = useState("4");
@@ -48,11 +49,12 @@ export function OrganizerScreen() {
         courtsText,
         pointsText,
         mode,
+        schedulingMode,
         targetGamesText,
         tournamentTimeText,
         playersCount: sanitizedPlayers.length
       }),
-    [courtsText, mode, pointsText, sanitizedPlayers.length, targetGamesText, tournamentTimeText]
+    [courtsText, mode, pointsText, sanitizedPlayers.length, schedulingMode, targetGamesText, tournamentTimeText]
   );
 
   const canContinueFromName = name.trim().length >= 2;
@@ -117,11 +119,14 @@ export function OrganizerScreen() {
         name: name.trim(),
         mode,
         variant,
+        schedulingMode: mode === "MEXICANO" ? "TOTAL_TIME" : schedulingMode,
         players: sanitizedPlayers,
         courts: Number(courtsText),
         pointsPerMatch: Number(pointsText),
-        targetGamesPerPlayer: mode === "AMERICANO" ? Number(targetGamesText) : undefined,
-        tournamentTimeMinutes: mode === "MEXICANO" ? Number(tournamentTimeText) : undefined
+        targetGamesPerPlayer:
+          (mode === "AMERICANO" ? schedulingMode : "TOTAL_TIME") === "TARGET_GAMES" ? Number(targetGamesText) : undefined,
+        tournamentTimeMinutes:
+          (mode === "AMERICANO" ? schedulingMode : "TOTAL_TIME") === "TOTAL_TIME" ? Number(tournamentTimeText) : undefined
       };
       const response = await apiPost<CreateTournamentResponse>("/tournaments", payload);
       setResponseText(`Created ${response.data.id}\nShare token: ${response.data.publicToken}`);
@@ -429,6 +434,8 @@ export function OrganizerScreen() {
       errorText={errorText}
       onChangeMode={setMode}
       onChangeVariant={setVariant}
+      schedulingMode={mode === "MEXICANO" ? "TOTAL_TIME" : schedulingMode}
+      onChangeSchedulingMode={setSchedulingMode}
       onChangeCourts={setCourtsText}
       onChangePoints={setPointsText}
       onChangeTargetGames={setTargetGamesText}

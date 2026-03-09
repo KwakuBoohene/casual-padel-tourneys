@@ -1,11 +1,12 @@
 import { Button, ScrollView, Text, TextInput, View } from "react-native";
-import type { TournamentMode, TournamentVariant } from "@padel/shared";
+import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 import type { Estimate } from "./types";
 
 interface RulesStepViewProps {
   mode: TournamentMode;
   variant: TournamentVariant;
+  schedulingMode: SchedulingMode;
   courtsText: string;
   pointsText: string;
   targetGamesText: string;
@@ -15,6 +16,7 @@ interface RulesStepViewProps {
   errorText: string;
   onChangeMode: (value: TournamentMode) => void;
   onChangeVariant: (value: TournamentVariant) => void;
+  onChangeSchedulingMode: (value: SchedulingMode) => void;
   onChangeCourts: (value: string) => void;
   onChangePoints: (value: string) => void;
   onChangeTargetGames: (value: string) => void;
@@ -40,17 +42,30 @@ export function RulesStepView(props: RulesStepViewProps) {
         <Button title="Team" onPress={() => props.onChangeVariant("TEAM")} />
       </View>
 
+      {props.mode === "AMERICANO" ? (
+        <>
+          <Text>Scheduling</Text>
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <Button title="Games Per Player" onPress={() => props.onChangeSchedulingMode("TARGET_GAMES")} />
+            <Button title="Total Time" onPress={() => props.onChangeSchedulingMode("TOTAL_TIME")} />
+            <Button title="Round Robin" onPress={() => props.onChangeSchedulingMode("ROUND_ROBIN")} />
+          </View>
+        </>
+      ) : null}
+
       <Text>Courts</Text>
       <TextInput value={props.courtsText} onChangeText={props.onChangeCourts} keyboardType="numeric" style={{ borderWidth: 1, padding: 8 }} />
       <Text>Points Per Match</Text>
       <TextInput value={props.pointsText} onChangeText={props.onChangePoints} keyboardType="numeric" style={{ borderWidth: 1, padding: 8 }} />
 
-      {props.mode === "AMERICANO" ? (
+      {props.schedulingMode === "TARGET_GAMES" ? (
         <>
           <Text>Target Games Per Player</Text>
           <TextInput value={props.targetGamesText} onChangeText={props.onChangeTargetGames} keyboardType="numeric" style={{ borderWidth: 1, padding: 8 }} />
         </>
-      ) : (
+      ) : null}
+
+      {props.schedulingMode === "TOTAL_TIME" ? (
         <>
           <Text>Tournament Time (minutes)</Text>
           <TextInput
@@ -60,7 +75,7 @@ export function RulesStepView(props: RulesStepViewProps) {
             style={{ borderWidth: 1, padding: 8 }}
           />
         </>
-      )}
+      ) : null}
 
       <View style={{ borderWidth: 1, padding: 10, gap: 4 }}>
         <Text style={{ fontWeight: "700" }}>Estimated Duration</Text>

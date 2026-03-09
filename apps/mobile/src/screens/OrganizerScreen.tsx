@@ -4,7 +4,7 @@ import type { TournamentMode, TournamentVariant } from "@padel/shared";
 
 import { apiGet, apiPost } from "../api/client";
 
-type SetupStep = "LIST" | "NAME" | "PLAYERS" | "RULES" | "LIVE";
+type SetupStep = "LIST" | "NAME" | "PLAYERS" | "RULES" | "LIVE" | "LEADERBOARD" | "PLAYER_GAMES";
 
 interface Estimate {
   rounds: number;
@@ -23,6 +23,7 @@ interface LiveTournamentState {
   updatedAt: string;
   config: { name: string; mode: TournamentMode; variant: TournamentVariant };
   players: Array<{ id: string; name: string }>;
+  leaderboard: Array<{ playerId: string; name: string; totalPoints: number; gamesPlayed: number; rank: number }>;
   rounds: Array<{
     id: string;
     roundNumber: number;
@@ -47,6 +48,26 @@ interface TournamentListResponse {
   data: LiveTournamentState[];
 }
 
+interface LeaderboardRow {
+  playerId: string;
+  name: string;
+  wins: number;
+  losses: number;
+  draws: number;
+  gamesPlayed: number;
+  totalPoints: number;
+}
+
+interface PlayerGameRow {
+  matchId: string;
+  roundNumber: number;
+  court: number;
+  partner: string;
+  opponents: [string, string];
+  scoreText: string;
+  result: "WIN" | "LOSS" | "DRAW" | "PENDING";
+}
+
 export function OrganizerScreen() {
   const [step, setStep] = useState<SetupStep>("LIST");
   const [name, setName] = useState("");
@@ -62,6 +83,7 @@ export function OrganizerScreen() {
   const [liveTournament, setLiveTournament] = useState<LiveTournamentState | null>(null);
   const [tournaments, setTournaments] = useState<LiveTournamentState[]>([]);
   const [listRefreshing, setListRefreshing] = useState(false);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [scoreInputs, setScoreInputs] = useState<Record<string, { scoreA: string; scoreB: string }>>({});
 
   const sanitizedPlayers = useMemo(
@@ -124,6 +146,95 @@ export function OrganizerScreen() {
       null
     );
   }, [liveTournament]);
+
+  const leaderboardRows = useMemo<LeaderboardRow[]>(() => {
+    if (!liveTournament) {
+      return [];
+    }
+    const stats = new Map<string, LeaderboardRow>();
+    for (const entry of liveTournament.leaderboard ?? []) {
+      stats.set(entry.playerId, {
+        playerId: entry.playerId,
+        name: entry.name,
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        gamesPlayed: entry.gamesPlayed,
+        totalPoints: entry.totalPoints
+      });
+    }
+
+    for (const player of liveTournament.players) {
+      if (!stats.has(player.id)) {
+        stats.set(player.id, {
+          playerId: player.id,
+          name: player.name,
+          wins: 0,
+          losses: 0,
+          draws: 0,
+          gamesPlayed: 0,
+          totalPoints: 0
+        });
+      }
+    }
+
+    for (const round of liveTournament.rounds) {
+      for (const match of round.matches) {
+        if (!match.completed || match.scoreA === undefined || match.scoreB === undefined) {
+          continue;
+        }
+        const teamAResult = match.scoreA === match.scoreB ? "DRAW" : match.scoreA > match.scoreB ? "WIN" : "LOSS";
+        const teamBResult = match.scoreA === match.scoreB ? "DRAW" : match.scoreB > match.scoreA ? "WIN" : "LOSS";
+        for (const playerId of match.teamA) {
+          bumpResult(stats, playerId, teamAResult);
+        }
+        for (const playerId of match.teamB) {
+          bumpResult(stats, playerId, teamBResult);
+        }
+      }
+    }
+
+    return [...stats.values()].sort((a, b) => b.totalPoints - a.totalPoints);
+  }, [liveTournament]);
+
+  const selectedPlayerGames = useMemo<PlayerGameRow[]>(() => {
+    if (!liveTournament || !selectedPlayerId) {
+      return [];
+    }
+    const rows: PlayerGameRow[] = [];
+    for (const round of liveTournament.rounds) {
+      for (const match of round.matches) {
+        const inTeamA = match.teamA.includes(selectedPlayerId);
+        const inTeamB = match.teamB.includes(selectedPlayerId);
+        if (!inTeamA && !inTeamB) {
+          continue;
+        }
+        const myTeam = inTeamA ? match.teamA : match.teamB;
+        const otherTeam = inTeamA ? match.teamB : match.teamA;
+        const partnerId = myTeam.find((playerId) => playerId !== selectedPlayerId) ?? selectedPlayerId;
+        const myScore = inTeamA ? match.scoreA : match.scoreB;
+        const theirScore = inTeamA ? match.scoreB : match.scoreA;
+        let result: PlayerGameRow["result"] = "PENDING";
+        if (match.completed && myScore !== undefined && theirScore !== undefined) {
+          result = myScore === theirScore ? "DRAW" : myScore > theirScore ? "WIN" : "LOSS";
+        }
+        rows.push({
+          matchId: match.id,
+          roundNumber: round.roundNumber,
+          court: match.court,
+          partner: playerNameById.get(partnerId) ?? partnerId,
+          opponents: [
+            playerNameById.get(otherTeam[0]) ?? otherTeam[0],
+            playerNameById.get(otherTeam[1]) ?? otherTeam[1]
+          ],
+          scoreText:
+            myScore !== undefined && theirScore !== undefined ? `${myScore}-${theirScore}` : "Pending",
+          result
+        });
+      }
+    }
+    return rows.sort((a, b) => a.roundNumber - b.roundNumber);
+  }, [liveTournament, playerNameById, selectedPlayerId]);
 
   const addPlayerInput = () => {
     setPlayers((previous) => [...previous, ""]);
@@ -318,6 +429,7 @@ export function OrganizerScreen() {
       <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
         <Text style={{ fontSize: 24, fontWeight: "700" }}>Live Tournament</Text>
         <Button title="Back To Tournament List" onPress={() => setStep("LIST")} />
+        <Button title="View Leaderboard" onPress={() => setStep("LEADERBOARD")} />
         <Text>
           {liveTournament.config.name} ({liveTournament.config.mode}/{liveTournament.config.variant})
         </Text>
@@ -363,6 +475,62 @@ export function OrganizerScreen() {
         </View>
 
         {errorText ? <Text style={{ color: "red" }}>Error: {errorText}</Text> : null}
+      </ScrollView>
+    );
+  }
+
+  if (step === "LEADERBOARD" && liveTournament) {
+    return (
+      <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
+        <Text style={{ fontSize: 24, fontWeight: "700" }}>Leaderboard</Text>
+        <Button title="Back" onPress={() => setStep("LIVE")} />
+        <Text>{liveTournament.config.name}</Text>
+
+        {leaderboardRows.map((row, index) => (
+          <Pressable
+            key={row.playerId}
+            onPress={() => {
+              setSelectedPlayerId(row.playerId);
+              setStep("PLAYER_GAMES");
+            }}
+            style={{ borderWidth: 1, padding: 10, gap: 4 }}
+          >
+            <Text style={{ fontWeight: "700" }}>
+              {index + 1}. {row.name}
+            </Text>
+            <Text>Points: {row.totalPoints}</Text>
+            <Text>Games: {row.gamesPlayed}</Text>
+            <Text>
+              W/L/D: {row.wins}/{row.losses}/{row.draws}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+    );
+  }
+
+  if (step === "PLAYER_GAMES" && liveTournament && selectedPlayerId) {
+    const playerName = playerNameById.get(selectedPlayerId) ?? selectedPlayerId;
+    return (
+      <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
+        <Text style={{ fontSize: 24, fontWeight: "700" }}>{playerName} - Games</Text>
+        <Button title="Back" onPress={() => setStep("LEADERBOARD")} />
+
+        {selectedPlayerGames.length === 0 ? <Text>No games yet for this player.</Text> : null}
+
+        {selectedPlayerGames.map((game) => (
+          <View key={game.matchId} style={{ borderWidth: 1, padding: 10, gap: 4 }}>
+            <Text style={{ fontWeight: "700" }}>
+              Round {game.roundNumber} - Court {game.court}
+            </Text>
+            <Text>Partner: {game.partner}</Text>
+            <Text>
+              Opponents: {game.opponents[0]} / {game.opponents[1]}
+            </Text>
+            <Text>Score: {game.scoreText}</Text>
+            <Text>Result: {game.result}</Text>
+          </View>
+        ))}
       </ScrollView>
     );
   }
@@ -433,4 +601,22 @@ export function OrganizerScreen() {
       </View>
     </ScrollView>
   );
+}
+
+function bumpResult(
+  stats: Map<string, LeaderboardRow>,
+  playerId: string,
+  result: "WIN" | "LOSS" | "DRAW"
+): void {
+  const row = stats.get(playerId);
+  if (!row) {
+    return;
+  }
+  if (result === "WIN") {
+    row.wins += 1;
+  } else if (result === "LOSS") {
+    row.losses += 1;
+  } else {
+    row.draws += 1;
+  }
 }

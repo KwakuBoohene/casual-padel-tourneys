@@ -10,7 +10,7 @@ for (let index = 0; index < runs; index += 1) {
     mode: "AMERICANO" as const,
     variant: "CLASSIC" as const,
     schedulingMode: "TARGET_GAMES" as const,
-    players: Array.from({ length: 16 }, (_, value) => `Player ${value + 1}`),
+    players: Array.from({ length: 16 }, (_, value) => ({ name: `Player ${value + 1}` })),
     courts: 3,
     pointsPerMatch: 24,
     targetGamesPerPlayer: 4

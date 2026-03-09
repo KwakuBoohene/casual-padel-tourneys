@@ -3,6 +3,7 @@ import { z } from "zod";
 export const modeSchema = z.enum(["AMERICANO", "MEXICANO"]);
 export const variantSchema = z.enum(["CLASSIC", "MIXED", "TEAM"]);
 export const schedulingModeSchema = z.enum(["TARGET_GAMES", "TOTAL_TIME", "ROUND_ROBIN"]);
+export const playerGenderSchema = z.enum(["MALE", "FEMALE"]);
 
 export const createTournamentSchema = z
   .object({
@@ -10,7 +11,7 @@ export const createTournamentSchema = z
     mode: modeSchema,
     variant: variantSchema,
     schedulingMode: schedulingModeSchema,
-    players: z.array(z.string().min(1)).min(4),
+    players: z.array(z.object({ name: z.string().min(1), gender: playerGenderSchema.optional() })).min(4),
     courts: z.number().int().min(1),
     pointsPerMatch: z.number().int().min(1),
     targetGamesPerPlayer: z.number().int().min(1).optional(),
@@ -34,6 +35,17 @@ export const createTournamentSchema = z
         code: z.ZodIssueCode.custom,
         message: "Mexicano currently supports TOTAL_TIME scheduling mode."
       });
+    }
+    if (value.variant === "MIXED") {
+      for (let index = 0; index < value.players.length; index += 1) {
+        if (!value.players[index].gender) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Gender is required for every player in MIXED variant."
+          });
+          break;
+        }
+      }
     }
   });
 

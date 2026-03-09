@@ -10,7 +10,7 @@ test("americano generator keeps fair play count", () => {
     mode: "AMERICANO",
     variant: "CLASSIC",
     schedulingMode: "TARGET_GAMES",
-    players: Array.from({ length: 16 }, (_, index) => `Player ${index + 1}`),
+    players: Array.from({ length: 16 }, (_, index) => ({ name: `Player ${index + 1}` })),
     courts: 3,
     pointsPerMatch: 24,
     targetGamesPerPlayer: 4

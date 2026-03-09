@@ -10,9 +10,10 @@ export interface ScheduledTournament {
 }
 
 export function generateTournament(config: TournamentConfig): ScheduledTournament {
-  const players: Player[] = config.players.map((name) => ({
+  const players: Player[] = config.players.map((input) => ({
     id: createId("player"),
-    name,
+    name: input.name,
+    gender: input.gender,
     gamesPlayed: 0,
     totalPoints: 0
   }));
@@ -41,6 +42,7 @@ function buildRounds(config: TournamentConfig, players: Player[]): Round[] {
     const round = buildRound({
       roundNumber,
       courts: config.courts,
+      variant: config.variant,
       players,
       teammateMatrix,
       opponentMatrix,

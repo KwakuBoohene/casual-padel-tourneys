@@ -13,7 +13,16 @@ test("create tournament and fetch public view", async () => {
       mode: "AMERICANO",
       variant: "CLASSIC",
       schedulingMode: "TARGET_GAMES",
-      players: ["A", "B", "C", "D", "E", "F", "G", "H"],
+      players: [
+        { name: "A" },
+        { name: "B" },
+        { name: "C" },
+        { name: "D" },
+        { name: "E" },
+        { name: "F" },
+        { name: "G" },
+        { name: "H" }
+      ],
       courts: 2,
       pointsPerMatch: 24,
       targetGamesPerPlayer: 3

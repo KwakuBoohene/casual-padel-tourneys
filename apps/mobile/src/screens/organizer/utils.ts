@@ -19,6 +19,9 @@ export function computeEstimate(input: {
   if (playersPerRound <= 0 || input.playersCount === 0) {
     return null;
   }
+  if (input.playersCount < playersPerRound) {
+    return null;
+  }
 
   let rounds = 0;
   if (input.schedulingMode === "ROUND_ROBIN") {

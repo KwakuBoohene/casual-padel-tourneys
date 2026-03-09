@@ -37,6 +37,11 @@ export const renamePlayerSchema = z.object({
   newName: z.string().min(1)
 });
 
+export const renameTournamentSchema = z.object({
+  tournamentId: z.string().min(1),
+  newName: z.string().min(2)
+});
+
 export const adjustCourtsSchema = z.object({
   tournamentId: z.string().min(1),
   courts: z.number().int().min(1),

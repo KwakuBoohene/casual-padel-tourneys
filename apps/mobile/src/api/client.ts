@@ -23,3 +23,16 @@ export async function apiPost<T>(path: string, payload: unknown): Promise<T> {
   }
   return response.json() as Promise<T>;
 }
+
+export async function apiDelete<T>(path: string): Promise<T> {
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    method: "DELETE",
+    headers: {
+      "x-organizer-token": organizerToken
+    }
+  });
+  if (!response.ok) {
+    throw new Error(`Request failed: ${response.status}`);
+  }
+  return response.json() as Promise<T>;
+}

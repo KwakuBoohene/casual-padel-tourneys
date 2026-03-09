@@ -34,6 +34,7 @@ function buildRounds(config: TournamentConfig, players: Player[]): Round[] {
   const estimate = estimateTournament(config);
   const teammateMatrix = new Map<string, number>();
   const opponentMatrix = new Map<string, number>();
+  const coPlayerMatrix = new Map<string, number>();
   const rounds: Round[] = [];
 
   for (let roundNumber = 1; roundNumber <= estimate.rounds; roundNumber += 1) {
@@ -42,7 +43,8 @@ function buildRounds(config: TournamentConfig, players: Player[]): Round[] {
       courts: config.courts,
       players,
       teammateMatrix,
-      opponentMatrix
+      opponentMatrix,
+      coPlayerMatrix
     });
     for (const match of round.matches) {
       const allPlayers = [...match.teamA, ...match.teamB];

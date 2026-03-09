@@ -1,5 +1,6 @@
 export type TournamentMode = "AMERICANO" | "MEXICANO";
 export type TournamentVariant = "CLASSIC" | "MIXED" | "TEAM";
+export type SchedulingMode = "TARGET_GAMES" | "TOTAL_TIME" | "ROUND_ROBIN";
 
 export interface Player {
   id: string;
@@ -30,6 +31,7 @@ export interface TournamentConfig {
   name: string;
   mode: TournamentMode;
   variant: TournamentVariant;
+  schedulingMode: SchedulingMode;
   players: string[];
   courts: number;
   pointsPerMatch: number;

@@ -63,6 +63,13 @@ export function renamePlayer(tournamentId: string, playerId: string, newName: st
   return tournament;
 }
 
+export function renameTournament(tournamentId: string, newName: string): TournamentState {
+  const tournament = requireTournament(tournamentId);
+  tournament.config.name = newName;
+  touch(tournament);
+  return tournament;
+}
+
 export function substitutePlayer(tournamentId: string, playerId: string, replacementName: string): TournamentState {
   const tournament = requireTournament(tournamentId);
   const player = tournament.players.find((item) => item.id === playerId);
@@ -72,6 +79,14 @@ export function substitutePlayer(tournamentId: string, playerId: string, replace
   player.name = replacementName;
   touch(tournament);
   return tournament;
+}
+
+export function deleteTournament(tournamentId: string): void {
+  const exists = tournaments.has(tournamentId);
+  if (!exists) {
+    throw new Error("Tournament not found.");
+  }
+  tournaments.delete(tournamentId);
 }
 
 export function adjustCourts(tournamentId: string, courts: number): TournamentState {

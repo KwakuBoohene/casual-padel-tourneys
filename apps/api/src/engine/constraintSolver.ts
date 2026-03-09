@@ -4,6 +4,7 @@ import type { Match, Player, Round } from "@padel/shared";
 export interface BuildRoundInput {
   roundNumber: number;
   courts: number;
+  variant: "CLASSIC" | "MIXED" | "TEAM";
   players: Player[];
   teammateMatrix: Map<string, number>;
   opponentMatrix: Map<string, number>;
@@ -20,7 +21,7 @@ export function buildRound(input: BuildRoundInput): Round {
     if (group.length < 4) {
       break;
     }
-    const teams = bestTeams(group.map((player) => player.id), input.teammateMatrix, input.opponentMatrix);
+    const teams = bestTeams(group, input.variant, input.teammateMatrix, input.opponentMatrix);
     const match: Match = {
       id: createId("match"),
       round: input.roundNumber,
@@ -64,19 +65,24 @@ function selectPlayersForRound(players: Player[], count: number, coPlayerMatrix:
 }
 
 function bestTeams(
-  players: string[],
+  players: Player[],
+  variant: "CLASSIC" | "MIXED" | "TEAM",
   teammateMatrix: Map<string, number>,
   opponentMatrix: Map<string, number>
 ): [string, string, string, string] {
+  const ids = players.map((player) => player.id);
   const combos: [string, string, string, string][] = [
-    [players[0], players[1], players[2], players[3]],
-    [players[0], players[2], players[1], players[3]],
-    [players[0], players[3], players[1], players[2]]
+    [ids[0], ids[1], ids[2], ids[3]],
+    [ids[0], ids[2], ids[1], ids[3]],
+    [ids[0], ids[3], ids[1], ids[2]]
   ];
 
   let best = combos[0];
   let bestScore = Number.POSITIVE_INFINITY;
   for (const candidate of combos) {
+    if (variant === "MIXED" && !isMixedValid(candidate, players)) {
+      continue;
+    }
     const score =
       teammateCost(candidate[0], candidate[1], teammateMatrix) +
       teammateCost(candidate[2], candidate[3], teammateMatrix) +
@@ -87,6 +93,20 @@ function bestTeams(
     }
   }
   return best;
+}
+
+function isMixedValid(candidate: [string, string, string, string], players: Player[]): boolean {
+  const byId = new Map(players.map((player) => [player.id, player]));
+  const teamA = [byId.get(candidate[0]), byId.get(candidate[1])];
+  const teamB = [byId.get(candidate[2]), byId.get(candidate[3])];
+  return isMixedTeam(teamA[0], teamA[1]) && isMixedTeam(teamB[0], teamB[1]);
+}
+
+function isMixedTeam(a?: Player, b?: Player): boolean {
+  if (!a?.gender || !b?.gender) {
+    return false;
+  }
+  return (a.gender === "MALE" && b.gender === "FEMALE") || (a.gender === "FEMALE" && b.gender === "MALE");
 }
 
 function teammateCost(a: string, b: string, matrix: Map<string, number>): number {

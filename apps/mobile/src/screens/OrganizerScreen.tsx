@@ -1,15 +1,16 @@
 import { useMemo, useState } from "react";
 import { Button, Modal, Text, View } from "react-native";
-import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
+import type { PlayerGender, SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 import { apiDelete, apiGet, apiPost } from "../api/client";
 import { LeaderboardView } from "./organizer/LeaderboardView";
 import { LiveTournamentView } from "./organizer/LiveTournamentView";
+import { MatchSettingsStepView } from "./organizer/MatchSettingsStepView";
 import { NameStepView } from "./organizer/NameStepView";
 import { PlayerGamesView } from "./organizer/PlayerGamesView";
 import { PlayersStepView } from "./organizer/PlayersStepView";
-import { RulesStepView } from "./organizer/RulesStepView";
 import { TournamentListView } from "./organizer/TournamentListView";
+import { TournamentOptionsStepView } from "./organizer/TournamentOptionsStepView";
 import type { CreateTournamentResponse, SetupStep, TournamentListResponse, TournamentResponse } from "./organizer/types";
 import { buildLeaderboardRows, buildPlayerGameRows, computeEstimate } from "./organizer/utils";
 
@@ -17,6 +18,7 @@ export function OrganizerScreen() {
   const [step, setStep] = useState<SetupStep>("LIST");
   const [name, setName] = useState("");
   const [players, setPlayers] = useState<string[]>(["", "", "", ""]);
+  const [playerGenders, setPlayerGenders] = useState<Array<PlayerGender | undefined>>([undefined, undefined, undefined, undefined]);
   const [mode, setMode] = useState<TournamentMode>("AMERICANO");
   const [variant, setVariant] = useState<TournamentVariant>("CLASSIC");
   const [schedulingMode, setSchedulingMode] = useState<SchedulingMode>("TARGET_GAMES");
@@ -40,25 +42,33 @@ export function OrganizerScreen() {
   const [showEditConfirmModal, setShowEditConfirmModal] = useState(false);
 
   const viewerBaseUrl = process.env.EXPO_PUBLIC_VIEWER_BASE_URL ?? "http://localhost:3000";
+  const effectiveSchedulingMode: SchedulingMode = mode === "MEXICANO" ? "TOTAL_TIME" : schedulingMode;
 
   const sanitizedPlayers = useMemo(() => players.map((value) => value.trim()).filter(Boolean), [players]);
-
   const estimate = useMemo(
     () =>
       computeEstimate({
         courtsText,
         pointsText,
         mode,
-        schedulingMode,
+        schedulingMode: effectiveSchedulingMode,
         targetGamesText,
         tournamentTimeText,
         playersCount: sanitizedPlayers.length
       }),
-    [courtsText, mode, pointsText, sanitizedPlayers.length, schedulingMode, targetGamesText, tournamentTimeText]
+    [courtsText, effectiveSchedulingMode, mode, pointsText, sanitizedPlayers.length, targetGamesText, tournamentTimeText]
   );
 
   const canContinueFromName = name.trim().length >= 2;
-  const canContinueFromPlayers = sanitizedPlayers.length >= 4;
+  const canContinueFromPlayers = useMemo(() => {
+    if (sanitizedPlayers.length < 4) {
+      return false;
+    }
+    if (variant !== "MIXED") {
+      return true;
+    }
+    return players.every((value, index) => value.trim().length === 0 || Boolean(playerGenders[index]));
+  }, [playerGenders, players, sanitizedPlayers.length, variant]);
 
   const playerNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -95,7 +105,6 @@ export function OrganizerScreen() {
   }, [activeRound, liveTournament]);
 
   const leaderboardRows = useMemo(() => (liveTournament ? buildLeaderboardRows(liveTournament) : []), [liveTournament]);
-
   const selectedPlayerGames = useMemo(() => {
     if (!liveTournament || !selectedPlayerId) {
       return [];
@@ -107,10 +116,21 @@ export function OrganizerScreen() {
     });
   }, [liveTournament, playerNameById, selectedPlayerId]);
 
-  const addPlayerInput = () => setPlayers((previous) => [...previous, ""]);
-  const removePlayerInput = (index: number) => setPlayers((previous) => previous.filter((_, itemIndex) => itemIndex !== index));
+  const addPlayerInput = () => {
+    setPlayers((previous) => [...previous, ""]);
+    setPlayerGenders((previous) => [...previous, undefined]);
+  };
+
+  const removePlayerInput = (index: number) => {
+    setPlayers((previous) => previous.filter((_, itemIndex) => itemIndex !== index));
+    setPlayerGenders((previous) => previous.filter((_, itemIndex) => itemIndex !== index));
+  };
+
   const updatePlayerName = (index: number, value: string) =>
     setPlayers((previous) => previous.map((item, itemIndex) => (itemIndex === index ? value : item)));
+
+  const updatePlayerGender = (index: number, value: PlayerGender) =>
+    setPlayerGenders((previous) => previous.map((item, itemIndex) => (itemIndex === index ? value : item)));
 
   const createTournament = async () => {
     try {
@@ -119,14 +139,17 @@ export function OrganizerScreen() {
         name: name.trim(),
         mode,
         variant,
-        schedulingMode: mode === "MEXICANO" ? "TOTAL_TIME" : schedulingMode,
-        players: sanitizedPlayers,
+        schedulingMode: effectiveSchedulingMode,
+        players: players
+          .map((playerName, index) => ({
+            name: playerName.trim(),
+            gender: variant === "MIXED" ? playerGenders[index] : undefined
+          }))
+          .filter((item) => item.name.length > 0),
         courts: Number(courtsText),
         pointsPerMatch: Number(pointsText),
-        targetGamesPerPlayer:
-          (mode === "AMERICANO" ? schedulingMode : "TOTAL_TIME") === "TARGET_GAMES" ? Number(targetGamesText) : undefined,
-        tournamentTimeMinutes:
-          (mode === "AMERICANO" ? schedulingMode : "TOTAL_TIME") === "TOTAL_TIME" ? Number(tournamentTimeText) : undefined
+        targetGamesPerPlayer: effectiveSchedulingMode === "TARGET_GAMES" ? Number(targetGamesText) : undefined,
+        tournamentTimeMinutes: effectiveSchedulingMode === "TOTAL_TIME" ? Number(tournamentTimeText) : undefined
       };
       const response = await apiPost<CreateTournamentResponse>("/tournaments", payload);
       setResponseText(`Created ${response.data.id}\nShare token: ${response.data.publicToken}`);
@@ -246,9 +269,7 @@ export function OrganizerScreen() {
       });
       setLiveTournament(response.data);
       setLiveTournamentNameDraft(response.data.config.name);
-      setTournaments((previous) =>
-        previous.map((item) => (item.id === response.data.id ? response.data : item))
-      );
+      setTournaments((previous) => previous.map((item) => (item.id === response.data.id ? response.data : item)));
     } catch (error) {
       setErrorText((error as Error).message);
     }
@@ -314,7 +335,6 @@ export function OrganizerScreen() {
             </View>
           </View>
         </Modal>
-
         <Modal
           transparent
           visible={showTournamentActionConfirmModal}
@@ -349,6 +369,21 @@ export function OrganizerScreen() {
         canContinue={canContinueFromName}
         onChangeName={setName}
         onBack={() => setStep("LIST")}
+        onNext={() => setStep("OPTIONS")}
+      />
+    );
+  }
+
+  if (step === "OPTIONS") {
+    return (
+      <TournamentOptionsStepView
+        mode={mode}
+        variant={variant}
+        schedulingMode={effectiveSchedulingMode}
+        onChangeMode={setMode}
+        onChangeVariant={setVariant}
+        onChangeSchedulingMode={setSchedulingMode}
+        onBack={() => setStep("NAME")}
         onNext={() => setStep("PLAYERS")}
       />
     );
@@ -358,13 +393,16 @@ export function OrganizerScreen() {
     return (
       <PlayersStepView
         players={players}
+        genders={playerGenders}
+        variant={variant}
         sanitizedPlayers={sanitizedPlayers}
         canContinue={canContinueFromPlayers}
         onUpdatePlayer={updatePlayerName}
+        onUpdateGender={updatePlayerGender}
         onRemovePlayer={removePlayerInput}
         onAddPlayer={addPlayerInput}
-        onBack={() => setStep("NAME")}
-        onNext={() => setStep("RULES")}
+        onBack={() => setStep("OPTIONS")}
+        onNext={() => setStep("SETTINGS")}
       />
     );
   }
@@ -422,9 +460,8 @@ export function OrganizerScreen() {
   }
 
   return (
-    <RulesStepView
-      mode={mode}
-      variant={variant}
+    <MatchSettingsStepView
+      schedulingMode={effectiveSchedulingMode}
       courtsText={courtsText}
       pointsText={pointsText}
       targetGamesText={targetGamesText}
@@ -432,10 +469,6 @@ export function OrganizerScreen() {
       estimate={estimate}
       responseText={responseText}
       errorText={errorText}
-      onChangeMode={setMode}
-      onChangeVariant={setVariant}
-      schedulingMode={mode === "MEXICANO" ? "TOTAL_TIME" : schedulingMode}
-      onChangeSchedulingMode={setSchedulingMode}
       onChangeCourts={setCourtsText}
       onChangePoints={setPointsText}
       onChangeTargetGames={setTargetGamesText}

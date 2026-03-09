@@ -43,6 +43,9 @@ export function OrganizerScreen() {
   const [showEditConfirmModal, setShowEditConfirmModal] = useState(false);
   const [showLiveOptionsModal, setShowLiveOptionsModal] = useState(false);
   const [showAdjustCourtsConfirmModal, setShowAdjustCourtsConfirmModal] = useState(false);
+  const [scorePicker, setScorePicker] = useState<{ matchId: string; side: "scoreA" | "scoreB" } | null>(null);
+  const [suppressNextScorePickerOpen, setSuppressNextScorePickerOpen] = useState<{ matchId: string; side: "scoreA" | "scoreB" } | null>(null);
+  const [focusSubmitMatchId, setFocusSubmitMatchId] = useState<string | null>(null);
   const [proposedCourts, setProposedCourts] = useState(2);
   const [estimatorMode, setEstimatorMode] = useState<TournamentMode>("AMERICANO");
   const [estimatorVariant, setEstimatorVariant] = useState<TournamentVariant>("CLASSIC");
@@ -304,6 +307,53 @@ export function OrganizerScreen() {
     }));
   };
 
+  const getExistingMatch = (matchId: string) => {
+    if (!liveTournament) {
+      return undefined;
+    }
+    for (const round of liveTournament.rounds) {
+      const found = round.matches.find((match) => match.id === matchId);
+      if (found) {
+        return found;
+      }
+    }
+    return undefined;
+  };
+
+  const pickScoreFromSheet = (value: number) => {
+    if (!liveTournament || !scorePicker) {
+      return;
+    }
+    const { matchId, side } = scorePicker;
+    const oppositeSide = side === "scoreA" ? "scoreB" : "scoreA";
+    const match = getExistingMatch(matchId);
+    const existing = scoreInputs[matchId];
+    const currentA = existing?.scoreA ?? (match?.scoreA !== undefined ? String(match.scoreA) : "");
+    const currentB = existing?.scoreB ?? (match?.scoreB !== undefined ? String(match.scoreB) : "");
+    const bothFilledBefore = currentA.trim().length > 0 && currentB.trim().length > 0;
+    const oppositeCurrent = oppositeSide === "scoreA" ? currentA : currentB;
+    const totalScore = liveTournament.config.pointsPerMatch;
+    const inferredOpposite = String(Math.max(0, totalScore - value));
+
+    setScoreInputs((previous) => {
+      const next = {
+        scoreA: previous[matchId]?.scoreA ?? (match?.scoreA !== undefined ? String(match.scoreA) : ""),
+        scoreB: previous[matchId]?.scoreB ?? (match?.scoreB !== undefined ? String(match.scoreB) : "")
+      };
+      next[side] = String(value);
+      if (!bothFilledBefore && oppositeCurrent.trim().length === 0) {
+        next[oppositeSide] = inferredOpposite;
+      }
+      return {
+        ...previous,
+        [matchId]: next
+      };
+    });
+    setSuppressNextScorePickerOpen(scorePicker);
+    setFocusSubmitMatchId(matchId);
+    setScorePicker(null);
+  };
+
   const finishTournament = () => {
     if (!isTournamentCompleted) {
       setErrorText("Finish is only available after all round matches have scores.");
@@ -537,6 +587,8 @@ export function OrganizerScreen() {
         proposedCourts={proposedCourts}
         maxCourts={maxCourts}
         canAdjustCourts={canAdjustCourts}
+        scorePicker={scorePicker}
+        focusSubmitMatchId={focusSubmitMatchId}
         onChangeTournamentName={setLiveTournamentNameDraft}
         onChangeProposedCourts={setProposedCourts}
         onSaveTournamentName={() => void saveTournamentName()}
@@ -562,6 +614,16 @@ export function OrganizerScreen() {
         onCloseAdjustCourtsConfirm={() => setShowAdjustCourtsConfirmModal(false)}
         onConfirmAdjustCourts={() => void adjustTournamentCourts()}
         onSaveGameEdits={() => setIsEditingCompletedTournament(false)}
+        onOpenScorePicker={(matchId, side) => {
+          if (suppressNextScorePickerOpen?.matchId === matchId && suppressNextScorePickerOpen.side === side) {
+            setSuppressNextScorePickerOpen(null);
+            return;
+          }
+          setScorePicker({ matchId, side });
+        }}
+        onCloseScorePicker={() => setScorePicker(null)}
+        onSelectScoreFromPicker={pickScoreFromSheet}
+        onSubmitFocusHandled={() => setFocusSubmitMatchId(null)}
         onUpdateScoreInput={updateScoreInput}
         onSubmitMatchScore={(matchId) => void submitMatchScore(matchId)}
       />

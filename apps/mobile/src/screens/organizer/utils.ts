@@ -124,6 +124,19 @@ export function buildPlayerGameRows(input: {
   return rows.sort((a, b) => a.roundNumber - b.roundNumber);
 }
 
+export function computeLiveTimeStatus(tournament: LiveTournamentState): { roundsLeft: number; estimatedMinutesLeft: number } {
+  const pointsPerMatch = Number(tournament.config.pointsPerMatch);
+  if (!Number.isFinite(pointsPerMatch) || pointsPerMatch < 1) {
+    return { roundsLeft: 0, estimatedMinutesLeft: 0 };
+  }
+  const roundsLeft = tournament.rounds.filter((round) => !round.matches.every((match) => match.completed)).length;
+  const matchTimeMinutes = (pointsPerMatch * 35) / 60;
+  return {
+    roundsLeft,
+    estimatedMinutesLeft: Math.ceil(roundsLeft * matchTimeMinutes)
+  };
+}
+
 function bumpResult(stats: Map<string, LeaderboardRow>, playerId: string, result: "WIN" | "LOSS" | "DRAW"): void {
   const row = stats.get(playerId);
   if (!row) {

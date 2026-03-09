@@ -13,8 +13,16 @@ interface LiveTournamentViewProps {
   scoreInputs: Record<string, { scoreA: string; scoreB: string }>;
   playerNameById: Map<string, string>;
   showEditConfirmModal: boolean;
+  showAdjustCourtsConfirmModal: boolean;
   tournamentNameDraft: string;
+  roundsLeft: number;
+  estimatedMinutesLeft: number;
+  currentCourts: number;
+  proposedCourts: number;
+  maxCourts: number;
+  canAdjustCourts: boolean;
   onChangeTournamentName: (value: string) => void;
+  onChangeProposedCourts: (value: number) => void;
   onSaveTournamentName: () => void;
   onBackToList: () => void;
   onViewLeaderboard: () => void;
@@ -23,6 +31,9 @@ interface LiveTournamentViewProps {
   onOpenEditConfirm: () => void;
   onCloseEditConfirm: () => void;
   onConfirmEditGame: () => void;
+  onOpenAdjustCourtsConfirm: () => void;
+  onCloseAdjustCourtsConfirm: () => void;
+  onConfirmAdjustCourts: () => void;
   onSaveGameEdits: () => void;
   onUpdateScoreInput: (matchId: string, side: "scoreA" | "scoreB", value: string) => void;
   onSubmitMatchScore: (matchId: string) => void;
@@ -47,7 +58,21 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
         </Text>
       )}
       <Text>Current Version: {props.tournament.version}</Text>
+      <Text>Rounds Left: {props.roundsLeft}</Text>
+      <Text>Estimated Time Left: {props.estimatedMinutesLeft} minutes</Text>
       <Button title="Refresh" onPress={props.onRefresh} />
+      {props.canAdjustCourts ? (
+        <View style={{ borderWidth: 1, padding: 10, gap: 8 }}>
+          <Text style={{ fontWeight: "700" }}>Adjust Courts</Text>
+          <Text>Current courts: {props.currentCourts}</Text>
+          <Text>Proposed courts: {props.proposedCourts}</Text>
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <Button title="-" onPress={() => props.onChangeProposedCourts(Math.max(props.currentCourts + 1, props.proposedCourts - 1))} />
+            <Button title="+" onPress={() => props.onChangeProposedCourts(Math.min(props.maxCourts, props.proposedCourts + 1))} />
+          </View>
+          <Button title="Add/Adjust Courts" onPress={props.onOpenAdjustCourtsConfirm} />
+        </View>
+      ) : null}
 
       <Text style={{ fontSize: 18, fontWeight: "700" }}>{props.activeRound ? `Round ${props.activeRound.roundNumber}` : "No active round"}</Text>
       {props.isTournamentCompleted ? <Text style={{ fontWeight: "700" }}>Tournament Completed</Text> : null}
@@ -105,6 +130,21 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
             <View style={{ flexDirection: "row", gap: 10 }}>
               <Button title="Cancel" onPress={props.onCloseEditConfirm} />
               <Button title="Yes, Edit Game" onPress={props.onConfirmEditGame} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal transparent visible={props.showAdjustCourtsConfirmModal} animationType="fade" onRequestClose={props.onCloseAdjustCourtsConfirm}>
+        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <View style={{ backgroundColor: "white", width: "100%", maxWidth: 420, padding: 16, gap: 12 }}>
+            <Text style={{ fontSize: 18, fontWeight: "700" }}>Adjust Courts?</Text>
+            <Text>
+              Are you sure you want to change courts from {props.currentCourts} to {props.proposedCourts}? Remaining rounds will be recalculated.
+            </Text>
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <Button title="Cancel" onPress={props.onCloseAdjustCourtsConfirm} />
+              <Button title="Yes, Reassign Games" onPress={props.onConfirmAdjustCourts} />
             </View>
           </View>
         </View>

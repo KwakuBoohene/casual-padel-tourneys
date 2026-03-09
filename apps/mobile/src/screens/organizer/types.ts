@@ -13,7 +13,16 @@ export interface LiveTournamentState {
   publicToken: string;
   version: number;
   updatedAt: string;
-  config: { name: string; mode: TournamentMode; variant: TournamentVariant; schedulingMode: SchedulingMode };
+  config: {
+    name: string;
+    mode: TournamentMode;
+    variant: TournamentVariant;
+    schedulingMode: SchedulingMode;
+    courts: number;
+    pointsPerMatch: number;
+    targetGamesPerPlayer?: number;
+    tournamentTimeMinutes?: number;
+  };
   players: Array<{ id: string; name: string }>;
   leaderboard: Array<{ playerId: string; name: string; totalPoints: number; gamesPlayed: number; rank: number }>;
   rounds: Array<{

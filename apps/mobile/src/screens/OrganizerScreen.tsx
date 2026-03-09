@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Button, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
+import { Button, Modal, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
 import type { TournamentMode, TournamentVariant } from "@padel/shared";
 
 import { apiGet, apiPost } from "../api/client";
@@ -85,6 +85,8 @@ export function OrganizerScreen() {
   const [listRefreshing, setListRefreshing] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [scoreInputs, setScoreInputs] = useState<Record<string, { scoreA: string; scoreB: string }>>({});
+  const [isEditingCompletedTournament, setIsEditingCompletedTournament] = useState(false);
+  const [showEditConfirmModal, setShowEditConfirmModal] = useState(false);
 
   const sanitizedPlayers = useMemo(
     () =>
@@ -146,6 +148,21 @@ export function OrganizerScreen() {
       null
     );
   }, [liveTournament]);
+
+  const isTournamentCompleted = useMemo(() => {
+    if (!liveTournament) {
+      return false;
+    }
+    return liveTournament.rounds.every((round) => round.matches.every((match) => match.completed));
+  }, [liveTournament]);
+
+  const isLastRound = useMemo(() => {
+    if (!activeRound || !liveTournament) {
+      return false;
+    }
+    const highestRound = Math.max(...liveTournament.rounds.map((round) => round.roundNumber));
+    return activeRound.roundNumber === highestRound;
+  }, [activeRound, liveTournament]);
 
   const leaderboardRows = useMemo<LeaderboardRow[]>(() => {
     if (!liveTournament) {
@@ -267,6 +284,7 @@ export function OrganizerScreen() {
       setResponseText(`Created ${response.data.id}\nShare token: ${response.data.publicToken}`);
       setLiveTournament(response.data);
       setTournaments((previous) => [response.data, ...previous.filter((item) => item.id !== response.data.id)]);
+      setIsEditingCompletedTournament(false);
       setStep("LIVE");
     } catch (error) {
       setErrorText((error as Error).message);
@@ -291,6 +309,7 @@ export function OrganizerScreen() {
       setErrorText("");
       const response = await apiGet<TournamentResponse>(`/tournaments/${tournamentId}`);
       setLiveTournament(response.data);
+      setIsEditingCompletedTournament(false);
       setStep("LIVE");
     } catch (error) {
       setErrorText((error as Error).message);
@@ -304,6 +323,9 @@ export function OrganizerScreen() {
     try {
       const response = await apiGet<TournamentResponse>(`/tournaments/${liveTournament.id}`);
       setLiveTournament(response.data);
+      if (!response.data.rounds.every((round) => round.matches.every((match) => match.completed))) {
+        setIsEditingCompletedTournament(false);
+      }
     } catch (error) {
       setErrorText((error as Error).message);
     }
@@ -344,6 +366,15 @@ export function OrganizerScreen() {
         [side]: value
       }
     }));
+  };
+
+  const finishTournament = () => {
+    if (!isTournamentCompleted) {
+      setErrorText("Finish is only available after all round matches have scores.");
+      return;
+    }
+    setIsEditingCompletedTournament(false);
+    setStep("LEADERBOARD");
   };
 
   if (step === "LIST") {
@@ -425,6 +456,7 @@ export function OrganizerScreen() {
   }
 
   if (step === "LIVE" && liveTournament) {
+    const canEditScores = !isTournamentCompleted || isEditingCompletedTournament;
     return (
       <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
         <Text style={{ fontSize: 24, fontWeight: "700" }}>Live Tournament</Text>
@@ -439,6 +471,16 @@ export function OrganizerScreen() {
         <Text style={{ fontSize: 18, fontWeight: "700" }}>
           {activeRound ? `Round ${activeRound.roundNumber}` : "No active round"}
         </Text>
+        {isTournamentCompleted ? <Text style={{ fontWeight: "700" }}>Tournament Completed</Text> : null}
+        {isLastRound ? (
+          <Button title="Finish Tournament" onPress={finishTournament} />
+        ) : null}
+        {isTournamentCompleted && !isEditingCompletedTournament ? (
+          <Button title="Edit Game" onPress={() => setShowEditConfirmModal(true)} />
+        ) : null}
+        {isTournamentCompleted && isEditingCompletedTournament ? (
+          <Button title="Save Game Edits" onPress={() => setIsEditingCompletedTournament(false)} />
+        ) : null}
 
         {(activeRound?.matches ?? []).map((match) => (
           <View key={match.id} style={{ borderWidth: 1, padding: 10, gap: 8 }}>
@@ -449,23 +491,31 @@ export function OrganizerScreen() {
             <Text>
               vs {playerNameById.get(match.teamB[0]) ?? match.teamB[0]} / {playerNameById.get(match.teamB[1]) ?? match.teamB[1]}
             </Text>
-            <View style={{ flexDirection: "row", gap: 8 }}>
-              <TextInput
-                placeholder="Team A"
-                keyboardType="numeric"
-                value={scoreInputs[match.id]?.scoreA ?? (match.scoreA?.toString() ?? "")}
-                onChangeText={(value) => updateScoreInput(match.id, "scoreA", value)}
-                style={{ borderWidth: 1, padding: 8, flex: 1 }}
-              />
-              <TextInput
-                placeholder="Team B"
-                keyboardType="numeric"
-                value={scoreInputs[match.id]?.scoreB ?? (match.scoreB?.toString() ?? "")}
-                onChangeText={(value) => updateScoreInput(match.id, "scoreB", value)}
-                style={{ borderWidth: 1, padding: 8, flex: 1 }}
-              />
-            </View>
-            <Button title={match.completed ? "Update Score" : "Submit Score"} onPress={() => void submitMatchScore(match.id)} />
+            {canEditScores ? (
+              <>
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  <TextInput
+                    placeholder="Team A"
+                    keyboardType="numeric"
+                    value={scoreInputs[match.id]?.scoreA ?? (match.scoreA?.toString() ?? "")}
+                    onChangeText={(value) => updateScoreInput(match.id, "scoreA", value)}
+                    style={{ borderWidth: 1, padding: 8, flex: 1 }}
+                  />
+                  <TextInput
+                    placeholder="Team B"
+                    keyboardType="numeric"
+                    value={scoreInputs[match.id]?.scoreB ?? (match.scoreB?.toString() ?? "")}
+                    onChangeText={(value) => updateScoreInput(match.id, "scoreB", value)}
+                    style={{ borderWidth: 1, padding: 8, flex: 1 }}
+                  />
+                </View>
+                <Button title={match.completed ? "Update Score" : "Submit Score"} onPress={() => void submitMatchScore(match.id)} />
+              </>
+            ) : (
+              <Text>
+                Final Score: {match.scoreA ?? "-"} - {match.scoreB ?? "-"}
+              </Text>
+            )}
           </View>
         ))}
 
@@ -473,6 +523,25 @@ export function OrganizerScreen() {
           <Text style={{ fontWeight: "700" }}>Shareable Link</Text>
           <Text>{`${viewerBaseUrl}/tournament/${liveTournament.publicToken}`}</Text>
         </View>
+
+        <Modal transparent visible={showEditConfirmModal} animationType="fade" onRequestClose={() => setShowEditConfirmModal(false)}>
+          <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center", padding: 24 }}>
+            <View style={{ backgroundColor: "white", width: "100%", maxWidth: 420, padding: 16, gap: 12 }}>
+              <Text style={{ fontSize: 18, fontWeight: "700" }}>Edit Completed Tournament?</Text>
+              <Text>Are you sure you want to unlock this tournament and edit round scores?</Text>
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                <Button title="Cancel" onPress={() => setShowEditConfirmModal(false)} />
+                <Button
+                  title="Yes, Edit Game"
+                  onPress={() => {
+                    setShowEditConfirmModal(false);
+                    setIsEditingCompletedTournament(true);
+                  }}
+                />
+              </View>
+            </View>
+          </View>
+        </Modal>
 
         {errorText ? <Text style={{ color: "red" }}>Error: {errorText}</Text> : null}
       </ScrollView>

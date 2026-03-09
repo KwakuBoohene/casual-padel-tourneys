@@ -9,6 +9,7 @@ interface TournamentListViewProps {
   onRefresh: () => void;
   onCreateNew: () => void;
   onOpenTournament: (id: string) => void;
+  onOpenOptions: (id: string) => void;
 }
 
 export function TournamentListView(props: TournamentListViewProps) {
@@ -24,17 +25,14 @@ export function TournamentListView(props: TournamentListViewProps) {
       {props.tournaments.length === 0 ? <Text>No tournaments loaded yet.</Text> : null}
 
       {props.tournaments.map((tournament) => (
-        <Pressable
-          key={tournament.id}
-          onPress={() => props.onOpenTournament(tournament.id)}
-          style={{ borderWidth: 1, padding: 10, gap: 4 }}
-        >
+        <Pressable key={tournament.id} onPress={() => props.onOpenTournament(tournament.id)} style={{ borderWidth: 1, padding: 10, gap: 4 }}>
           <Text style={{ fontWeight: "700" }}>{tournament.config.name}</Text>
           <Text>
             {tournament.config.mode}/{tournament.config.variant}
           </Text>
           <Text>Players: {tournament.players.length}</Text>
           <Text>Updated: {new Date(tournament.updatedAt).toLocaleString()}</Text>
+          <Button title="Options" onPress={() => props.onOpenOptions(tournament.id)} />
         </Pressable>
       ))}
 

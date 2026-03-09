@@ -13,6 +13,9 @@ interface LiveTournamentViewProps {
   scoreInputs: Record<string, { scoreA: string; scoreB: string }>;
   playerNameById: Map<string, string>;
   showEditConfirmModal: boolean;
+  tournamentNameDraft: string;
+  onChangeTournamentName: (value: string) => void;
+  onSaveTournamentName: () => void;
   onBackToList: () => void;
   onViewLeaderboard: () => void;
   onRefresh: () => void;
@@ -32,9 +35,17 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
       <Text style={{ fontSize: 24, fontWeight: "700" }}>Live Tournament</Text>
       <Button title="Back To Tournament List" onPress={props.onBackToList} />
       <Button title="View Leaderboard" onPress={props.onViewLeaderboard} />
-      <Text>
-        {props.tournament.config.name} ({props.tournament.config.mode}/{props.tournament.config.variant})
-      </Text>
+      {props.isEditingCompletedTournament ? (
+        <>
+          <Text>Edit Tournament Name</Text>
+          <TextInput value={props.tournamentNameDraft} onChangeText={props.onChangeTournamentName} style={{ borderWidth: 1, padding: 8 }} />
+          <Button title="Save Tournament Name" onPress={props.onSaveTournamentName} />
+        </>
+      ) : (
+        <Text>
+          {props.tournament.config.name} ({props.tournament.config.mode}/{props.tournament.config.variant})
+        </Text>
+      )}
       <Text>Current Version: {props.tournament.version}</Text>
       <Button title="Refresh" onPress={props.onRefresh} />
 

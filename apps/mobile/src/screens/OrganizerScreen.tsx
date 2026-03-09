@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
+import { Button, Modal, Text, View } from "react-native";
 import type { TournamentMode, TournamentVariant } from "@padel/shared";
 
-import { apiGet, apiPost } from "../api/client";
+import { apiDelete, apiGet, apiPost } from "../api/client";
 import { LeaderboardView } from "./organizer/LeaderboardView";
 import { LiveTournamentView } from "./organizer/LiveTournamentView";
 import { NameStepView } from "./organizer/NameStepView";
@@ -28,6 +29,11 @@ export function OrganizerScreen() {
   const [tournaments, setTournaments] = useState<TournamentListResponse["data"]>([]);
   const [listRefreshing, setListRefreshing] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const [selectedTournamentId, setSelectedTournamentId] = useState<string | null>(null);
+  const [pendingTournamentAction, setPendingTournamentAction] = useState<"EDIT" | "DELETE" | null>(null);
+  const [showTournamentOptionsModal, setShowTournamentOptionsModal] = useState(false);
+  const [showTournamentActionConfirmModal, setShowTournamentActionConfirmModal] = useState(false);
+  const [liveTournamentNameDraft, setLiveTournamentNameDraft] = useState("");
   const [scoreInputs, setScoreInputs] = useState<Record<string, { scoreA: string; scoreB: string }>>({});
   const [isEditingCompletedTournament, setIsEditingCompletedTournament] = useState(false);
   const [showEditConfirmModal, setShowEditConfirmModal] = useState(false);
@@ -120,6 +126,7 @@ export function OrganizerScreen() {
       const response = await apiPost<CreateTournamentResponse>("/tournaments", payload);
       setResponseText(`Created ${response.data.id}\nShare token: ${response.data.publicToken}`);
       setLiveTournament(response.data);
+      setLiveTournamentNameDraft(response.data.config.name);
       setTournaments((previous) => [response.data, ...previous.filter((item) => item.id !== response.data.id)]);
       setIsEditingCompletedTournament(false);
       setStep("LIVE");
@@ -141,12 +148,13 @@ export function OrganizerScreen() {
     }
   };
 
-  const openTournament = async (tournamentId: string) => {
+  const openTournament = async (tournamentId: string, editMode = false) => {
     try {
       setErrorText("");
       const response = await apiGet<TournamentResponse>(`/tournaments/${tournamentId}`);
       setLiveTournament(response.data);
-      setIsEditingCompletedTournament(false);
+      setLiveTournamentNameDraft(response.data.config.name);
+      setIsEditingCompletedTournament(editMode);
       setStep("LIVE");
     } catch (error) {
       setErrorText((error as Error).message);
@@ -160,6 +168,7 @@ export function OrganizerScreen() {
     try {
       const response = await apiGet<TournamentResponse>(`/tournaments/${liveTournament.id}`);
       setLiveTournament(response.data);
+      setLiveTournamentNameDraft(response.data.config.name);
       if (!response.data.rounds.every((round) => round.matches.every((match) => match.completed))) {
         setIsEditingCompletedTournament(false);
       }
@@ -189,6 +198,7 @@ export function OrganizerScreen() {
         expectedVersion: liveTournament.version
       });
       setLiveTournament(response.data);
+      setLiveTournamentNameDraft(response.data.config.name);
     } catch (error) {
       setErrorText((error as Error).message);
     }
@@ -214,16 +224,116 @@ export function OrganizerScreen() {
     setStep("LEADERBOARD");
   };
 
+  const saveTournamentName = async () => {
+    if (!liveTournament) {
+      return;
+    }
+    const newName = liveTournamentNameDraft.trim();
+    if (newName.length < 2) {
+      setErrorText("Tournament name must be at least 2 characters.");
+      return;
+    }
+    try {
+      setErrorText("");
+      const response = await apiPost<TournamentResponse>("/tournaments/rename", {
+        tournamentId: liveTournament.id,
+        newName
+      });
+      setLiveTournament(response.data);
+      setLiveTournamentNameDraft(response.data.config.name);
+      setTournaments((previous) =>
+        previous.map((item) => (item.id === response.data.id ? response.data : item))
+      );
+    } catch (error) {
+      setErrorText((error as Error).message);
+    }
+  };
+
+  const openTournamentOptions = (tournamentId: string) => {
+    setSelectedTournamentId(tournamentId);
+    setPendingTournamentAction(null);
+    setShowTournamentOptionsModal(true);
+  };
+
+  const requestTournamentAction = (action: "EDIT" | "DELETE") => {
+    setPendingTournamentAction(action);
+    setShowTournamentOptionsModal(false);
+    setShowTournamentActionConfirmModal(true);
+  };
+
+  const confirmTournamentAction = async () => {
+    if (!selectedTournamentId || !pendingTournamentAction) {
+      setShowTournamentActionConfirmModal(false);
+      return;
+    }
+    try {
+      setErrorText("");
+      if (pendingTournamentAction === "DELETE") {
+        await apiDelete<{ ok: boolean }>(`/tournaments/${selectedTournamentId}`);
+        setTournaments((previous) => previous.filter((item) => item.id !== selectedTournamentId));
+        if (liveTournament?.id === selectedTournamentId) {
+          setLiveTournament(null);
+          setStep("LIST");
+        }
+      } else {
+        await openTournament(selectedTournamentId, true);
+      }
+    } catch (error) {
+      setErrorText((error as Error).message);
+    } finally {
+      setShowTournamentActionConfirmModal(false);
+      setPendingTournamentAction(null);
+      setSelectedTournamentId(null);
+    }
+  };
+
   if (step === "LIST") {
     return (
-      <TournamentListView
-        tournaments={tournaments}
-        refreshing={listRefreshing}
-        errorText={errorText}
-        onRefresh={() => void loadTournaments()}
-        onCreateNew={() => setStep("NAME")}
-        onOpenTournament={(id) => void openTournament(id)}
-      />
+      <>
+        <TournamentListView
+          tournaments={tournaments}
+          refreshing={listRefreshing}
+          errorText={errorText}
+          onRefresh={() => void loadTournaments()}
+          onCreateNew={() => setStep("NAME")}
+          onOpenTournament={(id) => void openTournament(id)}
+          onOpenOptions={openTournamentOptions}
+        />
+        <Modal transparent visible={showTournamentOptionsModal} animationType="fade" onRequestClose={() => setShowTournamentOptionsModal(false)}>
+          <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center", padding: 24 }}>
+            <View style={{ backgroundColor: "white", width: "100%", maxWidth: 420, padding: 16, gap: 12 }}>
+              <Text style={{ fontSize: 18, fontWeight: "700" }}>Tournament Options</Text>
+              <Button title="Edit Tournament" onPress={() => requestTournamentAction("EDIT")} />
+              <Button title="Delete Tournament" onPress={() => requestTournamentAction("DELETE")} />
+              <Button title="Cancel" onPress={() => setShowTournamentOptionsModal(false)} />
+            </View>
+          </View>
+        </Modal>
+
+        <Modal
+          transparent
+          visible={showTournamentActionConfirmModal}
+          animationType="fade"
+          onRequestClose={() => setShowTournamentActionConfirmModal(false)}
+        >
+          <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center", padding: 24 }}>
+            <View style={{ backgroundColor: "white", width: "100%", maxWidth: 420, padding: 16, gap: 12 }}>
+              <Text style={{ fontSize: 18, fontWeight: "700" }}>
+                {pendingTournamentAction === "DELETE" ? "Delete Tournament?" : "Edit Tournament?"}
+              </Text>
+              <Text>
+                {pendingTournamentAction === "DELETE"
+                  ? "Are you sure you want to delete this tournament?"
+                  : "Are you sure you want to edit this tournament?"}
+              </Text>
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                <Button title="Cancel" onPress={() => setShowTournamentActionConfirmModal(false)} />
+                <Button title="Yes" onPress={() => void confirmTournamentAction()} />
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </>
     );
   }
 
@@ -264,6 +374,9 @@ export function OrganizerScreen() {
         isLastRound={isLastRound}
         isTournamentCompleted={isTournamentCompleted}
         isEditingCompletedTournament={isEditingCompletedTournament}
+        tournamentNameDraft={liveTournamentNameDraft}
+        onChangeTournamentName={setLiveTournamentNameDraft}
+        onSaveTournamentName={() => void saveTournamentName()}
         scoreInputs={scoreInputs}
         playerNameById={playerNameById}
         showEditConfirmModal={showEditConfirmModal}

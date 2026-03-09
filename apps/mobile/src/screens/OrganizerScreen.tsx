@@ -2,9 +2,9 @@ import { useMemo, useState } from "react";
 import { Button, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import type { TournamentMode, TournamentVariant } from "@padel/shared";
 
-import { apiPost } from "../api/client";
+import { apiGet, apiPost } from "../api/client";
 
-type SetupStep = "NAME" | "PLAYERS" | "RULES";
+type SetupStep = "NAME" | "PLAYERS" | "RULES" | "LIVE";
 
 interface Estimate {
   rounds: number;
@@ -13,7 +13,33 @@ interface Estimate {
 }
 
 interface CreateTournamentResponse {
-  data: { id: string; publicToken: string };
+  data: LiveTournamentState;
+}
+
+interface LiveTournamentState {
+  id: string;
+  publicToken: string;
+  version: number;
+  config: { name: string; mode: TournamentMode; variant: TournamentVariant };
+  players: Array<{ id: string; name: string }>;
+  rounds: Array<{
+    id: string;
+    roundNumber: number;
+    isLocked: boolean;
+    matches: Array<{
+      id: string;
+      court: number;
+      teamA: [string, string];
+      teamB: [string, string];
+      scoreA?: number;
+      scoreB?: number;
+      completed: boolean;
+    }>;
+  }>;
+}
+
+interface TournamentResponse {
+  data: LiveTournamentState;
 }
 
 export function OrganizerScreen() {
@@ -28,6 +54,8 @@ export function OrganizerScreen() {
   const [tournamentTimeText, setTournamentTimeText] = useState("90");
   const [responseText, setResponseText] = useState("No tournament created yet.");
   const [errorText, setErrorText] = useState("");
+  const [liveTournament, setLiveTournament] = useState<LiveTournamentState | null>(null);
+  const [scoreInputs, setScoreInputs] = useState<Record<string, { scoreA: string; scoreB: string }>>({});
 
   const sanitizedPlayers = useMemo(
     () =>
@@ -69,6 +97,26 @@ export function OrganizerScreen() {
 
   const canContinueFromName = name.trim().length >= 2;
   const canContinueFromPlayers = sanitizedPlayers.length >= 4;
+  const viewerBaseUrl = process.env.EXPO_PUBLIC_VIEWER_BASE_URL ?? "http://localhost:3000";
+
+  const playerNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const player of liveTournament?.players ?? []) {
+      map.set(player.id, player.name);
+    }
+    return map;
+  }, [liveTournament?.players]);
+
+  const activeRound = useMemo(() => {
+    if (!liveTournament) {
+      return null;
+    }
+    return (
+      liveTournament.rounds.find((round) => !round.isLocked) ??
+      [...liveTournament.rounds].sort((a, b) => b.roundNumber - a.roundNumber)[0] ??
+      null
+    );
+  }, [liveTournament]);
 
   const addPlayerInput = () => {
     setPlayers((previous) => [...previous, ""]);
@@ -99,9 +147,60 @@ export function OrganizerScreen() {
       };
       const response = await apiPost<CreateTournamentResponse>("/tournaments", payload);
       setResponseText(`Created ${response.data.id}\nShare token: ${response.data.publicToken}`);
+      setLiveTournament(response.data);
+      setStep("LIVE");
     } catch (error) {
       setErrorText((error as Error).message);
     }
+  };
+
+  const refreshTournament = async () => {
+    if (!liveTournament) {
+      return;
+    }
+    try {
+      const response = await apiGet<TournamentResponse>(`/tournaments/${liveTournament.id}`);
+      setLiveTournament(response.data);
+    } catch (error) {
+      setErrorText((error as Error).message);
+    }
+  };
+
+  const submitMatchScore = async (matchId: string) => {
+    if (!liveTournament) {
+      return;
+    }
+    const raw = scoreInputs[matchId];
+    const scoreA = Number(raw?.scoreA ?? "");
+    const scoreB = Number(raw?.scoreB ?? "");
+    if (!Number.isFinite(scoreA) || !Number.isFinite(scoreB)) {
+      setErrorText("Enter valid numeric scores for both teams.");
+      return;
+    }
+    try {
+      setErrorText("");
+      const response = await apiPost<TournamentResponse>("/tournaments/score", {
+        tournamentId: liveTournament.id,
+        matchId,
+        scoreA,
+        scoreB,
+        expectedVersion: liveTournament.version
+      });
+      setLiveTournament(response.data);
+    } catch (error) {
+      setErrorText((error as Error).message);
+    }
+  };
+
+  const updateScoreInput = (matchId: string, side: "scoreA" | "scoreB", value: string) => {
+    setScoreInputs((previous) => ({
+      ...previous,
+      [matchId]: {
+        scoreA: previous[matchId]?.scoreA ?? "",
+        scoreB: previous[matchId]?.scoreB ?? "",
+        [side]: value
+      }
+    }));
   };
 
   if (step === "NAME") {
@@ -143,6 +242,59 @@ export function OrganizerScreen() {
           <Button title="Back" onPress={() => setStep("NAME")} />
           <Button title="Next" disabled={!canContinueFromPlayers} onPress={() => setStep("RULES")} />
         </View>
+      </ScrollView>
+    );
+  }
+
+  if (step === "LIVE" && liveTournament) {
+    return (
+      <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
+        <Text style={{ fontSize: 24, fontWeight: "700" }}>Live Tournament</Text>
+        <Text>
+          {liveTournament.config.name} ({liveTournament.config.mode}/{liveTournament.config.variant})
+        </Text>
+        <Text>Current Version: {liveTournament.version}</Text>
+        <Button title="Refresh" onPress={() => void refreshTournament()} />
+
+        <Text style={{ fontSize: 18, fontWeight: "700" }}>
+          {activeRound ? `Round ${activeRound.roundNumber}` : "No active round"}
+        </Text>
+
+        {(activeRound?.matches ?? []).map((match) => (
+          <View key={match.id} style={{ borderWidth: 1, padding: 10, gap: 8 }}>
+            <Text style={{ fontWeight: "700" }}>Court {match.court}</Text>
+            <Text>
+              {playerNameById.get(match.teamA[0]) ?? match.teamA[0]} / {playerNameById.get(match.teamA[1]) ?? match.teamA[1]}
+            </Text>
+            <Text>
+              vs {playerNameById.get(match.teamB[0]) ?? match.teamB[0]} / {playerNameById.get(match.teamB[1]) ?? match.teamB[1]}
+            </Text>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <TextInput
+                placeholder="Team A"
+                keyboardType="numeric"
+                value={scoreInputs[match.id]?.scoreA ?? (match.scoreA?.toString() ?? "")}
+                onChangeText={(value) => updateScoreInput(match.id, "scoreA", value)}
+                style={{ borderWidth: 1, padding: 8, flex: 1 }}
+              />
+              <TextInput
+                placeholder="Team B"
+                keyboardType="numeric"
+                value={scoreInputs[match.id]?.scoreB ?? (match.scoreB?.toString() ?? "")}
+                onChangeText={(value) => updateScoreInput(match.id, "scoreB", value)}
+                style={{ borderWidth: 1, padding: 8, flex: 1 }}
+              />
+            </View>
+            <Button title={match.completed ? "Update Score" : "Submit Score"} onPress={() => void submitMatchScore(match.id)} />
+          </View>
+        ))}
+
+        <View style={{ marginTop: 10, borderTopWidth: 1, paddingTop: 10, gap: 4 }}>
+          <Text style={{ fontWeight: "700" }}>Shareable Link</Text>
+          <Text>{`${viewerBaseUrl}/tournament/${liveTournament.publicToken}`}</Text>
+        </View>
+
+        {errorText ? <Text style={{ color: "red" }}>Error: {errorText}</Text> : null}
       </ScrollView>
     );
   }

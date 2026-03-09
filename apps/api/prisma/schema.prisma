@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TournamentMode {
+  AMERICANO
+  MEXICANO
+}
+
+enum TournamentVariant {
+  CLASSIC
+  MIXED
+  TEAM
+}
+
+model Tournament {
+  id                 String   @id @default(cuid())
+  name               String
+  mode               TournamentMode
+  variant            TournamentVariant
+  courts             Int
+  pointsPerMatch     Int
+  targetGamesPerPlayer Int?
+  tournamentTimeMinutes Int?
+  publicToken        String   @unique
+  version            Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  players            Player[]
+  rounds             Round[]
+}
+
+model Player {
+  id           String  @id @default(cuid())
+  tournamentId String
+  name         String
+  gamesPlayed  Int     @default(0)
+  totalPoints  Int     @default(0)
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+}
+
+model Round {
+  id           String   @id @default(cuid())
+  tournamentId String
+  roundNumber  Int
+  isLocked     Boolean  @default(false)
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  matches      Match[]
+}
+
+model Match {
+  id        String @id @default(cuid())
+  roundId    String
+  court      Int
+  teamA      String[]
+  teamB      String[]
+  scoreA     Int?
+  scoreB     Int?
+  completed  Boolean @default(false)
+  round      Round   @relation(fields: [roundId], references: [id], onDelete: Cascade)
+}

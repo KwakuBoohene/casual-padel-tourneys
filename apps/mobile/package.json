@@ -1,0 +1,22 @@
+{
+  "name": "@padel/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "dev": "expo start",
+    "build": "echo \"Use EAS build in production\"",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@padel/shared": "*",
+    "expo": "^54.0.17",
+    "react": "^19.1.0",
+    "react-native": "^0.81.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.13"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "Padel Organizer",
+    "slug": "padel-organizer",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "padel",
+    "platforms": ["ios", "android", "web"]
+  }
+}

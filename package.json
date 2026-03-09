@@ -7,7 +7,8 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspaces --if-present",
+    "dev": "concurrently -n api,web,mobile -c cyan,magenta,yellow \"npm run dev --workspace @padel/api\" \"npm run dev --workspace @padel/web\" \"npm run dev --workspace @padel/mobile\"",
+    "dev:core": "concurrently -n api,web -c cyan,magenta \"npm run dev --workspace @padel/api\" \"npm run dev --workspace @padel/web\"",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
@@ -21,6 +22,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.5.2",
+    "concurrently": "^9.2.1",
     "eslint": "^9.35.0",
     "prettier": "^3.6.2",
     "typescript": "^5.9.2"

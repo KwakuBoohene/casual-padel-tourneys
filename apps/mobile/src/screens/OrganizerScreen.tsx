@@ -56,6 +56,7 @@ export function OrganizerScreen() {
   const [estimatorPointsText, setEstimatorPointsText] = useState("24");
   const [estimatorTargetGamesText, setEstimatorTargetGamesText] = useState("4");
   const [estimatorTournamentTimeText, setEstimatorTournamentTimeText] = useState("90");
+  const [suggestedPlayerNames, setSuggestedPlayerNames] = useState<string[]>([]);
 
   const viewerBaseUrl = process.env.EXPO_PUBLIC_VIEWER_BASE_URL ?? "http://localhost:3000";
   const effectiveSchedulingMode: SchedulingMode = mode === "MEXICANO" ? "TOTAL_TIME" : schedulingMode;
@@ -196,6 +197,37 @@ export function OrganizerScreen() {
   const onChangeEstimatorPointsValue = (value: string) => setEstimatorPointsText(sanitizeWholeNumberInput(value));
   const onChangeEstimatorTargetGamesValue = (value: string) => setEstimatorTargetGamesText(sanitizeWholeNumberInput(value));
   const onChangeEstimatorTournamentTimeValue = (value: string) => setEstimatorTournamentTimeText(sanitizeWholeNumberInput(value));
+  const allKnownPlayerNames = useMemo(() => {
+    const names = new Set<string>();
+    for (const name of suggestedPlayerNames) {
+      if (name.trim().length > 0) {
+        names.add(name.trim());
+      }
+    }
+    for (const tournament of tournaments) {
+      for (const player of tournament.players) {
+        if (player.name.trim().length > 0) {
+          names.add(player.name.trim());
+        }
+      }
+    }
+    for (const playerName of players) {
+      const trimmed = playerName.trim();
+      if (trimmed.length > 0) {
+        names.add(trimmed);
+      }
+    }
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [players, suggestedPlayerNames, tournaments]);
+
+  const loadPlayerSuggestions = async () => {
+    try {
+      const response = await apiGet<{ names: string[] }>("/players/suggestions");
+      setSuggestedPlayerNames(response.names ?? []);
+    } catch (error) {
+      // Ignore suggestion errors; autocomplete will fall back to local names.
+    }
+  };
 
   const createTournament = async () => {
     try {
@@ -261,6 +293,7 @@ export function OrganizerScreen() {
       setListRefreshing(true);
       const response = await apiGet<TournamentListResponse>("/tournaments");
       setTournaments(response.data);
+      await loadPlayerSuggestions();
     } catch (error) {
       setErrorText((error as Error).message);
     } finally {
@@ -593,6 +626,7 @@ export function OrganizerScreen() {
         variant={variant}
         sanitizedPlayers={sanitizedPlayers}
         canContinue={canContinueFromPlayers}
+        allSuggestions={allKnownPlayerNames}
         onUpdatePlayer={updatePlayerName}
         onUpdateGender={updatePlayerGender}
         onRemovePlayer={removePlayerInput}

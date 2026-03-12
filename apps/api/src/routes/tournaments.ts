@@ -21,6 +21,7 @@ import {
   submitScore,
   substitutePlayer
 } from "../lib/store.js";
+import { prisma } from "../lib/prisma.js";
 import { requireOrganizerAuth } from "../lib/auth.js";
 import { publishEvent } from "../realtime/events.js";
 import { broadcastToTournament } from "../realtime/socketHub.js";
@@ -57,10 +58,66 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       return { errors: parsed.error.flatten() };
     }
     const tournament = createTournament(parsed.data);
+    // Persist to database for history/suggestions
+    try {
+      await prisma.tournament.create({
+        data: {
+          id: tournament.id,
+          name: tournament.config.name,
+          mode: tournament.config.mode,
+          variant: tournament.config.variant,
+          courts: tournament.config.courts,
+          pointsPerMatch: tournament.config.pointsPerMatch,
+          targetGamesPerPlayer: tournament.config.targetGamesPerPlayer ?? null,
+          tournamentTimeMinutes: tournament.config.tournamentTimeMinutes ?? null,
+          publicToken: tournament.publicToken,
+          version: tournament.version,
+          createdAt: new Date(tournament.createdAt),
+          updatedAt: new Date(tournament.updatedAt),
+          players: {
+            create: tournament.players.map((player) => ({
+              id: player.id,
+              name: player.name,
+              gamesPlayed: player.gamesPlayed,
+              totalPoints: player.totalPoints
+            }))
+          },
+          rounds: {
+            create: tournament.rounds.map((round) => ({
+              id: round.id,
+              roundNumber: round.roundNumber,
+              isLocked: round.isLocked,
+              matches: {
+                create: round.matches.map((match) => ({
+                  id: match.id,
+                  court: match.court,
+                  teamA: match.teamA,
+                  teamB: match.teamB,
+                  scoreA: match.scoreA ?? null,
+                  scoreB: match.scoreB ?? null,
+                  completed: match.completed
+                }))
+              }
+            }))
+          }
+        }
+      });
+    } catch (error) {
+      request.log.error(error, "Failed to persist tournament to database");
+    }
     const event = { type: "TOURNAMENT_CREATED" as const, tournamentId: tournament.id, payload: tournament };
     await publishEvent(server.redis, event);
     broadcastToTournament(server.subscriptions, tournament.id, event);
     return { data: tournament };
+  });
+
+  server.get("/players/suggestions", async () => {
+    const rows = await prisma.player.findMany({
+      select: { name: true },
+      distinct: ["name"],
+      orderBy: { name: "asc" }
+    });
+    return { names: rows.map((row: { name: string }) => row.name) };
   });
 
   server.post("/tournaments/score", { preHandler: requireOrganizerAuth }, async (request, reply) => {

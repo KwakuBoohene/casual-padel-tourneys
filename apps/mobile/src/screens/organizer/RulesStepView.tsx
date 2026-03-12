@@ -1,7 +1,8 @@
-import { Button, ScrollView, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 import type { Estimate } from "./types";
+import { cardStyles, colors, radius, spacing, typography } from "../../theme";
 
 interface RulesStepViewProps {
   mode: TournamentMode;
@@ -27,76 +28,260 @@ interface RulesStepViewProps {
 
 export function RulesStepView(props: RulesStepViewProps) {
   return (
-    <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
-      <Text style={{ fontSize: 24, fontWeight: "700" }}>Tournament Rules</Text>
-      <Text>Mode</Text>
-      <View style={{ flexDirection: "row", gap: 10 }}>
-        <Button title="Americano" onPress={() => props.onChangeMode("AMERICANO")} />
-        <Button title="Mexicano" onPress={() => props.onChangeMode("MEXICANO")} />
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}
+    >
+      <Text style={[typography.title, { color: colors.text }]}>Tournament Rules</Text>
+      <Text style={{ color: colors.muted }}>Mode</Text>
+      <View style={{ flexDirection: "row", gap: spacing.sm }}>
+        <Pressable
+          onPress={() => props.onChangeMode("AMERICANO")}
+          style={{
+            paddingVertical: spacing.sm,
+            paddingHorizontal: spacing.md,
+            borderRadius: radius.md,
+            borderWidth: 1,
+            borderColor: colors.border,
+            backgroundColor: colors.surface
+          }}
+        >
+          <Text style={{ color: colors.text }}>Americano</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => props.onChangeMode("MEXICANO")}
+          style={{
+            paddingVertical: spacing.sm,
+            paddingHorizontal: spacing.md,
+            borderRadius: radius.md,
+            borderWidth: 1,
+            borderColor: colors.border,
+            backgroundColor: colors.surface
+          }}
+        >
+          <Text style={{ color: colors.text }}>Mexicano</Text>
+        </Pressable>
       </View>
 
-      <Text>Variant</Text>
-      <View style={{ flexDirection: "row", gap: 10 }}>
-        <Button title="Classic" onPress={() => props.onChangeVariant("CLASSIC")} />
-        <Button title="Mixed" onPress={() => props.onChangeVariant("MIXED")} />
-        <Button title="Team" onPress={() => props.onChangeVariant("TEAM")} />
+      <Text style={{ color: colors.muted }}>Variant</Text>
+      <View style={{ flexDirection: "row", gap: spacing.sm }}>
+        <Pressable
+          onPress={() => props.onChangeVariant("CLASSIC")}
+          style={{
+            paddingVertical: spacing.sm,
+            paddingHorizontal: spacing.md,
+            borderRadius: radius.md,
+            borderWidth: 1,
+            borderColor: colors.border,
+            backgroundColor: colors.surface
+          }}
+        >
+          <Text style={{ color: colors.text }}>Classic</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => props.onChangeVariant("MIXED")}
+          style={{
+            paddingVertical: spacing.sm,
+            paddingHorizontal: spacing.md,
+            borderRadius: radius.md,
+            borderWidth: 1,
+            borderColor: colors.border,
+            backgroundColor: colors.surface
+          }}
+        >
+          <Text style={{ color: colors.text }}>Mixed</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => props.onChangeVariant("TEAM")}
+          style={{
+            paddingVertical: spacing.sm,
+            paddingHorizontal: spacing.md,
+            borderRadius: radius.md,
+            borderWidth: 1,
+            borderColor: colors.border,
+            backgroundColor: colors.surface
+          }}
+        >
+          <Text style={{ color: colors.text }}>Team</Text>
+        </Pressable>
       </View>
 
       {props.mode === "AMERICANO" ? (
         <>
-          <Text>Scheduling</Text>
-          <View style={{ flexDirection: "row", gap: 10 }}>
-            <Button title="Games Per Player" onPress={() => props.onChangeSchedulingMode("TARGET_GAMES")} />
-            <Button title="Total Time" onPress={() => props.onChangeSchedulingMode("TOTAL_TIME")} />
-            <Button title="Round Robin" onPress={() => props.onChangeSchedulingMode("ROUND_ROBIN")} />
+          <Text style={{ color: colors.muted }}>Scheduling</Text>
+          <View style={{ flexDirection: "row", gap: spacing.sm }}>
+            <Pressable
+              onPress={() => props.onChangeSchedulingMode("TARGET_GAMES")}
+              style={{
+                paddingVertical: spacing.sm,
+                paddingHorizontal: spacing.md,
+                borderRadius: radius.md,
+                borderWidth: 1,
+                borderColor: colors.border,
+                backgroundColor: colors.surface
+              }}
+            >
+              <Text style={{ color: colors.text }}>Games Per Player</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => props.onChangeSchedulingMode("TOTAL_TIME")}
+              style={{
+                paddingVertical: spacing.sm,
+                paddingHorizontal: spacing.md,
+                borderRadius: radius.md,
+                borderWidth: 1,
+                borderColor: colors.border,
+                backgroundColor: colors.surface
+              }}
+            >
+              <Text style={{ color: colors.text }}>Total Time</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => props.onChangeSchedulingMode("ROUND_ROBIN")}
+              style={{
+                paddingVertical: spacing.sm,
+                paddingHorizontal: spacing.md,
+                borderRadius: radius.md,
+                borderWidth: 1,
+                borderColor: colors.border,
+                backgroundColor: colors.surface
+              }}
+            >
+              <Text style={{ color: colors.text }}>Round Robin</Text>
+            </Pressable>
           </View>
         </>
       ) : null}
 
-      <Text>Courts</Text>
-      <TextInput value={props.courtsText} onChangeText={props.onChangeCourts} keyboardType="numeric" style={{ borderWidth: 1, padding: 8 }} />
-      <Text>Points Per Match</Text>
-      <TextInput value={props.pointsText} onChangeText={props.onChangePoints} keyboardType="numeric" style={{ borderWidth: 1, padding: 8 }} />
+      <Text style={{ color: colors.muted }}>Courts</Text>
+      <TextInput
+        value={props.courtsText}
+        onChangeText={props.onChangeCourts}
+        keyboardType="numeric"
+        style={{
+          borderWidth: 1,
+          borderColor: colors.border,
+          padding: spacing.sm,
+          borderRadius: radius.md,
+          backgroundColor: colors.surface,
+          color: colors.text
+        }}
+      />
+      <Text style={{ color: colors.muted }}>Points Per Match</Text>
+      <TextInput
+        value={props.pointsText}
+        onChangeText={props.onChangePoints}
+        keyboardType="numeric"
+        style={{
+          borderWidth: 1,
+          borderColor: colors.border,
+          padding: spacing.sm,
+          borderRadius: radius.md,
+          backgroundColor: colors.surface,
+          color: colors.text
+        }}
+      />
 
       {props.schedulingMode === "TARGET_GAMES" ? (
         <>
-          <Text>Target Games Per Player</Text>
-          <TextInput value={props.targetGamesText} onChangeText={props.onChangeTargetGames} keyboardType="numeric" style={{ borderWidth: 1, padding: 8 }} />
+          <Text style={{ color: colors.muted }}>Target Games Per Player</Text>
+          <TextInput
+            value={props.targetGamesText}
+            onChangeText={props.onChangeTargetGames}
+            keyboardType="numeric"
+            style={{
+              borderWidth: 1,
+              borderColor: colors.border,
+              padding: spacing.sm,
+              borderRadius: radius.md,
+              backgroundColor: colors.surface,
+              color: colors.text
+            }}
+          />
         </>
       ) : null}
 
       {props.schedulingMode === "TOTAL_TIME" ? (
         <>
-          <Text>Tournament Time (minutes)</Text>
+          <Text style={{ color: colors.muted }}>Tournament Time (minutes)</Text>
           <TextInput
             value={props.tournamentTimeText}
             onChangeText={props.onChangeTournamentTime}
             keyboardType="numeric"
-            style={{ borderWidth: 1, padding: 8 }}
+            style={{
+              borderWidth: 1,
+              borderColor: colors.border,
+              padding: spacing.sm,
+              borderRadius: radius.md,
+              backgroundColor: colors.surface,
+              color: colors.text
+            }}
           />
         </>
       ) : null}
 
-      <View style={{ borderWidth: 1, padding: 10, gap: 4 }}>
-        <Text style={{ fontWeight: "700" }}>Estimated Duration</Text>
+      <View
+        style={[
+          cardStyles.container,
+          {
+            paddingVertical: spacing.md,
+            paddingHorizontal: spacing.lg,
+            gap: 4
+          }
+        ]}
+      >
+        <Text style={{ fontWeight: "700", color: colors.text }}>Estimated Duration</Text>
         {props.estimate ? (
           <>
-            <Text>Rounds: {props.estimate.rounds}</Text>
-            <Text>Approx games per player: {props.estimate.gamesPerPlayer}</Text>
-            <Text>Estimated total time: {props.estimate.durationMinutes} minutes</Text>
+            <Text style={{ color: colors.text }}>Rounds: {props.estimate.rounds}</Text>
+            <Text style={{ color: colors.text }}>Approx games per player: {props.estimate.gamesPerPlayer}</Text>
+            <Text style={{ color: colors.text }}>Estimated total time: {props.estimate.durationMinutes} minutes</Text>
           </>
         ) : (
-          <Text>Fill in valid numeric values to see the estimate.</Text>
+          <Text style={{ color: colors.muted }}>Fill in valid numeric values to see the estimate.</Text>
         )}
       </View>
 
-      <View style={{ flexDirection: "row", gap: 10 }}>
-        <Button title="Back" onPress={props.onBack} />
-        <Button title="Create Tournament" onPress={props.onCreate} />
+      <View style={{ flexDirection: "row", gap: spacing.sm }}>
+        <Pressable
+          onPress={props.onBack}
+          style={{
+            flex: 1,
+            paddingVertical: spacing.sm,
+            borderRadius: radius.md,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <Text style={{ color: colors.text, fontWeight: "600" }}>Back</Text>
+        </Pressable>
+        <Pressable
+          onPress={props.onCreate}
+          style={{
+            flex: 1,
+            paddingVertical: spacing.sm,
+            borderRadius: radius.md,
+            backgroundColor: colors.primary,
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <Text
+            style={{
+              color: "#020617",
+              fontWeight: "700"
+            }}
+          >
+            Create Tournament
+          </Text>
+        </Pressable>
       </View>
       <View>
-        <Text>{props.responseText}</Text>
-        {props.errorText ? <Text style={{ color: "red" }}>Error: {props.errorText}</Text> : null}
+        <Text style={{ color: colors.text }}>{props.responseText}</Text>
+        {props.errorText ? <Text style={{ color: colors.danger }}>Error: {props.errorText}</Text> : null}
       </View>
     </ScrollView>
   );

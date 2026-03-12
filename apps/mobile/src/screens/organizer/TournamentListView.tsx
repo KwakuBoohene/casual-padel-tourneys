@@ -1,4 +1,4 @@
-import { Pressable,Button, RefreshControl, ScrollView, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 
 import { cardStyles, colors, radius, spacing, typography } from "../../theme";
 
@@ -80,15 +80,26 @@ export function TournamentListView(props: TournamentListViewProps) {
                   <Text style={{ fontSize: 10, fontWeight: "700", color: colors.primary }}>LIVE</Text>
                 </View>
               </View>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: spacing.sm }}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
                 <Text style={{ fontSize: 12, color: colors.muted }}>Players: {tournament.players.length}</Text>
                 <Text style={{ fontSize: 12, color: colors.muted }}>
                   Updated: {new Date(tournament.updatedAt).toLocaleTimeString()}
                 </Text>
               </View>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", gap: spacing.sm }}>
-                <Button title="Options" onPress={() => props.onOpenOptions(tournament.id)} />
-                <Button title="Estimator" onPress={props.onOpenEstimator} />
+              <View style={{ flexDirection: "row" }}>
+                <Pressable
+                  onPress={() => props.onOpenOptions(tournament.id)}
+                  style={{
+                    paddingVertical: spacing.sm,
+                    paddingHorizontal: spacing.lg,
+                    borderRadius: radius.md,
+                    backgroundColor: colors.surface,
+                    borderWidth: 1,
+                    borderColor: colors.border
+                  }}
+                >
+                  <Text style={{ color: colors.text, fontWeight: "600" }}>Options</Text>
+                </Pressable>
               </View>
             </Pressable>
           ))}

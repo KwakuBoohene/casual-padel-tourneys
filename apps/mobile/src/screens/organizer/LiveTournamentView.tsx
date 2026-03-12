@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Button, Modal, ScrollView, Text, TextInput, View } from "react-native";
+import { Button, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
 import { cardStyles, colors, radius, spacing, typography } from "../../theme";
 
@@ -67,9 +67,53 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
   return (
     <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background }}>
       <Text style={[typography.title, { color: colors.text }]}>Live Tournament</Text>
-      <Button title="Back To Tournament List" onPress={props.onBackToList} />
-      <Button title="View Leaderboard" onPress={props.onViewLeaderboard} />
-      <Button title="Options" onPress={props.onOpenLiveOptions} />
+      <Pressable
+        onPress={props.onBackToList}
+        style={{
+          paddingVertical: spacing.sm,
+          borderRadius: radius.md,
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.border,
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+      >
+        <Text style={{ color: colors.text, fontWeight: "600" }}>Back To Tournament List</Text>
+      </Pressable>
+      <Pressable
+        onPress={props.onViewLeaderboard}
+        style={{
+          paddingVertical: spacing.sm,
+          borderRadius: radius.md,
+          backgroundColor: colors.primary,
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+      >
+        <Text
+          style={{
+            color: "#020617",
+            fontWeight: "700"
+          }}
+        >
+          View Leaderboard
+        </Text>
+      </Pressable>
+      <Pressable
+        onPress={props.onOpenLiveOptions}
+        style={{
+          paddingVertical: spacing.sm,
+          borderRadius: radius.md,
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.border,
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+      >
+        <Text style={{ color: colors.text, fontWeight: "600" }}>Options</Text>
+      </Pressable>
       {props.isEditingCompletedTournament ? (
         <>
           <Text>Edit Tournament Name</Text>
@@ -81,26 +125,129 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
           {props.tournament.config.name} ({props.tournament.config.mode}/{props.tournament.config.variant})
         </Text>
       )}
-      <Text>Current Version: {props.tournament.version}</Text>
-      <Text>Rounds Left: {props.roundsLeft}</Text>
-      <Text>Estimated Time Left: {props.estimatedMinutesLeft} minutes</Text>
-      <Button title="Refresh" onPress={props.onRefresh} />
+      <Text style={{ color: colors.muted }}>Current Version: {props.tournament.version}</Text>
+      <Text style={{ color: colors.muted }}>Rounds Left: {props.roundsLeft}</Text>
+      <Text style={{ color: colors.muted }}>Estimated Time Left: {props.estimatedMinutesLeft} minutes</Text>
+      <Pressable
+        onPress={props.onRefresh}
+        style={{
+          marginTop: spacing.sm,
+          paddingVertical: spacing.sm,
+          borderRadius: radius.md,
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.border,
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+      >
+        <Text style={{ color: colors.text, fontWeight: "600" }}>Refresh</Text>
+      </Pressable>
 
-      <Text style={{ fontSize: 18, fontWeight: "700" }}>{props.activeRound ? `Round ${props.activeRound.roundNumber}` : "No active round"}</Text>
-      {props.isTournamentCompleted ? <Text style={{ fontWeight: "700" }}>Tournament Completed</Text> : null}
-      {props.isLastRound ? <Button title="Finish Tournament" onPress={props.onFinishTournament} /> : null}
-      {props.isTournamentCompleted && !props.isEditingCompletedTournament ? <Button title="Edit Game" onPress={props.onOpenEditConfirm} /> : null}
-      {props.isTournamentCompleted && props.isEditingCompletedTournament ? <Button title="Save Game Edits" onPress={props.onSaveGameEdits} /> : null}
+      <Text style={[typography.sectionTitle, { color: colors.text }]}>
+        {props.activeRound ? `Round ${props.activeRound.roundNumber}` : "No active round"}
+      </Text>
+      {props.isTournamentCompleted ? <Text style={{ fontWeight: "700", color: colors.primary }}>Tournament Completed</Text> : null}
+      {props.isLastRound ? (
+        <Pressable
+          onPress={props.onFinishTournament}
+          style={{
+            marginTop: spacing.sm,
+            paddingVertical: spacing.sm,
+            borderRadius: radius.md,
+            backgroundColor: colors.primary,
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <Text
+            style={{
+              color: "#020617",
+              fontWeight: "700"
+            }}
+          >
+            Finish Tournament
+          </Text>
+        </Pressable>
+      ) : null}
+      {props.isTournamentCompleted && !props.isEditingCompletedTournament ? (
+        <Pressable
+          onPress={props.onOpenEditConfirm}
+          style={{
+            marginTop: spacing.sm,
+            paddingVertical: spacing.sm,
+            borderRadius: radius.md,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <Text style={{ color: colors.text, fontWeight: "600" }}>Edit Game</Text>
+        </Pressable>
+      ) : null}
+      {props.isTournamentCompleted && props.isEditingCompletedTournament ? (
+        <Pressable
+          onPress={props.onSaveGameEdits}
+          style={{
+            marginTop: spacing.sm,
+            paddingVertical: spacing.sm,
+            borderRadius: radius.md,
+            backgroundColor: colors.primary,
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <Text
+            style={{
+              color: "#020617",
+              fontWeight: "700"
+            }}
+          >
+            Save Game Edits
+          </Text>
+        </Pressable>
+      ) : null}
 
       {(props.activeRound?.matches ?? []).map((match) => (
-        <View key={match.id} style={{ borderWidth: 1, padding: 10, gap: 8 }}>
-          <Text style={{ fontWeight: "700" }}>Court {match.court}</Text>
-          <Text>
-            {props.playerNameById.get(match.teamA[0]) ?? match.teamA[0]} / {props.playerNameById.get(match.teamA[1]) ?? match.teamA[1]}
-          </Text>
-          <Text>
-            vs {props.playerNameById.get(match.teamB[0]) ?? match.teamB[0]} / {props.playerNameById.get(match.teamB[1]) ?? match.teamB[1]}
-          </Text>
+        <View
+          key={match.id}
+          style={[
+            cardStyles.container,
+            {
+              padding: spacing.md,
+              gap: spacing.sm
+            }
+          ]}
+        >
+          <Text style={{ fontWeight: "700", color: colors.text }}>Court {match.court}</Text>
+
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: spacing.xs }}>
+            <View style={{ flex: 1, alignItems: "flex-start" }}>
+              <Text style={{ fontSize: 10, color: colors.muted, textTransform: "uppercase" }}>Team A</Text>
+              <Text style={{ color: colors.text, fontWeight: "600" }}>
+                {props.playerNameById.get(match.teamA[0]) ?? match.teamA[0]}
+              </Text>
+              <Text style={{ color: colors.text, fontWeight: "600" }}>
+                {props.playerNameById.get(match.teamA[1]) ?? match.teamA[1]}
+              </Text>
+            </View>
+
+            <View style={{ width: 40, alignItems: "center", justifyContent: "center" }}>
+              <Text style={{ color: colors.muted, fontWeight: "700" }}>vs</Text>
+            </View>
+
+            <View style={{ flex: 1, alignItems: "flex-end" }}>
+              <Text style={{ fontSize: 10, color: colors.muted, textTransform: "uppercase" }}>Team B</Text>
+              <Text style={{ color: colors.text, fontWeight: "600", textAlign: "right" }}>
+                {props.playerNameById.get(match.teamB[0]) ?? match.teamB[0]}
+              </Text>
+              <Text style={{ color: colors.text, fontWeight: "600", textAlign: "right" }}>
+                {props.playerNameById.get(match.teamB[1]) ?? match.teamB[1]}
+              </Text>
+            </View>
+          </View>
           {canEditScores ? (
             <>
               <View style={{ flexDirection: "row", gap: 8 }}>
@@ -110,7 +257,16 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
                   value={props.scoreInputs[match.id]?.scoreA ?? (match.scoreA?.toString() ?? "")}
                   onFocus={() => props.onOpenScorePicker(match.id, "scoreA")}
                   onChangeText={(value) => props.onUpdateScoreInput(match.id, "scoreA", value)}
-                  style={{ borderWidth: 1, padding: 8, flex: 1 }}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    padding: spacing.sm,
+                    flex: 1,
+                    borderRadius: radius.md,
+                    backgroundColor: colors.surface,
+                    color: colors.text
+                  }}
+                  placeholderTextColor={colors.muted}
                 />
                 <TextInput
                   placeholder="Team B"
@@ -118,7 +274,16 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
                   value={props.scoreInputs[match.id]?.scoreB ?? (match.scoreB?.toString() ?? "")}
                   onFocus={() => props.onOpenScorePicker(match.id, "scoreB")}
                   onChangeText={(value) => props.onUpdateScoreInput(match.id, "scoreB", value)}
-                  style={{ borderWidth: 1, padding: 8, flex: 1 }}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    padding: spacing.sm,
+                    flex: 1,
+                    borderRadius: radius.md,
+                    backgroundColor: colors.surface,
+                    color: colors.text
+                  }}
+                  placeholderTextColor={colors.muted}
                 />
               </View>
               <View
@@ -126,20 +291,39 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
                   submitAnchorRefs.current[match.id] = node;
                 }}
               >
-                <Button title={match.completed ? "Update Score" : "Submit Score"} onPress={() => props.onSubmitMatchScore(match.id)} />
+                <Pressable
+                  onPress={() => props.onSubmitMatchScore(match.id)}
+                  style={{
+                    marginTop: spacing.sm,
+                    paddingVertical: spacing.sm,
+                    borderRadius: radius.md,
+                    backgroundColor: colors.primary,
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#020617",
+                      fontWeight: "700"
+                    }}
+                  >
+                    {match.completed ? "Update Score" : "Submit Score"}
+                  </Text>
+                </Pressable>
               </View>
             </>
           ) : (
-            <Text>
+            <Text style={{ color: colors.text }}>
               Final Score: {match.scoreA ?? "-"} - {match.scoreB ?? "-"}
             </Text>
           )}
         </View>
       ))}
 
-      <View style={{ marginTop: 10, borderTopWidth: 1, paddingTop: 10, gap: 4 }}>
-        <Text style={{ fontWeight: "700" }}>Shareable Link</Text>
-        <Text>{`${props.viewerBaseUrl}/tournament/${props.tournament.publicToken}`}</Text>
+      <View style={{ marginTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.sm, gap: 4 }}>
+        <Text style={{ fontWeight: "700", color: colors.text }}>Shareable Link</Text>
+        <Text style={{ color: colors.muted }}>{`${props.viewerBaseUrl}/tournament/${props.tournament.publicToken}`}</Text>
       </View>
 
       <Modal transparent visible={props.showEditConfirmModal} animationType="fade" onRequestClose={props.onCloseEditConfirm}>
@@ -204,20 +388,63 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
 
       <Modal transparent visible={Boolean(props.scorePicker)} animationType="slide" onRequestClose={props.onCloseScorePicker}>
         <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.3)" }}>
-          <View style={{ backgroundColor: "white", padding: 16, borderTopLeftRadius: 16, borderTopRightRadius: 16, gap: 10, maxHeight: "45%" }}>
-            <Text style={{ fontSize: 18, fontWeight: "700" }}>Select Score</Text>
-            <Text>Possible scores (1 to {props.tournament.config.pointsPerMatch})</Text>
-            <ScrollView contentContainerStyle={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+          <View
+            style={{
+              backgroundColor: colors.surfaceAlt,
+              padding: spacing.lg,
+              borderTopLeftRadius: radius.lg,
+              borderTopRightRadius: radius.lg,
+              gap: spacing.md,
+              maxHeight: "45%"
+            }}
+          >
+            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>Select Score</Text>
+            <Text style={{ color: colors.muted }}>Possible scores (1 to {props.tournament.config.pointsPerMatch})</Text>
+            <ScrollView contentContainerStyle={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
               {Array.from({ length: props.tournament.config.pointsPerMatch }, (_, index) => index + 1).map((score) => (
-                <Button key={`score-${score}`} title={`${score}`} onPress={() => props.onSelectScoreFromPicker(score)} />
+                <Pressable
+                  key={`score-${score}`}
+                  onPress={() => props.onSelectScoreFromPicker(score)}
+                  style={{
+                    minWidth: 40,
+                    paddingVertical: spacing.xs,
+                    borderRadius: radius.md,
+                    backgroundColor: colors.surface,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                >
+                  <Text style={{ color: colors.text, fontWeight: "600" }}>{score}</Text>
+                </Pressable>
               ))}
             </ScrollView>
-            <Button title="Close" onPress={props.onCloseScorePicker} />
+            <Pressable
+              onPress={props.onCloseScorePicker}
+              style={{
+                marginTop: spacing.sm,
+                paddingVertical: spacing.sm,
+                borderRadius: radius.md,
+                backgroundColor: colors.primary,
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+            >
+              <Text
+                style={{
+                  color: "#020617",
+                  fontWeight: "700"
+                }}
+              >
+                Close
+              </Text>
+            </Pressable>
           </View>
         </View>
       </Modal>
 
-      {props.errorText ? <Text style={{ color: "red" }}>Error: {props.errorText}</Text> : null}
+      {props.errorText ? <Text style={{ color: colors.danger }}>Error: {props.errorText}</Text> : null}
     </ScrollView>
   );
 }

@@ -1,4 +1,4 @@
-import { Button, ScrollView, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import type { SchedulingMode } from "@padel/shared";
 
 import type { Estimate } from "./types";
@@ -133,9 +133,42 @@ export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
         )}
       </View>
 
-      <View style={{ flexDirection: "row", gap: 10 }}>
-        <Button title="Back" onPress={props.onBack} />
-        <Button title="Create Tournament" onPress={props.onCreate} disabled={!hasEnoughPlayersForCourts} />
+      <View style={{ flexDirection: "row", gap: spacing.sm }}>
+        <Pressable
+          onPress={props.onBack}
+          style={{
+            flex: 1,
+            paddingVertical: spacing.sm,
+            borderRadius: radius.md,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <Text style={{ color: colors.text, fontWeight: "600" }}>Back</Text>
+        </Pressable>
+        <Pressable
+          onPress={hasEnoughPlayersForCourts ? props.onCreate : undefined}
+          style={{
+            flex: 1,
+            paddingVertical: spacing.sm,
+            borderRadius: radius.md,
+            backgroundColor: hasEnoughPlayersForCourts ? colors.primary : colors.border,
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <Text
+            style={{
+              color: hasEnoughPlayersForCourts ? "#020617" : colors.muted,
+              fontWeight: "700"
+            }}
+          >
+            Create Tournament
+          </Text>
+        </Pressable>
       </View>
       <View>
         <Text style={{ color: colors.text }}>{props.responseText}</Text>

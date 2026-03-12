@@ -1,4 +1,4 @@
-import { Button, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import type { PlayerGender, TournamentVariant } from "@padel/shared";
 
 import { colors, radius, spacing, typography } from "../../theme";
@@ -123,13 +123,65 @@ export function PlayersStepView(props: PlayersStepViewProps) {
           </View>
         );
       })}
-      <Button title="Add Player" onPress={props.onAddPlayer} />
+      <Pressable
+        onPress={props.onAddPlayer}
+        style={{
+          marginTop: spacing.md,
+          paddingVertical: spacing.sm,
+          borderRadius: radius.md,
+          backgroundColor: colors.primary,
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+      >
+        <Text
+          style={{
+            color: "#020617",
+            fontWeight: "700"
+          }}
+        >
+          Add Player
+        </Text>
+      </Pressable>
       <Text style={{ color: colors.muted }}>
         Names: {props.sanitizedPlayers.length > 0 ? props.sanitizedPlayers.join(", ") : "None yet"}
       </Text>
-      <View style={{ flexDirection: "row", gap: 10 }}>
-        <Button title="Back" onPress={props.onBack} />
-        <Button title="Next" disabled={!props.canContinue} onPress={props.onNext} />
+      <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md }}>
+        <Pressable
+          onPress={props.onBack}
+          style={{
+            flex: 1,
+            paddingVertical: spacing.sm,
+            borderRadius: radius.md,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <Text style={{ color: colors.text, fontWeight: "600" }}>Back</Text>
+        </Pressable>
+        <Pressable
+          onPress={props.canContinue ? props.onNext : undefined}
+          style={{
+            flex: 1,
+            paddingVertical: spacing.sm,
+            borderRadius: radius.md,
+            backgroundColor: props.canContinue ? colors.primary : colors.border,
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <Text
+            style={{
+              color: props.canContinue ? "#020617" : colors.muted,
+              fontWeight: "700"
+            }}
+          >
+            Next
+          </Text>
+        </Pressable>
       </View>
     </ScrollView>
   );

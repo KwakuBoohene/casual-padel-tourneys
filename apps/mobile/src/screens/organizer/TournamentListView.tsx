@@ -1,4 +1,4 @@
-import { Button, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { Pressable,Button, RefreshControl, ScrollView, Text, View } from "react-native";
 
 import { cardStyles, colors, radius, spacing, typography } from "../../theme";
 
@@ -47,10 +47,6 @@ export function TournamentListView(props: TournamentListViewProps) {
       {props.tournaments.length === 0 ? (
         <View style={[cardStyles.container, { marginTop: spacing.sm }]}>
           <Text style={{ color: colors.muted, fontSize: 14 }}>No tournaments loaded yet.</Text>
-          <View style={{ marginTop: spacing.md, flexDirection: "row", gap: spacing.sm }}>
-            <Button title="Create New" onPress={props.onCreateNew} />
-            <Button title="Game Estimator" onPress={props.onOpenEstimator} />
-          </View>
         </View>
       ) : (
         <>
@@ -100,6 +96,57 @@ export function TournamentListView(props: TournamentListViewProps) {
       )}
 
       {props.errorText ? <Text style={{ color: colors.danger }}>Error: {props.errorText}</Text> : null}
+
+      <View
+        style={{
+          marginTop: spacing.lg,
+          flexDirection: "row",
+          gap: spacing.sm
+        }}
+      >
+        <Pressable
+          onPress={props.onCreateNew}
+          style={{
+            flex: 1,
+            paddingVertical: spacing.sm,
+            borderRadius: radius.md,
+            backgroundColor: colors.primary,
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <Text
+            style={{
+              color: "#020617",
+              fontWeight: "700"
+            }}
+          >
+            Create New
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={props.onOpenEstimator}
+          style={{
+            flex: 1,
+            paddingVertical: spacing.sm,
+            borderRadius: radius.md,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <Text
+            style={{
+              color: colors.text,
+              fontWeight: "600"
+            }}
+          >
+            Game Estimator
+          </Text>
+        </Pressable>
+      </View>
 
       <View
         style={{

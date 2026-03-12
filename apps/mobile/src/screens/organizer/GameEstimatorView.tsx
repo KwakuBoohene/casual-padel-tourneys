@@ -2,6 +2,7 @@ import { Button, Pressable, ScrollView, Text, TextInput, View } from "react-nati
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 import type { Estimate } from "./types";
+import { cardStyles, colors, radius, spacing, typography } from "../../theme";
 
 interface GameEstimatorViewProps {
   mode: TournamentMode;
@@ -32,28 +33,41 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
     Number.isFinite(playersCount) && Number.isFinite(courts) && playersCount >= minPlayersForCourts;
 
   const renderChoice = (label: string, active: boolean, onPress: () => void) => (
-    <Pressable onPress={onPress} style={{ borderWidth: 1, borderColor: active ? "#0a7" : "#999", backgroundColor: active ? "#d9fff3" : "#fff", padding: 10 }}>
-      <Text>{label}</Text>
+    <Pressable
+      onPress={onPress}
+      style={{
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.md,
+        borderRadius: radius.md,
+        borderWidth: 1,
+        borderColor: active ? colors.primary : colors.border,
+        backgroundColor: active ? "rgba(173,255,47,0.16)" : colors.surface
+      }}
+    >
+      <Text style={{ color: colors.text, fontWeight: active ? "700" : "500" }}>{label}</Text>
     </Pressable>
   );
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
-      <Text style={{ fontSize: 24, fontWeight: "700" }}>Game Estimator</Text>
-      <Text>Format</Text>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}
+    >
+      <Text style={[typography.title, { color: colors.text }]}>Game Estimator</Text>
+      <Text style={{ color: colors.muted }}>Format</Text>
       <View style={{ flexDirection: "row", gap: 10 }}>
         {renderChoice("Americano", props.mode === "AMERICANO", () => props.onChangeMode("AMERICANO"))}
         {renderChoice("Mexicano", props.mode === "MEXICANO", () => props.onChangeMode("MEXICANO"))}
       </View>
 
-      <Text>Type of game</Text>
+      <Text style={{ color: colors.muted }}>Type of game</Text>
       <View style={{ flexDirection: "row", gap: 10, flexWrap: "wrap" }}>
         {renderChoice("Classic", props.variant === "CLASSIC", () => props.onChangeVariant("CLASSIC"))}
         {renderChoice("Mixed", props.variant === "MIXED", () => props.onChangeVariant("MIXED"))}
         {renderChoice("Team", props.variant === "TEAM", () => props.onChangeVariant("TEAM"))}
       </View>
 
-      <Text>Options</Text>
+      <Text style={{ color: colors.muted }}>Options</Text>
       {props.mode === "AMERICANO" ? (
         <View style={{ flexDirection: "row", gap: 10, flexWrap: "wrap" }}>
           {renderChoice("Games Per Player", props.schedulingMode === "TARGET_GAMES", () => props.onChangeSchedulingMode("TARGET_GAMES"))}
@@ -61,52 +75,121 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
           {renderChoice("Round Robin", props.schedulingMode === "ROUND_ROBIN", () => props.onChangeSchedulingMode("ROUND_ROBIN"))}
         </View>
       ) : (
-        <Text>Mexicano uses Total Time scheduling.</Text>
+        <Text style={{ color: colors.muted }}>Mexicano uses Total Time scheduling.</Text>
       )}
 
-      <Text>Number of users</Text>
-      <TextInput value={props.usersText} onChangeText={props.onChangeUsers} keyboardType="numeric" style={{ borderWidth: 1, padding: 8 }} />
+      <Text style={{ color: colors.muted }}>Number of users</Text>
+      <TextInput
+        value={props.usersText}
+        onChangeText={props.onChangeUsers}
+        keyboardType="numeric"
+        style={{
+          borderWidth: 1,
+          borderColor: colors.border,
+          padding: spacing.sm,
+          borderRadius: radius.md,
+          backgroundColor: colors.surface,
+          color: colors.text
+        }}
+        placeholderTextColor={colors.muted}
+      />
 
-      <Text>Courts</Text>
-      <TextInput value={props.courtsText} onChangeText={props.onChangeCourts} keyboardType="numeric" style={{ borderWidth: 1, padding: 8 }} />
+      <Text style={{ color: colors.muted }}>Courts</Text>
+      <TextInput
+        value={props.courtsText}
+        onChangeText={props.onChangeCourts}
+        keyboardType="numeric"
+        style={{
+          borderWidth: 1,
+          borderColor: colors.border,
+          padding: spacing.sm,
+          borderRadius: radius.md,
+          backgroundColor: colors.surface,
+          color: colors.text
+        }}
+        placeholderTextColor={colors.muted}
+      />
       {!hasEnoughPlayersForCourts && minPlayersForCourts > 0 ? (
-        <Text style={{ color: "red" }}>
+        <Text style={{ color: colors.danger }}>
           {courts} court{courts === 1 ? "" : "s"} need at least {minPlayersForCourts} players.
         </Text>
       ) : null}
 
-      <Text>Points per match</Text>
-      <TextInput value={props.pointsText} onChangeText={props.onChangePoints} keyboardType="numeric" style={{ borderWidth: 1, padding: 8 }} />
+      <Text style={{ color: colors.muted }}>Points per match</Text>
+      <TextInput
+        value={props.pointsText}
+        onChangeText={props.onChangePoints}
+        keyboardType="numeric"
+        style={{
+          borderWidth: 1,
+          borderColor: colors.border,
+          padding: spacing.sm,
+          borderRadius: radius.md,
+          backgroundColor: colors.surface,
+          color: colors.text
+        }}
+        placeholderTextColor={colors.muted}
+      />
 
       {props.schedulingMode === "TARGET_GAMES" ? (
         <>
-          <Text>Target games per player</Text>
-          <TextInput value={props.targetGamesText} onChangeText={props.onChangeTargetGames} keyboardType="numeric" style={{ borderWidth: 1, padding: 8 }} />
+          <Text style={{ color: colors.muted }}>Target games per player</Text>
+          <TextInput
+            value={props.targetGamesText}
+            onChangeText={props.onChangeTargetGames}
+            keyboardType="numeric"
+            style={{
+              borderWidth: 1,
+              borderColor: colors.border,
+              padding: spacing.sm,
+              borderRadius: radius.md,
+              backgroundColor: colors.surface,
+              color: colors.text
+            }}
+            placeholderTextColor={colors.muted}
+          />
         </>
       ) : null}
 
       {props.schedulingMode === "TOTAL_TIME" ? (
         <>
-          <Text>Total tournament time (minutes)</Text>
+          <Text style={{ color: colors.muted }}>Total tournament time (minutes)</Text>
           <TextInput
             value={props.tournamentTimeText}
             onChangeText={props.onChangeTournamentTime}
             keyboardType="numeric"
-            style={{ borderWidth: 1, padding: 8 }}
+            style={{
+              borderWidth: 1,
+              borderColor: colors.border,
+              padding: spacing.sm,
+              borderRadius: radius.md,
+              backgroundColor: colors.surface,
+              color: colors.text
+            }}
+            placeholderTextColor={colors.muted}
           />
         </>
       ) : null}
 
-      <View style={{ borderWidth: 1, padding: 10, gap: 4 }}>
-        <Text style={{ fontWeight: "700" }}>Estimated Duration</Text>
+      <View
+        style={[
+          cardStyles.container,
+          {
+            paddingVertical: spacing.md,
+            paddingHorizontal: spacing.lg,
+            gap: 4
+          }
+        ]}
+      >
+        <Text style={{ fontWeight: "700", color: colors.text }}>Estimated Duration</Text>
         {props.estimate && hasEnoughPlayersForCourts ? (
           <>
-            <Text>Rounds: {props.estimate.rounds}</Text>
-            <Text>Approx games per player: {props.estimate.gamesPerPlayer}</Text>
-            <Text>Estimated total time: {props.estimate.durationMinutes} minutes</Text>
+            <Text style={{ color: colors.text }}>Rounds: {props.estimate.rounds}</Text>
+            <Text style={{ color: colors.text }}>Approx games per player: {props.estimate.gamesPerPlayer}</Text>
+            <Text style={{ color: colors.text }}>Estimated total time: {props.estimate.durationMinutes} minutes</Text>
           </>
         ) : (
-          <Text>Enter valid values to see estimate.</Text>
+          <Text style={{ color: colors.muted }}>Enter valid values to see estimate.</Text>
         )}
       </View>
 

@@ -220,6 +220,10 @@ export function OrganizerScreen() {
         setErrorText("Tournament time must be a whole number of at least 10 minutes.");
         return;
       }
+      if (sanitizedPlayers.length < courts * 4) {
+        setErrorText(`${courts} court${courts === 1 ? "" : "s"} require at least ${courts * 4} players.`);
+        return;
+      }
       const payload = {
         name: name.trim(),
         mode,
@@ -594,7 +598,11 @@ export function OrganizerScreen() {
         onRemovePlayer={removePlayerInput}
         onAddPlayer={addPlayerInput}
         onBack={() => setStep("OPTIONS")}
-        onNext={() => setStep("SETTINGS")}
+        onNext={() => {
+          const suggestedCourts = Math.max(1, Math.floor(sanitizedPlayers.length / 4) || 1);
+          setCourtsText(String(suggestedCourts));
+          setStep("SETTINGS");
+        }}
       />
     );
   }
@@ -690,6 +698,7 @@ export function OrganizerScreen() {
       estimate={estimate}
       responseText={responseText}
       errorText={errorText}
+      playersCount={sanitizedPlayers.length}
       onChangeCourts={onChangeCourtsValue}
       onChangePoints={onChangePointsValue}
       onChangeTargetGames={onChangeTargetGamesValue}

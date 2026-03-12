@@ -1,4 +1,4 @@
-import { Button, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { cardStyles, colors, spacing, typography } from "../../theme";
 
@@ -15,7 +15,19 @@ export function PlayerGamesView(props: PlayerGamesViewProps) {
     <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <Text style={[typography.title, { color: colors.text }]}>{props.playerName}</Text>
-        <Button title="Back" onPress={props.onBack} />
+        <Pressable
+          onPress={props.onBack}
+          style={{
+            paddingVertical: spacing.xs,
+            paddingHorizontal: spacing.md,
+            borderRadius: radius.md,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border
+          }}
+        >
+          <Text style={{ color: colors.text, fontWeight: "600" }}>Back</Text>
+        </Pressable>
       </View>
       <Text style={{ fontSize: 12, color: colors.muted }}>Match history</Text>
 

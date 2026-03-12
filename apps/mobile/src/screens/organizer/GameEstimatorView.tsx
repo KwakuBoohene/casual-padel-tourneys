@@ -1,4 +1,4 @@
-import { Button, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 import type { Estimate } from "./types";
@@ -193,7 +193,21 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
         )}
       </View>
 
-      <Button title="Back" onPress={props.onBack} />
+      <Pressable
+        onPress={props.onBack}
+        style={{
+          marginTop: spacing.sm,
+          paddingVertical: spacing.sm,
+          borderRadius: radius.md,
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.border,
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+      >
+        <Text style={{ color: colors.text, fontWeight: "600" }}>Back</Text>
+      </Pressable>
     </ScrollView>
   );
 }

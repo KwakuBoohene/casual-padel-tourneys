@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Button, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
 import { cardStyles, colors, radius, spacing, typography } from "../../theme";
 
@@ -118,7 +118,26 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
         <>
           <Text>Edit Tournament Name</Text>
           <TextInput value={props.tournamentNameDraft} onChangeText={props.onChangeTournamentName} style={{ borderWidth: 1, padding: 8 }} />
-          <Button title="Save Tournament Name" onPress={props.onSaveTournamentName} />
+          <Pressable
+            onPress={props.onSaveTournamentName}
+            style={{
+              marginTop: spacing.sm,
+              paddingVertical: spacing.sm,
+              borderRadius: radius.md,
+              backgroundColor: colors.primary,
+              alignItems: "center",
+              justifyContent: "center"
+            }}
+          >
+            <Text
+              style={{
+                color: "#020617",
+                fontWeight: "700"
+              }}
+            >
+              Save Tournament Name
+            </Text>
+          </Pressable>
         </>
       ) : (
         <Text>
@@ -328,12 +347,56 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
 
       <Modal transparent visible={props.showEditConfirmModal} animationType="fade" onRequestClose={props.onCloseEditConfirm}>
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <View style={{ backgroundColor: "white", width: "100%", maxWidth: 420, padding: 16, gap: 12 }}>
-            <Text style={{ fontSize: 18, fontWeight: "700" }}>Edit Completed Tournament?</Text>
-            <Text>Are you sure you want to unlock this tournament and edit round scores?</Text>
-            <View style={{ flexDirection: "row", gap: 10 }}>
-              <Button title="Cancel" onPress={props.onCloseEditConfirm} />
-              <Button title="Yes, Edit Game" onPress={props.onConfirmEditGame} />
+          <View
+            style={{
+              backgroundColor: colors.surfaceAlt,
+              width: "100%",
+              maxWidth: 420,
+              padding: spacing.lg,
+              gap: spacing.md,
+              borderRadius: radius.lg
+            }}
+          >
+            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>Edit Completed Tournament?</Text>
+            <Text style={{ color: colors.muted }}>
+              Are you sure you want to unlock this tournament and edit round scores?
+            </Text>
+            <View style={{ flexDirection: "row", gap: spacing.sm }}>
+              <Pressable
+                onPress={props.onCloseEditConfirm}
+                style={{
+                  flex: 1,
+                  paddingVertical: spacing.sm,
+                  borderRadius: radius.md,
+                  backgroundColor: colors.surface,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                <Text style={{ color: colors.text, fontWeight: "600" }}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={props.onConfirmEditGame}
+                style={{
+                  flex: 1,
+                  paddingVertical: spacing.sm,
+                  borderRadius: radius.md,
+                  backgroundColor: colors.primary,
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#020617",
+                    fontWeight: "700"
+                  }}
+                >
+                  Yes, Edit Game
+                </Text>
+              </Pressable>
             </View>
           </View>
         </View>
@@ -341,14 +404,57 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
 
       <Modal transparent visible={props.showAdjustCourtsConfirmModal} animationType="fade" onRequestClose={props.onCloseAdjustCourtsConfirm}>
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <View style={{ backgroundColor: "white", width: "100%", maxWidth: 420, padding: 16, gap: 12 }}>
-            <Text style={{ fontSize: 18, fontWeight: "700" }}>Adjust Courts?</Text>
-            <Text>
-              Are you sure you want to change courts from {props.currentCourts} to {props.proposedCourts}? Remaining rounds will be recalculated.
+          <View
+            style={{
+              backgroundColor: colors.surfaceAlt,
+              width: "100%",
+              maxWidth: 420,
+              padding: spacing.lg,
+              gap: spacing.md,
+              borderRadius: radius.lg
+            }}
+          >
+            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>Adjust Courts?</Text>
+            <Text style={{ color: colors.muted }}>
+              Are you sure you want to change courts from {props.currentCourts} to {props.proposedCourts}? Remaining rounds will be
+              recalculated.
             </Text>
-            <View style={{ flexDirection: "row", gap: 10 }}>
-              <Button title="Cancel" onPress={props.onCloseAdjustCourtsConfirm} />
-              <Button title="Yes, Reassign Games" onPress={props.onConfirmAdjustCourts} />
+            <View style={{ flexDirection: "row", gap: spacing.sm }}>
+              <Pressable
+                onPress={props.onCloseAdjustCourtsConfirm}
+                style={{
+                  flex: 1,
+                  paddingVertical: spacing.sm,
+                  borderRadius: radius.md,
+                  backgroundColor: colors.surface,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                <Text style={{ color: colors.text, fontWeight: "600" }}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={props.onConfirmAdjustCourts}
+                style={{
+                  flex: 1,
+                  paddingVertical: spacing.sm,
+                  borderRadius: radius.md,
+                  backgroundColor: colors.primary,
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#020617",
+                    fontWeight: "700"
+                  }}
+                >
+                  Yes, Reassign Games
+                </Text>
+              </Pressable>
             </View>
           </View>
         </View>
@@ -356,32 +462,96 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
 
       <Modal transparent visible={props.showLiveOptionsModal} animationType="fade" onRequestClose={props.onCloseLiveOptions}>
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <View style={{ backgroundColor: "white", width: "100%", maxWidth: 420, padding: 16, gap: 12 }}>
-            <Text style={{ fontSize: 18, fontWeight: "700" }}>Live Options</Text>
+          <View
+            style={{
+              backgroundColor: colors.surfaceAlt,
+              width: "100%",
+              maxWidth: 420,
+              padding: spacing.lg,
+              gap: spacing.md,
+              borderRadius: radius.lg
+            }}
+          >
+            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>Live Options</Text>
             {props.canAdjustCourts ? (
               <>
-                <Text style={{ fontWeight: "700" }}>Adjust Courts</Text>
-                <Text>Current courts: {props.currentCourts}</Text>
-                <Text>Proposed courts: {props.proposedCourts}</Text>
-                <Text>Allowed range: 1 - {props.maxCourts}</Text>
-                <View style={{ flexDirection: "row", gap: 10 }}>
-                  <Button
-                    title="-"
-                    disabled={props.proposedCourts <= 1}
+                <Text style={{ fontWeight: "700", color: colors.text }}>Adjust Courts</Text>
+                <Text style={{ color: colors.muted }}>Current courts: {props.currentCourts}</Text>
+                <Text style={{ color: colors.muted }}>Proposed courts: {props.proposedCourts}</Text>
+                <Text style={{ color: colors.muted }}>Allowed range: 1 - {props.maxCourts}</Text>
+                <View style={{ flexDirection: "row", gap: spacing.sm }}>
+                  <Pressable
                     onPress={() => props.onChangeProposedCourts(Math.max(1, props.proposedCourts - 1))}
-                  />
-                  <Button
-                    title="+"
-                    disabled={props.proposedCourts >= props.maxCourts}
+                    disabled={props.proposedCourts <= 1}
+                    style={{
+                      flex: 1,
+                      paddingVertical: spacing.sm,
+                      borderRadius: radius.md,
+                      backgroundColor: colors.surface,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      opacity: props.proposedCourts <= 1 ? 0.4 : 1
+                    }}
+                  >
+                    <Text style={{ color: colors.text, fontWeight: "700" }}>-</Text>
+                  </Pressable>
+                  <Pressable
                     onPress={() => props.onChangeProposedCourts(Math.min(props.maxCourts, props.proposedCourts + 1))}
-                  />
+                    disabled={props.proposedCourts >= props.maxCourts}
+                    style={{
+                      flex: 1,
+                      paddingVertical: spacing.sm,
+                      borderRadius: radius.md,
+                      backgroundColor: colors.surface,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      opacity: props.proposedCourts >= props.maxCourts ? 0.4 : 1
+                    }}
+                  >
+                    <Text style={{ color: colors.text, fontWeight: "700" }}>+</Text>
+                  </Pressable>
                 </View>
-                <Button title="Apply Court Change" onPress={props.onOpenAdjustCourtsConfirm} />
+                <Pressable
+                  onPress={props.onOpenAdjustCourtsConfirm}
+                  style={{
+                    paddingVertical: spacing.sm,
+                    borderRadius: radius.md,
+                    backgroundColor: colors.primary,
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#020617",
+                      fontWeight: "700"
+                    }}
+                  >
+                    Apply Court Change
+                  </Text>
+                </Pressable>
               </>
             ) : (
-              <Text>No court adjustment options available right now.</Text>
+              <Text style={{ color: colors.muted }}>No court adjustment options available right now.</Text>
             )}
-            <Button title="Close" onPress={props.onCloseLiveOptions} />
+            <Pressable
+              onPress={props.onCloseLiveOptions}
+              style={{
+                paddingVertical: spacing.sm,
+                borderRadius: radius.md,
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.border,
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+            >
+              <Text style={{ color: colors.text, fontWeight: "600" }}>Close</Text>
+            </Pressable>
           </View>
         </View>
       </Modal>

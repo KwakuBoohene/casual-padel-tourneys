@@ -7,6 +7,7 @@ interface PlayersStepViewProps {
   variant: TournamentVariant;
   sanitizedPlayers: string[];
   canContinue: boolean;
+  allSuggestions: string[];
   onUpdatePlayer: (index: number, value: string) => void;
   onUpdateGender: (index: number, value: PlayerGender) => void;
   onRemovePlayer: (index: number) => void;
@@ -20,19 +21,44 @@ export function PlayersStepView(props: PlayersStepViewProps) {
     <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
       <Text style={{ fontSize: 24, fontWeight: "700" }}>Add Players</Text>
       <Text>Players added: {props.sanitizedPlayers.length}</Text>
-      {props.players.map((playerName, index) => (
-        <View key={`player-${index}`} style={{ gap: 8 }}>
-          <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-            <TextInput
-              value={playerName}
-              onChangeText={(value) => props.onUpdatePlayer(index, value)}
-              placeholder={`Player ${index + 1}`}
-              style={{ borderWidth: 1, padding: 8, flex: 1 }}
-            />
-            <Pressable onPress={() => props.onRemovePlayer(index)} style={{ padding: 8, borderWidth: 1 }}>
-              <Text>Remove</Text>
-            </Pressable>
-          </View>
+      {props.players.map((playerName, index) => {
+        const query = playerName.trim();
+        const suggestions =
+          query.length === 0
+            ? []
+            : props.allSuggestions
+                .filter(
+                  (name) =>
+                    name.toLowerCase().startsWith(query.toLowerCase()) &&
+                    name !== playerName
+                )
+                .slice(0, 5);
+        return (
+          <View key={`player-${index}`} style={{ gap: 8 }}>
+            <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+              <TextInput
+                value={playerName}
+                onChangeText={(value) => props.onUpdatePlayer(index, value)}
+                placeholder={`Player ${index + 1}`}
+                style={{ borderWidth: 1, padding: 8, flex: 1 }}
+              />
+              <Pressable onPress={() => props.onRemovePlayer(index)} style={{ padding: 8, borderWidth: 1 }}>
+                <Text>Remove</Text>
+              </Pressable>
+            </View>
+            {suggestions.length > 0 ? (
+              <View style={{ borderWidth: 1, borderColor: "#ccc", padding: 4, gap: 4 }}>
+                {suggestions.map((name) => (
+                  <Pressable
+                    key={`${index}-suggestion-${name}`}
+                    onPress={() => props.onUpdatePlayer(index, name)}
+                    style={{ paddingVertical: 4 }}
+                  >
+                    <Text>{name}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
           {props.variant === "MIXED" ? (
             <View style={{ flexDirection: "row", gap: 10 }}>
               <Pressable
@@ -58,9 +84,10 @@ export function PlayersStepView(props: PlayersStepViewProps) {
                 <Text>Female</Text>
               </Pressable>
             </View>
-          ) : null}
-        </View>
-      ))}
+        ) : null}
+          </View>
+        );
+      })}
       <Button title="Add Player" onPress={props.onAddPlayer} />
       <Text>Names: {props.sanitizedPlayers.length > 0 ? props.sanitizedPlayers.join(", ") : "None yet"}</Text>
       <View style={{ flexDirection: "row", gap: 10 }}>

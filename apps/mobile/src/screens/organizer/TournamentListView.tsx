@@ -16,6 +16,13 @@ interface TournamentListViewProps {
 }
 
 export function TournamentListView(props: TournamentListViewProps) {
+  const activeTournaments = props.tournaments.filter(
+    (tournament) => !tournament.rounds.every((round) => round.matches.every((match) => match.completed))
+  );
+  const completedTournaments = props.tournaments.filter(
+    (tournament) => tournament.rounds.every((round) => round.matches.every((match) => match.completed))
+  );
+
   return (
     <ScrollView
       contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background }}
@@ -44,13 +51,13 @@ export function TournamentListView(props: TournamentListViewProps) {
         </Pressable>
       </View>
 
-      {props.tournaments.length === 0 ? (
+      {activeTournaments.length === 0 ? (
         <View style={[cardStyles.container, { marginTop: spacing.sm }]}>
-          <Text style={{ color: colors.muted, fontSize: 14 }}>No tournaments loaded yet.</Text>
+          <Text style={{ color: colors.muted, fontSize: 14 }}>No active tournaments.</Text>
         </View>
       ) : (
         <>
-          {props.tournaments.map((tournament) => (
+          {activeTournaments.map((tournament) => (
             <Pressable
               key={tournament.id}
               onPress={() => props.onOpenTournament(tournament.id)}
@@ -105,6 +112,60 @@ export function TournamentListView(props: TournamentListViewProps) {
           ))}
         </>
       )}
+
+      {completedTournaments.length > 0 ? (
+        <>
+          <View
+            style={{
+              marginTop: spacing.lg,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: spacing.sm
+            }}
+          >
+            <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>History</Text>
+          </View>
+          {completedTournaments.map((tournament) => (
+            <Pressable
+              key={tournament.id}
+              onPress={() => props.onOpenTournament(tournament.id)}
+              style={[
+                cardStyles.container,
+                {
+                  marginTop: spacing.sm,
+                  backgroundColor: colors.surface
+                }
+              ]}
+            >
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
+                <View>
+                  <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>{tournament.config.name}</Text>
+                  <Text style={{ fontSize: 12, color: colors.muted }}>
+                    {tournament.config.mode} / {tournament.config.variant}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    paddingHorizontal: spacing.sm,
+                    paddingVertical: 4,
+                    borderRadius: radius.pill,
+                    backgroundColor: colors.surfaceAlt
+                  }}
+                >
+                  <Text style={{ fontSize: 10, fontWeight: "700", color: colors.muted }}>COMPLETED</Text>
+                </View>
+              </View>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                <Text style={{ fontSize: 12, color: colors.muted }}>Players: {tournament.players.length}</Text>
+                <Text style={{ fontSize: 12, color: colors.muted }}>
+                  Updated: {new Date(tournament.updatedAt).toLocaleTimeString()}
+                </Text>
+              </View>
+            </Pressable>
+          ))}
+        </>
+      ) : null}
 
       {props.errorText ? <Text style={{ color: colors.danger }}>Error: {props.errorText}</Text> : null}
 
@@ -169,7 +230,7 @@ export function TournamentListView(props: TournamentListViewProps) {
           justifyContent: "space-between"
         }}
       >
-        {["Home", "History", "Rank", "Profile"].map((label, index) => (
+        {["Home", "History", "Profile"].map((label, index) => (
           <View key={label} style={{ alignItems: "center", flex: 1 }}>
             <View
               style={{

@@ -428,6 +428,9 @@ export function OrganizerScreen() {
       setErrorText("Finish is only available after all round matches have scores.");
       return;
     }
+    if (liveTournament) {
+      setTournaments((previous) => previous.map((item) => (item.id === liveTournament.id ? liveTournament : item)));
+    }
     setIsEditingCompletedTournament(false);
     setStep("LEADERBOARD");
   };

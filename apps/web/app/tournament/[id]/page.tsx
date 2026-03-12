@@ -6,6 +6,7 @@ interface TournamentViewModel {
   id: string;
   config: { name: string; mode: string; variant: string };
   updatedAt: string;
+  players: Array<{ id: string; name: string }>;
   leaderboard: Array<{ name: string; totalPoints: number; rank: number }>;
   rounds: Array<{
     id: string;

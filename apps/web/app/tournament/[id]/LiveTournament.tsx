@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 interface TournamentPayload {
   id: string;
   updatedAt: string;
+  players: Array<{ id: string; name: string }>;
   leaderboard: Array<{ name: string; totalPoints: number; rank: number }>;
   rounds: Array<{
     id: string;
@@ -42,6 +43,19 @@ export function LiveTournament({ initial, apiBaseUrl }: { initial: TournamentPay
     [tournament.rounds]
   );
 
+  const playerNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const player of tournament.players ?? []) {
+      map.set(player.id, player.name);
+    }
+    return map;
+  }, [tournament.players]);
+
+  const formatTeam = (team: [string, string]) =>
+    team
+      .map((id) => playerNameById.get(id) ?? id)
+      .join(" / ");
+
   return (
     <section>
       <p>Last update: {new Date(tournament.updatedAt).toLocaleString()}</p>
@@ -58,7 +72,7 @@ export function LiveTournament({ initial, apiBaseUrl }: { initial: TournamentPay
         <ul>
           {currentRound.matches.map((match) => (
             <li key={match.id}>
-              Court {match.court}: [{match.teamA.join(" / ")}] vs [{match.teamB.join(" / ")}]{" "}
+              Court {match.court}: [{formatTeam(match.teamA)}] vs [{formatTeam(match.teamB)}]{" "}
               {match.scoreA !== undefined && match.scoreB !== undefined ? `(${match.scoreA}-${match.scoreB})` : "(pending)"}
             </li>
           ))}

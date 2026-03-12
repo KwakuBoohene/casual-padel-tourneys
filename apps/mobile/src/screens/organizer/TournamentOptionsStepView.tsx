@@ -1,4 +1,4 @@
-import { Button, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 import { colors, radius, spacing, typography } from "../../theme";
@@ -62,9 +62,42 @@ export function TournamentOptionsStepView(props: TournamentOptionsStepViewProps)
         <Text style={{ color: colors.muted }}>Mexicano uses Total Time scheduling.</Text>
       )}
 
-      <View style={{ flexDirection: "row", gap: 10 }}>
-        <Button title="Back" onPress={props.onBack} />
-        <Button title="Next" onPress={props.onNext} />
+      <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.lg }}>
+        <Pressable
+          onPress={props.onBack}
+          style={{
+            flex: 1,
+            paddingVertical: spacing.sm,
+            borderRadius: radius.md,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <Text style={{ color: colors.text, fontWeight: "600" }}>Back</Text>
+        </Pressable>
+        <Pressable
+          onPress={props.onNext}
+          style={{
+            flex: 1,
+            paddingVertical: spacing.sm,
+            borderRadius: radius.md,
+            backgroundColor: colors.primary,
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <Text
+            style={{
+              color: "#020617",
+              fontWeight: "700"
+            }}
+          >
+            Next
+          </Text>
+        </Pressable>
       </View>
     </ScrollView>
   );

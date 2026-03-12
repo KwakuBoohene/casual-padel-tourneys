@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, Modal, Text, View } from "react-native";
+import { Modal, Pressable, Text, View } from "react-native";
 import type { PlayerGender, SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 import { apiDelete, apiGet, apiPost } from "../api/client";
+import { colors, radius, spacing } from "../theme";
 import { GameEstimatorView } from "./organizer/GameEstimatorView";
 import { LeaderboardView } from "./organizer/LeaderboardView";
 import { LiveTournamentView } from "./organizer/LiveTournamentView";
@@ -536,11 +537,64 @@ export function OrganizerScreen() {
         />
         <Modal transparent visible={showTournamentOptionsModal} animationType="fade" onRequestClose={() => setShowTournamentOptionsModal(false)}>
           <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center", padding: 24 }}>
-            <View style={{ backgroundColor: "white", width: "100%", maxWidth: 420, padding: 16, gap: 12 }}>
-              <Text style={{ fontSize: 18, fontWeight: "700" }}>Tournament Options</Text>
-              <Button title="Edit Tournament" onPress={() => requestTournamentAction("EDIT")} />
-              <Button title="Delete Tournament" onPress={() => requestTournamentAction("DELETE")} />
-              <Button title="Cancel" onPress={() => setShowTournamentOptionsModal(false)} />
+            <View
+              style={{
+                backgroundColor: colors.surfaceAlt,
+                width: "100%",
+                maxWidth: 420,
+                padding: spacing.lg,
+                gap: spacing.sm,
+                borderRadius: radius.lg
+              }}
+            >
+              <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>Tournament Options</Text>
+              <Pressable
+                onPress={() => requestTournamentAction("EDIT")}
+                style={{
+                  paddingVertical: spacing.sm,
+                  borderRadius: radius.md,
+                  backgroundColor: colors.surface,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                <Text style={{ color: colors.text, fontWeight: "600" }}>Edit Tournament</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => requestTournamentAction("DELETE")}
+                style={{
+                  paddingVertical: spacing.sm,
+                  borderRadius: radius.md,
+                  backgroundColor: colors.danger,
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#020617",
+                    fontWeight: "700"
+                  }}
+                >
+                  Delete Tournament
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setShowTournamentOptionsModal(false)}
+                style={{
+                  paddingVertical: spacing.sm,
+                  borderRadius: radius.md,
+                  backgroundColor: colors.surface,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                <Text style={{ color: colors.text, fontWeight: "600" }}>Cancel</Text>
+              </Pressable>
             </View>
           </View>
         </Modal>
@@ -551,18 +605,60 @@ export function OrganizerScreen() {
           onRequestClose={() => setShowTournamentActionConfirmModal(false)}
         >
           <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center", padding: 24 }}>
-            <View style={{ backgroundColor: "white", width: "100%", maxWidth: 420, padding: 16, gap: 12 }}>
-              <Text style={{ fontSize: 18, fontWeight: "700" }}>
+            <View
+              style={{
+                backgroundColor: colors.surfaceAlt,
+                width: "100%",
+                maxWidth: 420,
+                padding: spacing.lg,
+                gap: spacing.md,
+                borderRadius: radius.lg
+              }}
+            >
+              <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>
                 {pendingTournamentAction === "DELETE" ? "Delete Tournament?" : "Edit Tournament?"}
               </Text>
-              <Text>
+              <Text style={{ color: colors.muted }}>
                 {pendingTournamentAction === "DELETE"
                   ? "Are you sure you want to delete this tournament?"
                   : "Are you sure you want to edit this tournament?"}
               </Text>
-              <View style={{ flexDirection: "row", gap: 10 }}>
-                <Button title="Cancel" onPress={() => setShowTournamentActionConfirmModal(false)} />
-                <Button title="Yes" onPress={() => void confirmTournamentAction()} />
+              <View style={{ flexDirection: "row", gap: spacing.sm }}>
+                <Pressable
+                  onPress={() => setShowTournamentActionConfirmModal(false)}
+                  style={{
+                    flex: 1,
+                    paddingVertical: spacing.sm,
+                    borderRadius: radius.md,
+                    backgroundColor: colors.surface,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                >
+                  <Text style={{ color: colors.text, fontWeight: "600" }}>Cancel</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => void confirmTournamentAction()}
+                  style={{
+                    flex: 1,
+                    paddingVertical: spacing.sm,
+                    borderRadius: radius.md,
+                    backgroundColor: pendingTournamentAction === "DELETE" ? colors.danger : colors.primary,
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#020617",
+                      fontWeight: "700"
+                    }}
+                  >
+                    Yes
+                  </Text>
+                </Pressable>
               </View>
             </View>
           </View>

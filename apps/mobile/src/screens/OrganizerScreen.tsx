@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button, Modal, Text, View } from "react-native";
 import type { PlayerGender, SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
@@ -515,6 +515,11 @@ export function OrganizerScreen() {
       setSelectedTournamentId(null);
     }
   };
+
+  useEffect(() => {
+    // Auto-load tournaments (and suggestions) on app load
+    void loadTournaments();
+  }, []);
 
   if (step === "LIST") {
     return (

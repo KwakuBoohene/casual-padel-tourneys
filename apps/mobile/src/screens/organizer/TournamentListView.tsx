@@ -1,4 +1,6 @@
-import { Button, Pressable, RefreshControl, ScrollView, Text } from "react-native";
+import { Button, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+
+import { cardStyles, colors, radius, spacing, typography } from "../../theme";
 
 import type { LiveTournamentState } from "./types";
 
@@ -16,29 +18,124 @@ interface TournamentListViewProps {
 export function TournamentListView(props: TournamentListViewProps) {
   return (
     <ScrollView
-      contentContainerStyle={{ padding: 20, gap: 12 }}
+      contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background }}
       refreshControl={<RefreshControl refreshing={props.refreshing} onRefresh={props.onRefresh} />}
     >
-      <Text style={{ fontSize: 24, fontWeight: "700" }}>Live Tournaments</Text>
-      <Button title="Pull Live Tournaments" onPress={props.onRefresh} />
-      <Button title="Create New Tournament" onPress={props.onCreateNew} />
-      <Button title="Game Estimator" onPress={props.onOpenEstimator} />
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
+        <View>
+          <Text style={[typography.title, { color: colors.text }]}>Dashboard</Text>
+          <Text style={{ fontSize: 12, color: colors.muted }}>Welcome back, Pro Organizer</Text>
+        </View>
+        <View
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: radius.pill,
+            borderWidth: 2,
+            borderColor: colors.primary
+          }}
+        />
+      </View>
 
-      {props.tournaments.length === 0 ? <Text>No tournaments loaded yet.</Text> : null}
-
-      {props.tournaments.map((tournament) => (
-        <Pressable key={tournament.id} onPress={() => props.onOpenTournament(tournament.id)} style={{ borderWidth: 1, padding: 10, gap: 4 }}>
-          <Text style={{ fontWeight: "700" }}>{tournament.config.name}</Text>
-          <Text>
-            {tournament.config.mode}/{tournament.config.variant}
-          </Text>
-          <Text>Players: {tournament.players.length}</Text>
-          <Text>Updated: {new Date(tournament.updatedAt).toLocaleString()}</Text>
-          <Button title="Options" onPress={() => props.onOpenOptions(tournament.id)} />
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
+        <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>Active Tournaments</Text>
+        <Pressable onPress={props.onRefresh}>
+          <Text style={{ fontSize: 12, fontWeight: "600", color: colors.primary }}>Refresh</Text>
         </Pressable>
-      ))}
+      </View>
 
-      {props.errorText ? <Text style={{ color: "red" }}>Error: {props.errorText}</Text> : null}
+      {props.tournaments.length === 0 ? (
+        <View style={[cardStyles.container, { marginTop: spacing.sm }]}>
+          <Text style={{ color: colors.muted, fontSize: 14 }}>No tournaments loaded yet.</Text>
+          <View style={{ marginTop: spacing.md, flexDirection: "row", gap: spacing.sm }}>
+            <Button title="Create New" onPress={props.onCreateNew} />
+            <Button title="Game Estimator" onPress={props.onOpenEstimator} />
+          </View>
+        </View>
+      ) : (
+        <>
+          {props.tournaments.map((tournament) => (
+            <Pressable
+              key={tournament.id}
+              onPress={() => props.onOpenTournament(tournament.id)}
+              style={[
+                cardStyles.container,
+                {
+                  marginTop: spacing.sm,
+                  backgroundColor: colors.surfaceAlt
+                }
+              ]}
+            >
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
+                <View>
+                  <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>{tournament.config.name}</Text>
+                  <Text style={{ fontSize: 12, color: colors.muted }}>
+                    {tournament.config.mode} / {tournament.config.variant}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    paddingHorizontal: spacing.sm,
+                    paddingVertical: 4,
+                    borderRadius: radius.pill,
+                    backgroundColor: "rgba(173,255,47,0.12)"
+                  }}
+                >
+                  <Text style={{ fontSize: 10, fontWeight: "700", color: colors.primary }}>LIVE</Text>
+                </View>
+              </View>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: spacing.sm }}>
+                <Text style={{ fontSize: 12, color: colors.muted }}>Players: {tournament.players.length}</Text>
+                <Text style={{ fontSize: 12, color: colors.muted }}>
+                  Updated: {new Date(tournament.updatedAt).toLocaleTimeString()}
+                </Text>
+              </View>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", gap: spacing.sm }}>
+                <Button title="Options" onPress={() => props.onOpenOptions(tournament.id)} />
+                <Button title="Estimator" onPress={props.onOpenEstimator} />
+              </View>
+            </Pressable>
+          ))}
+        </>
+      )}
+
+      {props.errorText ? <Text style={{ color: colors.danger }}>Error: {props.errorText}</Text> : null}
+
+      <View
+        style={{
+          marginTop: spacing.lg,
+          paddingTop: spacing.sm,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          flexDirection: "row",
+          justifyContent: "space-between"
+        }}
+      >
+        {["Home", "History", "Rank", "Profile"].map((label, index) => (
+          <View key={label} style={{ alignItems: "center", flex: 1 }}>
+            <View
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: radius.pill,
+                backgroundColor: index === 0 ? colors.primary : colors.muted,
+                marginBottom: 4
+              }}
+            />
+            <Text
+              style={{
+                fontSize: 10,
+                fontWeight: "700",
+                letterSpacing: 1,
+                textTransform: "uppercase",
+                color: index === 0 ? colors.primary : colors.muted
+              }}
+            >
+              {label}
+            </Text>
+          </View>
+        ))}
+      </View>
     </ScrollView>
   );
 }

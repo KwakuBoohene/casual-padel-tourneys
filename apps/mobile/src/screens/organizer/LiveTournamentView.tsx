@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { Button, Modal, ScrollView, Text, TextInput, View } from "react-native";
 
+import { cardStyles, colors, radius, spacing, typography } from "../../theme";
+
 import type { LiveTournamentState } from "./types";
 
 interface LiveTournamentViewProps {
@@ -63,8 +65,8 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
   }, [props.focusSubmitMatchId, props]);
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
-      <Text style={{ fontSize: 24, fontWeight: "700" }}>Live Tournament</Text>
+    <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background }}>
+      <Text style={[typography.title, { color: colors.text }]}>Live Tournament</Text>
       <Button title="Back To Tournament List" onPress={props.onBackToList} />
       <Button title="View Leaderboard" onPress={props.onViewLeaderboard} />
       <Button title="Options" onPress={props.onOpenLiveOptions} />

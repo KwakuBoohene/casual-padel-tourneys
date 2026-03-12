@@ -1,5 +1,7 @@
 import { Button, ScrollView, Text, View } from "react-native";
 
+import { cardStyles, colors, spacing, typography } from "../../theme";
+
 import type { PlayerGameRow } from "./types";
 
 interface PlayerGamesViewProps {
@@ -10,23 +12,41 @@ interface PlayerGamesViewProps {
 
 export function PlayerGamesView(props: PlayerGamesViewProps) {
   return (
-    <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
-      <Text style={{ fontSize: 24, fontWeight: "700" }}>{props.playerName} - Games</Text>
-      <Button title="Back" onPress={props.onBack} />
+    <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <Text style={[typography.title, { color: colors.text }]}>{props.playerName}</Text>
+        <Button title="Back" onPress={props.onBack} />
+      </View>
+      <Text style={{ fontSize: 12, color: colors.muted }}>Match history</Text>
 
-      {props.games.length === 0 ? <Text>No games yet for this player.</Text> : null}
+      {props.games.length === 0 ? <Text style={{ color: colors.muted }}>No games yet for this player.</Text> : null}
 
       {props.games.map((game) => (
-        <View key={game.matchId} style={{ borderWidth: 1, padding: 10, gap: 4 }}>
-          <Text style={{ fontWeight: "700" }}>
-            Round {game.roundNumber} - Court {game.court}
+        <View
+          key={game.matchId}
+          style={[
+            cardStyles.container,
+            {
+              borderLeftWidth: 4,
+              borderLeftColor:
+                game.result === "WIN" ? colors.primary : game.result === "LOSS" ? colors.danger : colors.border
+            }
+          ]}
+        >
+          <Text style={{ fontWeight: "700", color: colors.text }}>
+            Round {game.roundNumber} • Court {game.court}
           </Text>
-          <Text>Partner: {game.partner}</Text>
-          <Text>
-            Opponents: {game.opponents[0]} / {game.opponents[1]}
+          <Text style={{ color: colors.muted, fontSize: 12, marginBottom: spacing.sm }}>{game.scoreText}</Text>
+          <Text style={{ color: colors.muted, fontSize: 12 }}>Partner</Text>
+          <Text style={{ color: colors.text, marginBottom: spacing.xs }}>{game.partner}</Text>
+          <Text style={{ color: colors.muted, fontSize: 12 }}>Opponents</Text>
+          <Text style={{ color: colors.text, marginBottom: spacing.xs }}>
+            {game.opponents[0]} / {game.opponents[1]}
           </Text>
-          <Text>Score: {game.scoreText}</Text>
-          <Text>Result: {game.result}</Text>
+          <Text style={{ color: colors.muted, fontSize: 12 }}>Result</Text>
+          <Text style={{ color: game.result === "WIN" ? colors.primary : colors.text, fontWeight: "700" }}>
+            {game.result}
+          </Text>
         </View>
       ))}
     </ScrollView>

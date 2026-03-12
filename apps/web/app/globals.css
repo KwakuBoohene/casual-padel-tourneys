@@ -9,6 +9,7 @@ body {
 }
 
 body {
-  @apply bg-padel-navy text-slate-100;
+  background-color: #020617;
+  color: #e5e7eb;
 }
 

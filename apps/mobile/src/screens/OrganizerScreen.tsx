@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import * as SecureStore from "expo-secure-store";
 import { Modal, Pressable, Text, View } from "react-native";
 import type { PlayerGender, SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
-import { apiDelete, apiGet, apiPost } from "../api/client";
+import { apiDelete, apiGet, apiPost, setAuthToken } from "../api/client";
+import { SignInScreen } from "./SignInScreen";
 import { colors, radius, spacing } from "../theme";
 import { GameEstimatorView } from "./organizer/GameEstimatorView";
 import { LeaderboardView } from "./organizer/LeaderboardView";
@@ -13,11 +15,14 @@ import { PlayerGamesView } from "./organizer/PlayerGamesView";
 import { PlayersStepView } from "./organizer/PlayersStepView";
 import { TournamentListView } from "./organizer/TournamentListView";
 import { TournamentOptionsStepView } from "./organizer/TournamentOptionsStepView";
+import { ProfileScreen } from "./ProfileScreen";
 import type { CreateTournamentResponse, SetupStep, TournamentListResponse, TournamentResponse } from "./organizer/types";
 import { buildLeaderboardRows, buildPlayerGameRows, computeEstimate, computeLiveTimeStatus } from "./organizer/utils";
 
 export function OrganizerScreen() {
   const sanitizeWholeNumberInput = (value: string) => value.replace(/[^0-9]/g, "");
+  const [authToken, setAuthTokenState] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; name?: string; email: string; avatarUrl?: string } | null>(null);
   const [step, setStep] = useState<SetupStep>("LIST");
   const [name, setName] = useState("");
   const [players, setPlayers] = useState<string[]>(["", "", "", ""]);
@@ -521,9 +526,58 @@ export function OrganizerScreen() {
   };
 
   useEffect(() => {
-    // Auto-load tournaments (and suggestions) on app load
-    void loadTournaments();
+    const bootstrapAuth = async () => {
+      const storedToken = await SecureStore.getItemAsync("authToken");
+      const storedUser = await SecureStore.getItemAsync("authUser");
+      if (storedToken) {
+        setAuthTokenState(storedToken);
+        setAuthToken(storedToken);
+      }
+      if (storedUser) {
+        try {
+          setCurrentUser(JSON.parse(storedUser));
+        } catch {
+          // ignore parse errors
+        }
+      }
+    };
+    void bootstrapAuth();
   }, []);
+
+  useEffect(() => {
+    if (!authToken) {
+      return;
+    }
+    // Auto-load tournaments (and suggestions) after we have an auth token
+    void loadTournaments();
+  }, [authToken]);
+
+  const handleSignedIn = async (payload: {
+    token: string;
+    user: { id: string; name?: string; email: string; avatarUrl?: string };
+  }) => {
+    setAuthTokenState(payload.token);
+    setAuthToken(payload.token);
+    setCurrentUser(payload.user);
+    await SecureStore.setItemAsync("authToken", payload.token);
+    await SecureStore.setItemAsync("authUser", JSON.stringify(payload.user));
+    void loadTournaments();
+  };
+
+  const handleSignOut = async () => {
+    setAuthTokenState(null);
+    setAuthToken(null);
+    setCurrentUser(null);
+    setTournaments([]);
+    setLiveTournament(null);
+    await SecureStore.deleteItemAsync("authToken");
+    await SecureStore.deleteItemAsync("authUser");
+    setStep("LIST");
+  };
+
+  if (!authToken || !currentUser) {
+    return <SignInScreen onSignedIn={handleSignedIn} />;
+  }
 
   if (step === "LIST") {
     return (
@@ -537,6 +591,7 @@ export function OrganizerScreen() {
           onOpenEstimator={() => setStep("ESTIMATOR")}
           onOpenTournament={(id) => void openTournament(id)}
           onOpenOptions={openTournamentOptions}
+          onOpenProfile={() => setStep("PROFILE")}
         />
         <Modal transparent visible={showTournamentOptionsModal} animationType="fade" onRequestClose={() => setShowTournamentOptionsModal(false)}>
           <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center", padding: 24 }}>
@@ -819,6 +874,10 @@ export function OrganizerScreen() {
         }}
       />
     );
+  }
+
+  if (step === "PROFILE" && currentUser) {
+    return <ProfileScreen user={currentUser} onBack={() => setStep("LIST")} onSignOut={handleSignOut} />;
   }
 
   if (step === "PLAYER_GAMES" && selectedPlayerId) {

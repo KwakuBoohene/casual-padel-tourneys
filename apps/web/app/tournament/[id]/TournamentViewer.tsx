@@ -10,7 +10,7 @@ interface TournamentViewModel {
   config: { name: string; mode: string; variant: string };
   updatedAt: string;
   players: Array<{ id: string; name: string }>;
-  leaderboard: Array<{ name: string; totalPoints: number; rank: number }>;
+  leaderboard: Array<{ playerId: string; name: string; totalPoints: number; gamesPlayed: number; rank: number }>;
   rounds: Array<{
     id: string;
     roundNumber: number;
@@ -25,13 +25,21 @@ interface TournamentViewModel {
   }>;
 }
 
-export function TournamentViewer({ initial, apiBaseUrl }: { initial: TournamentViewModel; apiBaseUrl: string }) {
+export function TournamentViewer({
+  initial,
+  apiBaseUrl,
+  token
+}: {
+  initial: TournamentViewModel;
+  apiBaseUrl: string;
+  token: string;
+}) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const router = useRouter();
 
   const handleOpenLeaderboard = () => {
     setSettingsOpen(false);
-    router.push(`/tournament/${initial.id}/leaderboard`);
+    router.push(`/tournament/${token}/leaderboard`);
   };
 
   return (

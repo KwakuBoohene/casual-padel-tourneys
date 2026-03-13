@@ -7,7 +7,7 @@ interface TournamentViewModel {
   config: { name: string; mode: string; variant: string };
   updatedAt: string;
   players: Array<{ id: string; name: string }>;
-  leaderboard: Array<{ name: string; totalPoints: number; rank: number }>;
+  leaderboard: Array<{ playerId: string; name: string; totalPoints: number; gamesPlayed: number; rank: number }>;
   rounds: Array<{
     id: string;
     roundNumber: number;
@@ -44,5 +44,5 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
       </main>
     );
   }
-  return <TournamentViewer initial={tournament} apiBaseUrl={apiBaseUrl} />;
+  return <TournamentViewer initial={tournament} apiBaseUrl={apiBaseUrl} token={route.id} />;
 }

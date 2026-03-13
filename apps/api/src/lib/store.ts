@@ -7,8 +7,8 @@ import type { TournamentState } from "../types/state.js";
 
 const tournaments = new Map<string, TournamentState>();
 
-export function listTournaments(): TournamentState[] {
-  return [...tournaments.values()];
+export function listTournamentsByUser(organizerId: string): TournamentState[] {
+  return [...tournaments.values()].filter((tournament) => tournament.organizerId === organizerId);
 }
 
 export function getTournament(id: string): TournamentState | undefined {
@@ -19,7 +19,7 @@ export function getTournamentByPublicToken(token: string): TournamentState | und
   return [...tournaments.values()].find((item) => item.publicToken === token);
 }
 
-export function createTournament(config: TournamentConfig): TournamentState {
+export function createTournament(config: TournamentConfig, organizerId: string): TournamentState {
   const id = createId("tournament");
   const createdAt = new Date().toISOString();
   const generated = config.mode === "MEXICANO" ? generateMexicano(config) : generateTournament(config);
@@ -31,6 +31,7 @@ export function createTournament(config: TournamentConfig): TournamentState {
     version: 0,
     leaderboard: buildLeaderboard(generated.players),
     publicToken: createId("public"),
+    organizerId,
     createdAt,
     updatedAt: createdAt
   };

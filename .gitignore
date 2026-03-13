@@ -9,4 +9,4 @@ coverage
 apps/api/generated
 apps/web/tsconfig.tsbuildinfo
 .idea/
-screens/
+designs/

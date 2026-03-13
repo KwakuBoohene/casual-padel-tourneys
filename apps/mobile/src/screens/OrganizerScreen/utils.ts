@@ -160,3 +160,4 @@ function bumpResult(stats: Map<string, LeaderboardRow>, playerId: string, result
     row.draws += 1;
   }
 }
+

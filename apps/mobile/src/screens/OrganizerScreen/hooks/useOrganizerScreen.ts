@@ -3,8 +3,8 @@ import * as SecureStore from "expo-secure-store";
 import type { PlayerGender, SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 import { apiDelete, apiGet, apiPost, setAuthToken } from "../../../api/client";
-import type { CreateTournamentResponse, SetupStep, TournamentListResponse, TournamentResponse } from "../../organizer/types";
-import { buildLeaderboardRows, buildPlayerGameRows, computeEstimate, computeLiveTimeStatus } from "../../organizer/utils";
+import type { CreateTournamentResponse, SetupStep, TournamentListResponse, TournamentResponse } from "../types";
+import { buildLeaderboardRows, buildPlayerGameRows, computeEstimate, computeLiveTimeStatus } from "../utils";
 
 const sanitizeWholeNumberInput = (value: string) => value.replace(/[^0-9]/g, "");
 

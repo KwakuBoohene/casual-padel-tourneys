@@ -82,3 +82,4 @@ export interface PlayerGameRow {
   scoreText: string;
   result: "WIN" | "LOSS" | "DRAW" | "PENDING";
 }
+

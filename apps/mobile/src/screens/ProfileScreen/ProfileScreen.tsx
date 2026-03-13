@@ -1,6 +1,6 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 
-import { colors, radius, spacing, typography } from "../theme";
+import { colors, radius, spacing, typography } from "../../theme";
 
 interface ProfileScreenProps {
   user: { id: string; name?: string; email: string; avatarUrl?: string };

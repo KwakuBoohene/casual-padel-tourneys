@@ -1,13 +1,13 @@
-import { SignInScreen } from "../SignInScreen";
+import { SignInScreen } from "../SignInScreen/SignInScreen";
 import { useOrganizerScreen } from "./hooks/useOrganizerScreen";
-import { GameEstimatorView } from "../organizer/GameEstimatorView";
-import { LeaderboardView } from "../organizer/LeaderboardView";
-import { MatchSettingsStepView } from "../organizer/MatchSettingsStepView";
-import { NameStepView } from "../organizer/NameStepView";
-import { PlayerGamesView } from "../organizer/PlayerGamesView";
-import { PlayersStepView } from "../organizer/PlayersStepView";
-import { TournamentOptionsStepView } from "../organizer/TournamentOptionsStepView";
-import { ProfileScreen } from "../ProfileScreen";
+import { GameEstimatorView } from "./components/GameEstimatorView";
+import { LeaderboardView } from "./components/LeaderboardView";
+import { MatchSettingsStepView } from "./components/MatchSettingsStepView";
+import { NameStepView } from "./components/NameStepView";
+import { PlayerGamesView } from "./components/PlayerGamesView";
+import { PlayersStepView } from "./components/PlayersStepView";
+import { TournamentOptionsStepView } from "./components/TournamentOptionsStepView";
+import { ProfileScreen } from "../ProfileScreen/ProfileScreen";
 import { OrganizerListScreen } from "./components/OrganizerListScreen";
 import { OrganizerLiveScreen } from "./components/OrganizerLiveScreen";
 

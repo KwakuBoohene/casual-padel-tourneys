@@ -3,7 +3,7 @@ import * as WebBrowser from "expo-web-browser";
 import { useEffect } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
-import { colors, radius, spacing, typography } from "../theme";
+import { colors, radius, spacing, typography } from "../../theme";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -32,7 +32,6 @@ export function SignInScreen(props: SignInScreenProps) {
       body: JSON.stringify({ idToken })
     });
     if (!result.ok) {
-      // Minimal error handling; OrganizerScreen will display errors if needed.
       return;
     }
     const json = (await result.json()) as {

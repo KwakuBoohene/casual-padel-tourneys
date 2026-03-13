@@ -8,9 +8,14 @@ module.exports = {
     extend: {
       colors: {
         padel: {
-          navy: "#0f172a",
+          background: "#0f172a",
           surface: "#1e293b",
-          green: "#ADFF2F"
+          surfaceAlt: "#020617",
+          text: "#e5e7eb",
+          muted: "#9ca3af",
+          primary: "#ADFF2F",
+          danger: "#f97373",
+          border: "rgba(148, 163, 184, 0.4)"
         }
       },
       fontFamily: {

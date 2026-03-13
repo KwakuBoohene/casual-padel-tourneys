@@ -1,4 +1,4 @@
-import { LiveTournament } from "./LiveTournament";
+import { TournamentViewer } from "./TournamentViewer";
 
 const apiBaseUrl = process.env.PUBLIC_API_BASE_URL ?? "http://localhost:3001";
 
@@ -35,15 +35,14 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   const route = await params;
   const tournament = await getTournament(route.id);
   if (!tournament) {
-    return <p>Tournament not found for token: {route.id}</p>;
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-padel-background text-padel-text">
+        <div className="space-y-2 text-center">
+          <p className="text-xs uppercase tracking-[0.25em] text-padel-muted">Casual Padel Tourneys</p>
+          <p className="text-sm text-padel-muted">Tournament not found for token: {route.id}</p>
+        </div>
+      </main>
+    );
   }
-  return (
-    <main>
-      <h1>{tournament.config.name}</h1>
-      <p>
-        {tournament.config.mode} / {tournament.config.variant}
-      </p>
-      <LiveTournament initial={tournament} apiBaseUrl={apiBaseUrl} />
-    </main>
-  );
+  return <TournamentViewer initial={tournament} apiBaseUrl={apiBaseUrl} />;
 }

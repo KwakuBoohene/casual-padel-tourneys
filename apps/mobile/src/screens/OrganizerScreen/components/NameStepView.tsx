@@ -79,7 +79,7 @@ export function NameStepView(props: NameStepViewProps) {
           >
             <Text
               style={{
-                color: "#020617",
+                color: props.canContinue ? "#020617" : colors.text,
                 fontWeight: "700"
               }}
             >

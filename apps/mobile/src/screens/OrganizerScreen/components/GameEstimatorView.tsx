@@ -28,7 +28,14 @@ interface GameEstimatorViewProps {
 export function GameEstimatorView(props: GameEstimatorViewProps) {
   const schedulingModeLabel = props.schedulingMode === "TARGET_GAMES" ? "Target Games" : "Tournament Time";
   return (
-    <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg, backgroundColor: colors.background }}>
+    <ScrollView
+      contentContainerStyle={{
+        paddingHorizontal: spacing.xl,
+        paddingVertical: spacing.xl,
+        gap: spacing.xl,
+        backgroundColor: colors.background
+      }}
+    >
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <Text style={[typography.title, { color: colors.text }]}>Game Estimator</Text>
         <Pressable
@@ -46,7 +53,7 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
         </Pressable>
       </View>
 
-      <View style={cardStyles.container}>
+      <View style={[cardStyles.container, { gap: spacing.md }]}>
         <Text style={[typography.sectionTitle, { color: colors.text }]}>Tournament Type</Text>
         <View style={{ flexDirection: "row", gap: spacing.sm }}>
           {(["AMERICANO", "MEXICANO"] as TournamentMode[]).map((value) => (
@@ -105,11 +112,11 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
         </View>
       </View>
 
-      <View style={cardStyles.container}>
+      <View style={[cardStyles.container, { gap: spacing.md }]}>
         <Text style={[typography.sectionTitle, { color: colors.text }]}>Configuration</Text>
         <Text style={{ color: colors.muted, marginBottom: spacing.sm }}>Quickly estimate how long a tournament will take.</Text>
 
-        <View style={{ gap: spacing.sm }}>
+        <View style={{ gap: spacing.xs }}>
           <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Players</Text>
           <TextInput
             keyboardType="numeric"
@@ -128,7 +135,7 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
           />
         </View>
 
-        <View style={{ gap: spacing.sm }}>
+        <View style={{ gap: spacing.xs }}>
           <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Courts</Text>
           <TextInput
             keyboardType="numeric"
@@ -147,7 +154,7 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
           />
         </View>
 
-        <View style={{ gap: spacing.sm }}>
+        <View style={{ gap: spacing.xs }}>
           <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Points Per Match</Text>
           <TextInput
             keyboardType="numeric"
@@ -166,7 +173,7 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
           />
         </View>
 
-        <View style={{ gap: spacing.sm }}>
+        <View style={{ gap: spacing.xs }}>
           <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>{schedulingModeLabel}</Text>
           {props.schedulingMode === "TARGET_GAMES" ? (
             <TextInput
@@ -204,7 +211,7 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
         </View>
       </View>
 
-      <View style={cardStyles.container}>
+      <View style={[cardStyles.container, { marginTop: spacing.sm }]}>
         <Text style={[typography.sectionTitle, { color: colors.text }]}>Estimate</Text>
         {props.estimate ? (
           <>

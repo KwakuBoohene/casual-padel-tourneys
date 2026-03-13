@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
 html,
 body {
@@ -9,7 +7,7 @@ body {
 }
 
 body {
-  background-color: #020617;
+  background-color: #0f172a;
   color: #e5e7eb;
 }
 

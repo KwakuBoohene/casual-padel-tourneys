@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL") 
 }
 
 enum TournamentMode {
@@ -16,6 +16,12 @@ enum TournamentVariant {
   CLASSIC
   MIXED
   TEAM
+}
+
+enum SchedulingMode {
+  TARGET_GAMES
+  TOTAL_TIME
+  ROUND_ROBIN
 }
 
 model User {
@@ -34,6 +40,7 @@ model Tournament {
   name                  String
   mode                  TournamentMode
   variant               TournamentVariant
+  schedulingMode        SchedulingMode @default(TARGET_GAMES)
   courts                Int
   pointsPerMatch        Int
   targetGamesPerPlayer  Int?

@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "expo start",
     "build": "echo \"Use EAS build in production\"",
+    "build:ios": "eas build --platform ios --profile preview",
+    "build:android": "eas build --platform android --profile preview",  
+    "build:web": "eas build --platform web --profile preview",
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test"

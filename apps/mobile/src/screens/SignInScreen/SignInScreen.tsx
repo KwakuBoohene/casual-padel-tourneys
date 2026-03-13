@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { colors, radius, spacing, typography } from "../../theme";
+import { logger } from "../../logger";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -17,28 +18,45 @@ export function SignInScreen(props: SignInScreenProps) {
   });
 
   useEffect(() => {
+    logger.debug("SignInScreen: auth request initialised", {
+      hasRequest: Boolean(request),
+      redirectUri: request?.redirectUri
+    });
+  }, [request]);
+
+  useEffect(() => {
     if (response?.type === "success" && response.params.id_token) {
+      logger.info("SignInScreen: received Google id_token");
       void exchangeIdToken(response.params.id_token);
+    } else if (response?.type && response.type !== "success") {
+      logger.warn("SignInScreen: Google response not successful", { type: response.type });
     }
   }, [response]);
 
   async function exchangeIdToken(idToken: string) {
     const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
-    const result = await fetch(`${apiBaseUrl}/auth/google`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ idToken })
-    });
-    if (!result.ok) {
-      return;
+    logger.debug("SignInScreen: exchanging idToken with API", { apiBaseUrl });
+    try {
+      const result = await fetch(`${apiBaseUrl}/auth/google`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ idToken })
+      });
+      if (!result.ok) {
+        logger.error("SignInScreen: /auth/google failed", { status: result.status });
+        return;
+      }
+      const json = (await result.json()) as {
+        token: string;
+        user: { id: string; name?: string; email: string; avatarUrl?: string };
+      };
+      logger.info("SignInScreen: exchange succeeded", { userId: json.user.id });
+      props.onSignedIn(json);
+    } catch (error) {
+      logger.error("SignInScreen: network error during idToken exchange", { error });
     }
-    const json = (await result.json()) as {
-      token: string;
-      user: { id: string; name?: string; email: string; avatarUrl?: string };
-    };
-    props.onSignedIn(json);
   }
 
   return (

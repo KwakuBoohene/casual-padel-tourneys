@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import type { PlayerGender, SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 import { apiDelete, apiGet, apiPost, setAuthToken } from "../../../api/client";
+import { logger } from "../../../logger";
 import type { CreateTournamentResponse, SetupStep, TournamentListResponse, TournamentResponse } from "../types";
 import { buildLeaderboardRows, buildPlayerGameRows, computeEstimate, computeLiveTimeStatus } from "../utils";
 
@@ -517,18 +519,40 @@ export function useOrganizerScreen() {
 
   useEffect(() => {
     const bootstrapAuth = async () => {
-      const storedToken = await SecureStore.getItemAsync("authToken");
-      const storedUser = await SecureStore.getItemAsync("authUser");
-      if (storedToken) {
-        setAuthTokenState(storedToken);
-        setAuthToken(storedToken);
-      }
-      if (storedUser) {
-        try {
-          setCurrentUser(JSON.parse(storedUser));
-        } catch {
-          // ignore parse errors
+      try {
+        logger.debug("bootstrapAuth: starting", { platform: Platform.OS });
+        let storedToken: string | null = null;
+        let storedUser: string | null = null;
+
+        if (Platform.OS === "web") {
+          const anyGlobal = globalThis as typeof globalThis & { localStorage?: { getItem(key: string): string | null } };
+          if (typeof anyGlobal !== "undefined" && anyGlobal.localStorage) {
+            storedToken = anyGlobal.localStorage.getItem("authToken");
+            storedUser = anyGlobal.localStorage.getItem("authUser");
+          }
+        } else {
+          storedToken = await SecureStore.getItemAsync("authToken");
+          storedUser = await SecureStore.getItemAsync("authUser");
         }
+
+        logger.debug("bootstrapAuth: loaded from storage", {
+          hasToken: Boolean(storedToken),
+          hasUser: Boolean(storedUser)
+        });
+
+        if (storedToken) {
+          setAuthTokenState(storedToken);
+          setAuthToken(storedToken);
+        }
+        if (storedUser) {
+          try {
+            setCurrentUser(JSON.parse(storedUser));
+          } catch (error) {
+            logger.warn("bootstrapAuth: failed to parse stored user", { error });
+          }
+        }
+      } catch (error) {
+        logger.error("bootstrapAuth: error while restoring auth state", { error });
       }
     };
     void bootstrapAuth();
@@ -545,22 +569,52 @@ export function useOrganizerScreen() {
     token: string;
     user: { id: string; name?: string; email: string; avatarUrl?: string };
   }) => {
+    logger.info("handleSignedIn: storing auth state", { platform: Platform.OS, userId: payload.user.id });
     setAuthTokenState(payload.token);
     setAuthToken(payload.token);
     setCurrentUser(payload.user);
-    await SecureStore.setItemAsync("authToken", payload.token);
-    await SecureStore.setItemAsync("authUser", JSON.stringify(payload.user));
+
+    try {
+      if (Platform.OS === "web") {
+        const anyGlobal = globalThis as typeof globalThis & { localStorage?: { setItem(key: string, value: string): void } };
+        if (typeof anyGlobal !== "undefined" && anyGlobal.localStorage) {
+          anyGlobal.localStorage.setItem("authToken", payload.token);
+          anyGlobal.localStorage.setItem("authUser", JSON.stringify(payload.user));
+        }
+      } else {
+        await SecureStore.setItemAsync("authToken", payload.token);
+        await SecureStore.setItemAsync("authUser", JSON.stringify(payload.user));
+      }
+    } catch (error) {
+      logger.error("handleSignedIn: failed to persist auth state", { error });
+    }
+
     void loadTournaments();
   };
 
   const handleSignOut = async () => {
+    logger.info("handleSignOut: clearing auth state", { platform: Platform.OS, currentUserId: currentUser?.id });
     setAuthTokenState(null);
     setAuthToken(null);
     setCurrentUser(null);
     setTournaments([]);
     setLiveTournament(null);
-    await SecureStore.deleteItemAsync("authToken");
-    await SecureStore.deleteItemAsync("authUser");
+
+    try {
+      if (Platform.OS === "web") {
+        const anyGlobal = globalThis as typeof globalThis & { localStorage?: { removeItem(key: string): void } };
+        if (typeof anyGlobal !== "undefined" && anyGlobal.localStorage) {
+          anyGlobal.localStorage.removeItem("authToken");
+          anyGlobal.localStorage.removeItem("authUser");
+        }
+      } else {
+        await SecureStore.deleteItemAsync("authToken");
+        await SecureStore.deleteItemAsync("authUser");
+      }
+    } catch (error) {
+      logger.error("handleSignOut: failed to clear stored auth", { error });
+    }
+
     setStep("LIST");
   };
 

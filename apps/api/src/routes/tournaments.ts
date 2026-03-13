@@ -23,7 +23,7 @@ import {
   deleteTournament,
   getTournament,
   getTournamentByPublicToken,
-  listTournamentsByUser,
+  putTournament,
   renamePlayer,
   renameTournament,
   submitScore,
@@ -254,6 +254,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       return { errors: parsed.error.flatten() };
     }
     try {
+      await ensureTournamentInMemory(parsed.data.tournamentId);
       assertVersion(parsed.data.tournamentId, parsed.data.expectedVersion);
       const tournament = submitScore(parsed.data.tournamentId, parsed.data.matchId, parsed.data.scoreA, parsed.data.scoreB);
       await persistTournament(tournament);
@@ -274,6 +275,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       return { errors: parsed.error.flatten() };
     }
     try {
+      await ensureTournamentInMemory(parsed.data.tournamentId);
       const tournament = renamePlayer(parsed.data.tournamentId, parsed.data.playerId, parsed.data.newName);
       await persistTournament(tournament);
       const event = { type: "PLAYER_RENAMED" as const, tournamentId: tournament.id, payload: tournament };
@@ -293,6 +295,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       return { errors: parsed.error.flatten() };
     }
     try {
+      await ensureTournamentInMemory(parsed.data.tournamentId);
       const tournament = renameTournament(parsed.data.tournamentId, parsed.data.newName);
       await persistTournament(tournament);
       const event = { type: "TOURNAMENT_RENAMED" as const, tournamentId: tournament.id, payload: tournament };
@@ -312,6 +315,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       return { errors: parsed.error.flatten() };
     }
     try {
+      await ensureTournamentInMemory(parsed.data.tournamentId);
       assertVersion(parsed.data.tournamentId, parsed.data.expectedVersion);
       const tournament = adjustCourts(parsed.data.tournamentId, parsed.data.courts);
       await persistTournament(tournament);
@@ -332,6 +336,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       return { errors: parsed.error.flatten() };
     }
     try {
+      await ensureTournamentInMemory(parsed.data.tournamentId);
       const tournament = substitutePlayer(parsed.data.tournamentId, parsed.data.playerId, parsed.data.replacementName);
       await persistTournament(tournament);
       const event = { type: "PLAYER_SUBSTITUTED" as const, tournamentId: tournament.id, payload: tournament };
@@ -347,7 +352,12 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
   server.delete("/tournaments/:id", { preHandler: requireAuth }, async (request, reply) => {
     const params = request.params as { id: string };
     try {
-      deleteTournament(params.id);
+      // Best-effort removal from in-memory store; ignore if it was already evicted.
+      try {
+        deleteTournament(params.id);
+      } catch {
+        // no-op
+      }
       await prisma.tournament.delete({
         where: { id: params.id }
       });
@@ -360,6 +370,29 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       return { message: (error as Error).message };
     }
   });
+}
+
+async function ensureTournamentInMemory(tournamentId: string): Promise<void> {
+  const existing = getTournament(tournamentId);
+  if (existing) {
+    return;
+  }
+  const row = await prisma.tournament.findUnique({
+    where: { id: tournamentId },
+    include: {
+      players: true,
+      rounds: {
+        include: {
+          matches: true
+        }
+      }
+    }
+  });
+  if (!row) {
+    throw new Error("Tournament not found.");
+  }
+  const state = mapDbTournamentToState(row);
+  putTournament(state);
 }
 
 async function persistTournament(tournament: {

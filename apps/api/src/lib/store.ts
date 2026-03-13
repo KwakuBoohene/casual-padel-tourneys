@@ -7,16 +7,67 @@ import type { TournamentState } from "../types/state.js";
 
 const tournaments = new Map<string, TournamentState>();
 
+// Basic in-memory cache controls
+const MAX_TOURNAMENTS_IN_MEMORY = 100;
+const lastAccessed = new Map<string, number>();
+
+function recordAccess(id: string): void {
+  lastAccessed.set(id, Date.now());
+}
+
+function isCompleted(tournament: TournamentState): boolean {
+  return tournament.rounds.every((round) => round.matches.every((match) => match.completed));
+}
+
+function evictOldestCompletedIfOverCapacity(): void {
+  if (tournaments.size <= MAX_TOURNAMENTS_IN_MEMORY) {
+    return;
+  }
+
+  let candidateId: string | null = null;
+  let candidateTs = Number.POSITIVE_INFINITY;
+
+  for (const [id, tournament] of tournaments.entries()) {
+    if (!isCompleted(tournament)) {
+      continue;
+    }
+    const ts = lastAccessed.get(id) ?? 0;
+    if (ts < candidateTs) {
+      candidateTs = ts;
+      candidateId = id;
+    }
+  }
+
+  if (candidateId) {
+    tournaments.delete(candidateId);
+    lastAccessed.delete(candidateId);
+  }
+}
+
 export function listTournamentsByUser(organizerId: string): TournamentState[] {
   return [...tournaments.values()].filter((tournament) => tournament.organizerId === organizerId);
 }
 
 export function getTournament(id: string): TournamentState | undefined {
-  return tournaments.get(id);
+  const tournament = tournaments.get(id);
+  if (tournament) {
+    recordAccess(id);
+  }
+  return tournament;
 }
 
 export function getTournamentByPublicToken(token: string): TournamentState | undefined {
-  return [...tournaments.values()].find((item) => item.publicToken === token);
+  const tournament = [...tournaments.values()].find((item) => item.publicToken === token);
+  if (tournament) {
+    recordAccess(tournament.id);
+  }
+  return tournament;
+}
+
+export function putTournament(state: TournamentState): void {
+  tournaments.set(state.id, state);
+  recordAccess(state.id);
+  evictOldestCompletedIfOverCapacity();
 }
 
 export function createTournament(config: TournamentConfig, organizerId: string): TournamentState {
@@ -36,6 +87,8 @@ export function createTournament(config: TournamentConfig, organizerId: string):
     updatedAt: createdAt
   };
   tournaments.set(id, state);
+  recordAccess(id);
+  evictOldestCompletedIfOverCapacity();
   return state;
 }
 
@@ -88,6 +141,7 @@ export function deleteTournament(tournamentId: string): void {
     throw new Error("Tournament not found.");
   }
   tournaments.delete(tournamentId);
+  lastAccessed.delete(tournamentId);
 }
 
 export function adjustCourts(tournamentId: string, courts: number): TournamentState {
@@ -148,7 +202,7 @@ function findMatch(rounds: Round[], matchId: string): { round: Round; match: Mat
 }
 
 function requireTournament(id: string): TournamentState {
-  const tournament = tournaments.get(id);
+  const tournament = getTournament(id);
   if (!tournament) {
     throw new Error("Tournament not found.");
   }

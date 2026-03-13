@@ -1,6 +1,6 @@
 import { SafeAreaView, StatusBar } from "react-native";
 
-import { OrganizerScreen } from "./screens/OrganizerScreen";
+import { OrganizerScreen } from "./screens/OrganizerScreen/OrganizerScreen";
 
 export function App() {
   return (

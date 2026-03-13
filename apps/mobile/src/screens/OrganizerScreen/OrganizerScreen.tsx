@@ -1,15 +1,16 @@
-import { SignInScreen } from "./SignInScreen";
-import { useOrganizerScreen } from "./OrganizerScreen/hooks/useOrganizerScreen";
-import { GameEstimatorView } from "./organizer/GameEstimatorView";
-import { LeaderboardView } from "./organizer/LeaderboardView";
-import { MatchSettingsStepView } from "./organizer/MatchSettingsStepView";
-import { NameStepView } from "./organizer/NameStepView";
-import { PlayerGamesView } from "./organizer/PlayerGamesView";
-import { PlayersStepView } from "./organizer/PlayersStepView";
-import { TournamentOptionsStepView } from "./organizer/TournamentOptionsStepView";
-import { ProfileScreen } from "./ProfileScreen";
-import { OrganizerListScreen } from "./OrganizerScreen/components/OrganizerListScreen";
-import { OrganizerLiveScreen } from "./OrganizerScreen/components/OrganizerLiveScreen";
+import { SignInScreen } from "../SignInScreen";
+import { useOrganizerScreen } from "./hooks/useOrganizerScreen";
+import { GameEstimatorView } from "../organizer/GameEstimatorView";
+import { LeaderboardView } from "../organizer/LeaderboardView";
+import { MatchSettingsStepView } from "../organizer/MatchSettingsStepView";
+import { NameStepView } from "../organizer/NameStepView";
+import { PlayerGamesView } from "../organizer/PlayerGamesView";
+import { PlayersStepView } from "../organizer/PlayersStepView";
+import { TournamentOptionsStepView } from "../organizer/TournamentOptionsStepView";
+import { ProfileScreen } from "../ProfileScreen";
+import { OrganizerListScreen } from "./components/OrganizerListScreen";
+import { OrganizerLiveScreen } from "./components/OrganizerLiveScreen";
+
 export function OrganizerScreen() {
   const {
     authToken,
@@ -328,3 +329,4 @@ export function OrganizerScreen() {
     />
   );
 }
+

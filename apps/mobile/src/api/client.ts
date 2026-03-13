@@ -1,8 +1,19 @@
 const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
-const organizerToken = process.env.EXPO_PUBLIC_ORGANIZER_TOKEN ?? "change_me";
+
+let authToken: string | null = null;
+
+export function setAuthToken(token: string | null): void {
+  authToken = token;
+}
 
 export async function apiGet<T>(path: string): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`);
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    headers: authToken
+      ? {
+          Authorization: `Bearer ${authToken}`
+        }
+      : undefined
+  });
   if (!response.ok) {
     throw new Error(`Request failed: ${response.status}`);
   }
@@ -14,7 +25,7 @@ export async function apiPost<T>(path: string, payload: unknown): Promise<T> {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-organizer-token": organizerToken
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {})
     },
     body: JSON.stringify(payload)
   });
@@ -27,9 +38,11 @@ export async function apiPost<T>(path: string, payload: unknown): Promise<T> {
 export async function apiDelete<T>(path: string): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     method: "DELETE",
-    headers: {
-      "x-organizer-token": organizerToken
-    }
+    headers: authToken
+      ? {
+          Authorization: `Bearer ${authToken}`
+        }
+      : undefined
   });
   if (!response.ok) {
     throw new Error(`Request failed: ${response.status}`);

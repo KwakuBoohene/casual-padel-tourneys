@@ -10,6 +10,7 @@ export interface TournamentState {
   publicToken: string;
   createdAt: string;
   updatedAt: string;
+  organizerId?: string;
 }
 
 export interface MatchLookup {

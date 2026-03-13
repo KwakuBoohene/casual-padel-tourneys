@@ -1,18 +1,15 @@
-import { Modal, Pressable, Text, View } from "react-native";
-
 import { SignInScreen } from "./SignInScreen";
 import { useOrganizerScreen } from "./OrganizerScreen/hooks/useOrganizerScreen";
-import { colors, radius, spacing } from "../theme";
 import { GameEstimatorView } from "./organizer/GameEstimatorView";
 import { LeaderboardView } from "./organizer/LeaderboardView";
-import { LiveTournamentView } from "./organizer/LiveTournamentView";
 import { MatchSettingsStepView } from "./organizer/MatchSettingsStepView";
 import { NameStepView } from "./organizer/NameStepView";
 import { PlayerGamesView } from "./organizer/PlayerGamesView";
 import { PlayersStepView } from "./organizer/PlayersStepView";
-import { TournamentListView } from "./organizer/TournamentListView";
 import { TournamentOptionsStepView } from "./organizer/TournamentOptionsStepView";
 import { ProfileScreen } from "./ProfileScreen";
+import { OrganizerListScreen } from "./OrganizerScreen/components/OrganizerListScreen";
+import { OrganizerLiveScreen } from "./OrganizerScreen/components/OrganizerLiveScreen";
 export function OrganizerScreen() {
   const {
     authToken,
@@ -129,147 +126,25 @@ export function OrganizerScreen() {
 
   if (step === "LIST") {
     return (
-      <>
-        <TournamentListView
-          tournaments={tournaments}
-          refreshing={listRefreshing}
-          errorText={errorText}
-          onRefresh={() => void loadTournaments()}
-          onCreateNew={() => setStep("NAME")}
-          onOpenEstimator={() => setStep("ESTIMATOR")}
-          onOpenTournament={(id) => void openTournament(id)}
-          onOpenOptions={openTournamentOptions}
-          onOpenProfile={() => setStep("PROFILE")}
-        />
-        <Modal transparent visible={showTournamentOptionsModal} animationType="fade" onRequestClose={() => setShowTournamentOptionsModal(false)}>
-          <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center", padding: 24 }}>
-            <View
-              style={{
-                backgroundColor: colors.surfaceAlt,
-                width: "100%",
-                maxWidth: 420,
-                padding: spacing.lg,
-                gap: spacing.sm,
-                borderRadius: radius.lg
-              }}
-            >
-              <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>Tournament Options</Text>
-              <Pressable
-                onPress={() => requestTournamentAction("EDIT")}
-                style={{
-                  paddingVertical: spacing.sm,
-                  borderRadius: radius.md,
-                  backgroundColor: colors.surface,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                <Text style={{ color: colors.text, fontWeight: "600" }}>Edit Tournament</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => requestTournamentAction("DELETE")}
-                style={{
-                  paddingVertical: spacing.sm,
-                  borderRadius: radius.md,
-                  backgroundColor: colors.danger,
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                <Text
-                  style={{
-                    color: "#020617",
-                    fontWeight: "700"
-                  }}
-                >
-                  Delete Tournament
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setShowTournamentOptionsModal(false)}
-                style={{
-                  paddingVertical: spacing.sm,
-                  borderRadius: radius.md,
-                  backgroundColor: colors.surface,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                <Text style={{ color: colors.text, fontWeight: "600" }}>Cancel</Text>
-              </Pressable>
-            </View>
-          </View>
-        </Modal>
-        <Modal
-          transparent
-          visible={showTournamentActionConfirmModal}
-          animationType="fade"
-          onRequestClose={() => setShowTournamentActionConfirmModal(false)}
-        >
-          <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center", padding: 24 }}>
-            <View
-              style={{
-                backgroundColor: colors.surfaceAlt,
-                width: "100%",
-                maxWidth: 420,
-                padding: spacing.lg,
-                gap: spacing.md,
-                borderRadius: radius.lg
-              }}
-            >
-              <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>
-                {pendingTournamentAction === "DELETE" ? "Delete Tournament?" : "Edit Tournament?"}
-              </Text>
-              <Text style={{ color: colors.muted }}>
-                {pendingTournamentAction === "DELETE"
-                  ? "Are you sure you want to delete this tournament?"
-                  : "Are you sure you want to edit this tournament?"}
-              </Text>
-              <View style={{ flexDirection: "row", gap: spacing.sm }}>
-                <Pressable
-                  onPress={() => setShowTournamentActionConfirmModal(false)}
-                  style={{
-                    flex: 1,
-                    paddingVertical: spacing.sm,
-                    borderRadius: radius.md,
-                    backgroundColor: colors.surface,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    alignItems: "center",
-                    justifyContent: "center"
-                  }}
-                >
-                  <Text style={{ color: colors.text, fontWeight: "600" }}>Cancel</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => void confirmTournamentAction()}
-                  style={{
-                    flex: 1,
-                    paddingVertical: spacing.sm,
-                    borderRadius: radius.md,
-                    backgroundColor: pendingTournamentAction === "DELETE" ? colors.danger : colors.primary,
-                    alignItems: "center",
-                    justifyContent: "center"
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#020617",
-                      fontWeight: "700"
-                    }}
-                  >
-                    Yes
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </Modal>
-      </>
+      <OrganizerListScreen
+        tournaments={tournaments}
+        refreshing={listRefreshing}
+        errorText={errorText}
+        showTournamentOptionsModal={showTournamentOptionsModal}
+        showTournamentActionConfirmModal={showTournamentActionConfirmModal}
+        pendingTournamentAction={pendingTournamentAction}
+        onRefresh={() => void loadTournaments()}
+        onCreateNew={() => setStep("NAME")}
+        onOpenEstimator={() => setStep("ESTIMATOR")}
+        onOpenTournament={(id) => void openTournament(id)}
+        onOpenOptions={openTournamentOptions}
+        onOpenProfile={() => setStep("PROFILE")}
+        onCloseOptionsModal={() => setShowTournamentOptionsModal(false)}
+        onRequestEdit={() => requestTournamentAction("EDIT")}
+        onRequestDelete={() => requestTournamentAction("DELETE")}
+        onCancelActionConfirm={() => setShowTournamentActionConfirmModal(false)}
+        onConfirmAction={() => void confirmTournamentAction()}
+      />
     );
   }
 
@@ -350,7 +225,7 @@ export function OrganizerScreen() {
 
   if (step === "LIVE" && liveTournament) {
     return (
-      <LiveTournamentView
+      <OrganizerLiveScreen
         tournament={liveTournament}
         viewerBaseUrl={viewerBaseUrl}
         errorText={errorText}
@@ -369,9 +244,6 @@ export function OrganizerScreen() {
         canAdjustCourts={canAdjustCourts}
         scorePicker={scorePicker}
         focusSubmitMatchId={focusSubmitMatchId}
-        onChangeTournamentName={setLiveTournamentNameDraft}
-        onChangeProposedCourts={setProposedCourts}
-        onSaveTournamentName={() => void saveTournamentName()}
         scoreInputs={scoreInputs}
         playerNameById={playerNameById}
         showEditConfirmModal={showEditConfirmModal}
@@ -379,6 +251,9 @@ export function OrganizerScreen() {
         onViewLeaderboard={() => setStep("LEADERBOARD")}
         onRefresh={() => void refreshTournament()}
         onFinishTournament={finishTournament}
+        onChangeTournamentName={setLiveTournamentNameDraft}
+        onChangeProposedCourts={setProposedCourts}
+        onSaveTournamentName={() => void saveTournamentName()}
         onOpenEditConfirm={() => setShowEditConfirmModal(true)}
         onCloseEditConfirm={() => setShowEditConfirmModal(false)}
         onConfirmEditGame={() => {

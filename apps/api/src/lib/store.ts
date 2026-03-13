@@ -4,6 +4,7 @@ import type { LeaderboardEntry, Match, Player, Round, TournamentConfig } from "@
 import { generateMexicano } from "../engine/mexicanoScheduler.js";
 import { generateTournament, recalculateRemainingTournament } from "../engine/americanoScheduler.js";
 import type { TournamentState } from "../types/state.js";
+import { logger } from "./logger.js";
 
 const tournaments = new Map<string, TournamentState>();
 
@@ -45,7 +46,9 @@ function evictOldestCompletedIfOverCapacity(): void {
 }
 
 export function listTournamentsByUser(organizerId: string): TournamentState[] {
-  return [...tournaments.values()].filter((tournament) => tournament.organizerId === organizerId);
+  const result = [...tournaments.values()].filter((tournament) => tournament.organizerId === organizerId);
+  logger.debug("store/listTournamentsByUser", { organizerId, count: result.length });
+  return result;
 }
 
 export function getTournament(id: string): TournamentState | undefined {
@@ -53,6 +56,7 @@ export function getTournament(id: string): TournamentState | undefined {
   if (tournament) {
     recordAccess(id);
   }
+  logger.debug("store/getTournament", { id, found: Boolean(tournament) });
   return tournament;
 }
 
@@ -61,6 +65,7 @@ export function getTournamentByPublicToken(token: string): TournamentState | und
   if (tournament) {
     recordAccess(tournament.id);
   }
+  logger.debug("store/getTournamentByPublicToken", { token, found: Boolean(tournament) });
   return tournament;
 }
 
@@ -68,6 +73,7 @@ export function putTournament(state: TournamentState): void {
   tournaments.set(state.id, state);
   recordAccess(state.id);
   evictOldestCompletedIfOverCapacity();
+  logger.debug("store/putTournament", { id: state.id, players: state.players.length, rounds: state.rounds.length });
 }
 
 export function createTournament(config: TournamentConfig, organizerId: string): TournamentState {
@@ -89,6 +95,14 @@ export function createTournament(config: TournamentConfig, organizerId: string):
   tournaments.set(id, state);
   recordAccess(id);
   evictOldestCompletedIfOverCapacity();
+  logger.info("store/createTournament", {
+    id,
+    mode: config.mode,
+    variant: config.variant,
+    organizerId,
+    players: state.players.length,
+    rounds: state.rounds.length
+  });
   return state;
 }
 
@@ -102,6 +116,13 @@ export function submitScore(tournamentId: string, matchId: string, scoreA: numbe
   awardPoints(tournament.players, lookup.match, scoreA, scoreB);
   tournament.leaderboard = buildLeaderboard(tournament.players);
   touch(tournament);
+  logger.info("store/submitScore", {
+    tournamentId,
+    matchId,
+    scoreA,
+    scoreB,
+    version: tournament.version
+  });
   return tournament;
 }
 
@@ -114,6 +135,7 @@ export function renamePlayer(tournamentId: string, playerId: string, newName: st
   player.name = newName;
   tournament.leaderboard = buildLeaderboard(tournament.players);
   touch(tournament);
+  logger.info("store/renamePlayer", { tournamentId, playerId, newName });
   return tournament;
 }
 
@@ -121,6 +143,7 @@ export function renameTournament(tournamentId: string, newName: string): Tournam
   const tournament = requireTournament(tournamentId);
   tournament.config.name = newName;
   touch(tournament);
+  logger.info("store/renameTournament", { tournamentId, newName });
   return tournament;
 }
 
@@ -132,6 +155,7 @@ export function substitutePlayer(tournamentId: string, playerId: string, replace
   }
   player.name = replacementName;
   touch(tournament);
+  logger.info("store/substitutePlayer", { tournamentId, playerId, replacementName });
   return tournament;
 }
 
@@ -142,6 +166,7 @@ export function deleteTournament(tournamentId: string): void {
   }
   tournaments.delete(tournamentId);
   lastAccessed.delete(tournamentId);
+  logger.info("store/deleteTournament", { tournamentId });
 }
 
 export function adjustCourts(tournamentId: string, courts: number): TournamentState {
@@ -149,12 +174,18 @@ export function adjustCourts(tournamentId: string, courts: number): TournamentSt
   tournament.config.courts = courts;
   tournament.rounds = recalculateRemainingTournament(tournament.config, tournament.players, tournament.rounds);
   touch(tournament);
+  logger.info("store/adjustCourts", { tournamentId, courts, version: tournament.version });
   return tournament;
 }
 
 export function assertVersion(tournamentId: string, expectedVersion: number): void {
   const tournament = requireTournament(tournamentId);
   if (tournament.version !== expectedVersion) {
+    logger.warn("store/assertVersion mismatch", {
+      tournamentId,
+      expectedVersion,
+      actualVersion: tournament.version
+    });
     throw new Error("Version mismatch. Refresh tournament data.");
   }
 }

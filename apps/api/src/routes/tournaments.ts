@@ -33,6 +33,7 @@ import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../lib/auth.js";
 import { publishEvent } from "../realtime/events.js";
 import { broadcastToTournament } from "../realtime/socketHub.js";
+import { logger } from "../lib/logger.js";
 
 function buildLeaderboard(players: DomainPlayer[]): LeaderboardEntry[] {
   return [...players]
@@ -120,7 +121,9 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       },
       orderBy: { createdAt: "desc" }
     });
-    return { data: rows.map(mapDbTournamentToState) };
+    const data = rows.map(mapDbTournamentToState);
+    request.log.info({ count: data.length }, "GET /tournaments");
+    return { data };
   });
 
   server.get("/tournaments/:id", async (request, reply) => {
@@ -138,8 +141,10 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     });
     if (!row) {
       reply.status(404);
+      request.log.warn({ id: params.id }, "GET /tournaments/:id not found");
       return { message: "Tournament not found." };
     }
+    request.log.info({ id: params.id }, "GET /tournaments/:id");
     return { data: mapDbTournamentToState(row) };
   });
 
@@ -158,8 +163,10 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     });
     if (!row) {
       reply.status(404);
+      request.log.warn({ token: params.token }, "GET /public/:token not found");
       return { message: "Public tournament not found." };
     }
+    request.log.info({ token: params.token }, "GET /public/:token");
     return { data: mapDbTournamentToState(row) };
   });
 
@@ -226,6 +233,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     const event = { type: "TOURNAMENT_CREATED" as const, tournamentId: tournament.id, payload: tournament };
     await publishEvent(server.redis, event);
     broadcastToTournament(server.subscriptions, tournament.id, event);
+    request.log.info({ id: tournament.id }, "POST /tournaments created");
     return { data: tournament };
   });
 
@@ -244,6 +252,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       distinct: ["name"],
       orderBy: { name: "asc" }
     });
+    request.log.debug({ count: rows.length }, "GET /players/suggestions");
     return { names: rows.map((row: { name: string }) => row.name) };
   });
 
@@ -261,6 +270,13 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       const event = { type: "SCORE_SUBMITTED" as const, tournamentId: tournament.id, payload: tournament };
       await publishEvent(server.redis, event);
       broadcastToTournament(server.subscriptions, tournament.id, event);
+      request.log.info(
+        {
+          tournamentId: tournament.id,
+          matchId: parsed.data.matchId
+        },
+        "POST /tournaments/score"
+      );
       return { data: tournament };
     } catch (error) {
       reply.status(409);
@@ -281,6 +297,13 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       const event = { type: "PLAYER_RENAMED" as const, tournamentId: tournament.id, payload: tournament };
       await publishEvent(server.redis, event);
       broadcastToTournament(server.subscriptions, tournament.id, event);
+      request.log.info(
+        {
+          tournamentId: tournament.id,
+          playerId: parsed.data.playerId
+        },
+        "POST /tournaments/rename-player"
+      );
       return { data: tournament };
     } catch (error) {
       reply.status(404);
@@ -301,6 +324,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       const event = { type: "TOURNAMENT_RENAMED" as const, tournamentId: tournament.id, payload: tournament };
       await publishEvent(server.redis, event);
       broadcastToTournament(server.subscriptions, tournament.id, event);
+      request.log.info({ tournamentId: tournament.id }, "POST /tournaments/rename");
       return { data: tournament };
     } catch (error) {
       reply.status(404);
@@ -322,6 +346,13 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       const event = { type: "COURTS_ADJUSTED" as const, tournamentId: tournament.id, payload: tournament };
       await publishEvent(server.redis, event);
       broadcastToTournament(server.subscriptions, tournament.id, event);
+      request.log.info(
+        {
+          tournamentId: tournament.id,
+          courts: parsed.data.courts
+        },
+        "POST /tournaments/adjust-courts"
+      );
       return { data: tournament };
     } catch (error) {
       reply.status(409);
@@ -342,6 +373,13 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       const event = { type: "PLAYER_SUBSTITUTED" as const, tournamentId: tournament.id, payload: tournament };
       await publishEvent(server.redis, event);
       broadcastToTournament(server.subscriptions, tournament.id, event);
+      request.log.info(
+        {
+          tournamentId: tournament.id,
+          playerId: parsed.data.playerId
+        },
+        "POST /tournaments/substitute-player"
+      );
       return { data: tournament };
     } catch (error) {
       reply.status(404);
@@ -364,6 +402,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       const event = { type: "TOURNAMENT_DELETED" as const, tournamentId: params.id, payload: { id: params.id } };
       await publishEvent(server.redis, event);
       broadcastToTournament(server.subscriptions, params.id, event);
+      request.log.info({ id: params.id }, "DELETE /tournaments/:id");
       return { ok: true };
     } catch (error) {
       reply.status(404);

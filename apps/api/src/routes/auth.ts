@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma.js";
 import type { AuthUser } from "../lib/authTypes.js";
 import { requireAuth } from "../lib/auth.js";
+import { logger } from "../lib/logger.js";
 
 interface GoogleAuthBody {
   idToken: string;
@@ -24,12 +25,18 @@ export async function registerAuthRoutes(server: FastifyInstance): Promise<void>
     }> => {
       if (!googleClient || !googleClientId || !jwtSecret) {
         reply.status(500);
+        logger.error("POST /auth/google: Google auth not configured", {
+          hasClient: Boolean(googleClient),
+          hasClientId: Boolean(googleClientId),
+          hasJwtSecret: Boolean(jwtSecret)
+        });
         throw new Error("Google auth is not configured on the server.");
       }
 
       const { idToken } = request.body;
       if (!idToken) {
         reply.status(400);
+        logger.warn("POST /auth/google: missing idToken");
         throw new Error("Missing idToken.");
       }
 
@@ -40,6 +47,7 @@ export async function registerAuthRoutes(server: FastifyInstance): Promise<void>
       const payload = ticket.getPayload();
       if (!payload || !payload.sub || !payload.email) {
         reply.status(401);
+        logger.warn("POST /auth/google: invalid Google token payload");
         throw new Error("Invalid Google token.");
       }
 
@@ -75,6 +83,7 @@ export async function registerAuthRoutes(server: FastifyInstance): Promise<void>
         }
       );
 
+      logger.info("POST /auth/google: user authenticated", { userId: user.id, email: user.email });
       return {
         token,
         user: {
@@ -93,6 +102,7 @@ export async function registerAuthRoutes(server: FastifyInstance): Promise<void>
     async (request: FastifyRequest, reply: FastifyReply): Promise<{ user: AuthUser & { avatarUrl?: string } }> => {
       if (!request.user) {
         reply.status(401);
+        logger.warn("GET /auth/me: no user on request");
         throw new Error("Unauthenticated.");
       }
       const userRecord = await prisma.user.findUnique({
@@ -100,6 +110,7 @@ export async function registerAuthRoutes(server: FastifyInstance): Promise<void>
       });
       if (!userRecord) {
         reply.status(404);
+        logger.warn("GET /auth/me: user not found", { userId: request.user.id });
         throw new Error("User not found.");
       }
       return {

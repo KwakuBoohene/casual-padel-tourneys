@@ -1,5 +1,7 @@
 import type { Redis } from "ioredis";
 
+import { logger } from "../lib/logger.js";
+
 const channelName = "tournament:events";
 
 export interface TournamentEvent<T = unknown> {
@@ -17,8 +19,10 @@ export interface TournamentEvent<T = unknown> {
 
 export async function publishEvent(redis: Redis | undefined, event: TournamentEvent): Promise<void> {
   if (!redis) {
+    logger.debug("events/publishEvent skipped (no redis)", { type: event.type, tournamentId: event.tournamentId });
     return;
   }
+  logger.debug("events/publishEvent", { type: event.type, tournamentId: event.tournamentId });
   await redis.publish(channelName, JSON.stringify(event));
 }
 

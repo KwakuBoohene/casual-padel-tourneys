@@ -723,3 +723,186 @@ Provide complete code for review
 Stop after the feature is implemented
 
 Wait for human approval before continuing
+
+1. General Principles
+
+Prefer small, modular files over large monolithic files.
+
+Follow single responsibility principle for components, hooks, services, and API routes.
+
+Avoid mixing UI, business logic, and network calls in the same file.
+
+Always favor composition over large components.
+
+Prefer typed interfaces and schemas for all data structures.
+
+React Native (TypeScript) Rules
+2. File Length Limits
+
+The agent must enforce strict file size limits.
+
+File Type	Maximum Lines
+Screen components	250 lines
+UI components	150 lines
+Hooks	120 lines
+Utility files	150 lines
+
+If a file exceeds these limits, the agent must refactor it by:
+
+Extracting components
+
+Extracting hooks
+
+Extracting helper functions
+
+Extracting styles
+
+3. Screen Architecture
+
+Every screen should follow this structure:
+
+screens/
+   ProfileScreen/
+      ProfileScreen.tsx
+      components/
+         ProfileHeader.tsx
+         ProfileStats.tsx
+      hooks/
+         useProfileData.ts
+      styles.ts
+
+Rules:
+
+Screens orchestrate UI only
+
+No heavy logic in screens
+
+Network calls must be inside hooks or services
+
+4. Component Design Rules
+
+Components must follow:
+
+Max 150 lines
+
+Must be pure UI whenever possible
+
+No API calls inside components
+
+Props must be fully typed
+
+Example:
+
+interface UserCardProps {
+  name: string
+  avatarUrl: string
+  onPress: () => void
+}
+5. Hooks for Logic
+
+Business logic belongs in custom hooks.
+
+Example:
+
+hooks/
+   useUserProfile.ts
+   useAuth.ts
+   useMessages.ts
+
+Hooks should manage:
+
+API calls
+
+state
+
+loading states
+
+caching
+
+transformations
+
+Example pattern:
+
+export function useProfile(userId: string) {
+  const [profile, setProfile] = useState<User | null>(null)
+
+  useEffect(() => {
+    fetchProfile(userId).then(setProfile)
+  }, [userId])
+
+  return { profile }
+}
+6. Styles Must Be Extracted
+
+Do not put large styles inside components.
+
+If styles exceed 20 lines, move them to:
+
+ComponentName.styles.ts
+
+Example:
+
+UserCard.tsx
+UserCard.styles.ts
+7. Avoid Nested JSX
+
+If JSX nesting goes deeper than 3 levels, extract a component.
+
+Bad:
+
+<View>
+  <View>
+    <View>
+      <Text />
+    </View>
+  </View>
+</View>
+
+Good:
+
+<View>
+  <UserContent />
+</View>
+
+
+Refactoring Rules (Very Important)
+
+The agent must refactor when detecting:
+
+If a file exceeds 250 lines
+
+Break into:
+
+sub components
+
+hooks
+
+utilities
+
+If a component has more than 5 props
+
+Group them into a typed object.
+
+If a screen contains:
+
+API logic
+
+heavy state
+
+large effects
+
+Extract a hook.
+
+Absolute Rules
+
+The agent must never allow:
+
+500+ line React Native files
+
+API calls in UI components
+
+Business logic inside screens
+
+untyped props
+
+deep JSX nesting

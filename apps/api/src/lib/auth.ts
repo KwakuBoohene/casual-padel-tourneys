@@ -36,5 +36,4 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply):
   }
 }
 
-// Backwards-compatible alias for older code paths.
-export const requireOrganizerAuth = requireAuth;
+

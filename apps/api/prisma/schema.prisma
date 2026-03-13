@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum TournamentMode {
@@ -17,21 +18,34 @@ enum TournamentVariant {
   TEAM
 }
 
+model User {
+  id         String       @id @default(cuid())
+  email      String       @unique
+  name       String
+  avatarUrl  String?
+  googleId   String       @unique
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  tournaments Tournament[]
+}
+
 model Tournament {
-  id                 String   @id @default(cuid())
-  name               String
-  mode               TournamentMode
-  variant            TournamentVariant
-  courts             Int
-  pointsPerMatch     Int
-  targetGamesPerPlayer Int?
+  id                    String   @id @default(cuid())
+  name                  String
+  mode                  TournamentMode
+  variant               TournamentVariant
+  courts                Int
+  pointsPerMatch        Int
+  targetGamesPerPlayer  Int?
   tournamentTimeMinutes Int?
-  publicToken        String   @unique
-  version            Int      @default(0)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  players            Player[]
-  rounds             Round[]
+  publicToken           String   @unique
+  version               Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  organizerId           String?
+  organizer             User?    @relation(fields: [organizerId], references: [id])
+  players               Player[]
+  rounds                Round[]
 }
 
 model Player {

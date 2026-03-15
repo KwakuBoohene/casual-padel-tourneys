@@ -14,5 +14,5 @@ RUN npm run build --workspace @padel/shared && npm run build --workspace @padel/
 FROM node:22-alpine
 WORKDIR /app
 COPY --from=build /app ./
-EXPOSE 3000
+EXPOSE 3005
 CMD ["npm", "run", "start", "--workspace", "@padel/web"]

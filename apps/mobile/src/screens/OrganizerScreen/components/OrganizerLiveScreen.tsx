@@ -1,11 +1,14 @@
-import type { LiveTournamentState } from "../../organizer/types";
-import { LiveTournamentView } from "../../organizer/LiveTournamentView";
+import type { LiveTournamentState } from "../types";
+import { LiveTournamentView } from "./LiveTournamentView";
 
 interface OrganizerLiveScreenProps {
   tournament: LiveTournamentState;
   viewerBaseUrl: string;
   errorText: string;
   activeRound: LiveTournamentState["rounds"][number] | null;
+  displayedRound: LiveTournamentState["rounds"][number] | null;
+  sortedRounds: LiveTournamentState["rounds"];
+  selectedRoundIndex: number;
   isLastRound: boolean;
   isTournamentCompleted: boolean;
   isEditingCompletedTournament: boolean;
@@ -44,7 +47,9 @@ interface OrganizerLiveScreenProps {
   onSelectScoreFromPicker: (value: number) => void;
   onSubmitFocusHandled: () => void;
   onUpdateScoreInput: (matchId: string, side: "scoreA" | "scoreB", value: string) => void;
-  onSubmitMatchScore: (matchId: string) => void;
+  onPrevRound: () => void;
+  onNextRound: () => void;
+  onSubmitRoundScores: () => void;
 }
 
 export function OrganizerLiveScreen(props: OrganizerLiveScreenProps) {
@@ -54,6 +59,9 @@ export function OrganizerLiveScreen(props: OrganizerLiveScreenProps) {
       viewerBaseUrl={props.viewerBaseUrl}
       errorText={props.errorText}
       activeRound={props.activeRound}
+      displayedRound={props.displayedRound}
+      sortedRounds={props.sortedRounds}
+      selectedRoundIndex={props.selectedRoundIndex}
       isLastRound={props.isLastRound}
       isTournamentCompleted={props.isTournamentCompleted}
       isEditingCompletedTournament={props.isEditingCompletedTournament}
@@ -92,7 +100,9 @@ export function OrganizerLiveScreen(props: OrganizerLiveScreenProps) {
       onSelectScoreFromPicker={props.onSelectScoreFromPicker}
       onSubmitFocusHandled={props.onSubmitFocusHandled}
       onUpdateScoreInput={props.onUpdateScoreInput}
-      onSubmitMatchScore={props.onSubmitMatchScore}
+      onPrevRound={props.onPrevRound}
+      onNextRound={props.onNextRound}
+      onSubmitRoundScores={props.onSubmitRoundScores}
     />
   );
 }

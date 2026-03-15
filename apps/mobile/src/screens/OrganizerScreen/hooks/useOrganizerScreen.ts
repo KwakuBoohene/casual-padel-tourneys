@@ -45,6 +45,7 @@ export function useOrganizerScreen() {
     null
   );
   const [focusSubmitMatchId, setFocusSubmitMatchId] = useState<string | null>(null);
+  const [selectedRoundIndex, setSelectedRoundIndex] = useState(0);
   const [proposedCourts, setProposedCourts] = useState(2);
   const [estimatorMode, setEstimatorMode] = useState<TournamentMode>("AMERICANO");
   const [estimatorVariant, setEstimatorVariant] = useState<TournamentVariant>("CLASSIC");
@@ -116,16 +117,32 @@ export function useOrganizerScreen() {
     return map;
   }, [liveTournament?.players]);
 
+  const sortedRounds = useMemo(() => {
+    if (!liveTournament) return [];
+    return [...liveTournament.rounds].sort((a, b) => a.roundNumber - b.roundNumber);
+  }, [liveTournament]);
+
   const activeRound = useMemo(() => {
     if (!liveTournament) {
       return null;
     }
     return (
       liveTournament.rounds.find((round) => !round.isLocked) ??
-      [...liveTournament.rounds].sort((a, b) => b.roundNumber - a.roundNumber)[0] ??
+      sortedRounds[sortedRounds.length - 1] ??
       null
     );
-  }, [liveTournament]);
+  }, [liveTournament, sortedRounds]);
+
+  const displayedRound = useMemo(() => sortedRounds[selectedRoundIndex] ?? null, [sortedRounds, selectedRoundIndex]);
+
+  useEffect(() => {
+    if (!liveTournament || !activeRound) return;
+    const idx = sortedRounds.findIndex((r) => r.id === activeRound.id);
+    if (idx >= 0) setSelectedRoundIndex(idx);
+  }, [liveTournament?.id, activeRound?.id, sortedRounds]);
+
+  const goToPrevRound = () => setSelectedRoundIndex((i) => Math.max(0, i - 1));
+  const goToNextRound = () => setSelectedRoundIndex((i) => Math.min(sortedRounds.length - 1, i + 1));
 
   const isTournamentCompleted = useMemo(() => {
     if (!liveTournament) {
@@ -359,6 +376,42 @@ export function useOrganizerScreen() {
       setLiveTournamentNameDraft(response.data.config.name);
     } catch (error) {
       setErrorText((error as Error).message);
+    }
+  };
+
+  const submitRoundScores = async () => {
+    if (!liveTournament || !displayedRound) return;
+    const matchesWithScores = displayedRound.matches.filter((match) => {
+      const raw = scoreInputs[match.id];
+      const scoreA = Number(raw?.scoreA ?? "");
+      const scoreB = Number(raw?.scoreB ?? "");
+      return Number.isFinite(scoreA) && Number.isFinite(scoreB);
+    });
+    if (matchesWithScores.length === 0) {
+      setErrorText("Enter valid numeric scores for at least one match in this round.");
+      return;
+    }
+    let version = liveTournament.version;
+    setErrorText("");
+    for (const match of matchesWithScores) {
+      const raw = scoreInputs[match.id]!;
+      const scoreA = Number(raw.scoreA);
+      const scoreB = Number(raw.scoreB);
+      try {
+        const response = await apiPost<TournamentResponse>("/tournaments/score", {
+          tournamentId: liveTournament.id,
+          matchId: match.id,
+          scoreA,
+          scoreB,
+          expectedVersion: version
+        });
+        setLiveTournament(response.data);
+        setLiveTournamentNameDraft(response.data.config.name);
+        version = response.data.version;
+      } catch (error) {
+        setErrorText((error as Error).message);
+        return;
+      }
     }
   };
 
@@ -697,6 +750,11 @@ export function useOrganizerScreen() {
     setLiveTournamentNameDraft,
     saveTournamentName,
     activeRound,
+    displayedRound,
+    sortedRounds,
+    selectedRoundIndex,
+    goToPrevRound,
+    goToNextRound,
     isLastRound,
     isTournamentCompleted,
     isEditingCompletedTournament,
@@ -721,6 +779,7 @@ export function useOrganizerScreen() {
     scoreInputs,
     updateScoreInput,
     submitMatchScore,
+    submitRoundScores,
     pickScoreFromSheet,
     scorePicker,
     setScorePicker,

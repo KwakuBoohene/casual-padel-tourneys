@@ -32,16 +32,19 @@ export function recalculateRemainingTournament(
 }
 
 function buildRounds(config: TournamentConfig, players: Player[]): Round[] {
-  const estimate = estimateTournament(config);
   const teammateMatrix = new Map<string, number>();
   const opponentMatrix = new Map<string, number>();
   const coPlayerMatrix = new Map<string, number>();
   const rounds: Round[] = [];
 
-  for (let roundNumber = 1; roundNumber <= estimate.rounds; roundNumber += 1) {
+  const totalRounds = getTotalRounds(config);
+  const courtsPerRound = getCourtsPerRound(config, totalRounds);
+
+  for (let roundNumber = 1; roundNumber <= totalRounds; roundNumber += 1) {
+    const courtsThisRound = courtsPerRound[roundNumber - 1] ?? config.courts;
     const round = buildRound({
       roundNumber,
-      courts: config.courts,
+      courts: courtsThisRound,
       variant: config.variant,
       players,
       teammateMatrix,
@@ -61,4 +64,30 @@ function buildRounds(config: TournamentConfig, players: Player[]): Round[] {
   }
 
   return rounds;
+}
+
+function getTotalRounds(config: TournamentConfig): number {
+  if (config.schedulingMode === "TARGET_GAMES") {
+    const totalMatchesNeeded = Math.ceil(
+      (config.players.length * (config.targetGamesPerPlayer ?? 4)) / 4
+    );
+    return Math.max(1, Math.ceil(totalMatchesNeeded / config.courts));
+  }
+  return estimateTournament(config).rounds;
+}
+
+function getCourtsPerRound(config: TournamentConfig, totalRounds: number): number[] {
+  if (config.schedulingMode !== "TARGET_GAMES") {
+    return Array(totalRounds).fill(config.courts);
+  }
+  const totalMatchesNeeded = Math.ceil(
+    (config.players.length * (config.targetGamesPerPlayer ?? 4)) / 4
+  );
+  const result: number[] = [];
+  for (let r = 0; r < totalRounds; r++) {
+    const matchesSoFar = r * config.courts;
+    const matchesLeft = totalMatchesNeeded - matchesSoFar;
+    result.push(r < totalRounds - 1 ? config.courts : Math.max(1, Math.min(config.courts, matchesLeft)));
+  }
+  return result;
 }

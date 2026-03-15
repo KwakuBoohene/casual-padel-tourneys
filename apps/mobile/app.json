@@ -5,6 +5,18 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "padel",
-    "platforms": ["ios", "android", "web"]
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "android": {
+      "package": "com.anonymous.padelorganizer"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3aec3f05-5da6-413d-8d8c-d433df81a3a4"
+      }
+    }
   }
 }

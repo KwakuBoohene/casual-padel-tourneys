@@ -1,6 +1,8 @@
 import { TournamentViewer } from "./TournamentViewer";
 
-const apiBaseUrl = process.env.PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+const defaultApi = "http://localhost:3004";
+const internalApiBaseUrl = process.env.INTERNAL_API_BASE_URL ?? process.env.PUBLIC_API_BASE_URL ?? defaultApi;
+const publicApiBaseUrl = process.env.PUBLIC_API_BASE_URL ?? defaultApi;
 
 interface TournamentViewModel {
   id: string;
@@ -23,7 +25,7 @@ interface TournamentViewModel {
 }
 
 async function getTournament(token: string) {
-  const response = await fetch(`${apiBaseUrl}/public/${token}`, { cache: "no-store" });
+  const response = await fetch(`${internalApiBaseUrl}/public/${token}`, { cache: "no-store" });
   if (!response.ok) {
     return null;
   }
@@ -44,5 +46,5 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
       </main>
     );
   }
-  return <TournamentViewer initial={tournament} apiBaseUrl={apiBaseUrl} token={route.id} />;
+  return <TournamentViewer initial={tournament} apiBaseUrl={publicApiBaseUrl} token={route.id} />;
 }

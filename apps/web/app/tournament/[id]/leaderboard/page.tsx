@@ -1,6 +1,7 @@
 import Link from "next/link";
 
-const apiBaseUrl = process.env.PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+const defaultApi = "http://localhost:3004";
+const internalApiBaseUrl = process.env.INTERNAL_API_BASE_URL ?? process.env.PUBLIC_API_BASE_URL ?? defaultApi;
 
 interface TournamentViewModel {
   id: string;
@@ -24,7 +25,7 @@ interface TournamentViewModel {
 }
 
 async function getTournament(token: string) {
-  const response = await fetch(`${apiBaseUrl}/public/${token}`, { cache: "no-store" });
+  const response = await fetch(`${internalApiBaseUrl}/public/${token}`, { cache: "no-store" });
   if (!response.ok) {
     return null;
   }

@@ -36,6 +36,8 @@ export function OrganizerScreen() {
     allKnownPlayerNames,
     addPlayerInput,
     removePlayerInput,
+    selectSuggestion,
+    hasDuplicatePlayerNames,
     updatePlayerName,
     updatePlayerGender,
     courtsText,
@@ -112,6 +114,7 @@ export function OrganizerScreen() {
     refreshTournament,
     scoreInputs,
     updateScoreInput,
+    clearScoreForMatch,
     submitRoundScores,
     pickScoreFromSheet,
     scorePicker,
@@ -214,11 +217,13 @@ export function OrganizerScreen() {
         variant={variant}
         sanitizedPlayers={sanitizedPlayers}
         canContinue={canContinueFromPlayers}
+        hasDuplicateNames={hasDuplicatePlayerNames}
         allSuggestions={allKnownPlayerNames}
         onUpdatePlayer={updatePlayerName}
         onUpdateGender={updatePlayerGender}
         onRemovePlayer={removePlayerInput}
         onAddPlayer={addPlayerInput}
+        onSelectSuggestion={selectSuggestion}
         onBack={() => setStep("OPTIONS")}
         onNext={() => {
           const suggestedCourts = Math.max(1, Math.floor(sanitizedPlayers.length / 4) || 1);
@@ -287,7 +292,8 @@ export function OrganizerScreen() {
         }}
         onCloseScorePicker={() => setScorePicker(null)}
         onSelectScoreFromPicker={pickScoreFromSheet}
-    onSubmitFocusHandled={() => setFocusSubmitMatchId(null)}
+        onResetScoreForMatch={clearScoreForMatch}
+        onSubmitFocusHandled={() => setFocusSubmitMatchId(null)}
     onUpdateScoreInput={updateScoreInput}
     onPrevRound={goToPrevRound}
     onNextRound={goToNextRound}

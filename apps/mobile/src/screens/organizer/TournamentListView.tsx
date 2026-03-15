@@ -162,11 +162,26 @@ export function TournamentListView(props: TournamentListViewProps) {
                   <Text style={{ fontSize: 10, fontWeight: "700", color: colors.muted }}>COMPLETED</Text>
                 </View>
               </View>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
                 <Text style={{ fontSize: 12, color: colors.muted }}>Players: {tournament.players.length}</Text>
                 <Text style={{ fontSize: 12, color: colors.muted }}>
                   Updated: {new Date(tournament.updatedAt).toLocaleTimeString()}
                 </Text>
+              </View>
+              <View style={{ flexDirection: "row" }}>
+                <Pressable
+                  onPress={() => props.onOpenOptions(tournament.id)}
+                  style={{
+                    paddingVertical: spacing.sm,
+                    paddingHorizontal: spacing.lg,
+                    borderRadius: radius.md,
+                    backgroundColor: colors.surface,
+                    borderWidth: 1,
+                    borderColor: colors.border
+                  }}
+                >
+                  <Text style={{ color: colors.text, fontWeight: "600" }}>Options</Text>
+                </Pressable>
               </View>
             </Pressable>
           ))}

@@ -45,6 +45,7 @@ interface OrganizerLiveScreenProps {
   onOpenScorePicker: (matchId: string, side: "scoreA" | "scoreB") => void;
   onCloseScorePicker: () => void;
   onSelectScoreFromPicker: (value: number) => void;
+  onResetScoreForMatch: (matchId: string) => void;
   onSubmitFocusHandled: () => void;
   onUpdateScoreInput: (matchId: string, side: "scoreA" | "scoreB", value: string) => void;
   onPrevRound: () => void;
@@ -98,6 +99,7 @@ export function OrganizerLiveScreen(props: OrganizerLiveScreenProps) {
       onOpenScorePicker={props.onOpenScorePicker}
       onCloseScorePicker={props.onCloseScorePicker}
       onSelectScoreFromPicker={props.onSelectScoreFromPicker}
+      onResetScoreForMatch={props.onResetScoreForMatch}
       onSubmitFocusHandled={props.onSubmitFocusHandled}
       onUpdateScoreInput={props.onUpdateScoreInput}
       onPrevRound={props.onPrevRound}

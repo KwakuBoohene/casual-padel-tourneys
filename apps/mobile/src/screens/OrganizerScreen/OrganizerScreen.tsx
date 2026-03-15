@@ -85,6 +85,11 @@ export function OrganizerScreen() {
     setLiveTournamentNameDraft,
     saveTournamentName,
     activeRound,
+    displayedRound,
+    sortedRounds,
+    selectedRoundIndex,
+    goToPrevRound,
+    goToNextRound,
     isLastRound,
     isTournamentCompleted,
     isEditingCompletedTournament,
@@ -107,7 +112,7 @@ export function OrganizerScreen() {
     refreshTournament,
     scoreInputs,
     updateScoreInput,
-    submitMatchScore,
+    submitRoundScores,
     pickScoreFromSheet,
     scorePicker,
     setScorePicker,
@@ -230,8 +235,11 @@ export function OrganizerScreen() {
         tournament={liveTournament}
         viewerBaseUrl={viewerBaseUrl}
         errorText={errorText}
-        activeRound={activeRound}
-        isLastRound={isLastRound}
+    activeRound={activeRound}
+    displayedRound={displayedRound}
+    sortedRounds={sortedRounds}
+    selectedRoundIndex={selectedRoundIndex}
+    isLastRound={isLastRound}
         isTournamentCompleted={isTournamentCompleted}
         isEditingCompletedTournament={isEditingCompletedTournament}
         showLiveOptionsModal={showLiveOptionsModal}
@@ -279,10 +287,12 @@ export function OrganizerScreen() {
         }}
         onCloseScorePicker={() => setScorePicker(null)}
         onSelectScoreFromPicker={pickScoreFromSheet}
-        onSubmitFocusHandled={() => setFocusSubmitMatchId(null)}
-        onUpdateScoreInput={updateScoreInput}
-        onSubmitMatchScore={(matchId) => void submitMatchScore(matchId)}
-      />
+    onSubmitFocusHandled={() => setFocusSubmitMatchId(null)}
+    onUpdateScoreInput={updateScoreInput}
+    onPrevRound={goToPrevRound}
+    onNextRound={goToNextRound}
+    onSubmitRoundScores={() => void submitRoundScores()}
+  />
     );
   }
 

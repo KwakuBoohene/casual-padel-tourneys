@@ -99,15 +99,23 @@ export function useOrganizerScreen() {
   );
 
   const canContinueFromName = name.trim().length >= 2;
+  const hasDuplicatePlayerNames = useMemo(() => {
+    const filled = players.map((p) => p.trim()).filter(Boolean);
+    return new Set(filled.map((s) => s.toLowerCase())).size !== filled.length;
+  }, [players]);
+
   const canContinueFromPlayers = useMemo(() => {
     if (sanitizedPlayers.length < 4) {
+      return false;
+    }
+    if (hasDuplicatePlayerNames) {
       return false;
     }
     if (variant !== "MIXED") {
       return true;
     }
     return players.every((value, index) => value.trim().length === 0 || Boolean(playerGenders[index]));
-  }, [playerGenders, players, sanitizedPlayers.length, variant]);
+  }, [hasDuplicatePlayerNames, playerGenders, players, sanitizedPlayers.length, variant]);
 
   const playerNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -197,6 +205,22 @@ export function useOrganizerScreen() {
     setPlayerGenders((previous) => previous.filter((_, itemIndex) => itemIndex !== index));
   };
 
+  const selectSuggestion = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const emptyIndex = players.findIndex((p) => p.trim() === "");
+    if (emptyIndex >= 0) {
+      setPlayers((previous) => {
+        const next = [...previous];
+        next[emptyIndex] = trimmed;
+        return next;
+      });
+    } else {
+      setPlayers((previous) => [...previous, trimmed]);
+      setPlayerGenders((previous) => [...previous, undefined]);
+    }
+  };
+
   const updatePlayerName = (index: number, value: string) =>
     setPlayers((previous) => previous.map((item, itemIndex) => (itemIndex === index ? value : item)));
 
@@ -269,6 +293,10 @@ export function useOrganizerScreen() {
       }
       if (sanitizedPlayers.length < courts * 4) {
         setErrorText(`${courts} court${courts === 1 ? "" : "s"} require at least ${courts * 4} players.`);
+        return;
+      }
+      if (hasDuplicatePlayerNames) {
+        setErrorText("No two players can have the same name.");
         return;
       }
       const payload = {
@@ -424,6 +452,14 @@ export function useOrganizerScreen() {
         [side]: value
       }
     }));
+  };
+
+  const clearScoreForMatch = (matchId: string) => {
+    setScoreInputs((previous) => {
+      const next = { ...previous };
+      next[matchId] = { scoreA: "", scoreB: "" };
+      return next;
+    });
   };
 
   const getExistingMatch = (matchId: string) => {
@@ -695,9 +731,11 @@ export function useOrganizerScreen() {
     playerGenders,
     sanitizedPlayers,
     canContinueFromPlayers,
+    hasDuplicatePlayerNames,
     allKnownPlayerNames,
     addPlayerInput,
     removePlayerInput,
+    selectSuggestion,
     updatePlayerName,
     updatePlayerGender,
     courtsText,
@@ -778,7 +816,7 @@ export function useOrganizerScreen() {
     // scoring
     scoreInputs,
     updateScoreInput,
-    submitMatchScore,
+    clearScoreForMatch,
     submitRoundScores,
     pickScoreFromSheet,
     scorePicker,

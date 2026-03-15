@@ -48,6 +48,7 @@ interface LiveTournamentViewProps {
   onOpenScorePicker: (matchId: string, side: "scoreA" | "scoreB") => void;
   onCloseScorePicker: () => void;
   onSelectScoreFromPicker: (value: number) => void;
+  onResetScoreForMatch: (matchId: string) => void;
   onSubmitFocusHandled: () => void;
   onUpdateScoreInput: (matchId: string, side: "scoreA" | "scoreB", value: string) => void;
   onPrevRound: () => void;
@@ -633,9 +634,29 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
               ))}
             </ScrollView>
             <Pressable
-              onPress={props.onCloseScorePicker}
+              onPress={() => {
+                if (props.scorePicker) {
+                  props.onResetScoreForMatch(props.scorePicker.matchId);
+                  props.onCloseScorePicker();
+                }
+              }}
               style={{
                 marginTop: spacing.sm,
+                paddingVertical: spacing.sm,
+                borderRadius: radius.md,
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.border,
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+            >
+              <Text style={{ color: colors.text, fontWeight: "600" }}>Reset</Text>
+            </Pressable>
+            <Pressable
+              onPress={props.onCloseScorePicker}
+              style={{
+                marginTop: spacing.xs,
                 paddingVertical: spacing.sm,
                 borderRadius: radius.md,
                 backgroundColor: colors.primary,

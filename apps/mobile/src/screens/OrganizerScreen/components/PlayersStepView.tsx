@@ -9,11 +9,13 @@ interface PlayersStepViewProps {
   variant: TournamentVariant;
   sanitizedPlayers: string[];
   canContinue: boolean;
+  hasDuplicateNames: boolean;
   allSuggestions: string[];
   onUpdatePlayer: (index: number, value: string) => void;
   onUpdateGender: (index: number, value: PlayerGender) => void;
   onRemovePlayer: (index: number) => void;
   onAddPlayer: () => void;
+  onSelectSuggestion: (name: string) => void;
   onBack: () => void;
   onNext: () => void;
 }
@@ -97,6 +99,12 @@ export function PlayersStepView(props: PlayersStepViewProps) {
         <Text style={{ color: colors.text, fontWeight: "600" }}>Add Player</Text>
       </Pressable>
 
+      {props.hasDuplicateNames ? (
+        <Text style={{ color: colors.danger, fontSize: 12, marginTop: spacing.sm }}>
+          No two players can have the same name. Remove or change duplicates to continue.
+        </Text>
+      ) : null}
+
       <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.lg }}>
         <Pressable
           onPress={props.onBack}
@@ -139,21 +147,39 @@ export function PlayersStepView(props: PlayersStepViewProps) {
 
       {props.allSuggestions.length > 0 ? (
         <View style={{ marginTop: spacing.lg }}>
-          <Text style={{ fontSize: 12, color: colors.muted, marginBottom: spacing.xs }}>Suggestions</Text>
+          <Text style={{ fontSize: 12, color: colors.muted, marginBottom: spacing.xs }}>Suggestions (tap to add to next empty slot)</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.xs }}>
-            {props.allSuggestions.slice(0, 12).map((suggestion) => (
-              <View
-                key={suggestion}
-                style={{
-                  paddingHorizontal: spacing.sm,
-                  paddingVertical: spacing.xs,
-                  borderRadius: radius.pill,
-                  backgroundColor: colors.surfaceAlt
-                }}
-              >
-                <Text style={{ fontSize: 12, color: colors.muted }}>{suggestion}</Text>
-              </View>
-            ))}
+            {props.allSuggestions.slice(0, 12).map((suggestion) => {
+              const isUsed = props.players.some(
+                (p) => p.trim().toLowerCase() === suggestion.trim().toLowerCase()
+              );
+              return (
+                <Pressable
+                  key={suggestion}
+                  onPress={() => !isUsed && props.onSelectSuggestion(suggestion)}
+                  disabled={isUsed}
+                  style={{
+                    paddingHorizontal: spacing.sm,
+                    paddingVertical: spacing.xs,
+                    borderRadius: radius.pill,
+                    backgroundColor: isUsed ? colors.surfaceAlt : colors.surface,
+                    borderWidth: 1,
+                    borderColor: isUsed ? colors.border : colors.primary,
+                    opacity: isUsed ? 0.5 : 1
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: isUsed ? colors.muted : colors.text,
+                      fontWeight: isUsed ? "400" : "600"
+                    }}
+                  >
+                    {suggestion}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
       ) : null}

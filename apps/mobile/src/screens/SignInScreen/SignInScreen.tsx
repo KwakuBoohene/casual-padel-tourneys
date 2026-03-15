@@ -1,3 +1,4 @@
+import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect } from "react";
@@ -8,13 +9,22 @@ import { logger } from "../../logger";
 
 WebBrowser.maybeCompleteAuthSession();
 
+/**
+ * Must match "scheme" in app.json.
+ * Using a custom scheme makes the redirect URI e.g. padel:// (dev build), which Google OAuth allows.
+ * Add the exact redirect URI in Google Cloud Console: APIs & Services → Credentials → your OAuth client → Authorized redirect URIs.
+ */
+const APP_SCHEME = "padel";
+
 interface SignInScreenProps {
   onSignedIn: (params: { token: string; user: { id: string; name?: string; email: string; avatarUrl?: string } }) => void;
 }
 
 export function SignInScreen(props: SignInScreenProps) {
+  const redirectUri = AuthSession.makeRedirectUri({ scheme: APP_SCHEME });
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID
+    clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
+    redirectUri
   });
 
   useEffect(() => {

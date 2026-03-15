@@ -9,6 +9,7 @@
     "build:ios": "eas build --platform ios --profile preview",
     "build:android": "eas build --platform android --profile preview",  
     "build:web": "eas build --platform web --profile preview",
+    "export:web": "expo export --platform web",
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test"
@@ -19,8 +20,8 @@
     "expo": "^54.0.17",
     "expo-auth-session": "~5.5.1",
     "expo-secure-store": "~13.0.2",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
     "react-native": "^0.81.5",
     "react-native-web": "^0.21.2"
   },

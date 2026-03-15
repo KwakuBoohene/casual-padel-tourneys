@@ -4,7 +4,7 @@ services:
       context: ..
       dockerfile: apps/api/Dockerfile
     env_file:
-      - ../.env
+      - ./.env
     depends_on:
       - db
       - redis
@@ -16,19 +16,30 @@ services:
       context: ..
       dockerfile: apps/web/Dockerfile
     env_file:
-      - ../.env
+      - ./.env
     depends_on:
       - api
     ports:
       - "3000:3000"
 
+  mobile:
+    build:
+      context: ..
+      dockerfile: apps/mobile/Dockerfile
+    env_file:
+      - ../apps/mobile/.env
+    depends_on:
+      - api
+    ports:
+      - "8081:8081"
+
   db:
     image: postgres:16
     restart: unless-stopped
     environment:
-      POSTGRES_DB: padel
-      POSTGRES_USER: padel
-      POSTGRES_PASSWORD: padel
+      POSTGRES_DB: '${POSTGRES_DB}'
+      POSTGRES_USER: '${POSTGRES_USER}'
+      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD}'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:

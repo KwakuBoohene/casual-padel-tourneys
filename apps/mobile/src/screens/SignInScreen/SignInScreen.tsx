@@ -158,7 +158,7 @@ export function SignInScreen(props: SignInScreenProps) {
       }}
     >
       <View style={{ alignItems: "center", gap: spacing.sm }}>
-        <Text style={[typography.title, { color: colors.text }]}>Padel Organizer</Text>
+        <Text style={[typography.title, { color: colors.text }]}>Casual Padel Tourneys</Text>
         <Text style={{ color: colors.muted, fontSize: 14 }}>Sign in to manage your tournaments.</Text>
       </View>
       <Pressable

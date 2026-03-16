@@ -26,13 +26,15 @@ enum SchedulingMode {
 }
 
 model User {
-  id         String       @id @default(cuid())
-  email      String       @unique
-  name       String
-  avatarUrl  String?
-  googleId   String       @unique
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+  id          String       @id @default(cuid())
+  email       String       @unique
+  name        String
+  avatarUrl   String?
+  googleId    String?      @unique
+  guestId     String?      @unique
+  isGuest     Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   tournaments Tournament[]
 }
 

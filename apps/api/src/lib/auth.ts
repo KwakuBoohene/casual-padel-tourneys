@@ -30,7 +30,7 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply):
 
   const token = header.slice("bearer ".length);
   try {
-    const payload = jwt.verify(token, secret) as { sub?: string; email?: string; name?: string };
+    const payload = jwt.verify(token, secret) as { sub?: string; email?: string; name?: string; isGuest?: boolean };
     if (!payload.sub || !payload.email) {
       reply.status(401);
       logger.warn("requireAuth: token missing sub/email", {
@@ -39,7 +39,7 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply):
       });
       throw new Error("Invalid token payload.");
     }
-    request.user = { id: payload.sub, email: payload.email, name: payload.name };
+    request.user = { id: payload.sub, email: payload.email, name: payload.name, isGuest: payload.isGuest };
   } catch (error) {
     reply.status(401);
     logger.warn("requireAuth: token verification failed", {

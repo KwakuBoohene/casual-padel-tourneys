@@ -3,12 +3,15 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { colors, radius, spacing, typography } from "../../theme";
 
 interface ProfileScreenProps {
-  user: { id: string; name?: string; email: string; avatarUrl?: string };
+  user: { id: string; name?: string; email: string; avatarUrl?: string; isGuest?: boolean };
   onBack: () => void;
   onSignOut: () => void;
 }
 
 export function ProfileScreen(props: ProfileScreenProps) {
+  const displayInitial = (props.user.name ?? "G")[0]?.toUpperCase();
+  const isGuest = props.user.isGuest === true;
+
   return (
     <ScrollView
       contentContainerStyle={{
@@ -56,12 +59,30 @@ export function ProfileScreen(props: ProfileScreenProps) {
             }}
           >
             <Text style={{ color: colors.primary, fontWeight: "700", fontSize: 20 }}>
-              {(props.user.name ?? props.user.email)[0]?.toUpperCase()}
+              {displayInitial}
             </Text>
           </View>
-          <View>
-            <Text style={{ color: colors.text, fontWeight: "700", fontSize: 18 }}>{props.user.name ?? "Organizer"}</Text>
-            <Text style={{ color: colors.muted, fontSize: 12 }}>{props.user.email}</Text>
+          <View style={{ gap: 2 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
+              <Text style={{ color: colors.text, fontWeight: "700", fontSize: 18 }}>{props.user.name ?? "Organizer"}</Text>
+              {isGuest ? (
+                <View
+                  style={{
+                    backgroundColor: colors.surfaceAlt,
+                    borderRadius: radius.sm,
+                    paddingVertical: 2,
+                    paddingHorizontal: 6,
+                    borderWidth: 1,
+                    borderColor: colors.border
+                  }}
+                >
+                  <Text style={{ color: colors.muted, fontSize: 10, fontWeight: "600" }}>GUEST</Text>
+                </View>
+              ) : null}
+            </View>
+            {!isGuest ? (
+              <Text style={{ color: colors.muted, fontSize: 12 }}>{props.user.email}</Text>
+            ) : null}
           </View>
         </View>
       </View>

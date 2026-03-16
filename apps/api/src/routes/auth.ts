@@ -11,6 +11,10 @@ interface GoogleAuthBody {
   idToken: string;
 }
 
+interface GuestAuthBody {
+  guestId: string;
+}
+
 function getGoogleAudiences(): string[] {
   const configuredAudiences = [
     process.env.GOOGLE_ANDROID_CLIENT_ID,
@@ -91,7 +95,8 @@ export async function registerAuthRoutes(server: FastifyInstance): Promise<void>
         {
           sub: user.id,
           email: user.email,
-          name: user.name
+          name: user.name,
+          isGuest: false
         },
         jwtSecret,
         {
@@ -106,7 +111,73 @@ export async function registerAuthRoutes(server: FastifyInstance): Promise<void>
           id: user.id,
           email: user.email,
           name: user.name,
-          avatarUrl: user.avatarUrl ?? undefined
+          avatarUrl: user.avatarUrl ?? undefined,
+          isGuest: false
+        }
+      };
+    }
+  );
+
+  server.post(
+    "/auth/guest",
+    async (request: FastifyRequest<{ Body: GuestAuthBody }>, reply: FastifyReply): Promise<{
+      token: string;
+      user: AuthUser & { avatarUrl?: string };
+    }> => {
+      if (!jwtSecret) {
+        reply.status(500);
+        logger.error("POST /auth/guest: JWT_SECRET missing");
+        throw new Error("JWT_SECRET is not configured.");
+      }
+
+      const { guestId } = request.body;
+      if (!guestId || typeof guestId !== "string" || guestId.trim().length === 0) {
+        reply.status(400);
+        logger.warn("POST /auth/guest: missing guestId");
+        throw new Error("Missing guestId.");
+      }
+      if (!/^[a-zA-Z0-9_-]{8,128}$/.test(guestId)) {
+        reply.status(400);
+        logger.warn("POST /auth/guest: invalid guestId format");
+        throw new Error("Invalid guestId format.");
+      }
+
+      const guestEmail = `guest-${guestId}@padel.local`;
+
+      let user = await prisma.user.findUnique({ where: { guestId } });
+      if (!user) {
+        const suffix = String(Math.floor(1000 + Math.random() * 9000));
+        user = await prisma.user.create({
+          data: {
+            guestId,
+            email: guestEmail,
+            name: `Guest ${suffix}`,
+            isGuest: true
+          }
+        });
+        logger.info("POST /auth/guest: new guest created", { userId: user.id });
+      } else {
+        logger.info("POST /auth/guest: returning guest authenticated", { userId: user.id });
+      }
+
+      const token = jwt.sign(
+        {
+          sub: user.id,
+          email: user.email,
+          name: user.name,
+          isGuest: true
+        },
+        jwtSecret,
+        { expiresIn: "7d" }
+      );
+
+      return {
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          isGuest: true
         }
       };
     }
@@ -134,7 +205,8 @@ export async function registerAuthRoutes(server: FastifyInstance): Promise<void>
           id: userRecord.id,
           email: userRecord.email,
           name: userRecord.name,
-          avatarUrl: userRecord.avatarUrl ?? undefined
+          avatarUrl: userRecord.avatarUrl ?? undefined,
+          isGuest: userRecord.isGuest
         }
       };
     }

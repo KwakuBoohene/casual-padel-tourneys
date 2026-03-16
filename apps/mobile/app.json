@@ -4,6 +4,7 @@
     "slug": "padel-organizer",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon2.png",
     "scheme": "padel",
     "platforms": [
       "ios",

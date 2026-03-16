@@ -22,17 +22,22 @@ interface SignInScreenProps {
 
 export function SignInScreen(props: SignInScreenProps) {
   const redirectUri = AuthSession.makeRedirectUri({ scheme: APP_SCHEME });
+  const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
+  const googleAndroidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
+    webClientId: googleWebClientId,
+    androidClientId: googleAndroidClientId,
     redirectUri
   });
 
   useEffect(() => {
     logger.debug("SignInScreen: auth request initialised", {
       hasRequest: Boolean(request),
-      redirectUri: request?.redirectUri
+      redirectUri: request?.redirectUri,
+      hasGoogleWebClientId: Boolean(googleWebClientId),
+      hasGoogleAndroidClientId: Boolean(googleAndroidClientId)
     });
-  }, [request]);
+  }, [googleAndroidClientId, googleWebClientId, request]);
 
   useEffect(() => {
     if (response?.type === "success" && response.params.id_token) {

@@ -11,11 +11,27 @@ interface GoogleAuthBody {
   idToken: string;
 }
 
+function getGoogleAudiences(): string[] {
+  const configuredAudiences = [
+    process.env.GOOGLE_ANDROID_CLIENT_ID,
+    process.env.GOOGLE_WEB_CLIENT_ID
+  ];
+
+  return Array.from(
+    new Set(
+      configuredAudiences
+        .flatMap((value) => value?.split(",") ?? [])
+        .map((value) => value.trim())
+        .filter(Boolean)
+    )
+  );
+}
+
 export async function registerAuthRoutes(server: FastifyInstance): Promise<void> {
-  const googleClientId = process.env.GOOGLE_CLIENT_ID;
+  const googleAudiences = getGoogleAudiences();
   const jwtSecret = process.env.JWT_SECRET;
 
-  const googleClient = googleClientId ? new OAuth2Client(googleClientId) : null;
+  const googleClient = googleAudiences.length > 0 ? new OAuth2Client() : null;
 
   server.post(
     "/auth/google",
@@ -23,11 +39,11 @@ export async function registerAuthRoutes(server: FastifyInstance): Promise<void>
       token: string;
       user: AuthUser & { avatarUrl?: string };
     }> => {
-      if (!googleClient || !googleClientId || !jwtSecret) {
+      if (!googleClient || googleAudiences.length === 0 || !jwtSecret) {
         reply.status(500);
         logger.error("POST /auth/google: Google auth not configured", {
           hasClient: Boolean(googleClient),
-          hasClientId: Boolean(googleClientId),
+          googleAudienceCount: googleAudiences.length,
           hasJwtSecret: Boolean(jwtSecret)
         });
         throw new Error("Google auth is not configured on the server.");
@@ -42,7 +58,7 @@ export async function registerAuthRoutes(server: FastifyInstance): Promise<void>
 
       const ticket = await googleClient.verifyIdToken({
         idToken,
-        audience: googleClientId
+        audience: googleAudiences
       });
       const payload = ticket.getPayload();
       if (!payload || !payload.sub || !payload.email) {

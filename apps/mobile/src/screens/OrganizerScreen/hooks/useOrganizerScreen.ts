@@ -10,6 +10,41 @@ import { buildLeaderboardRows, buildPlayerGameRows, computeEstimate, computeLive
 
 const sanitizeWholeNumberInput = (value: string) => value.replace(/[^0-9]/g, "");
 
+const scoreDraftStorageKey = (tournamentId: string) => `scoreDraft:${tournamentId}`;
+
+async function readLocalValue(key: string): Promise<string | null> {
+  if (Platform.OS === "web") {
+    const anyGlobal = globalThis as typeof globalThis & { localStorage?: { getItem(storageKey: string): string | null } };
+    if (typeof anyGlobal !== "undefined" && anyGlobal.localStorage) {
+      return anyGlobal.localStorage.getItem(key);
+    }
+    return null;
+  }
+  return SecureStore.getItemAsync(key);
+}
+
+async function writeLocalValue(key: string, value: string): Promise<void> {
+  if (Platform.OS === "web") {
+    const anyGlobal = globalThis as typeof globalThis & { localStorage?: { setItem(storageKey: string, storageValue: string): void } };
+    if (typeof anyGlobal !== "undefined" && anyGlobal.localStorage) {
+      anyGlobal.localStorage.setItem(key, value);
+    }
+    return;
+  }
+  await SecureStore.setItemAsync(key, value);
+}
+
+async function deleteLocalValue(key: string): Promise<void> {
+  if (Platform.OS === "web") {
+    const anyGlobal = globalThis as typeof globalThis & { localStorage?: { removeItem(storageKey: string): void } };
+    if (typeof anyGlobal !== "undefined" && anyGlobal.localStorage) {
+      anyGlobal.localStorage.removeItem(key);
+    }
+    return;
+  }
+  await SecureStore.deleteItemAsync(key);
+}
+
 export function useOrganizerScreen() {
   const [authToken, setAuthTokenState] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<{ id: string; name?: string; email: string; avatarUrl?: string } | null>(null);
@@ -36,6 +71,7 @@ export function useOrganizerScreen() {
   const [showTournamentActionConfirmModal, setShowTournamentActionConfirmModal] = useState(false);
   const [liveTournamentNameDraft, setLiveTournamentNameDraft] = useState("");
   const [scoreInputs, setScoreInputs] = useState<Record<string, { scoreA: string; scoreB: string }>>({});
+  const [scoreDraftHydratedTournamentId, setScoreDraftHydratedTournamentId] = useState<string | null>(null);
   const [isEditingCompletedTournament, setIsEditingCompletedTournament] = useState(false);
   const [showEditConfirmModal, setShowEditConfirmModal] = useState(false);
   const [showLiveOptionsModal, setShowLiveOptionsModal] = useState(false);
@@ -148,6 +184,68 @@ export function useOrganizerScreen() {
     const idx = sortedRounds.findIndex((r) => r.id === activeRound.id);
     if (idx >= 0) setSelectedRoundIndex(idx);
   }, [liveTournament?.id, activeRound?.id, sortedRounds]);
+
+  useEffect(() => {
+    const tournamentId = liveTournament?.id;
+    if (!tournamentId) {
+      setScoreInputs({});
+      setScoreDraftHydratedTournamentId(null);
+      return;
+    }
+
+    let cancelled = false;
+    const loadDraftScores = async () => {
+      try {
+        const raw = await readLocalValue(scoreDraftStorageKey(tournamentId));
+        if (cancelled) {
+          return;
+        }
+        if (!raw) {
+          setScoreInputs({});
+          setScoreDraftHydratedTournamentId(tournamentId);
+          return;
+        }
+        const parsed = JSON.parse(raw) as Record<string, { scoreA: string; scoreB: string }>;
+        setScoreInputs(parsed ?? {});
+      } catch (error) {
+        logger.warn("loadDraftScores: failed to load local draft", { error, tournamentId });
+        setScoreInputs({});
+      } finally {
+        if (!cancelled) {
+          setScoreDraftHydratedTournamentId(tournamentId);
+        }
+      }
+    };
+
+    void loadDraftScores();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [liveTournament?.id]);
+
+  useEffect(() => {
+    const tournamentId = liveTournament?.id;
+    if (!tournamentId || scoreDraftHydratedTournamentId !== tournamentId) {
+      return;
+    }
+
+    const persistDraftScores = async () => {
+      try {
+        const hasDraftValues = Object.values(scoreInputs).some((entry) => entry.scoreA.trim().length > 0 || entry.scoreB.trim().length > 0);
+        const key = scoreDraftStorageKey(tournamentId);
+        if (!hasDraftValues) {
+          await deleteLocalValue(key);
+          return;
+        }
+        await writeLocalValue(key, JSON.stringify(scoreInputs));
+      } catch (error) {
+        logger.warn("persistDraftScores: failed to persist local draft", { error, tournamentId });
+      }
+    };
+
+    void persistDraftScores();
+  }, [liveTournament?.id, scoreDraftHydratedTournamentId, scoreInputs]);
 
   const goToPrevRound = () => setSelectedRoundIndex((i) => Math.max(0, i - 1));
   const goToNextRound = () => setSelectedRoundIndex((i) => Math.min(sortedRounds.length - 1, i + 1));
@@ -402,6 +500,11 @@ export function useOrganizerScreen() {
       });
       setLiveTournament(response.data);
       setLiveTournamentNameDraft(response.data.config.name);
+      setScoreInputs((previous) => {
+        const next = { ...previous };
+        delete next[matchId];
+        return next;
+      });
     } catch (error) {
       setErrorText((error as Error).message);
     }
@@ -435,6 +538,11 @@ export function useOrganizerScreen() {
         });
         setLiveTournament(response.data);
         setLiveTournamentNameDraft(response.data.config.name);
+        setScoreInputs((previous) => {
+          const next = { ...previous };
+          delete next[match.id];
+          return next;
+        });
         version = response.data.version;
       } catch (error) {
         setErrorText((error as Error).message);
@@ -457,7 +565,7 @@ export function useOrganizerScreen() {
   const clearScoreForMatch = (matchId: string) => {
     setScoreInputs((previous) => {
       const next = { ...previous };
-      next[matchId] = { scoreA: "", scoreB: "" };
+      delete next[matchId];
       return next;
     });
   };

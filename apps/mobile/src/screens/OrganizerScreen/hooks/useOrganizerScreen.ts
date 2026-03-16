@@ -47,7 +47,7 @@ async function deleteLocalValue(key: string): Promise<void> {
 
 export function useOrganizerScreen() {
   const [authToken, setAuthTokenState] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<{ id: string; name?: string; email: string; avatarUrl?: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; name?: string; email: string; avatarUrl?: string; isGuest?: boolean } | null>(null);
   const [step, setStep] = useState<SetupStep>("LIST");
   const [name, setName] = useState("");
   const [players, setPlayers] = useState<string[]>(["", "", "", ""]);
@@ -764,7 +764,7 @@ export function useOrganizerScreen() {
 
   const handleSignedIn = async (payload: {
     token: string;
-    user: { id: string; name?: string; email: string; avatarUrl?: string };
+    user: { id: string; name?: string; email: string; avatarUrl?: string; isGuest?: boolean };
   }) => {
     logger.info("handleSignedIn: storing auth state", { platform: Platform.OS, userId: payload.user.id });
     setAuthTokenState(payload.token);

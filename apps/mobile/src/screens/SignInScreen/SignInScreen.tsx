@@ -1,8 +1,9 @@
 import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
+import * as SecureStore from "expo-secure-store";
 import * as WebBrowser from "expo-web-browser";
-import { useEffect } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Platform, Pressable, Text, View } from "react-native";
 
 import { colors, radius, spacing, typography } from "../../theme";
 import { logger } from "../../logger";
@@ -15,9 +16,46 @@ WebBrowser.maybeCompleteAuthSession();
  * Add the exact redirect URI in Google Cloud Console: APIs & Services → Credentials → your OAuth client → Authorized redirect URIs.
  */
 const APP_SCHEME = "padel";
+const GUEST_ID_KEY = "guestId";
 
 interface SignInScreenProps {
-  onSignedIn: (params: { token: string; user: { id: string; name?: string; email: string; avatarUrl?: string } }) => void;
+  onSignedIn: (params: { token: string; user: { id: string; name?: string; email: string; avatarUrl?: string; isGuest?: boolean } }) => void;
+}
+
+function generateGuestId(): string {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+async function getStoredGuestId(): Promise<string | null> {
+  if (Platform.OS === "web") {
+    const anyGlobal = globalThis as typeof globalThis & {
+      localStorage?: { getItem(key: string): string | null };
+    };
+    if (typeof anyGlobal !== "undefined" && anyGlobal.localStorage) {
+      return anyGlobal.localStorage.getItem(GUEST_ID_KEY);
+    }
+    return null;
+  }
+
+  return SecureStore.getItemAsync(GUEST_ID_KEY);
+}
+
+async function storeGuestId(guestId: string): Promise<void> {
+  if (Platform.OS === "web") {
+    const anyGlobal = globalThis as typeof globalThis & {
+      localStorage?: { setItem(key: string, value: string): void };
+    };
+    if (typeof anyGlobal !== "undefined" && anyGlobal.localStorage) {
+      anyGlobal.localStorage.setItem(GUEST_ID_KEY, guestId);
+    }
+    return;
+  }
+
+  await SecureStore.setItemAsync(GUEST_ID_KEY, guestId);
 }
 
 export function SignInScreen(props: SignInScreenProps) {
@@ -29,6 +67,7 @@ export function SignInScreen(props: SignInScreenProps) {
     androidClientId: googleAndroidClientId,
     redirectUri
   });
+  const [guestLoading, setGuestLoading] = useState(false);
 
   useEffect(() => {
     logger.debug("SignInScreen: auth request initialised", {
@@ -65,12 +104,45 @@ export function SignInScreen(props: SignInScreenProps) {
       }
       const json = (await result.json()) as {
         token: string;
-        user: { id: string; name?: string; email: string; avatarUrl?: string };
+        user: { id: string; name?: string; email: string; avatarUrl?: string; isGuest?: boolean };
       };
       logger.info("SignInScreen: exchange succeeded", { userId: json.user.id });
       props.onSignedIn(json);
     } catch (error) {
       logger.error("SignInScreen: network error during idToken exchange", { error });
+    }
+  }
+
+  async function continueAsGuest() {
+    setGuestLoading(true);
+    const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+    try {
+      let guestId = await getStoredGuestId();
+      if (!guestId) {
+        guestId = generateGuestId();
+        await storeGuestId(guestId);
+      }
+      logger.debug("SignInScreen: continuing as guest", { guestId });
+
+      const result = await fetch(`${apiBaseUrl}/auth/guest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ guestId })
+      });
+      if (!result.ok) {
+        logger.error("SignInScreen: /auth/guest failed", { status: result.status });
+        return;
+      }
+      const json = (await result.json()) as {
+        token: string;
+        user: { id: string; name?: string; email: string; isGuest: boolean };
+      };
+      logger.info("SignInScreen: guest sign-in succeeded", { userId: json.user.id });
+      props.onSignedIn(json);
+    } catch (error) {
+      logger.error("SignInScreen: network error during guest sign-in", { error });
+    } finally {
+      setGuestLoading(false);
     }
   }
 
@@ -87,7 +159,7 @@ export function SignInScreen(props: SignInScreenProps) {
     >
       <View style={{ alignItems: "center", gap: spacing.sm }}>
         <Text style={[typography.title, { color: colors.text }]}>Padel Organizer</Text>
-        <Text style={{ color: colors.muted, fontSize: 14 }}>Sign in with Google to manage your tournaments.</Text>
+        <Text style={{ color: colors.muted, fontSize: 14 }}>Sign in to manage your tournaments.</Text>
       </View>
       <Pressable
         disabled={!request}
@@ -114,6 +186,25 @@ export function SignInScreen(props: SignInScreenProps) {
         >
           Continue with Google
         </Text>
+      </Pressable>
+      <Pressable
+        disabled={guestLoading}
+        onPress={() => { void continueAsGuest(); }}
+        style={{
+          paddingVertical: spacing.sm,
+          paddingHorizontal: spacing.lg,
+          borderRadius: radius.md,
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.border,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: spacing.sm
+        }}
+      >
+        {guestLoading ? <ActivityIndicator color={colors.text} /> : null}
+        <Text style={{ color: colors.text, fontWeight: "600" }}>Continue as Guest</Text>
       </Pressable>
     </View>
   );

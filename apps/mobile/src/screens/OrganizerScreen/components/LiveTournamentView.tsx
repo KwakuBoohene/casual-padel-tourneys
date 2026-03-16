@@ -316,41 +316,51 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
             </View>
           </View>
           {canEditScores ? (
-            <View style={{ flexDirection: "row", gap: 8 }}>
-              <TextInput
-                placeholder="Team A"
-                keyboardType="numeric"
-                value={props.scoreInputs[match.id]?.scoreA ?? (match.scoreA?.toString() ?? "")}
-                onFocus={() => props.onOpenScorePicker(match.id, "scoreA")}
-                onChangeText={(value) => props.onUpdateScoreInput(match.id, "scoreA", value)}
+            <View style={{ flexDirection: "row", gap: spacing.sm, justifyContent: "center" }}>
+              <Pressable
+                onPress={() => props.onOpenScorePicker(match.id, "scoreA")}
                 style={{
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  padding: spacing.sm,
-                  flex: 1,
+                  width: 84,
+                  height: 84,
                   borderRadius: radius.md,
                   backgroundColor: colors.surface,
-                  color: colors.text
-                }}
-                placeholderTextColor={colors.muted}
-              />
-              <TextInput
-                placeholder="Team B"
-                keyboardType="numeric"
-                value={props.scoreInputs[match.id]?.scoreB ?? (match.scoreB?.toString() ?? "")}
-                onFocus={() => props.onOpenScorePicker(match.id, "scoreB")}
-                onChangeText={(value) => props.onUpdateScoreInput(match.id, "scoreB", value)}
-                style={{
                   borderWidth: 1,
-                  borderColor: colors.border,
-                  padding: spacing.sm,
-                  flex: 1,
+                  borderColor:
+                    props.scorePicker?.matchId === match.id && props.scorePicker.side === "scoreA"
+                      ? colors.primary
+                      : colors.border,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 4
+                }}
+              >
+                <Text style={{ fontSize: 10, color: colors.muted, textTransform: "uppercase" }}>Team A</Text>
+                <Text style={{ color: colors.text, fontSize: 24, fontWeight: "700" }}>
+                  {props.scoreInputs[match.id]?.scoreA ?? (match.scoreA?.toString() ?? "-")}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => props.onOpenScorePicker(match.id, "scoreB")}
+                style={{
+                  width: 84,
+                  height: 84,
                   borderRadius: radius.md,
                   backgroundColor: colors.surface,
-                  color: colors.text
+                  borderWidth: 1,
+                  borderColor:
+                    props.scorePicker?.matchId === match.id && props.scorePicker.side === "scoreB"
+                      ? colors.primary
+                      : colors.border,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 4
                 }}
-                placeholderTextColor={colors.muted}
-              />
+              >
+                <Text style={{ fontSize: 10, color: colors.muted, textTransform: "uppercase" }}>Team B</Text>
+                <Text style={{ color: colors.text, fontSize: 24, fontWeight: "700" }}>
+                  {props.scoreInputs[match.id]?.scoreB ?? (match.scoreB?.toString() ?? "-")}
+                </Text>
+              </Pressable>
             </View>
           ) : (
             <Text style={{ color: colors.text }}>

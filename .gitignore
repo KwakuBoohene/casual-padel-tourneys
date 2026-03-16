@@ -11,4 +11,5 @@ apps/web/tsconfig.tsbuildinfo
 .idea/
 designs/
 apps/mobile/ios/*
+apps/mobile/android/src/main/res/*
 casual-padel-tourneys.code-workspace

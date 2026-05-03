@@ -258,3 +258,15 @@ function requireTournament(id: string): TournamentState {
   }
   return tournament;
 }
+
+export function addPendingPlayer(
+  tournamentId: string,
+  name: string,
+  gender: "MALE" | "FEMALE" | undefined
+): TournamentState {
+  throw new Error("addPendingPlayer not implemented yet");
+}
+
+export function integratePendingPlayers(tournamentId: string): TournamentState {
+  throw new Error("integratePendingPlayers not implemented yet");
+}

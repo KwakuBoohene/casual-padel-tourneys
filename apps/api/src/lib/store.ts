@@ -73,7 +73,11 @@ export function putTournament(state: TournamentState): void {
   tournaments.set(state.id, state);
   recordAccess(state.id);
   evictOldestCompletedIfOverCapacity();
-  logger.debug("store/putTournament", { id: state.id, players: state.players.length, rounds: state.rounds.length });
+  logger.debug("store/putTournament", {
+    id: state.id,
+    players: state.players.length,
+    rounds: state.rounds.length
+  });
 }
 
 export function createTournament(config: TournamentConfig, organizerId: string): TournamentState {
@@ -90,7 +94,9 @@ export function createTournament(config: TournamentConfig, organizerId: string):
     publicToken: createId("public"),
     organizerId,
     createdAt,
-    updatedAt: createdAt
+    updatedAt: createdAt,
+    pendingPlayers: [],
+    integrationWaveCount: 0
   };
   tournaments.set(id, state);
   recordAccess(id);
@@ -106,7 +112,12 @@ export function createTournament(config: TournamentConfig, organizerId: string):
   return state;
 }
 
-export function submitScore(tournamentId: string, matchId: string, scoreA: number, scoreB: number): TournamentState {
+export function submitScore(
+  tournamentId: string,
+  matchId: string,
+  scoreA: number,
+  scoreB: number
+): TournamentState {
   const tournament = requireTournament(tournamentId);
   const lookup = findMatch(tournament.rounds, matchId);
   lookup.match.scoreA = scoreA;
@@ -147,7 +158,11 @@ export function renameTournament(tournamentId: string, newName: string): Tournam
   return tournament;
 }
 
-export function substitutePlayer(tournamentId: string, playerId: string, replacementName: string): TournamentState {
+export function substitutePlayer(
+  tournamentId: string,
+  playerId: string,
+  replacementName: string
+): TournamentState {
   const tournament = requireTournament(tournamentId);
   const player = tournament.players.find((item) => item.id === playerId);
   if (!player) {
@@ -172,7 +187,11 @@ export function deleteTournament(tournamentId: string): void {
 export function adjustCourts(tournamentId: string, courts: number): TournamentState {
   const tournament = requireTournament(tournamentId);
   tournament.config.courts = courts;
-  tournament.rounds = recalculateRemainingTournament(tournament.config, tournament.players, tournament.rounds);
+  tournament.rounds = recalculateRemainingTournament(
+    tournament.config,
+    tournament.players,
+    tournament.rounds
+  );
   touch(tournament);
   logger.info("store/adjustCourts", { tournamentId, courts, version: tournament.version });
   return tournament;

@@ -1,4 +1,4 @@
-import type { LeaderboardEntry, Match, Player, Round, TournamentConfig } from "@padel/shared";
+import type { LeaderboardEntry, Match, PendingPlayer, Player, Round, TournamentConfig } from "@padel/shared";
 
 export interface TournamentState {
   id: string;
@@ -11,6 +11,8 @@ export interface TournamentState {
   createdAt: string;
   updatedAt: string;
   organizerId?: string;
+  pendingPlayers: PendingPlayer[];
+  integrationWaveCount: number;
 }
 
 export interface MatchLookup {

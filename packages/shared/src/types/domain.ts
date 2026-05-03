@@ -14,6 +14,15 @@ export interface Player {
   gender?: PlayerGender;
   gamesPlayed: number;
   totalPoints: number;
+  handicap?: number;
+  integrationWave?: number;
+}
+
+export interface PendingPlayer {
+  id: string;
+  name: string;
+  gender?: PlayerGender;
+  createdAt: string;
 }
 
 export interface Match {

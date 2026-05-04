@@ -4,7 +4,6 @@
     "outDir": "dist",
     "rootDir": "../..",
     "declaration": false,
-    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@padel/shared": ["../../packages/shared/src/index.ts"]

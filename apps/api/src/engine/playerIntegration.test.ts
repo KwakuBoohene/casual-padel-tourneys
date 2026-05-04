@@ -137,6 +137,7 @@ test("isCurrentRoundComplete returns true when all matches in last round complet
       matches: [
         {
           id: "m1",
+          round: 1,
           court: 1,
           teamA: ["p1", "p2"],
           teamB: ["p3", "p4"],
@@ -160,6 +161,7 @@ test("isCurrentRoundComplete returns false when some matches incomplete", () => 
       matches: [
         {
           id: "m1",
+          round: 1,
           court: 1,
           teamA: ["p1", "p2"],
           teamB: ["p3", "p4"],
@@ -169,11 +171,12 @@ test("isCurrentRoundComplete returns false when some matches incomplete", () => 
         },
         {
           id: "m2",
+          round: 1,
           court: 2,
           teamA: ["p5", "p6"],
           teamB: ["p7", "p8"],
-          scoreA: null,
-          scoreB: null,
+          scoreA: undefined,
+          scoreB: undefined,
           completed: false
         }
       ]
@@ -192,6 +195,7 @@ test("isCurrentRoundComplete checks only the last round", () => {
       matches: [
         {
           id: "m1",
+          round: 1,
           court: 1,
           teamA: ["p1", "p2"],
           teamB: ["p3", "p4"],
@@ -208,11 +212,12 @@ test("isCurrentRoundComplete checks only the last round", () => {
       matches: [
         {
           id: "m2",
+          round: 2,
           court: 1,
           teamA: ["p1", "p2"],
           teamB: ["p5", "p6"],
-          scoreA: null,
-          scoreB: null,
+          scoreA: undefined,
+          scoreB: undefined,
           completed: false
         }
       ]
@@ -231,6 +236,7 @@ test("isCurrentRoundComplete with multiple completed rounds", () => {
       matches: [
         {
           id: "m1",
+          round: 1,
           court: 1,
           teamA: ["p1", "p2"],
           teamB: ["p3", "p4"],
@@ -247,6 +253,7 @@ test("isCurrentRoundComplete with multiple completed rounds", () => {
       matches: [
         {
           id: "m2",
+          round: 2,
           court: 1,
           teamA: ["p1", "p2"],
           teamB: ["p5", "p6"],
@@ -390,6 +397,7 @@ test("canIntegratePlayers returns false when only 1 pending player", () => {
         matches: [
           {
             id: "m1",
+            round: 1,
             court: 1,
             teamA: ["p1", "p2"],
             teamB: ["p3", "p4"],
@@ -443,6 +451,7 @@ test("canIntegratePlayers returns false when wave limit reached", () => {
         matches: [
           {
             id: "m1",
+            round: 1,
             court: 1,
             teamA: ["p1", "p2"],
             teamB: ["p3", "p4"],
@@ -499,6 +508,7 @@ test("canIntegratePlayers returns false when current round incomplete", () => {
         matches: [
           {
             id: "m1",
+            round: 1,
             court: 1,
             teamA: ["p1", "p2"],
             teamB: ["p3", "p4"],
@@ -515,11 +525,12 @@ test("canIntegratePlayers returns false when current round incomplete", () => {
         matches: [
           {
             id: "m2",
+            round: 2,
             court: 1,
             teamA: ["p1", "p3"],
             teamB: ["p2", "p4"],
-            scoreA: null,
-            scoreB: null,
+            scoreA: undefined,
+            scoreB: undefined,
             completed: false
           }
         ]
@@ -571,6 +582,7 @@ test("canIntegratePlayers returns true when all conditions met", () => {
         matches: [
           {
             id: "m1",
+            round: 1,
             court: 1,
             teamA: ["p1", "p2"],
             teamB: ["p3", "p4"],
@@ -627,6 +639,7 @@ test("canIntegratePlayers with wave 2 and pending players", () => {
         matches: [
           {
             id: "m1",
+            round: 1,
             court: 1,
             teamA: ["p1", "p2"],
             teamB: ["p3", "p4"],

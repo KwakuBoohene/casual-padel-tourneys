@@ -1,7 +1,7 @@
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import type { SchedulingMode } from "@padel/shared";
 
-import type { Estimate } from "./types";
+import type { Estimate } from "../OrganizerScreen/types";
 import { cardStyles, colors, radius, spacing, typography } from "../../theme";
 
 interface MatchSettingsStepViewProps {
@@ -51,8 +51,8 @@ export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
       />
       {!hasEnoughPlayersForCourts && minPlayersForCourts > 0 ? (
         <Text style={{ color: colors.danger }}>
-          {courts} court{courts === 1 ? "" : "s"} need at least {minPlayersForCourts} players; you currently have{" "}
-          {props.playersCount}.
+          {courts} court{courts === 1 ? "" : "s"} need at least {minPlayersForCourts} players; you currently
+          have {props.playersCount}.
         </Text>
       ) : null}
       <Text style={{ color: colors.muted }}>Points Per Match</Text>
@@ -125,8 +125,12 @@ export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
         {props.estimate && hasEnoughPlayersForCourts ? (
           <>
             <Text style={{ color: colors.text }}>Rounds: {props.estimate.rounds}</Text>
-            <Text style={{ color: colors.text }}>Approx games per player: {props.estimate.gamesPerPlayer}</Text>
-            <Text style={{ color: colors.text }}>Estimated total time: {props.estimate.durationMinutes} minutes</Text>
+            <Text style={{ color: colors.text }}>
+              Approx games per player: {props.estimate.gamesPerPlayer}
+            </Text>
+            <Text style={{ color: colors.text }}>
+              Estimated total time: {props.estimate.durationMinutes} minutes
+            </Text>
           </>
         ) : (
           <Text style={{ color: colors.muted }}>Fill in valid numeric values to see the estimate.</Text>

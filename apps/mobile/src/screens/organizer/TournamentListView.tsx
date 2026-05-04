@@ -2,7 +2,7 @@ import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native"
 
 import { cardStyles, colors, radius, spacing, typography } from "../../theme";
 
-import type { LiveTournamentState } from "./types";
+import type { LiveTournamentState } from "../OrganizerScreen/types";
 
 interface TournamentListViewProps {
   tournaments: LiveTournamentState[];
@@ -18,10 +18,15 @@ interface TournamentListViewProps {
 
 export function TournamentListView(props: TournamentListViewProps) {
   const activeTournaments = props.tournaments.filter(
-    (tournament) => !tournament.rounds.every((round) => round.matches.every((match) => match.completed))
+    (tournament) =>
+      !tournament.rounds.every((round: { matches: Array<{ completed: boolean }> }) =>
+        round.matches.every((match: { completed: boolean }) => match.completed)
+      )
   );
-  const completedTournaments = props.tournaments.filter(
-    (tournament) => tournament.rounds.every((round) => round.matches.every((match) => match.completed))
+  const completedTournaments = props.tournaments.filter((tournament) =>
+    tournament.rounds.every((round: { matches: Array<{ completed: boolean }> }) =>
+      round.matches.every((match: { completed: boolean }) => match.completed)
+    )
   );
 
   return (
@@ -29,7 +34,14 @@ export function TournamentListView(props: TournamentListViewProps) {
       contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background }}
       refreshControl={<RefreshControl refreshing={props.refreshing} onRefresh={props.onRefresh} />}
     >
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: spacing.sm
+        }}
+      >
         <View>
           <Text style={[typography.title, { color: colors.text }]}>Dashboard</Text>
           <Text style={{ fontSize: 12, color: colors.muted }}>Welcome back, Pro Organizer</Text>
@@ -50,7 +62,14 @@ export function TournamentListView(props: TournamentListViewProps) {
         </Pressable>
       </View>
 
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: spacing.sm
+        }}
+      >
         <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>Active Tournaments</Text>
         <Pressable onPress={props.onRefresh}>
           <Text style={{ fontSize: 12, fontWeight: "600", color: colors.primary }}>Refresh</Text>
@@ -75,9 +94,18 @@ export function TournamentListView(props: TournamentListViewProps) {
                 }
               ]}
             >
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: spacing.sm
+                }}
+              >
                 <View>
-                  <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>{tournament.config.name}</Text>
+                  <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>
+                    {tournament.config.name}
+                  </Text>
                   <Text style={{ fontSize: 12, color: colors.muted }}>
                     {tournament.config.mode} / {tournament.config.variant}
                   </Text>
@@ -93,8 +121,17 @@ export function TournamentListView(props: TournamentListViewProps) {
                   <Text style={{ fontSize: 10, fontWeight: "700", color: colors.primary }}>LIVE</Text>
                 </View>
               </View>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
-                <Text style={{ fontSize: 12, color: colors.muted }}>Players: {tournament.players.length}</Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: spacing.sm
+                }}
+              >
+                <Text style={{ fontSize: 12, color: colors.muted }}>
+                  Players: {tournament.players.length}
+                </Text>
                 <Text style={{ fontSize: 12, color: colors.muted }}>
                   Updated: {new Date(tournament.updatedAt).toLocaleTimeString()}
                 </Text>
@@ -144,9 +181,18 @@ export function TournamentListView(props: TournamentListViewProps) {
                 }
               ]}
             >
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: spacing.sm
+                }}
+              >
                 <View>
-                  <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>{tournament.config.name}</Text>
+                  <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>
+                    {tournament.config.name}
+                  </Text>
                   <Text style={{ fontSize: 12, color: colors.muted }}>
                     {tournament.config.mode} / {tournament.config.variant}
                   </Text>
@@ -162,8 +208,17 @@ export function TournamentListView(props: TournamentListViewProps) {
                   <Text style={{ fontSize: 10, fontWeight: "700", color: colors.muted }}>COMPLETED</Text>
                 </View>
               </View>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
-                <Text style={{ fontSize: 12, color: colors.muted }}>Players: {tournament.players.length}</Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: spacing.sm
+                }}
+              >
+                <Text style={{ fontSize: 12, color: colors.muted }}>
+                  Players: {tournament.players.length}
+                </Text>
                 <Text style={{ fontSize: 12, color: colors.muted }}>
                   Updated: {new Date(tournament.updatedAt).toLocaleTimeString()}
                 </Text>

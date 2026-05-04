@@ -12,14 +12,19 @@ export interface TournamentEvent<T = unknown> {
     | "SCORE_SUBMITTED"
     | "PLAYER_RENAMED"
     | "COURTS_ADJUSTED"
-    | "PLAYER_SUBSTITUTED";
+    | "PLAYER_SUBSTITUTED"
+    | "PENDING_PLAYER_ADDED"
+    | "PENDING_PLAYERS_INTEGRATED";
   tournamentId: string;
   payload: T;
 }
 
 export async function publishEvent(redis: Redis | undefined, event: TournamentEvent): Promise<void> {
   if (!redis) {
-    logger.debug("events/publishEvent skipped (no redis)", { type: event.type, tournamentId: event.tournamentId });
+    logger.debug("events/publishEvent skipped (no redis)", {
+      type: event.type,
+      tournamentId: event.tournamentId
+    });
     return;
   }
   logger.debug("events/publishEvent", { type: event.type, tournamentId: event.tournamentId });

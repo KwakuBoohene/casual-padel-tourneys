@@ -13,8 +13,29 @@ export function calculateHandicap(avgGames: number, ratio: number = 0.5): number
 
 export function isCurrentRoundComplete(rounds: Round[]): boolean {
   if (rounds.length === 0) return true;
-  const currentRound = rounds[rounds.length - 1];
-  return currentRound.matches.every((m) => m.completed);
+
+  // Find the first locked round (a round that has been completed)
+  const lastCompletedRound = rounds.find((round) => round.isLocked);
+
+  if (!lastCompletedRound) {
+    // No rounds completed yet - can't integrate before any play happens
+    return false;
+  }
+
+  // Check if there's a round in progress (has started but not locked)
+  const roundInProgress = rounds.find(
+    (round) =>
+      !round.isLocked &&
+      round.matches.some((m) => m.completed || m.scoreA !== undefined || m.scoreB !== undefined)
+  );
+
+  if (roundInProgress) {
+    // A round is currently being played - can't integrate mid-round
+    return false;
+  }
+
+  // At least one round is complete and no round is in progress - OK to integrate
+  return true;
 }
 
 export function getIntegrationWaveCount(players: Player[]): number {
@@ -30,6 +51,8 @@ export function canIntegratePlayers(tournament: TournamentState): {
     return { can: false, reason: "Need at least 2 pending players to integrate" };
   }
 
+  // TODO: Consider allowing integration if there's only 1 pending player and the last round ended with an odd number of players, to avoid giving byes. This would require tracking the number of active players in the last round.
+  // Extract magic number 2 into a constant and add a comment about it being the minimum for a new match.
   if (tournament.integrationWaveCount >= 3) {
     return { can: false, reason: "Maximum integration waves (3) reached" };
   }

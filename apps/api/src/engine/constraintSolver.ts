@@ -42,7 +42,11 @@ export function buildRound(input: BuildRoundInput): Round {
   };
 }
 
-function selectPlayersForRound(players: Player[], count: number, coPlayerMatrix: Map<string, number>): Player[] {
+function selectPlayersForRound(
+  players: Player[],
+  count: number,
+  coPlayerMatrix: Map<string, number>
+): Player[] {
   const selected: Player[] = [];
   const remaining = [...players];
 
@@ -51,8 +55,12 @@ function selectPlayersForRound(players: Player[], count: number, coPlayerMatrix:
     let bestScore = Number.POSITIVE_INFINITY;
     for (let index = 0; index < remaining.length; index += 1) {
       const candidate = remaining[index];
-      const diversityPenalty = selected.reduce((sum, chosen) => sum + (coPlayerMatrix.get(pairKey(candidate.id, chosen.id)) ?? 0), 0);
-      const score = candidate.gamesPlayed * 100 + diversityPenalty * 10;
+      const diversityPenalty = selected.reduce(
+        (sum, chosen) => sum + (coPlayerMatrix.get(pairKey(candidate.id, chosen.id)) ?? 0),
+        0
+      );
+      const effectiveGames = candidate.gamesPlayed + (candidate.handicap ?? 0);
+      const score = effectiveGames * 100 + diversityPenalty * 10;
       if (score < bestScore) {
         bestScore = score;
         bestIndex = index;

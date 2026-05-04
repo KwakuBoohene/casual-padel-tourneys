@@ -471,7 +471,7 @@ test("handicap formula: players with handicap=2 selected like players with 2 gam
 
 test("players without handicap are prioritized over those with same gamesPlayed + handicap", () => {
   const players: Player[] = [
-    // Group A: 4 players with 3 games played, no handicap
+    // Group A: 4 players with 3 games played, no handicap (effective = 3)
     { id: "a1", name: "A1", gamesPlayed: 3, totalPoints: 72 },
     { id: "a2", name: "A2", gamesPlayed: 3, totalPoints: 72 },
     { id: "a3", name: "A3", gamesPlayed: 3, totalPoints: 72 },
@@ -480,7 +480,12 @@ test("players without handicap are prioritized over those with same gamesPlayed 
     { id: "b1", name: "B1", gamesPlayed: 2, totalPoints: 48, handicap: 2, integrationWave: 1 },
     { id: "b2", name: "B2", gamesPlayed: 2, totalPoints: 48, handicap: 2, integrationWave: 1 },
     { id: "b3", name: "B3", gamesPlayed: 2, totalPoints: 48, handicap: 2, integrationWave: 1 },
-    { id: "b4", name: "B4", gamesPlayed: 2, totalPoints: 48, handicap: 2, integrationWave: 1 }
+    { id: "b4", name: "B4", gamesPlayed: 2, totalPoints: 48, handicap: 2, integrationWave: 1 },
+    // Group C: 4 players with 4 games played (effective = 4) - should be deprioritized like Group B
+    { id: "c1", name: "C1", gamesPlayed: 4, totalPoints: 96 },
+    { id: "c2", name: "C2", gamesPlayed: 4, totalPoints: 96 },
+    { id: "c3", name: "C3", gamesPlayed: 4, totalPoints: 96 },
+    { id: "c4", name: "C4", gamesPlayed: 4, totalPoints: 96 }
   ];
 
   const config: TournamentConfig = {
@@ -496,23 +501,30 @@ test("players without handicap are prioritized over those with same gamesPlayed 
 
   const rounds = recalculateRemainingTournament(config, players, []);
 
-  // In the first round, Group A (effective=3) should be prioritized over Group B (effective=4)
+  // In the first round with 2 courts (8 player slots), Group A (effective=3) should be fully selected
+  // while Groups B and C (effective=4) should share remaining slots
   const round1Matches = rounds[0]?.matches ?? [];
   let groupACount = 0;
   let groupBCount = 0;
+  let groupCCount = 0;
 
   for (const match of round1Matches) {
     const allPlayerIds = [...match.teamA, ...match.teamB];
     for (const playerId of allPlayerIds) {
       if (playerId.startsWith("a")) groupACount++;
       if (playerId.startsWith("b")) groupBCount++;
+      if (playerId.startsWith("c")) groupCCount++;
     }
   }
 
-  // Group A should appear more than Group B
-  assert.ok(
-    groupACount > groupBCount,
-    `Group A (${groupACount}) should be selected more than Group B (${groupBCount})`
+  // Group A (effective=3) should be fully selected (all 4 players)
+  assert.equal(groupACount, 4, `All Group A players should be selected, got ${groupACount}`);
+
+  // Combined Group B+C should be 4 (filling remaining slots)
+  assert.equal(
+    groupBCount + groupCCount,
+    4,
+    `Groups B+C should fill remaining 4 slots, got ${groupBCount + groupCCount}`
   );
 });
 

@@ -216,9 +216,9 @@ test("isCurrentRoundComplete checks only the last round", () => {
           court: 1,
           teamA: ["p1", "p2"],
           teamB: ["p5", "p6"],
-          scoreA: undefined,
-          scoreB: undefined,
-          completed: false
+          scoreA: 24,
+          scoreB: 20,
+          completed: true
         }
       ]
     }
@@ -529,9 +529,9 @@ test("canIntegratePlayers returns false when current round incomplete", () => {
             court: 1,
             teamA: ["p1", "p3"],
             teamB: ["p2", "p4"],
-            scoreA: undefined,
-            scoreB: undefined,
-            completed: false
+            scoreA: 24,
+            scoreB: 16,
+            completed: true
           }
         ]
       }

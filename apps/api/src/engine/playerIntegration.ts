@@ -14,28 +14,21 @@ export function calculateHandicap(avgGames: number, ratio: number = 0.5): number
 export function isCurrentRoundComplete(rounds: Round[]): boolean {
   if (rounds.length === 0) return true;
 
-  // Find the first locked round (a round that has been completed)
-  const lastCompletedRound = rounds.find((round) => round.isLocked);
-
-  if (!lastCompletedRound) {
-    // No rounds completed yet - can't integrate before any play happens
+  // Check if we have any locked rounds (at least one round must be complete to integrate)
+  const hasLockedRound = rounds.some((round) => round.isLocked);
+  if (!hasLockedRound) {
     return false;
   }
 
-  // Check if there's a round in progress (has started but not locked)
-  const roundInProgress = rounds.find(
-    (round) =>
-      !round.isLocked &&
-      round.matches.some((m) => m.completed || m.scoreA !== undefined || m.scoreB !== undefined)
+  // Check if any round has STARTED playing but is NOT complete
+  // A round has started if it has at least one completed match
+  // A round is incomplete if it's not locked
+  const hasInProgressRound = rounds.some(
+    (round) => !round.isLocked && round.matches.some((m) => m.completed)
   );
 
-  if (roundInProgress) {
-    // A round is currently being played - can't integrate mid-round
-    return false;
-  }
-
-  // At least one round is complete and no round is in progress - OK to integrate
-  return true;
+  // Integration is allowed if no rounds are in progress
+  return !hasInProgressRound;
 }
 
 export function getIntegrationWaveCount(players: Player[]): number {

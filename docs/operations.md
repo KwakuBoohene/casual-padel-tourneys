@@ -26,6 +26,19 @@ docker compose -f infra/docker-compose.yml up -d --build
 4. Apply migration on production.
 5. Verify API health and round generation.
 
+### Current Migrations
+
+- `0001_init`: Initial schema (Tournament, Player, Round, Match)
+- `20260312112022`: Schema updates
+- `20260312130752_add_user_and_organizer`: User authentication and organizer relation
+- `20260313105650_add_scheduling_mode`: Scheduling mode variants
+- `20260316000000_add_guest_support`: Guest access support
+- `20260503000000_add_player_integration_support`: Player integration feature
+  - Adds `PendingPlayer` table for mid-tournament player additions
+  - Extends `Player` table with gender, handicap, integrationWave, integratedAt fields
+  - Extends `Tournament` table with integrationWaveCount, enableAutoIntegration, integrationThreshold
+  - Creates indexes for performance optimization
+
 ## Backup And Restore
 
 Backup:

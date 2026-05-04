@@ -2,7 +2,7 @@ import { Modal, Pressable, Text, View } from "react-native";
 
 import { TournamentListView } from "../../organizer/TournamentListView";
 import { colors, radius, spacing } from "../../../theme";
-import type { LiveTournamentState } from "../../organizer/types";
+import type { LiveTournamentState } from "../types";
 
 interface OrganizerListScreenProps {
   tournaments: LiveTournamentState[];
@@ -38,8 +38,21 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
         onOpenOptions={props.onOpenOptions}
         onOpenProfile={props.onOpenProfile}
       />
-      <Modal transparent visible={props.showTournamentOptionsModal} animationType="fade" onRequestClose={props.onCloseOptionsModal}>
-        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <Modal
+        transparent
+        visible={props.showTournamentOptionsModal}
+        animationType="fade"
+        onRequestClose={props.onCloseOptionsModal}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.4)",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24
+          }}
+        >
           <View
             style={{
               backgroundColor: colors.surfaceAlt,
@@ -107,7 +120,15 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
         animationType="fade"
         onRequestClose={props.onCancelActionConfirm}
       >
-        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.4)",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24
+          }}
+        >
           <View
             style={{
               backgroundColor: colors.surfaceAlt,
@@ -148,7 +169,8 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
                   flex: 1,
                   paddingVertical: spacing.sm,
                   borderRadius: radius.md,
-                  backgroundColor: props.pendingTournamentAction === "DELETE" ? colors.danger : colors.primary,
+                  backgroundColor:
+                    props.pendingTournamentAction === "DELETE" ? colors.danger : colors.primary,
                   alignItems: "center",
                   justifyContent: "center"
                 }}
@@ -169,4 +191,3 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
     </>
   );
 }
-

@@ -46,7 +46,20 @@ export function recalculateRemainingTournament(
     }
   }
 
-  return [...lockedRounds, ...regeneratedRounds.slice(lockedRounds.length)];
+  // Keep locked rounds as-is, replace everything else with regenerated rounds
+  // buildRounds generates a complete tournament, but we already have locked rounds
+  // So we only need (totalRounds - lockedRounds.length) regenerated rounds
+  const totalRoundsNeeded = getTotalRounds(config, players.length);
+  const unlockedRoundsNeeded = totalRoundsNeeded - lockedRounds.length;
+  const unlockedRounds = regeneratedRounds.slice(0, unlockedRoundsNeeded);
+
+  // Update round numbers to continue from where locked rounds left off
+  const startingRoundNumber = lockedRounds.length + 1;
+  for (let i = 0; i < unlockedRounds.length; i++) {
+    unlockedRounds[i].roundNumber = startingRoundNumber + i;
+  }
+
+  return [...lockedRounds, ...unlockedRounds];
 }
 
 function countGamesInRounds(playerId: string, rounds: Round[]): number {

@@ -1,10 +1,15 @@
 import { createId } from "@padel/shared";
-import type { LeaderboardEntry, Match, Player, Round, TournamentConfig } from "@padel/shared";
+import type { LeaderboardEntry, Match, Player, Round, TournamentConfig, PendingPlayer } from "@padel/shared";
 
 import { generateMexicano } from "../engine/mexicanoScheduler.js";
 import { generateTournament, recalculateRemainingTournament } from "../engine/americanoScheduler.js";
 import type { TournamentState } from "../types/state.js";
 import { logger } from "./logger.js";
+import {
+  calculateAverageGames,
+  calculateHandicap,
+  canIntegratePlayers
+} from "../engine/playerIntegration.js";
 
 const tournaments = new Map<string, TournamentState>();
 
@@ -254,7 +259,7 @@ function findMatch(rounds: Round[], matchId: string): { round: Round; match: Mat
 function requireTournament(id: string): TournamentState {
   const tournament = getTournament(id);
   if (!tournament) {
-    throw new Error("Tournament not found.");
+    throw new Error(`Tournament ${id} not found.`);
   }
   return tournament;
 }
@@ -264,9 +269,86 @@ export function addPendingPlayer(
   name: string,
   gender: "MALE" | "FEMALE" | undefined
 ): TournamentState {
-  throw new Error("addPendingPlayer not implemented yet");
+  const trimmedName = name.trim();
+  if (!trimmedName) {
+    throw new Error("Player name is required.");
+  }
+
+  const tournament = requireTournament(tournamentId);
+
+  const pendingPlayer: PendingPlayer = {
+    id: createId("player"),
+    name: trimmedName,
+    gender,
+    createdAt: new Date().toISOString()
+  };
+
+  tournament.pendingPlayers.push(pendingPlayer);
+  touch(tournament);
+
+  logger.info("store/addPendingPlayer", {
+    tournamentId,
+    playerId: pendingPlayer.id,
+    name: trimmedName,
+    gender
+  });
+
+  return tournament;
 }
 
 export function integratePendingPlayers(tournamentId: string): TournamentState {
-  throw new Error("integratePendingPlayers not implemented yet");
+  const tournament = requireTournament(tournamentId);
+
+  // Validate integration eligibility
+  const validation = canIntegratePlayers(tournament);
+  if (!validation.can) {
+    throw new Error(validation.reason || "Cannot integrate players");
+  }
+
+  // Calculate handicap for new players
+  const avgGames = calculateAverageGames(tournament.players);
+  const handicap = calculateHandicap(avgGames, 0.5);
+  const newWave = tournament.integrationWaveCount + 1;
+
+  // Convert pending players to active players
+  const newPlayers: Player[] = tournament.pendingPlayers.map((pending) => ({
+    id: pending.id,
+    name: pending.name,
+    gender: pending.gender,
+    gamesPlayed: 0,
+    totalPoints: 0,
+    handicap,
+    integrationWave: newWave
+  }));
+
+  // Add new players to tournament
+  tournament.players.push(...newPlayers);
+
+  // Clear pending players
+  tournament.pendingPlayers = [];
+
+  // Increment integration wave count
+  tournament.integrationWaveCount = newWave;
+
+  // Recalculate remaining rounds with expanded player list
+  tournament.rounds = recalculateRemainingTournament(
+    tournament.config,
+    tournament.players,
+    tournament.rounds
+  );
+
+  // Update leaderboard
+  tournament.leaderboard = buildLeaderboard(tournament.players);
+
+  touch(tournament);
+
+  logger.info("store/integratePendingPlayers", {
+    tournamentId,
+    newPlayersCount: newPlayers.length,
+    wave: newWave,
+    handicap,
+    totalPlayers: tournament.players.length
+  });
+
+  return tournament;
 }

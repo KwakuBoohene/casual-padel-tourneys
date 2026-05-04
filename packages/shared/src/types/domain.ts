@@ -53,6 +53,8 @@ export interface TournamentConfig {
   pointsPerMatch: number;
   targetGamesPerPlayer?: number;
   tournamentTimeMinutes?: number;
+  enableAutoIntegration?: boolean;
+  integrationThreshold?: number;
 }
 
 export interface Tournament {

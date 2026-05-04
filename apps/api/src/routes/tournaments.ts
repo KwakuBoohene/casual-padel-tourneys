@@ -82,7 +82,7 @@ function mapDbTournamentToState(
   const players: DomainPlayer[] = tournament.players.map((player) => ({
     id: player.id,
     name: player.name,
-    gender: player.gender ?? undefined,
+    gender: player.gender === "MALE" || player.gender === "FEMALE" ? player.gender : undefined,
     gamesPlayed: player.gamesPlayed,
     totalPoints: player.totalPoints,
     handicap: player.handicap ?? undefined,
@@ -92,7 +92,7 @@ function mapDbTournamentToState(
   const pendingPlayers: DomainPendingPlayer[] = tournament.pendingPlayers.map((pp) => ({
     id: pp.id,
     name: pp.name,
-    gender: pp.gender ?? undefined,
+    gender: pp.gender === "MALE" || pp.gender === "FEMALE" ? pp.gender : undefined,
     createdAt: pp.createdAt.toISOString()
   }));
 
@@ -146,7 +146,8 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
           include: {
             matches: true
           }
-        }
+        },
+        pendingPlayers: true
       },
       orderBy: { createdAt: "desc" }
     });
@@ -165,7 +166,8 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
           include: {
             matches: true
           }
-        }
+        },
+        pendingPlayers: true
       }
     });
     if (!row) {

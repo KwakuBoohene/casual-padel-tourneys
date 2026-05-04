@@ -6,6 +6,7 @@ import {
   addPendingPlayer,
   integratePendingPlayers,
   getTournament,
+  putTournament,
   deleteTournament
 } from "./store.js";
 import type { TournamentConfig } from "@padel/shared";
@@ -178,6 +179,7 @@ test("integratePendingPlayers integrates 2 pending players successfully", () => 
     match.scoreA = 24;
     match.scoreB = 20;
   }
+  putTournament(updated);
 
   // Integrate pending players
   const integrated = integratePendingPlayers(tournament.id);
@@ -223,6 +225,7 @@ test("integratePendingPlayers calculates handicap based on average games", () =>
   for (const match of firstRound.matches) {
     match.completed = true;
   }
+  putTournament(updated);
 
   // Calculate expected handicap
   const avgGames = updated.players.reduce((sum, p) => sum + p.gamesPlayed, 0) / updated.players.length;
@@ -262,6 +265,7 @@ test("integratePendingPlayers recalculates remaining rounds", () => {
   for (const match of firstRound.matches) {
     match.completed = true;
   }
+  putTournament(updated);
 
   const round2IdBefore = updated.rounds[1]?.id;
 
@@ -356,6 +360,7 @@ test("integratePendingPlayers throws error if max waves reached", () => {
   for (const match of firstRound.matches) {
     match.completed = true;
   }
+  putTournament(updated);
 
   assert.throws(() => integratePendingPlayers(tournament.id), /Maximum integration waves \(3\) reached/);
 
@@ -387,6 +392,7 @@ test("integratePendingPlayers increments version", () => {
   for (const match of firstRound.matches) {
     match.completed = true;
   }
+  putTournament(updated);
 
   const integrated = integratePendingPlayers(tournament.id);
 
@@ -420,6 +426,7 @@ test("integratePendingPlayers updates timestamp", () => {
   for (const match of firstRound.matches) {
     match.completed = true;
   }
+  putTournament(updated);
 
   const integrated = integratePendingPlayers(tournament.id);
 
@@ -458,6 +465,7 @@ test("integratePendingPlayers supports multiple waves", () => {
   for (const match of firstRound.matches) {
     match.completed = true;
   }
+  putTournament(updated);
 
   let integrated = integratePendingPlayers(tournament.id);
   assert.equal(integrated.integrationWaveCount, 1);
@@ -478,6 +486,7 @@ test("integratePendingPlayers supports multiple waves", () => {
         }
       }
     }
+    putTournament(state);
   }
 
   integrated = integratePendingPlayers(tournament.id);
@@ -522,6 +531,7 @@ test("integratePendingPlayers preserves gender for MIXED variant", () => {
   for (const match of firstRound.matches) {
     match.completed = true;
   }
+  putTournament(updated);
 
   const integrated = integratePendingPlayers(tournament.id);
 
@@ -564,6 +574,7 @@ test("integratePendingPlayers with more than 2 pending players", () => {
   for (const match of firstRound.matches) {
     match.completed = true;
   }
+  putTournament(updated);
 
   const integrated = integratePendingPlayers(tournament.id);
 

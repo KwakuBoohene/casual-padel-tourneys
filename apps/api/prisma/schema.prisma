@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL") 
+  url      = env("DATABASE_URL")
 }
 
 enum TournamentMode {
@@ -39,51 +39,72 @@ model User {
 }
 
 model Tournament {
-  id                    String   @id @default(cuid())
+  id                    String            @id @default(cuid())
   name                  String
   mode                  TournamentMode
   variant               TournamentVariant
-  schedulingMode        SchedulingMode @default(TARGET_GAMES)
+  schedulingMode        SchedulingMode    @default(TARGET_GAMES)
   courts                Int
   pointsPerMatch        Int
   targetGamesPerPlayer  Int?
   tournamentTimeMinutes Int?
-  publicToken           String   @unique
-  version               Int      @default(0)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  publicToken           String            @unique
+  version               Int               @default(0)
+  integrationWaveCount  Int               @default(0)
+  enableAutoIntegration Boolean           @default(false)
+  integrationThreshold  Int               @default(2)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
   organizerId           String?
-  organizer             User?    @relation(fields: [organizerId], references: [id])
+  organizer             User?             @relation(fields: [organizerId], references: [id])
   players               Player[]
   rounds                Round[]
+  pendingPlayers        PendingPlayer[]
 }
 
 model Player {
-  id           String  @id @default(cuid())
+  id              String     @id @default(cuid())
+  tournamentId    String
+  name            String
+  gender          String?
+  gamesPlayed     Int        @default(0)
+  totalPoints     Int        @default(0)
+  handicap        Float?
+  integrationWave Int?
+  integratedAt    DateTime?
+  tournament      Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@index([tournamentId])
+}
+
+model PendingPlayer {
+  id           String     @id @default(cuid())
   tournamentId String
   name         String
-  gamesPlayed  Int     @default(0)
-  totalPoints  Int     @default(0)
+  gender       String?
+  createdAt    DateTime   @default(now())
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@index([tournamentId])
 }
 
 model Round {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   tournamentId String
   roundNumber  Int
-  isLocked     Boolean  @default(false)
+  isLocked     Boolean    @default(false)
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   matches      Match[]
 }
 
 model Match {
-  id        String @id @default(cuid())
-  roundId    String
-  court      Int
-  teamA      String[]
-  teamB      String[]
-  scoreA     Int?
-  scoreB     Int?
-  completed  Boolean @default(false)
-  round      Round   @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  roundId   String
+  court     Int
+  teamA     String[]
+  teamB     String[]
+  scoreA    Int?
+  scoreB    Int?
+  completed Boolean  @default(false)
+  round     Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
 }

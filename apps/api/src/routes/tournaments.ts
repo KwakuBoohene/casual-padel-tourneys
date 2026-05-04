@@ -1,15 +1,24 @@
 import type { FastifyInstance } from "fastify";
-import type { Match as DbMatch, Player as DbPlayer, Round as DbRound, Tournament as DbTournament } from "@prisma/client";
+import type {
+  Match as DbMatch,
+  PendingPlayer as DbPendingPlayer,
+  Player as DbPlayer,
+  Round as DbRound,
+  Tournament as DbTournament
+} from "@prisma/client";
 import type {
   LeaderboardEntry,
+  PendingPlayer as DomainPendingPlayer,
   Player as DomainPlayer,
   Round as DomainRound,
   SchedulingMode,
   TournamentConfig
 } from "@padel/shared";
 import {
+  addPendingPlayerSchema,
   adjustCourtsSchema,
   createTournamentSchema,
+  integratePendingPlayersSchema,
   renamePlayerSchema,
   renameTournamentSchema,
   submitScoreSchema,
@@ -17,12 +26,14 @@ import {
 } from "@padel/shared";
 
 import {
+  addPendingPlayer,
   adjustCourts,
   assertVersion,
   createTournament,
   deleteTournament,
   getTournament,
   getTournamentByPublicToken,
+  integratePendingPlayers,
   putTournament,
   renamePlayer,
   renameTournament,
@@ -48,7 +59,11 @@ function buildLeaderboard(players: DomainPlayer[]): LeaderboardEntry[] {
 }
 
 function mapDbTournamentToState(
-  tournament: DbTournament & { players: DbPlayer[]; rounds: Array<DbRound & { matches: DbMatch[] }> }
+  tournament: DbTournament & {
+    players: DbPlayer[];
+    rounds: Array<DbRound & { matches: DbMatch[] }>;
+    pendingPlayers: DbPendingPlayer[];
+  }
 ) {
   const config: TournamentConfig = {
     name: tournament.name,
@@ -59,14 +74,26 @@ function mapDbTournamentToState(
     courts: tournament.courts,
     pointsPerMatch: tournament.pointsPerMatch,
     targetGamesPerPlayer: tournament.targetGamesPerPlayer ?? undefined,
-    tournamentTimeMinutes: tournament.tournamentTimeMinutes ?? undefined
+    tournamentTimeMinutes: tournament.tournamentTimeMinutes ?? undefined,
+    enableAutoIntegration: tournament.enableAutoIntegration,
+    integrationThreshold: tournament.integrationThreshold
   };
 
   const players: DomainPlayer[] = tournament.players.map((player) => ({
     id: player.id,
     name: player.name,
+    gender: player.gender ?? undefined,
     gamesPlayed: player.gamesPlayed,
-    totalPoints: player.totalPoints
+    totalPoints: player.totalPoints,
+    handicap: player.handicap ?? undefined,
+    integrationWave: player.integrationWave ?? undefined
+  }));
+
+  const pendingPlayers: DomainPendingPlayer[] = tournament.pendingPlayers.map((pp) => ({
+    id: pp.id,
+    name: pp.name,
+    gender: pp.gender ?? undefined,
+    createdAt: pp.createdAt.toISOString()
   }));
 
   const rounds: DomainRound[] = tournament.rounds
@@ -98,7 +125,9 @@ function mapDbTournamentToState(
     publicToken: tournament.publicToken,
     createdAt: tournament.createdAt.toISOString(),
     updatedAt: tournament.updatedAt.toISOString(),
-    organizerId: tournament.organizerId ?? undefined
+    organizerId: tournament.organizerId ?? undefined,
+    pendingPlayers,
+    integrationWaveCount: tournament.integrationWaveCount
   };
 }
 
@@ -158,7 +187,8 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
           include: {
             matches: true
           }
-        }
+        },
+        pendingPlayers: true
       }
     });
     if (!row) {
@@ -197,14 +227,21 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
           publicToken: tournament.publicToken,
           organizerId: request.user.id,
           version: tournament.version,
+          integrationWaveCount: tournament.integrationWaveCount,
+          enableAutoIntegration: tournament.config.enableAutoIntegration ?? false,
+          integrationThreshold: tournament.config.integrationThreshold ?? 2,
           createdAt: new Date(tournament.createdAt),
           updatedAt: new Date(tournament.updatedAt),
           players: {
             create: tournament.players.map((player) => ({
               id: player.id,
               name: player.name,
+              gender: player.gender ?? null,
               gamesPlayed: player.gamesPlayed,
-              totalPoints: player.totalPoints
+              totalPoints: player.totalPoints,
+              handicap: player.handicap ?? null,
+              integrationWave: player.integrationWave ?? null,
+              integratedAt: null
             }))
           },
           rounds: {
@@ -265,7 +302,12 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     try {
       await ensureTournamentInMemory(parsed.data.tournamentId);
       assertVersion(parsed.data.tournamentId, parsed.data.expectedVersion);
-      const tournament = submitScore(parsed.data.tournamentId, parsed.data.matchId, parsed.data.scoreA, parsed.data.scoreB);
+      const tournament = submitScore(
+        parsed.data.tournamentId,
+        parsed.data.matchId,
+        parsed.data.scoreA,
+        parsed.data.scoreB
+      );
       await persistTournament(tournament);
       const event = { type: "SCORE_SUBMITTED" as const, tournamentId: tournament.id, payload: tournament };
       await publishEvent(server.redis, event);
@@ -368,7 +410,11 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     }
     try {
       await ensureTournamentInMemory(parsed.data.tournamentId);
-      const tournament = substitutePlayer(parsed.data.tournamentId, parsed.data.playerId, parsed.data.replacementName);
+      const tournament = substitutePlayer(
+        parsed.data.tournamentId,
+        parsed.data.playerId,
+        parsed.data.replacementName
+      );
       await persistTournament(tournament);
       const event = { type: "PLAYER_SUBSTITUTED" as const, tournamentId: tournament.id, payload: tournament };
       await publishEvent(server.redis, event);
@@ -379,6 +425,69 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
           playerId: parsed.data.playerId
         },
         "POST /tournaments/substitute-player"
+      );
+      return { data: tournament };
+    } catch (error) {
+      reply.status(404);
+      return { message: (error as Error).message };
+    }
+  });
+
+  server.post("/tournaments/add-pending-player", { preHandler: requireAuth }, async (request, reply) => {
+    const parsed = addPendingPlayerSchema.safeParse(request.body);
+    if (!parsed.success) {
+      reply.status(400);
+      return { errors: parsed.error.flatten() };
+    }
+    try {
+      await ensureTournamentInMemory(parsed.data.tournamentId);
+      assertVersion(parsed.data.tournamentId, parsed.data.expectedVersion);
+      const tournament = addPendingPlayer(parsed.data.tournamentId, parsed.data.name, parsed.data.gender);
+      await persistTournament(tournament);
+      const event = {
+        type: "PENDING_PLAYER_ADDED" as const,
+        tournamentId: tournament.id,
+        payload: tournament
+      };
+      await publishEvent(server.redis, event);
+      broadcastToTournament(server.subscriptions, tournament.id, event);
+      request.log.info(
+        {
+          tournamentId: tournament.id,
+          playerName: parsed.data.name
+        },
+        "POST /tournaments/add-pending-player"
+      );
+      return { data: tournament };
+    } catch (error) {
+      reply.status(404);
+      return { message: (error as Error).message };
+    }
+  });
+
+  server.post("/tournaments/integrate-pending", { preHandler: requireAuth }, async (request, reply) => {
+    const parsed = integratePendingPlayersSchema.safeParse(request.body);
+    if (!parsed.success) {
+      reply.status(400);
+      return { errors: parsed.error.flatten() };
+    }
+    try {
+      await ensureTournamentInMemory(parsed.data.tournamentId);
+      assertVersion(parsed.data.tournamentId, parsed.data.expectedVersion);
+      const tournament = integratePendingPlayers(parsed.data.tournamentId);
+      await persistTournament(tournament);
+      const event = {
+        type: "PENDING_PLAYERS_INTEGRATED" as const,
+        tournamentId: tournament.id,
+        payload: tournament
+      };
+      await publishEvent(server.redis, event);
+      broadcastToTournament(server.subscriptions, tournament.id, event);
+      request.log.info(
+        {
+          tournamentId: tournament.id
+        },
+        "POST /tournaments/integrate-pending"
       );
       return { data: tournament };
     } catch (error) {
@@ -399,7 +508,11 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       await prisma.tournament.delete({
         where: { id: params.id }
       });
-      const event = { type: "TOURNAMENT_DELETED" as const, tournamentId: params.id, payload: { id: params.id } };
+      const event = {
+        type: "TOURNAMENT_DELETED" as const,
+        tournamentId: params.id,
+        payload: { id: params.id }
+      };
       await publishEvent(server.redis, event);
       broadcastToTournament(server.subscriptions, params.id, event);
       request.log.info({ id: params.id }, "DELETE /tournaments/:id");
@@ -424,7 +537,8 @@ async function ensureTournamentInMemory(tournamentId: string): Promise<void> {
         include: {
           matches: true
         }
-      }
+      },
+      pendingPlayers: true
     }
   });
   if (!row) {
@@ -442,9 +556,12 @@ async function persistTournament(tournament: {
   version: number;
   createdAt: string;
   updatedAt: string;
+  pendingPlayers: DomainPendingPlayer[];
+  integrationWaveCount: number;
 }) {
   await prisma.player.deleteMany({ where: { tournamentId: tournament.id } });
   await prisma.round.deleteMany({ where: { tournamentId: tournament.id } });
+  await prisma.pendingPlayer.deleteMany({ where: { tournamentId: tournament.id } });
 
   await prisma.tournament.update({
     where: { id: tournament.id },
@@ -457,14 +574,29 @@ async function persistTournament(tournament: {
       pointsPerMatch: tournament.config.pointsPerMatch,
       targetGamesPerPlayer: tournament.config.targetGamesPerPlayer ?? null,
       tournamentTimeMinutes: tournament.config.tournamentTimeMinutes ?? null,
+      integrationWaveCount: tournament.integrationWaveCount,
+      enableAutoIntegration: tournament.config.enableAutoIntegration ?? false,
+      integrationThreshold: tournament.config.integrationThreshold ?? 2,
       version: tournament.version,
       updatedAt: new Date(tournament.updatedAt),
       players: {
         create: tournament.players.map((player) => ({
           id: player.id,
           name: player.name,
+          gender: player.gender ?? null,
           gamesPlayed: player.gamesPlayed,
-          totalPoints: player.totalPoints
+          totalPoints: player.totalPoints,
+          handicap: player.handicap ?? null,
+          integrationWave: player.integrationWave ?? null,
+          integratedAt: null // Not currently tracked in domain model
+        }))
+      },
+      pendingPlayers: {
+        create: tournament.pendingPlayers.map((pp) => ({
+          id: pp.id,
+          name: pp.name,
+          gender: pp.gender ?? null,
+          createdAt: new Date(pp.createdAt)
         }))
       },
       rounds: {

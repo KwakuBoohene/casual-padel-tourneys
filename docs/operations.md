@@ -1,6 +1,59 @@
 # Operations Runbook
 
-## Local Deployment
+## Development Workflow
+
+Run database and Redis in Docker; run applications locally using npm scripts. This provides the best performance on macOS with hot-reloading.
+
+**Setup:**
+
+```bash
+# First time setup
+cp infra/.env.example infra/.env
+# Edit infra/.env with your configuration
+
+# Start ONLY database and Redis (no application containers)
+cd infra
+docker compose up -d db redis
+
+# In project root, install dependencies
+cd ..
+npm install
+
+# Generate Prisma client and run migrations
+npm run db:generate
+npm run db:migrate
+
+# Run applications locally
+npm run dev:core    # Run API and web only
+npm run dev         # Run API, web, and mobile
+```
+
+**How it works:**
+
+- Specifying `db redis` tells Docker Compose to start only those services
+- Applications run locally with native hot-reloading (tsx watch, Next.js HMR)
+- Applications access database on `localhost:5400` and Redis on `localhost:6579`
+
+**Database operations:**
+
+```bash
+# Since apps run locally, use npm scripts directly
+npm run db:migrate
+npm run db:generate
+
+# Access database
+cd infra
+docker compose exec db psql -U padel -d padel
+```
+
+**Stopping services:**
+
+```bash
+cd infra
+docker compose down
+```
+
+## Local Deployment (Legacy)
 
 ```bash
 cp .env.example .env

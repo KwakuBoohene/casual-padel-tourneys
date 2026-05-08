@@ -272,6 +272,32 @@ test("submitScore updates leaderboard", () => {
   assert.equal(updated.leaderboard[0].totalPoints, 24, "Top player should have 24 points");
 });
 
+test("submitScore rejects resubmission for completed match", () => {
+  const config: TournamentConfig = {
+    name: "Test",
+    mode: "AMERICANO",
+    variant: "CLASSIC",
+    schedulingMode: "TARGET_GAMES",
+    players: [{ name: "A" }, { name: "B" }, { name: "C" }, { name: "D" }],
+    courts: 1,
+    pointsPerMatch: 24,
+    targetGamesPerPlayer: 2
+  };
+
+  const tournament = createTournament(config, "org_idempotency");
+  const match = tournament.rounds[0].matches[0];
+  const [playerA] = match.teamA;
+
+  submitScore(tournament.id, match.id, 24, 16);
+  const pointsAfterFirstSubmit = tournament.players.find((p) => p.id === playerA)?.totalPoints;
+
+  assert.throws(() => submitScore(tournament.id, match.id, 24, 16), /Match already scored\./);
+
+  const pointsAfterSecondSubmitAttempt = tournament.players.find((p) => p.id === playerA)?.totalPoints;
+  assert.equal(pointsAfterFirstSubmit, 24);
+  assert.equal(pointsAfterSecondSubmitAttempt, 24);
+});
+
 // ============================================================================
 // renamePlayer() Tests
 // ============================================================================

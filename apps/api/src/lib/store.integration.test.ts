@@ -146,6 +146,94 @@ test("addPendingPlayer preserves existing tournament state", () => {
   deleteTournament(tournament.id);
 });
 
+test("addPendingPlayer handles duplicate names with active players", () => {
+  const config: TournamentConfig = {
+    name: "Test Tournament",
+    mode: "AMERICANO",
+    variant: "CLASSIC",
+    schedulingMode: "TARGET_GAMES",
+    players: [{ name: "Frank Doha" }, { name: "Player 2" }, { name: "Player 3" }, { name: "Player 4" }],
+    courts: 1,
+    pointsPerMatch: 24,
+    targetGamesPerPlayer: 3
+  };
+
+  const tournament = createTournament(config, "org-1");
+
+  // Try to add a pending player with the same name as an active player
+  const updated = addPendingPlayer(tournament.id, "Frank Doha", undefined);
+
+  assert.equal(updated.pendingPlayers.length, 1);
+  assert.equal(updated.pendingPlayers[0].name, "Frank Doha 01");
+
+  deleteTournament(tournament.id);
+});
+
+test("addPendingPlayer handles duplicate names with other pending players", () => {
+  const config: TournamentConfig = {
+    name: "Test Tournament",
+    mode: "AMERICANO",
+    variant: "CLASSIC",
+    schedulingMode: "TARGET_GAMES",
+    players: Array.from({ length: 4 }, (_, i) => ({ name: `Player ${i + 1}` })),
+    courts: 1,
+    pointsPerMatch: 24,
+    targetGamesPerPlayer: 3
+  };
+
+  const tournament = createTournament(config, "org-1");
+
+  // Add first pending player
+  let updated = addPendingPlayer(tournament.id, "John Smith", undefined);
+  assert.equal(updated.pendingPlayers[0].name, "John Smith");
+
+  // Add second pending player with same name
+  updated = addPendingPlayer(tournament.id, "John Smith", undefined);
+  assert.equal(updated.pendingPlayers.length, 2);
+  assert.equal(updated.pendingPlayers[1].name, "John Smith 01");
+
+  // Add third pending player with same name
+  updated = addPendingPlayer(tournament.id, "John Smith", undefined);
+  assert.equal(updated.pendingPlayers.length, 3);
+  assert.equal(updated.pendingPlayers[2].name, "John Smith 02");
+
+  deleteTournament(tournament.id);
+});
+
+test("addPendingPlayer handles multiple duplicate scenarios", () => {
+  const config: TournamentConfig = {
+    name: "Test Tournament",
+    mode: "AMERICANO",
+    variant: "CLASSIC",
+    schedulingMode: "TARGET_GAMES",
+    players: [
+      { name: "Alice" },
+      { name: "Alice 01" }, // Already has a number suffix
+      { name: "Charlie" },
+      { name: "Diana" }
+    ],
+    courts: 1,
+    pointsPerMatch: 24,
+    targetGamesPerPlayer: 3
+  };
+
+  const tournament = createTournament(config, "org-1");
+
+  // Add pending player with duplicate name (Alice exists)
+  let updated = addPendingPlayer(tournament.id, "Alice", undefined);
+  assert.equal(updated.pendingPlayers[0].name, "Alice 02"); // Since Alice and Alice 01 already exist
+
+  // Add unique name
+  updated = addPendingPlayer(tournament.id, "Bob", undefined);
+  assert.equal(updated.pendingPlayers[1].name, "Bob");
+
+  // Add Bob again - should get suffix
+  updated = addPendingPlayer(tournament.id, "Bob", undefined);
+  assert.equal(updated.pendingPlayers[2].name, "Bob 01");
+
+  deleteTournament(tournament.id);
+});
+
 // ============================================================================
 // integratePendingPlayers() Tests
 // ============================================================================

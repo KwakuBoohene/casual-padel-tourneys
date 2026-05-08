@@ -24,3 +24,9 @@ db-generate:
 
 db-migrate:
 	npm run db:migrate
+
+db-services-up:
+	cd infra && docker compose up db redis
+
+db-services-down:
+	cd infra && docker compose down

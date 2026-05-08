@@ -125,6 +125,9 @@ export function submitScore(
 ): TournamentState {
   const tournament = requireTournament(tournamentId);
   const lookup = findMatch(tournament.rounds, matchId);
+  if (lookup.match.completed) {
+    throw new Error("Match already scored.");
+  }
   lookup.match.scoreA = scoreA;
   lookup.match.scoreB = scoreB;
   lookup.match.completed = true;
@@ -264,6 +267,30 @@ function requireTournament(id: string): TournamentState {
   return tournament;
 }
 
+/**
+ * Generate a unique name by appending a number suffix if duplicates exist
+ */
+function generateUniqueName(baseName: string, existingNames: string[]): string {
+  const trimmedBase = baseName.trim();
+
+  // Check if the base name is already unique
+  if (!existingNames.includes(trimmedBase)) {
+    return trimmedBase;
+  }
+
+  // Find a unique suffix
+  let counter = 1;
+  let uniqueName: string;
+
+  do {
+    const suffix = counter.toString().padStart(2, "0");
+    uniqueName = `${trimmedBase} ${suffix}`;
+    counter += 1;
+  } while (existingNames.includes(uniqueName) && counter < 100);
+
+  return uniqueName;
+}
+
 export function addPendingPlayer(
   tournamentId: string,
   name: string,
@@ -276,9 +303,18 @@ export function addPendingPlayer(
 
   const tournament = requireTournament(tournamentId);
 
+  // Collect all existing names (both active players and pending players)
+  const existingNames = [
+    ...tournament.players.map((p) => p.name),
+    ...tournament.pendingPlayers.map((p) => p.name)
+  ];
+
+  // Generate a unique name if duplicate exists
+  const uniqueName = generateUniqueName(trimmedName, existingNames);
+
   const pendingPlayer: PendingPlayer = {
     id: createId("player"),
-    name: trimmedName,
+    name: uniqueName,
     gender,
     createdAt: new Date().toISOString()
   };
@@ -289,7 +325,9 @@ export function addPendingPlayer(
   logger.info("store/addPendingPlayer", {
     tournamentId,
     playerId: pendingPlayer.id,
-    name: trimmedName,
+    originalName: trimmedName,
+    finalName: uniqueName,
+    wasDuplicate: trimmedName !== uniqueName,
     gender
   });
 

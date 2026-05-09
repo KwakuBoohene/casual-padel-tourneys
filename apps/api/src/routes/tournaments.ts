@@ -58,6 +58,23 @@ function buildLeaderboard(players: DomainPlayer[]): LeaderboardEntry[] {
     }));
 }
 
+function mapTournamentMutationErrorStatus(message: string): number {
+  if (message.includes("not found")) {
+    return 404;
+  }
+  if (message.includes("Version mismatch")) {
+    return 409;
+  }
+  if (
+    message.includes("Need at least 2 pending players") ||
+    message.includes("Maximum integration waves") ||
+    message.includes("Cannot integrate during incomplete round")
+  ) {
+    return 400;
+  }
+  return 500;
+}
+
 function mapDbTournamentToState(
   tournament: DbTournament & {
     players: DbPlayer[];
@@ -462,8 +479,9 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       );
       return { data: tournament };
     } catch (error) {
-      reply.status(404);
-      return { message: (error as Error).message };
+      const message = (error as Error).message;
+      reply.status(mapTournamentMutationErrorStatus(message));
+      return { message };
     }
   });
 
@@ -493,8 +511,9 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       );
       return { data: tournament };
     } catch (error) {
-      reply.status(404);
-      return { message: (error as Error).message };
+      const message = (error as Error).message;
+      reply.status(mapTournamentMutationErrorStatus(message));
+      return { message };
     }
   });
 

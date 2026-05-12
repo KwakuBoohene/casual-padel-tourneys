@@ -5,7 +5,8 @@ COPY apps/api/package.json ./apps/api/package.json
 COPY apps/web/package.json ./apps/web/package.json
 COPY apps/mobile/package.json ./apps/mobile/package.json
 COPY packages/shared/package.json ./packages/shared/package.json
-RUN npm install
+# Skip lifecycle scripts so @padel/api postinstall does not run prisma generate without schema.
+RUN npm install --ignore-scripts
 
 FROM base AS build
 COPY . .

@@ -1,8 +1,8 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 
-import { cardStyles, colors, spacing, typography } from "../../theme";
+import { cardStyles, colors, radius, spacing, typography } from "../../theme";
 
-import type { PlayerGameRow } from "./types";
+import type { PlayerGameRow } from "../OrganizerScreen/types";
 
 interface PlayerGamesViewProps {
   playerName: string;
@@ -12,7 +12,9 @@ interface PlayerGamesViewProps {
 
 export function PlayerGamesView(props: PlayerGamesViewProps) {
   return (
-    <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background }}>
+    <ScrollView
+      contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background }}
+    >
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <Text style={[typography.title, { color: colors.text }]}>{props.playerName}</Text>
         <Pressable
@@ -31,7 +33,9 @@ export function PlayerGamesView(props: PlayerGamesViewProps) {
       </View>
       <Text style={{ fontSize: 12, color: colors.muted }}>Match history</Text>
 
-      {props.games.length === 0 ? <Text style={{ color: colors.muted }}>No games yet for this player.</Text> : null}
+      {props.games.length === 0 ? (
+        <Text style={{ color: colors.muted }}>No games yet for this player.</Text>
+      ) : null}
 
       {props.games.map((game) => (
         <View
@@ -41,14 +45,20 @@ export function PlayerGamesView(props: PlayerGamesViewProps) {
             {
               borderLeftWidth: 4,
               borderLeftColor:
-                game.result === "WIN" ? colors.primary : game.result === "LOSS" ? colors.danger : colors.border
+                game.result === "WIN"
+                  ? colors.primary
+                  : game.result === "LOSS"
+                    ? colors.danger
+                    : colors.border
             }
           ]}
         >
           <Text style={{ fontWeight: "700", color: colors.text }}>
             Round {game.roundNumber} • Court {game.court}
           </Text>
-          <Text style={{ color: colors.muted, fontSize: 12, marginBottom: spacing.sm }}>{game.scoreText}</Text>
+          <Text style={{ color: colors.muted, fontSize: 12, marginBottom: spacing.sm }}>
+            {game.scoreText}
+          </Text>
           <Text style={{ color: colors.muted, fontSize: 12 }}>Partner</Text>
           <Text style={{ color: colors.text, marginBottom: spacing.xs }}>{game.partner}</Text>
           <Text style={{ color: colors.muted, fontSize: 12 }}>Opponents</Text>

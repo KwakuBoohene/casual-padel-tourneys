@@ -1,7 +1,7 @@
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
-import type { Estimate } from "./types";
+import type { Estimate } from "../OrganizerScreen/types";
 import { cardStyles, colors, radius, spacing, typography } from "../../theme";
 
 interface GameEstimatorViewProps {
@@ -70,9 +70,15 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
       <Text style={{ color: colors.muted }}>Options</Text>
       {props.mode === "AMERICANO" ? (
         <View style={{ flexDirection: "row", gap: 10, flexWrap: "wrap" }}>
-          {renderChoice("Games Per Player", props.schedulingMode === "TARGET_GAMES", () => props.onChangeSchedulingMode("TARGET_GAMES"))}
-          {renderChoice("Total Time", props.schedulingMode === "TOTAL_TIME", () => props.onChangeSchedulingMode("TOTAL_TIME"))}
-          {renderChoice("Round Robin", props.schedulingMode === "ROUND_ROBIN", () => props.onChangeSchedulingMode("ROUND_ROBIN"))}
+          {renderChoice("Games Per Player", props.schedulingMode === "TARGET_GAMES", () =>
+            props.onChangeSchedulingMode("TARGET_GAMES")
+          )}
+          {renderChoice("Total Time", props.schedulingMode === "TOTAL_TIME", () =>
+            props.onChangeSchedulingMode("TOTAL_TIME")
+          )}
+          {renderChoice("Round Robin", props.schedulingMode === "ROUND_ROBIN", () =>
+            props.onChangeSchedulingMode("ROUND_ROBIN")
+          )}
         </View>
       ) : (
         <Text style={{ color: colors.muted }}>Mexicano uses Total Time scheduling.</Text>
@@ -185,8 +191,12 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
         {props.estimate && hasEnoughPlayersForCourts ? (
           <>
             <Text style={{ color: colors.text }}>Rounds: {props.estimate.rounds}</Text>
-            <Text style={{ color: colors.text }}>Approx games per player: {props.estimate.gamesPerPlayer}</Text>
-            <Text style={{ color: colors.text }}>Estimated total time: {props.estimate.durationMinutes} minutes</Text>
+            <Text style={{ color: colors.text }}>
+              Approx games per player: {props.estimate.gamesPerPlayer}
+            </Text>
+            <Text style={{ color: colors.text }}>
+              Estimated total time: {props.estimate.durationMinutes} minutes
+            </Text>
           </>
         ) : (
           <Text style={{ color: colors.muted }}>Enter valid values to see estimate.</Text>

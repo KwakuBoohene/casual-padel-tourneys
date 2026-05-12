@@ -79,3 +79,15 @@ export const substitutePlayerSchema = z.object({
   playerId: z.string().min(1),
   replacementName: z.string().min(1)
 });
+
+export const addPendingPlayerSchema = z.object({
+  tournamentId: z.string().min(1),
+  name: z.string().min(1),
+  gender: playerGenderSchema.optional(),
+  expectedVersion: z.number().int().min(0)
+});
+
+export const integratePendingPlayersSchema = z.object({
+  tournamentId: z.string().min(1),
+  expectedVersion: z.number().int().min(0)
+});

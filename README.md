@@ -2,6 +2,18 @@
 
 Self-hosted, mobile-first platform for running Padel Americano and Mexicano tournaments with fairness-first scheduling, live controls, and a public viewer.
 
+## Key Features
+
+- **Fairness-first scheduling**: Advanced constraint solver for equal games and minimal repeated pairings
+- **Tournament modes**: Americano (successive challenge) and Mexicano (point-based dynamic)
+- **Tournament variants**: Classic, Mixed (gender-balanced), Team
+- **Scheduling modes**: Target games per player, total time, or round-robin
+- **Live controls**: Submit scores, rename players, adjust courts mid-tournament
+- **Player integration**: Add late-arriving players during active tournaments with handicap weighting
+- **Real-time updates**: WebSocket + Redis pub/sub for instant viewer synchronization
+- **Public viewer**: Share tournaments via token for read-only spectator access
+- **Mobile organizer app**: React Native app for on-site tournament management
+
 ## Monorepo Structure
 
 - `apps/api`: Fastify backend, scheduling engine, websocket events.
@@ -82,7 +94,8 @@ See `.env.example`:
 
 ## Documentation
 
-- `docs/architecture.md`
-- `docs/scheduling.md`
-- `docs/api.md`
-- `docs/operations.md`
+- `docs/architecture.md` - System architecture and deployment topology
+- `docs/scheduling.md` - Scheduling engine and fairness algorithms
+- `docs/api.md` - REST API endpoints and WebSocket events
+- `docs/operations.md` - Deployment, migrations, backup/restore procedures
+- `docs/player-integration-feature.md` - Player integration feature documentation

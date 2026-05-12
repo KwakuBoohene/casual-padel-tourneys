@@ -1,5 +1,6 @@
 import type { LiveTournamentState } from "../types";
 import { LiveTournamentView } from "./LiveTournamentView";
+import type { PlayerGender } from "@padel/shared";
 
 interface OrganizerLiveScreenProps {
   tournament: LiveTournamentState;
@@ -26,6 +27,19 @@ interface OrganizerLiveScreenProps {
   scoreInputs: Record<string, { scoreA: string; scoreB: string }>;
   playerNameById: Map<string, string>;
   showEditConfirmModal: boolean;
+  // pending players
+  showAddPendingPlayerModal: boolean;
+  pendingPlayerNameDraft: string;
+  pendingPlayerGender: PlayerGender | undefined;
+  showIntegrateConfirmModal: boolean;
+  onOpenAddPendingPlayer: () => void;
+  onCloseAddPendingPlayer: () => void;
+  onChangePendingPlayerName: (value: string) => void;
+  onChangePendingPlayerGender: (gender: PlayerGender) => void;
+  onSubmitAddPendingPlayer: () => void;
+  onOpenIntegrateConfirm: () => void;
+  onCloseIntegrateConfirm: () => void;
+  onConfirmIntegratePendingPlayers: () => void;
   onBackToList: () => void;
   onViewLeaderboard: () => void;
   onRefresh: () => void;
@@ -105,7 +119,18 @@ export function OrganizerLiveScreen(props: OrganizerLiveScreenProps) {
       onPrevRound={props.onPrevRound}
       onNextRound={props.onNextRound}
       onSubmitRoundScores={props.onSubmitRoundScores}
+      showAddPendingPlayerModal={props.showAddPendingPlayerModal}
+      pendingPlayerNameDraft={props.pendingPlayerNameDraft}
+      pendingPlayerGender={props.pendingPlayerGender}
+      showIntegrateConfirmModal={props.showIntegrateConfirmModal}
+      onOpenAddPendingPlayer={props.onOpenAddPendingPlayer}
+      onCloseAddPendingPlayer={props.onCloseAddPendingPlayer}
+      onChangePendingPlayerName={props.onChangePendingPlayerName}
+      onChangePendingPlayerGender={props.onChangePendingPlayerGender}
+      onSubmitAddPendingPlayer={props.onSubmitAddPendingPlayer}
+      onOpenIntegrateConfirm={props.onOpenIntegrateConfirm}
+      onCloseIntegrateConfirm={props.onCloseIntegrateConfirm}
+      onConfirmIntegratePendingPlayers={props.onConfirmIntegratePendingPlayers}
     />
   );
 }
-

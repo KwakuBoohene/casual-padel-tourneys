@@ -16,12 +16,23 @@ The platform has three user-facing surfaces and one shared engine:
 3. API stores state, publishes realtime events.
 4. Viewer web app fetches by share token and subscribes over WebSocket.
 5. Organizer updates scores and controls, viewer updates instantly.
+6. **Player integration flow** (for late arrivals):
+   - Organizer adds players to pending list during tournament
+   - When eligible (round complete, ≥2 pending), organizer triggers integration
+   - API calculates handicaps, converts pending to active players
+   - API recalculates remaining rounds with expanded player pool
+   - Realtime events broadcast updates to all connected viewers
 
 ## Core Services
 
 - **Scheduler engine**: fairness-first round and match generation.
 - **Match engine**: score submission and leaderboard aggregation.
 - **Control engine**: rename player, substitute player, adjust courts and recalc.
+- **Player integration engine**: mid-tournament player additions with handicap weighting.
+  - Manages pending player list
+  - Validates integration eligibility (round state, thresholds, wave limits)
+  - Calculates handicaps based on tournament progress
+  - Triggers schedule recalculation with expanded player pool
 - **Viewer service**: public token and read-only endpoint.
 - **Realtime service**: websocket fanout + optional Redis Pub/Sub broadcast.
 

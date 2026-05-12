@@ -1,7 +1,7 @@
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
-import type { Estimate } from "./types";
+import type { Estimate } from "../OrganizerScreen/types";
 import { cardStyles, colors, radius, spacing, typography } from "../../theme";
 
 interface RulesStepViewProps {
@@ -234,8 +234,12 @@ export function RulesStepView(props: RulesStepViewProps) {
         {props.estimate ? (
           <>
             <Text style={{ color: colors.text }}>Rounds: {props.estimate.rounds}</Text>
-            <Text style={{ color: colors.text }}>Approx games per player: {props.estimate.gamesPerPlayer}</Text>
-            <Text style={{ color: colors.text }}>Estimated total time: {props.estimate.durationMinutes} minutes</Text>
+            <Text style={{ color: colors.text }}>
+              Approx games per player: {props.estimate.gamesPerPlayer}
+            </Text>
+            <Text style={{ color: colors.text }}>
+              Estimated total time: {props.estimate.durationMinutes} minutes
+            </Text>
           </>
         ) : (
           <Text style={{ color: colors.muted }}>Fill in valid numeric values to see the estimate.</Text>

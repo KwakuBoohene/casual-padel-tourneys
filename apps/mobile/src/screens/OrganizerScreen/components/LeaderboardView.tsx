@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 
+import { useBreakpoint } from "../../../layout";
 import { cardStyles, colors, radius, spacing, typography } from "../../../theme";
 import type { LeaderboardRow, LiveTournamentState } from "../types";
 
@@ -11,8 +12,18 @@ interface LeaderboardViewProps {
 }
 
 export function LeaderboardView(props: LeaderboardViewProps) {
+  const { formMaxWidth } = useBreakpoint();
   return (
-    <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background }}>
+    <ScrollView
+      contentContainerStyle={{
+        padding: spacing.lg,
+        gap: spacing.md,
+        backgroundColor: colors.background,
+        maxWidth: formMaxWidth,
+        width: "100%",
+        alignSelf: "center"
+      }}
+    >
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <Text style={[typography.title, { color: colors.text }]}>Leaderboard</Text>
         <Pressable

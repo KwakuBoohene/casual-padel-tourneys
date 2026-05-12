@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 
+import { useBreakpoint } from "../../../layout";
 import { cardStyles, colors, spacing, typography } from "../../../theme";
 import type { PlayerGameRow } from "../types";
 
@@ -10,8 +11,18 @@ interface PlayerGamesViewProps {
 }
 
 export function PlayerGamesView(props: PlayerGamesViewProps) {
+  const { formMaxWidth } = useBreakpoint();
   return (
-    <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background }}>
+    <ScrollView
+      contentContainerStyle={{
+        padding: spacing.lg,
+        gap: spacing.md,
+        backgroundColor: colors.background,
+        maxWidth: formMaxWidth,
+        width: "100%",
+        alignSelf: "center"
+      }}
+    >
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <Text style={[typography.title, { color: colors.text }]}>{props.playerName}</Text>
         <Pressable

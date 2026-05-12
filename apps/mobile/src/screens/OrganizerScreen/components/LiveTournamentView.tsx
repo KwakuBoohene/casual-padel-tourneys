@@ -1,9 +1,12 @@
-import { useEffect, useRef } from "react";
+import { Fragment, useEffect } from "react";
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import type { PlayerGender } from "@padel/shared";
 
+import { layoutTokens, useBreakpoint } from "../../../layout";
 import { cardStyles, colors, radius, spacing, typography } from "../../../theme";
 import type { LiveTournamentState } from "../types";
+
+import { LiveTournamentMatchCard } from "./LiveTournamentMatchCard";
 
 interface LiveTournamentViewProps {
   tournament: LiveTournamentState;
@@ -71,8 +74,13 @@ interface LiveTournamentViewProps {
 }
 
 export function LiveTournamentView(props: LiveTournamentViewProps) {
+  const { isWide, formMaxWidth, width } = useBreakpoint();
+  const sidebarWidth = Math.min(
+    layoutTokens.liveSidebarMaxWidth,
+    Math.max(layoutTokens.liveSidebarMinWidth, Math.round(width * 0.32))
+  );
+
   const canEditScores = !props.isTournamentCompleted || props.isEditingCompletedTournament;
-  const submitAnchorRefs = useRef<Record<string, { focus?: () => void } | null>>({});
   const roundsCount = props.sortedRounds.length;
   const canGoPrev = props.selectedRoundIndex > 0;
   const canGoNext = props.selectedRoundIndex < roundsCount - 1 && roundsCount > 0;
@@ -81,15 +89,21 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
     if (!props.focusSubmitMatchId) {
       return;
     }
-    const target = submitAnchorRefs.current[props.focusSubmitMatchId];
-    target?.focus?.();
     props.onSubmitFocusHandled();
-  }, [props.focusSubmitMatchId, props]);
+  }, [props.focusSubmitMatchId, props.onSubmitFocusHandled]);
 
-  return (
-    <ScrollView
-      contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background }}
-    >
+  const scrollPad = { padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background };
+  const modalInner = {
+    backgroundColor: colors.surfaceAlt,
+    width: "100%" as const,
+    maxWidth: formMaxWidth,
+    padding: spacing.lg,
+    gap: spacing.md,
+    borderRadius: radius.lg
+  };
+
+  const mainColumn = (
+    <>
       <Text style={[typography.title, { color: colors.text }]}>Live Tournament</Text>
       <Pressable
         onPress={props.onBackToList}
@@ -360,98 +374,21 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
           </Text>
         </Pressable>
       ) : null}
+    </>
+  );
 
+  const matchesBlock = (
+    <>
       {(props.displayedRound?.matches ?? []).map((match) => (
-        <View
+        <LiveTournamentMatchCard
           key={match.id}
-          style={[
-            cardStyles.container,
-            {
-              padding: spacing.md,
-              gap: spacing.sm
-            }
-          ]}
-        >
-          <Text style={{ fontWeight: "700", color: colors.text }}>Court {match.court}</Text>
-
-          <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: spacing.xs }}>
-            <View style={{ flex: 1, alignItems: "flex-start" }}>
-              <Text style={{ fontSize: 10, color: colors.muted, textTransform: "uppercase" }}>Team A</Text>
-              <Text style={{ color: colors.text, fontWeight: "600" }}>
-                {props.playerNameById.get(match.teamA[0]) ?? match.teamA[0]}
-              </Text>
-              <Text style={{ color: colors.text, fontWeight: "600" }}>
-                {props.playerNameById.get(match.teamA[1]) ?? match.teamA[1]}
-              </Text>
-            </View>
-
-            <View style={{ width: 40, alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ color: colors.muted, fontWeight: "700" }}>vs</Text>
-            </View>
-
-            <View style={{ flex: 1, alignItems: "flex-end" }}>
-              <Text style={{ fontSize: 10, color: colors.muted, textTransform: "uppercase" }}>Team B</Text>
-              <Text style={{ color: colors.text, fontWeight: "600", textAlign: "right" }}>
-                {props.playerNameById.get(match.teamB[0]) ?? match.teamB[0]}
-              </Text>
-              <Text style={{ color: colors.text, fontWeight: "600", textAlign: "right" }}>
-                {props.playerNameById.get(match.teamB[1]) ?? match.teamB[1]}
-              </Text>
-            </View>
-          </View>
-          {canEditScores ? (
-            <View style={{ flexDirection: "row", gap: spacing.sm, justifyContent: "center" }}>
-              <Pressable
-                onPress={() => props.onOpenScorePicker(match.id, "scoreA")}
-                style={{
-                  width: 84,
-                  height: 84,
-                  borderRadius: radius.md,
-                  backgroundColor: colors.surface,
-                  borderWidth: 1,
-                  borderColor:
-                    props.scorePicker?.matchId === match.id && props.scorePicker.side === "scoreA"
-                      ? colors.primary
-                      : colors.border,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 4
-                }}
-              >
-                <Text style={{ fontSize: 10, color: colors.muted, textTransform: "uppercase" }}>Team A</Text>
-                <Text style={{ color: colors.text, fontSize: 24, fontWeight: "700" }}>
-                  {props.scoreInputs[match.id]?.scoreA ?? match.scoreA?.toString() ?? "-"}
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => props.onOpenScorePicker(match.id, "scoreB")}
-                style={{
-                  width: 84,
-                  height: 84,
-                  borderRadius: radius.md,
-                  backgroundColor: colors.surface,
-                  borderWidth: 1,
-                  borderColor:
-                    props.scorePicker?.matchId === match.id && props.scorePicker.side === "scoreB"
-                      ? colors.primary
-                      : colors.border,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 4
-                }}
-              >
-                <Text style={{ fontSize: 10, color: colors.muted, textTransform: "uppercase" }}>Team B</Text>
-                <Text style={{ color: colors.text, fontSize: 24, fontWeight: "700" }}>
-                  {props.scoreInputs[match.id]?.scoreB ?? match.scoreB?.toString() ?? "-"}
-                </Text>
-              </Pressable>
-            </View>
-          ) : (
-            <Text style={{ color: colors.text }}>
-              Final Score: {match.scoreA ?? "-"} - {match.scoreB ?? "-"}
-            </Text>
-          )}
-        </View>
+          match={match}
+          canEditScores={canEditScores}
+          scorePicker={props.scorePicker}
+          scoreInputs={props.scoreInputs}
+          playerNameById={props.playerNameById}
+          onOpenScorePicker={props.onOpenScorePicker}
+        />
       ))}
 
       {canEditScores && props.displayedRound && props.displayedRound.matches.length > 0 ? (
@@ -476,7 +413,11 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
           </Text>
         </Pressable>
       ) : null}
+    </>
+  );
 
+  const shareBlock = (
+    <>
       <View
         style={{
           marginTop: spacing.md,
@@ -491,6 +432,43 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
           style={{ color: colors.muted }}
         >{`${props.viewerBaseUrl}/tournament/${props.tournament.publicToken}`}</Text>
       </View>
+    </>
+  );
+
+  return (
+    <Fragment>
+      {isWide ? (
+        <View
+          style={{
+            flex: 1,
+            flexDirection: "row",
+            gap: spacing.md,
+            minHeight: 0
+          }}
+        >
+          <ScrollView
+            style={{ width: sidebarWidth, flexShrink: 0 }}
+            contentContainerStyle={scrollPad}
+            keyboardShouldPersistTaps="handled"
+          >
+            {mainColumn}
+            {shareBlock}
+          </ScrollView>
+          <ScrollView
+            style={{ flex: 1, minWidth: 0 }}
+            contentContainerStyle={scrollPad}
+            keyboardShouldPersistTaps="handled"
+          >
+            {matchesBlock}
+          </ScrollView>
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={scrollPad} keyboardShouldPersistTaps="handled">
+          {mainColumn}
+          {matchesBlock}
+          {shareBlock}
+        </ScrollView>
+      )}
 
       <Modal
         transparent
@@ -507,16 +485,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
             padding: 24
           }}
         >
-          <View
-            style={{
-              backgroundColor: colors.surfaceAlt,
-              width: "100%",
-              maxWidth: 420,
-              padding: spacing.lg,
-              gap: spacing.md,
-              borderRadius: radius.lg
-            }}
-          >
+          <View style={modalInner}>
             <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>
               Edit Completed Tournament?
             </Text>
@@ -579,16 +548,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
             padding: 24
           }}
         >
-          <View
-            style={{
-              backgroundColor: colors.surfaceAlt,
-              width: "100%",
-              maxWidth: 420,
-              padding: spacing.lg,
-              gap: spacing.md,
-              borderRadius: radius.lg
-            }}
-          >
+          <View style={modalInner}>
             <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>Adjust Courts?</Text>
             <Text style={{ color: colors.muted }}>
               Are you sure you want to change courts from {props.currentCourts} to {props.proposedCourts}?
@@ -650,16 +610,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
             padding: 24
           }}
         >
-          <View
-            style={{
-              backgroundColor: colors.surfaceAlt,
-              width: "100%",
-              maxWidth: 420,
-              padding: spacing.lg,
-              gap: spacing.md,
-              borderRadius: radius.lg
-            }}
-          >
+          <View style={modalInner}>
             <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>Live Options</Text>
             {props.canAdjustCourts ? (
               <>
@@ -849,16 +800,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
             padding: 24
           }}
         >
-          <View
-            style={{
-              backgroundColor: colors.surfaceAlt,
-              width: "100%",
-              maxWidth: 420,
-              padding: spacing.lg,
-              gap: spacing.md,
-              borderRadius: radius.lg
-            }}
-          >
+          <View style={modalInner}>
             <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>Add Player to Queue</Text>
             <TextInput
               placeholder="Player name"
@@ -965,16 +907,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
             padding: 24
           }}
         >
-          <View
-            style={{
-              backgroundColor: colors.surfaceAlt,
-              width: "100%",
-              maxWidth: 420,
-              padding: spacing.lg,
-              gap: spacing.md,
-              borderRadius: radius.lg
-            }}
-          >
+          <View style={modalInner}>
             <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>Integrate Players?</Text>
             <Text style={{ color: colors.muted }}>
               Integrate {props.tournament.pendingPlayers.length} waiting player
@@ -1022,6 +955,6 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
       </Modal>
 
       {props.errorText ? <Text style={{ color: colors.danger }}>Error: {props.errorText}</Text> : null}
-    </ScrollView>
+    </Fragment>
   );
 }

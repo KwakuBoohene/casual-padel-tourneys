@@ -1,6 +1,7 @@
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
+import { useBreakpoint } from "../../../layout";
 import type { Estimate } from "../types";
 import { cardStyles, colors, radius, spacing, typography } from "../../../theme";
 
@@ -27,33 +28,10 @@ interface GameEstimatorViewProps {
 
 export function GameEstimatorView(props: GameEstimatorViewProps) {
   const schedulingModeLabel = props.schedulingMode === "TARGET_GAMES" ? "Target Games" : "Tournament Time";
-  return (
-    <ScrollView
-      contentContainerStyle={{
-        paddingHorizontal: spacing.xl,
-        paddingVertical: spacing.xl,
-        gap: spacing.xl,
-        backgroundColor: colors.background
-      }}
-    >
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <Text style={[typography.title, { color: colors.text }]}>Game Estimator</Text>
-        <Pressable
-          onPress={props.onBack}
-          style={{
-            paddingVertical: spacing.sm,
-            paddingHorizontal: spacing.md,
-            borderRadius: radius.md,
-            backgroundColor: colors.surface,
-            borderWidth: 1,
-            borderColor: colors.border
-          }}
-        >
-          <Text style={{ color: colors.text, fontWeight: "600" }}>Back</Text>
-        </Pressable>
-      </View>
+  const { isWide, formMaxWidth } = useBreakpoint();
 
-      <View style={[cardStyles.container, { gap: spacing.md }]}>
+  const typeCard = (
+    <View style={[cardStyles.container, { gap: spacing.md }]}>
         <Text style={[typography.sectionTitle, { color: colors.text }]}>Tournament Type</Text>
         <View style={{ flexDirection: "row", gap: spacing.sm }}>
           {(["AMERICANO", "MEXICANO"] as TournamentMode[]).map((value) => (
@@ -111,8 +89,10 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
           ))}
         </View>
       </View>
+  );
 
-      <View style={[cardStyles.container, { gap: spacing.md }]}>
+  const configCard = (
+    <View style={[cardStyles.container, { gap: spacing.md }]}>
         <Text style={[typography.sectionTitle, { color: colors.text }]}>Configuration</Text>
         <Text style={{ color: colors.muted, marginBottom: spacing.sm }}>Quickly estimate how long a tournament will take.</Text>
 
@@ -210,8 +190,10 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
           )}
         </View>
       </View>
+  );
 
-      <View style={[cardStyles.container, { marginTop: spacing.sm }]}>
+  const estimateCard = (
+    <View style={[cardStyles.container, { marginTop: isWide ? 0 : spacing.sm }]}>
         <Text style={[typography.sectionTitle, { color: colors.text }]}>Estimate</Text>
         {props.estimate ? (
           <>
@@ -223,6 +205,54 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
           <Text style={{ color: colors.muted }}>Enter valid configuration to see an estimate.</Text>
         )}
       </View>
+  );
+
+  return (
+    <ScrollView
+      contentContainerStyle={{
+        paddingHorizontal: spacing.xl,
+        paddingVertical: spacing.xl,
+        gap: spacing.xl,
+        backgroundColor: colors.background,
+        maxWidth: formMaxWidth,
+        width: "100%",
+        alignSelf: "center"
+      }}
+    >
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <Text style={[typography.title, { color: colors.text }]}>Game Estimator</Text>
+        <Pressable
+          onPress={props.onBack}
+          style={{
+            paddingVertical: spacing.sm,
+            paddingHorizontal: spacing.md,
+            borderRadius: radius.md,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border
+          }}
+        >
+          <Text style={{ color: colors.text, fontWeight: "600" }}>Back</Text>
+        </Pressable>
+      </View>
+
+      {isWide ? (
+        <View style={{ flexDirection: "row", alignItems: "flex-start", gap: spacing.lg, flexWrap: "wrap" }}>
+          <View style={{ flex: 1, minWidth: 280, gap: spacing.lg }}>
+            {typeCard}
+            {configCard}
+          </View>
+          <View style={{ flex: 1, minWidth: 280 }}>
+            {estimateCard}
+          </View>
+        </View>
+      ) : (
+        <>
+          {typeCard}
+          {configCard}
+          {estimateCard}
+        </>
+      )}
     </ScrollView>
   );
 }

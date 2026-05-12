@@ -1,6 +1,7 @@
 import { Modal, Pressable, Text, View } from "react-native";
 
-import { TournamentListView } from "../../organizer/TournamentListView";
+import { TournamentListView } from "./TournamentListView";
+import { useBreakpoint } from "../../../layout";
 import { colors, radius, spacing } from "../../../theme";
 import type { LiveTournamentState } from "../types";
 
@@ -25,6 +26,17 @@ interface OrganizerListScreenProps {
 }
 
 export function OrganizerListScreen(props: OrganizerListScreenProps) {
+  const { formMaxWidth } = useBreakpoint();
+  const modalInner = {
+    backgroundColor: colors.surfaceAlt,
+    width: "100%" as const,
+    maxWidth: formMaxWidth,
+    padding: spacing.lg,
+    gap: spacing.sm,
+    borderRadius: radius.lg
+  };
+  const modalInnerWideGap = { ...modalInner, gap: spacing.md };
+
   return (
     <>
       <TournamentListView
@@ -53,16 +65,7 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
             padding: 24
           }}
         >
-          <View
-            style={{
-              backgroundColor: colors.surfaceAlt,
-              width: "100%",
-              maxWidth: 420,
-              padding: spacing.lg,
-              gap: spacing.sm,
-              borderRadius: radius.lg
-            }}
-          >
+          <View style={modalInner}>
             <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>Tournament Options</Text>
             <Pressable
               onPress={props.onRequestEdit}
@@ -129,16 +132,7 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
             padding: 24
           }}
         >
-          <View
-            style={{
-              backgroundColor: colors.surfaceAlt,
-              width: "100%",
-              maxWidth: 420,
-              padding: spacing.lg,
-              gap: spacing.md,
-              borderRadius: radius.lg
-            }}
-          >
+          <View style={modalInnerWideGap}>
             <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>
               {props.pendingTournamentAction === "DELETE" ? "Delete Tournament?" : "Edit Tournament?"}
             </Text>

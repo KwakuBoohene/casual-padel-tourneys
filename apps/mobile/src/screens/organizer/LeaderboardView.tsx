@@ -1,8 +1,8 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 
-import { cardStyles, colors, spacing, typography } from "../../theme";
+import { cardStyles, colors, radius, spacing, typography } from "../../theme";
 
-import type { LeaderboardRow, LiveTournamentState } from "./types";
+import type { LeaderboardRow, LiveTournamentState } from "../OrganizerScreen/types";
 
 interface LeaderboardViewProps {
   tournament: LiveTournamentState;
@@ -13,7 +13,9 @@ interface LeaderboardViewProps {
 
 export function LeaderboardView(props: LeaderboardViewProps) {
   return (
-    <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background }}>
+    <ScrollView
+      contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background }}
+    >
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <Text style={[typography.title, { color: colors.text }]}>Leaderboard</Text>
         <Pressable

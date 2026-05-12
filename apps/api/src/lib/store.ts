@@ -1,10 +1,15 @@
 import { createId } from "@padel/shared";
-import type { LeaderboardEntry, Match, Player, Round, TournamentConfig } from "@padel/shared";
+import type { LeaderboardEntry, Match, Player, Round, TournamentConfig, PendingPlayer } from "@padel/shared";
 
 import { generateMexicano } from "../engine/mexicanoScheduler.js";
 import { generateTournament, recalculateRemainingTournament } from "../engine/americanoScheduler.js";
 import type { TournamentState } from "../types/state.js";
 import { logger } from "./logger.js";
+import {
+  calculateAverageGames,
+  calculateHandicap,
+  canIntegratePlayers
+} from "../engine/playerIntegration.js";
 
 const tournaments = new Map<string, TournamentState>();
 
@@ -73,7 +78,11 @@ export function putTournament(state: TournamentState): void {
   tournaments.set(state.id, state);
   recordAccess(state.id);
   evictOldestCompletedIfOverCapacity();
-  logger.debug("store/putTournament", { id: state.id, players: state.players.length, rounds: state.rounds.length });
+  logger.debug("store/putTournament", {
+    id: state.id,
+    players: state.players.length,
+    rounds: state.rounds.length
+  });
 }
 
 export function createTournament(config: TournamentConfig, organizerId: string): TournamentState {
@@ -90,7 +99,9 @@ export function createTournament(config: TournamentConfig, organizerId: string):
     publicToken: createId("public"),
     organizerId,
     createdAt,
-    updatedAt: createdAt
+    updatedAt: createdAt,
+    pendingPlayers: [],
+    integrationWaveCount: 0
   };
   tournaments.set(id, state);
   recordAccess(id);
@@ -106,9 +117,17 @@ export function createTournament(config: TournamentConfig, organizerId: string):
   return state;
 }
 
-export function submitScore(tournamentId: string, matchId: string, scoreA: number, scoreB: number): TournamentState {
+export function submitScore(
+  tournamentId: string,
+  matchId: string,
+  scoreA: number,
+  scoreB: number
+): TournamentState {
   const tournament = requireTournament(tournamentId);
   const lookup = findMatch(tournament.rounds, matchId);
+  if (lookup.match.completed) {
+    throw new Error("Match already scored.");
+  }
   lookup.match.scoreA = scoreA;
   lookup.match.scoreB = scoreB;
   lookup.match.completed = true;
@@ -147,7 +166,11 @@ export function renameTournament(tournamentId: string, newName: string): Tournam
   return tournament;
 }
 
-export function substitutePlayer(tournamentId: string, playerId: string, replacementName: string): TournamentState {
+export function substitutePlayer(
+  tournamentId: string,
+  playerId: string,
+  replacementName: string
+): TournamentState {
   const tournament = requireTournament(tournamentId);
   const player = tournament.players.find((item) => item.id === playerId);
   if (!player) {
@@ -172,7 +195,11 @@ export function deleteTournament(tournamentId: string): void {
 export function adjustCourts(tournamentId: string, courts: number): TournamentState {
   const tournament = requireTournament(tournamentId);
   tournament.config.courts = courts;
-  tournament.rounds = recalculateRemainingTournament(tournament.config, tournament.players, tournament.rounds);
+  tournament.rounds = recalculateRemainingTournament(
+    tournament.config,
+    tournament.players,
+    tournament.rounds
+  );
   touch(tournament);
   logger.info("store/adjustCourts", { tournamentId, courts, version: tournament.version });
   return tournament;
@@ -235,7 +262,131 @@ function findMatch(rounds: Round[], matchId: string): { round: Round; match: Mat
 function requireTournament(id: string): TournamentState {
   const tournament = getTournament(id);
   if (!tournament) {
-    throw new Error("Tournament not found.");
+    throw new Error(`Tournament ${id} not found.`);
   }
+  return tournament;
+}
+
+/**
+ * Generate a unique name by appending a number suffix if duplicates exist
+ */
+function generateUniqueName(baseName: string, existingNames: string[]): string {
+  const trimmedBase = baseName.trim();
+
+  // Check if the base name is already unique
+  if (!existingNames.includes(trimmedBase)) {
+    return trimmedBase;
+  }
+
+  // Find a unique suffix
+  let counter = 1;
+  let uniqueName: string;
+
+  do {
+    const suffix = counter.toString().padStart(2, "0");
+    uniqueName = `${trimmedBase} ${suffix}`;
+    counter += 1;
+  } while (existingNames.includes(uniqueName) && counter < 100);
+
+  return uniqueName;
+}
+
+export function addPendingPlayer(
+  tournamentId: string,
+  name: string,
+  gender: "MALE" | "FEMALE" | undefined
+): TournamentState {
+  const trimmedName = name.trim();
+  if (!trimmedName) {
+    throw new Error("Player name is required.");
+  }
+
+  const tournament = requireTournament(tournamentId);
+
+  // Collect all existing names (both active players and pending players)
+  const existingNames = [
+    ...tournament.players.map((p) => p.name),
+    ...tournament.pendingPlayers.map((p) => p.name)
+  ];
+
+  // Generate a unique name if duplicate exists
+  const uniqueName = generateUniqueName(trimmedName, existingNames);
+
+  const pendingPlayer: PendingPlayer = {
+    id: createId("player"),
+    name: uniqueName,
+    gender,
+    createdAt: new Date().toISOString()
+  };
+
+  tournament.pendingPlayers.push(pendingPlayer);
+  touch(tournament);
+
+  logger.info("store/addPendingPlayer", {
+    tournamentId,
+    playerId: pendingPlayer.id,
+    originalName: trimmedName,
+    finalName: uniqueName,
+    wasDuplicate: trimmedName !== uniqueName,
+    gender
+  });
+
+  return tournament;
+}
+
+export function integratePendingPlayers(tournamentId: string): TournamentState {
+  const tournament = requireTournament(tournamentId);
+
+  // Validate integration eligibility
+  const validation = canIntegratePlayers(tournament);
+  if (!validation.can) {
+    throw new Error(validation.reason || "Cannot integrate players");
+  }
+
+  // Calculate handicap for new players
+  const avgGames = calculateAverageGames(tournament.players);
+  const handicap = calculateHandicap(avgGames, 0.5);
+  const newWave = tournament.integrationWaveCount + 1;
+
+  // Convert pending players to active players
+  const newPlayers: Player[] = tournament.pendingPlayers.map((pending) => ({
+    id: pending.id,
+    name: pending.name,
+    gender: pending.gender,
+    gamesPlayed: 0,
+    totalPoints: 0,
+    handicap,
+    integrationWave: newWave
+  }));
+
+  // Add new players to tournament
+  tournament.players.push(...newPlayers);
+
+  // Clear pending players
+  tournament.pendingPlayers = [];
+
+  // Increment integration wave count
+  tournament.integrationWaveCount = newWave;
+
+  // Recalculate remaining rounds with expanded player list
+  tournament.rounds = recalculateRemainingTournament(
+    tournament.config,
+    tournament.players,
+    tournament.rounds
+  );
+
+  // Update leaderboard
+  tournament.leaderboard = buildLeaderboard(tournament.players);
+
+  touch(tournament);
+
+  logger.info("store/integratePendingPlayers", {
+    tournamentId,
+    newPlayersCount: newPlayers.length,
+    wave: newWave,
+    handicap,
+    totalPlayers: tournament.players.length
+  });
+
   return tournament;
 }

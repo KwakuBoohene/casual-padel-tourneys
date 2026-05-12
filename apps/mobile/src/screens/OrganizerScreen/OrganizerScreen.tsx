@@ -126,6 +126,18 @@ export function OrganizerScreen() {
     playerNameById,
     showEditConfirmModal,
     setShowEditConfirmModal,
+    showAddPendingPlayerModal,
+    pendingPlayerNameDraft,
+    setPendingPlayerNameDraft,
+    pendingPlayerGender,
+    setPendingPlayerGender,
+    showIntegrateConfirmModal,
+    openAddPendingPlayerModal,
+    closeAddPendingPlayerModal,
+    submitAddPendingPlayer,
+    openIntegrateConfirmModal,
+    closeIntegrateConfirmModal,
+    confirmIntegratePendingPlayers,
     viewerBaseUrl
   } = useOrganizerScreen();
 
@@ -298,6 +310,18 @@ export function OrganizerScreen() {
     onPrevRound={goToPrevRound}
     onNextRound={goToNextRound}
     onSubmitRoundScores={() => void submitRoundScores()}
+        showAddPendingPlayerModal={showAddPendingPlayerModal}
+        pendingPlayerNameDraft={pendingPlayerNameDraft}
+        pendingPlayerGender={pendingPlayerGender}
+        showIntegrateConfirmModal={showIntegrateConfirmModal}
+        onOpenAddPendingPlayer={openAddPendingPlayerModal}
+        onCloseAddPendingPlayer={closeAddPendingPlayerModal}
+        onChangePendingPlayerName={setPendingPlayerNameDraft}
+        onChangePendingPlayerGender={setPendingPlayerGender}
+        onSubmitAddPendingPlayer={() => void submitAddPendingPlayer()}
+        onOpenIntegrateConfirm={openIntegrateConfirmModal}
+        onCloseIntegrateConfirm={closeIntegrateConfirmModal}
+        onConfirmIntegratePendingPlayers={() => void confirmIntegratePendingPlayers()}
   />
     );
   }

@@ -5,7 +5,12 @@ import type { PlayerGender, SchedulingMode, TournamentMode, TournamentVariant } 
 
 import { apiDelete, apiGet, apiPost, setAuthToken } from "../../../api/client";
 import { logger } from "../../../logger";
-import type { CreateTournamentResponse, SetupStep, TournamentListResponse, TournamentResponse } from "../types";
+import type {
+  CreateTournamentResponse,
+  SetupStep,
+  TournamentListResponse,
+  TournamentResponse
+} from "../types";
 import { buildLeaderboardRows, buildPlayerGameRows, computeEstimate, computeLiveTimeStatus } from "../utils";
 
 const sanitizeWholeNumberInput = (value: string) => value.replace(/[^0-9]/g, "");
@@ -14,7 +19,9 @@ const scoreDraftStorageKey = (tournamentId: string) => `scoreDraft:${tournamentI
 
 async function readLocalValue(key: string): Promise<string | null> {
   if (Platform.OS === "web") {
-    const anyGlobal = globalThis as typeof globalThis & { localStorage?: { getItem(storageKey: string): string | null } };
+    const anyGlobal = globalThis as typeof globalThis & {
+      localStorage?: { getItem(storageKey: string): string | null };
+    };
     if (typeof anyGlobal !== "undefined" && anyGlobal.localStorage) {
       return anyGlobal.localStorage.getItem(key);
     }
@@ -25,7 +32,9 @@ async function readLocalValue(key: string): Promise<string | null> {
 
 async function writeLocalValue(key: string, value: string): Promise<void> {
   if (Platform.OS === "web") {
-    const anyGlobal = globalThis as typeof globalThis & { localStorage?: { setItem(storageKey: string, storageValue: string): void } };
+    const anyGlobal = globalThis as typeof globalThis & {
+      localStorage?: { setItem(storageKey: string, storageValue: string): void };
+    };
     if (typeof anyGlobal !== "undefined" && anyGlobal.localStorage) {
       anyGlobal.localStorage.setItem(key, value);
     }
@@ -36,7 +45,9 @@ async function writeLocalValue(key: string, value: string): Promise<void> {
 
 async function deleteLocalValue(key: string): Promise<void> {
   if (Platform.OS === "web") {
-    const anyGlobal = globalThis as typeof globalThis & { localStorage?: { removeItem(storageKey: string): void } };
+    const anyGlobal = globalThis as typeof globalThis & {
+      localStorage?: { removeItem(storageKey: string): void };
+    };
     if (typeof anyGlobal !== "undefined" && anyGlobal.localStorage) {
       anyGlobal.localStorage.removeItem(key);
     }
@@ -47,11 +58,22 @@ async function deleteLocalValue(key: string): Promise<void> {
 
 export function useOrganizerScreen() {
   const [authToken, setAuthTokenState] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<{ id: string; name?: string; email: string; avatarUrl?: string; isGuest?: boolean } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{
+    id: string;
+    name?: string;
+    email: string;
+    avatarUrl?: string;
+    isGuest?: boolean;
+  } | null>(null);
   const [step, setStep] = useState<SetupStep>("LIST");
   const [name, setName] = useState("");
   const [players, setPlayers] = useState<string[]>(["", "", "", ""]);
-  const [playerGenders, setPlayerGenders] = useState<Array<PlayerGender | undefined>>([undefined, undefined, undefined, undefined]);
+  const [playerGenders, setPlayerGenders] = useState<Array<PlayerGender | undefined>>([
+    undefined,
+    undefined,
+    undefined,
+    undefined
+  ]);
   const [mode, setMode] = useState<TournamentMode>("AMERICANO");
   const [variant, setVariant] = useState<TournamentVariant>("CLASSIC");
   const [schedulingMode, setSchedulingMode] = useState<SchedulingMode>("TARGET_GAMES");
@@ -76,10 +98,15 @@ export function useOrganizerScreen() {
   const [showEditConfirmModal, setShowEditConfirmModal] = useState(false);
   const [showLiveOptionsModal, setShowLiveOptionsModal] = useState(false);
   const [showAdjustCourtsConfirmModal, setShowAdjustCourtsConfirmModal] = useState(false);
+  const [showAddPendingPlayerModal, setShowAddPendingPlayerModal] = useState(false);
+  const [pendingPlayerNameDraft, setPendingPlayerNameDraft] = useState("");
+  const [pendingPlayerGender, setPendingPlayerGender] = useState<PlayerGender | undefined>(undefined);
+  const [showIntegrateConfirmModal, setShowIntegrateConfirmModal] = useState(false);
   const [scorePicker, setScorePicker] = useState<{ matchId: string; side: "scoreA" | "scoreB" } | null>(null);
-  const [suppressNextScorePickerOpen, setSuppressNextScorePickerOpen] = useState<{ matchId: string; side: "scoreA" | "scoreB" } | null>(
-    null
-  );
+  const [suppressNextScorePickerOpen, setSuppressNextScorePickerOpen] = useState<{
+    matchId: string;
+    side: "scoreA" | "scoreB";
+  } | null>(null);
   const [focusSubmitMatchId, setFocusSubmitMatchId] = useState<string | null>(null);
   const [selectedRoundIndex, setSelectedRoundIndex] = useState(0);
   const [proposedCourts, setProposedCourts] = useState(2);
@@ -95,7 +122,8 @@ export function useOrganizerScreen() {
 
   const viewerBaseUrl = process.env.EXPO_PUBLIC_VIEWER_BASE_URL ?? "http://localhost:3000";
   const effectiveSchedulingMode: SchedulingMode = mode === "MEXICANO" ? "TOTAL_TIME" : schedulingMode;
-  const effectiveEstimatorSchedulingMode: SchedulingMode = estimatorMode === "MEXICANO" ? "TOTAL_TIME" : estimatorSchedulingMode;
+  const effectiveEstimatorSchedulingMode: SchedulingMode =
+    estimatorMode === "MEXICANO" ? "TOTAL_TIME" : estimatorSchedulingMode;
 
   const sanitizedPlayers = useMemo(() => players.map((value) => value.trim()).filter(Boolean), [players]);
   const estimate = useMemo(
@@ -109,7 +137,15 @@ export function useOrganizerScreen() {
         tournamentTimeText,
         playersCount: sanitizedPlayers.length
       }),
-    [courtsText, effectiveSchedulingMode, mode, pointsText, sanitizedPlayers.length, targetGamesText, tournamentTimeText]
+    [
+      courtsText,
+      effectiveSchedulingMode,
+      mode,
+      pointsText,
+      sanitizedPlayers.length,
+      targetGamesText,
+      tournamentTimeText
+    ]
   );
   const estimatorUsers = Number(estimatorUsersText);
   const estimator = useMemo(
@@ -171,13 +207,14 @@ export function useOrganizerScreen() {
       return null;
     }
     return (
-      liveTournament.rounds.find((round) => !round.isLocked) ??
-      sortedRounds[sortedRounds.length - 1] ??
-      null
+      liveTournament.rounds.find((round) => !round.isLocked) ?? sortedRounds[sortedRounds.length - 1] ?? null
     );
   }, [liveTournament, sortedRounds]);
 
-  const displayedRound = useMemo(() => sortedRounds[selectedRoundIndex] ?? null, [sortedRounds, selectedRoundIndex]);
+  const displayedRound = useMemo(
+    () => sortedRounds[selectedRoundIndex] ?? null,
+    [sortedRounds, selectedRoundIndex]
+  );
 
   useEffect(() => {
     if (!liveTournament || !activeRound) return;
@@ -232,7 +269,9 @@ export function useOrganizerScreen() {
 
     const persistDraftScores = async () => {
       try {
-        const hasDraftValues = Object.values(scoreInputs).some((entry) => entry.scoreA.trim().length > 0 || entry.scoreB.trim().length > 0);
+        const hasDraftValues = Object.values(scoreInputs).some(
+          (entry) => entry.scoreA.trim().length > 0 || entry.scoreB.trim().length > 0
+        );
         const key = scoreDraftStorageKey(tournamentId);
         if (!hasDraftValues) {
           await deleteLocalValue(key);
@@ -265,7 +304,8 @@ export function useOrganizerScreen() {
     return activeRound.roundNumber === highestRound;
   }, [activeRound, liveTournament]);
   const liveTimeStatus = useMemo(
-    () => (liveTournament ? computeLiveTimeStatus(liveTournament) : { roundsLeft: 0, estimatedMinutesLeft: 0 }),
+    () =>
+      liveTournament ? computeLiveTimeStatus(liveTournament) : { roundsLeft: 0, estimatedMinutesLeft: 0 },
     [liveTournament]
   );
   const maxCourts = useMemo(() => {
@@ -281,7 +321,10 @@ export function useOrganizerScreen() {
     return liveTournament.config.courts > 1 || maxCourts > liveTournament.config.courts;
   }, [isTournamentCompleted, liveTournament, maxCourts]);
 
-  const leaderboardRows = useMemo(() => (liveTournament ? buildLeaderboardRows(liveTournament) : []), [liveTournament]);
+  const leaderboardRows = useMemo(
+    () => (liveTournament ? buildLeaderboardRows(liveTournament) : []),
+    [liveTournament]
+  );
   const selectedPlayerGames = useMemo(() => {
     if (!liveTournament || !selectedPlayerId) {
       return [];
@@ -328,12 +371,18 @@ export function useOrganizerScreen() {
   const onChangeCourtsValue = (value: string) => setCourtsText(sanitizeWholeNumberInput(value));
   const onChangePointsValue = (value: string) => setPointsText(sanitizeWholeNumberInput(value));
   const onChangeTargetGamesValue = (value: string) => setTargetGamesText(sanitizeWholeNumberInput(value));
-  const onChangeTournamentTimeValue = (value: string) => setTournamentTimeText(sanitizeWholeNumberInput(value));
-  const onChangeEstimatorUsersValue = (value: string) => setEstimatorUsersText(sanitizeWholeNumberInput(value));
-  const onChangeEstimatorCourtsValue = (value: string) => setEstimatorCourtsText(sanitizeWholeNumberInput(value));
-  const onChangeEstimatorPointsValue = (value: string) => setEstimatorPointsText(sanitizeWholeNumberInput(value));
-  const onChangeEstimatorTargetGamesValue = (value: string) => setEstimatorTargetGamesText(sanitizeWholeNumberInput(value));
-  const onChangeEstimatorTournamentTimeValue = (value: string) => setEstimatorTournamentTimeText(sanitizeWholeNumberInput(value));
+  const onChangeTournamentTimeValue = (value: string) =>
+    setTournamentTimeText(sanitizeWholeNumberInput(value));
+  const onChangeEstimatorUsersValue = (value: string) =>
+    setEstimatorUsersText(sanitizeWholeNumberInput(value));
+  const onChangeEstimatorCourtsValue = (value: string) =>
+    setEstimatorCourtsText(sanitizeWholeNumberInput(value));
+  const onChangeEstimatorPointsValue = (value: string) =>
+    setEstimatorPointsText(sanitizeWholeNumberInput(value));
+  const onChangeEstimatorTargetGamesValue = (value: string) =>
+    setEstimatorTargetGamesText(sanitizeWholeNumberInput(value));
+  const onChangeEstimatorTournamentTimeValue = (value: string) =>
+    setEstimatorTournamentTimeText(sanitizeWholeNumberInput(value));
   const allKnownPlayerNames = useMemo(() => {
     const names = new Set<string>();
     for (const suggestion of suggestedPlayerNames) {
@@ -385,7 +434,10 @@ export function useOrganizerScreen() {
         setErrorText("Target games must be a whole number greater than 0.");
         return;
       }
-      if (effectiveSchedulingMode === "TOTAL_TIME" && (!Number.isInteger(tournamentTime) || tournamentTime < 10)) {
+      if (
+        effectiveSchedulingMode === "TOTAL_TIME" &&
+        (!Number.isInteger(tournamentTime) || tournamentTime < 10)
+      ) {
         setErrorText("Tournament time must be a whole number of at least 10 minutes.");
         return;
       }
@@ -417,10 +469,16 @@ export function useOrganizerScreen() {
       setResponseText(`Created ${response.data.id}\nShare token: ${response.data.publicToken}`);
       setLiveTournament(response.data);
       setProposedCourts(
-        Math.min(Math.max(1, response.data.config.courts), Math.max(1, Math.floor(response.data.players.length / 4)))
+        Math.min(
+          Math.max(1, response.data.config.courts),
+          Math.max(1, Math.floor(response.data.players.length / 4))
+        )
       );
       setLiveTournamentNameDraft(response.data.config.name);
-      setTournaments((previous) => [response.data, ...previous.filter((item) => item.id !== response.data.id)]);
+      setTournaments((previous) => [
+        response.data,
+        ...previous.filter((item) => item.id !== response.data.id)
+      ]);
       setIsEditingCompletedTournament(false);
       setStep("LIVE");
     } catch (error) {
@@ -448,7 +506,10 @@ export function useOrganizerScreen() {
       const response = await apiGet<TournamentResponse>(`/tournaments/${tournamentId}`);
       setLiveTournament(response.data);
       setProposedCourts(
-        Math.min(Math.max(1, response.data.config.courts), Math.max(1, Math.floor(response.data.players.length / 4)))
+        Math.min(
+          Math.max(1, response.data.config.courts),
+          Math.max(1, Math.floor(response.data.players.length / 4))
+        )
       );
       setLiveTournamentNameDraft(response.data.config.name);
       setIsEditingCompletedTournament(editMode);
@@ -623,7 +684,9 @@ export function useOrganizerScreen() {
       return;
     }
     if (liveTournament) {
-      setTournaments((previous) => previous.map((item) => (item.id === liveTournament.id ? liveTournament : item)));
+      setTournaments((previous) =>
+        previous.map((item) => (item.id === liveTournament.id ? liveTournament : item))
+      );
     }
     setIsEditingCompletedTournament(false);
     setStep("LEADERBOARD");
@@ -646,7 +709,9 @@ export function useOrganizerScreen() {
       });
       setLiveTournament(response.data);
       setLiveTournamentNameDraft(response.data.config.name);
-      setTournaments((previous) => previous.map((item) => (item.id === response.data.id ? response.data : item)));
+      setTournaments((previous) =>
+        previous.map((item) => (item.id === response.data.id ? response.data : item))
+      );
     } catch (error) {
       setErrorText((error as Error).message);
     }
@@ -673,6 +738,61 @@ export function useOrganizerScreen() {
     } catch (error) {
       setErrorText((error as Error).message);
       setShowAdjustCourtsConfirmModal(false);
+    }
+  };
+
+  const openAddPendingPlayerModal = () => {
+    setPendingPlayerNameDraft("");
+    setPendingPlayerGender(undefined);
+    setShowAddPendingPlayerModal(true);
+  };
+
+  const closeAddPendingPlayerModal = () => {
+    setShowAddPendingPlayerModal(false);
+  };
+
+  const submitAddPendingPlayer = async () => {
+    if (!liveTournament) return;
+    const name = pendingPlayerNameDraft.trim();
+    if (!name) {
+      setErrorText("Player name cannot be empty.");
+      return;
+    }
+    try {
+      setErrorText("");
+      const response = await apiPost<TournamentResponse>("/tournaments/add-pending-player", {
+        tournamentId: liveTournament.id,
+        name,
+        gender: liveTournament.config.variant === "MIXED" ? pendingPlayerGender : undefined,
+        expectedVersion: liveTournament.version
+      });
+      setLiveTournament(response.data);
+      setShowAddPendingPlayerModal(false);
+    } catch (error) {
+      setErrorText((error as Error).message);
+    }
+  };
+
+  const openIntegrateConfirmModal = () => setShowIntegrateConfirmModal(true);
+  const closeIntegrateConfirmModal = () => setShowIntegrateConfirmModal(false);
+
+  const confirmIntegratePendingPlayers = async () => {
+    if (!liveTournament) return;
+    try {
+      setErrorText("");
+      const response = await apiPost<TournamentResponse>("/tournaments/integrate-pending", {
+        tournamentId: liveTournament.id,
+        expectedVersion: liveTournament.version
+      });
+      setLiveTournament(response.data);
+      setProposedCourts((previous) => {
+        const nextMax = Math.max(1, Math.floor(response.data.players.length / 4));
+        return Math.min(Math.max(1, previous), nextMax);
+      });
+      setShowIntegrateConfirmModal(false);
+    } catch (error) {
+      setErrorText((error as Error).message);
+      setShowIntegrateConfirmModal(false);
     }
   };
 
@@ -722,7 +842,9 @@ export function useOrganizerScreen() {
         let storedUser: string | null = null;
 
         if (Platform.OS === "web") {
-          const anyGlobal = globalThis as typeof globalThis & { localStorage?: { getItem(key: string): string | null } };
+          const anyGlobal = globalThis as typeof globalThis & {
+            localStorage?: { getItem(key: string): string | null };
+          };
           if (typeof anyGlobal !== "undefined" && anyGlobal.localStorage) {
             storedToken = anyGlobal.localStorage.getItem("authToken");
             storedUser = anyGlobal.localStorage.getItem("authUser");
@@ -773,7 +895,9 @@ export function useOrganizerScreen() {
 
     try {
       if (Platform.OS === "web") {
-        const anyGlobal = globalThis as typeof globalThis & { localStorage?: { setItem(key: string, value: string): void } };
+        const anyGlobal = globalThis as typeof globalThis & {
+          localStorage?: { setItem(key: string, value: string): void };
+        };
         if (typeof anyGlobal !== "undefined" && anyGlobal.localStorage) {
           anyGlobal.localStorage.setItem("authToken", payload.token);
           anyGlobal.localStorage.setItem("authUser", JSON.stringify(payload.user));
@@ -790,7 +914,10 @@ export function useOrganizerScreen() {
   };
 
   const handleSignOut = async () => {
-    logger.info("handleSignOut: clearing auth state", { platform: Platform.OS, currentUserId: currentUser?.id });
+    logger.info("handleSignOut: clearing auth state", {
+      platform: Platform.OS,
+      currentUserId: currentUser?.id
+    });
     setAuthTokenState(null);
     setAuthToken(null);
     setCurrentUser(null);
@@ -799,7 +926,9 @@ export function useOrganizerScreen() {
 
     try {
       if (Platform.OS === "web") {
-        const anyGlobal = globalThis as typeof globalThis & { localStorage?: { removeItem(key: string): void } };
+        const anyGlobal = globalThis as typeof globalThis & {
+          localStorage?: { removeItem(key: string): void };
+        };
         if (typeof anyGlobal !== "undefined" && anyGlobal.localStorage) {
           anyGlobal.localStorage.removeItem("authToken");
           anyGlobal.localStorage.removeItem("authUser");
@@ -936,8 +1065,20 @@ export function useOrganizerScreen() {
     playerNameById,
     showEditConfirmModal,
     setShowEditConfirmModal,
+    // pending players
+    showAddPendingPlayerModal,
+    pendingPlayerNameDraft,
+    setPendingPlayerNameDraft,
+    pendingPlayerGender,
+    setPendingPlayerGender,
+    showIntegrateConfirmModal,
+    openAddPendingPlayerModal,
+    closeAddPendingPlayerModal,
+    submitAddPendingPlayer,
+    openIntegrateConfirmModal,
+    closeIntegrateConfirmModal,
+    confirmIntegratePendingPlayers,
     // misc
     viewerBaseUrl
   };
 }
-

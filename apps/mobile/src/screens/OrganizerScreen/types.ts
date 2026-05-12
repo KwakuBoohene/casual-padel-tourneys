@@ -1,4 +1,4 @@
-import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
+import type { PendingPlayer, SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 export type SetupStep =
   | "LIST"
@@ -34,7 +34,14 @@ export interface LiveTournamentState {
     tournamentTimeMinutes?: number;
   };
   players: Array<{ id: string; name: string }>;
-  leaderboard: Array<{ playerId: string; name: string; totalPoints: number; gamesPlayed: number; rank: number }>;
+  pendingPlayers: PendingPlayer[];
+  leaderboard: Array<{
+    playerId: string;
+    name: string;
+    totalPoints: number;
+    gamesPlayed: number;
+    rank: number;
+  }>;
   rounds: Array<{
     id: string;
     roundNumber: number;
@@ -82,4 +89,3 @@ export interface PlayerGameRow {
   scoreText: string;
   result: "WIN" | "LOSS" | "DRAW" | "PENDING";
 }
-

@@ -1,6 +1,7 @@
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import type { PlayerGender, TournamentVariant } from "@padel/shared";
 
+import { useBreakpoint } from "../../../layout";
 import { colors, radius, spacing, typography } from "../../../theme";
 
 interface PlayersStepViewProps {
@@ -21,8 +22,18 @@ interface PlayersStepViewProps {
 }
 
 export function PlayersStepView(props: PlayersStepViewProps) {
+  const { formMaxWidth } = useBreakpoint();
   return (
-    <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background }}>
+    <ScrollView
+      contentContainerStyle={{
+        padding: spacing.lg,
+        gap: spacing.md,
+        backgroundColor: colors.background,
+        maxWidth: formMaxWidth,
+        width: "100%",
+        alignSelf: "center"
+      }}
+    >
       <Text style={[typography.title, { color: colors.text }]}>Players</Text>
       <Text style={{ color: colors.muted }}>Add at least 4 players to get started.</Text>
 

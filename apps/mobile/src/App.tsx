@@ -1,5 +1,6 @@
 import { Platform, SafeAreaView, StatusBar } from "react-native";
 
+import { PageShell } from "./layout";
 import { OrganizerScreen } from "./screens/OrganizerScreen/OrganizerScreen";
 
 export function App() {
@@ -8,7 +9,9 @@ export function App() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#0f172a", paddingTop: androidTopInset }}>
       <StatusBar barStyle="light-content" />
-      <OrganizerScreen />
+      <PageShell>
+        <OrganizerScreen />
+      </PageShell>
     </SafeAreaView>
   );
 }

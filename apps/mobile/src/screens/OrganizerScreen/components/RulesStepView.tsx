@@ -2,6 +2,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 import type { Estimate } from "../types";
+import { useBreakpoint } from "../../../layout";
 import { cardStyles, colors, radius, spacing, typography } from "../../../theme";
 
 interface RulesStepViewProps {
@@ -27,10 +28,17 @@ interface RulesStepViewProps {
 }
 
 export function RulesStepView(props: RulesStepViewProps) {
+  const { formMaxWidth } = useBreakpoint();
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}
+      contentContainerStyle={{
+        padding: spacing.lg,
+        gap: spacing.md,
+        maxWidth: formMaxWidth,
+        width: "100%",
+        alignSelf: "center"
+      }}
     >
       <Text style={[typography.title, { color: colors.text }]}>Tournament Rules</Text>
       <Text style={{ color: colors.muted }}>Mode</Text>

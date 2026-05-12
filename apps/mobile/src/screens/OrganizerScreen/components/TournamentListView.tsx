@@ -1,5 +1,6 @@
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 
+import { useBreakpoint } from "../../../layout";
 import { cardStyles, colors, radius, spacing, typography } from "../../../theme";
 import type { LiveTournamentState } from "../types";
 
@@ -16,6 +17,23 @@ interface TournamentListViewProps {
 }
 
 export function TournamentListView(props: TournamentListViewProps) {
+  const { isWide } = useBreakpoint();
+  const cardWrapStyle = isWide
+    ? ({
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: spacing.md
+      } as const)
+    : undefined;
+  const wideCardStyle = isWide
+    ? ({
+        flexGrow: 1,
+        flexBasis: "47%",
+        minWidth: 260,
+        maxWidth: 520
+      } as const)
+    : undefined;
+
   const activeTournaments = props.tournaments.filter(
     (tournament) => !tournament.rounds.every((round) => round.matches.every((match) => match.completed))
   );
@@ -61,7 +79,7 @@ export function TournamentListView(props: TournamentListViewProps) {
           <Text style={{ color: colors.muted, fontSize: 14 }}>No active tournaments.</Text>
         </View>
       ) : (
-        <>
+        <View style={cardWrapStyle}>
           {activeTournaments.map((tournament) => (
             <Pressable
               key={tournament.id}
@@ -71,7 +89,8 @@ export function TournamentListView(props: TournamentListViewProps) {
                 {
                   marginTop: spacing.sm,
                   backgroundColor: colors.surfaceAlt
-                }
+                },
+                wideCardStyle
               ]}
             >
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
@@ -115,7 +134,7 @@ export function TournamentListView(props: TournamentListViewProps) {
               </View>
             </Pressable>
           ))}
-        </>
+        </View>
       )}
 
       {completedTournaments.length > 0 ? (
@@ -131,18 +150,20 @@ export function TournamentListView(props: TournamentListViewProps) {
           >
             <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>History</Text>
           </View>
-          {completedTournaments.map((tournament) => (
-            <Pressable
-              key={tournament.id}
-              onPress={() => props.onOpenTournament(tournament.id)}
-              style={[
-                cardStyles.container,
-                {
-                  marginTop: spacing.sm,
-                  backgroundColor: colors.surface
-                }
-              ]}
-            >
+          <View style={cardWrapStyle}>
+            {completedTournaments.map((tournament) => (
+              <Pressable
+                key={tournament.id}
+                onPress={() => props.onOpenTournament(tournament.id)}
+                style={[
+                  cardStyles.container,
+                  {
+                    marginTop: spacing.sm,
+                    backgroundColor: colors.surface
+                  },
+                  wideCardStyle
+                ]}
+              >
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
                 <View>
                   <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>{tournament.config.name}</Text>
@@ -168,7 +189,8 @@ export function TournamentListView(props: TournamentListViewProps) {
                 </Text>
               </View>
             </Pressable>
-          ))}
+            ))}
+          </View>
         </>
       ) : null}
 
@@ -178,13 +200,18 @@ export function TournamentListView(props: TournamentListViewProps) {
         style={{
           marginTop: spacing.lg,
           flexDirection: "row",
-          gap: spacing.sm
+          flexWrap: isWide ? "wrap" : "nowrap",
+          gap: spacing.sm,
+          justifyContent: isWide ? "flex-start" : "flex-start"
         }}
       >
         <Pressable
           onPress={props.onCreateNew}
           style={{
-            flex: 1,
+            flex: isWide ? 0 : 1,
+            flexGrow: isWide ? 1 : undefined,
+            minWidth: isWide ? 160 : undefined,
+            maxWidth: isWide ? 320 : undefined,
             paddingVertical: spacing.sm,
             borderRadius: radius.md,
             backgroundColor: colors.primary,
@@ -204,7 +231,10 @@ export function TournamentListView(props: TournamentListViewProps) {
         <Pressable
           onPress={props.onOpenEstimator}
           style={{
-            flex: 1,
+            flex: isWide ? 0 : 1,
+            flexGrow: isWide ? 1 : undefined,
+            minWidth: isWide ? 160 : undefined,
+            maxWidth: isWide ? 320 : undefined,
             paddingVertical: spacing.sm,
             borderRadius: radius.md,
             backgroundColor: colors.surface,

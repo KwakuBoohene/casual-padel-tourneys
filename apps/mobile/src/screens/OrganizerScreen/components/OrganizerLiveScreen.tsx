@@ -1,3 +1,5 @@
+import { View } from "react-native";
+
 import type { LiveTournamentState } from "../types";
 import { LiveTournamentView } from "./LiveTournamentView";
 import type { PlayerGender } from "@padel/shared";
@@ -69,7 +71,8 @@ interface OrganizerLiveScreenProps {
 
 export function OrganizerLiveScreen(props: OrganizerLiveScreenProps) {
   return (
-    <LiveTournamentView
+    <View style={{ flex: 1 }}>
+      <LiveTournamentView
       tournament={props.tournament}
       viewerBaseUrl={props.viewerBaseUrl}
       errorText={props.errorText}
@@ -132,5 +135,6 @@ export function OrganizerLiveScreen(props: OrganizerLiveScreenProps) {
       onCloseIntegrateConfirm={props.onCloseIntegrateConfirm}
       onConfirmIntegratePendingPlayers={props.onConfirmIntegratePendingPlayers}
     />
+    </View>
   );
 }

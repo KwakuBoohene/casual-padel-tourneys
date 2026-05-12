@@ -1,6 +1,7 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
+import { useBreakpoint } from "../../../layout";
 import { colors, radius, spacing, typography } from "../../../theme";
 
 interface TournamentOptionsStepViewProps {
@@ -15,6 +16,7 @@ interface TournamentOptionsStepViewProps {
 }
 
 export function TournamentOptionsStepView(props: TournamentOptionsStepViewProps) {
+  const { formMaxWidth } = useBreakpoint();
   const renderChoice = (label: string, active: boolean, onPress: () => void) => (
     <Pressable
       onPress={onPress}
@@ -34,7 +36,13 @@ export function TournamentOptionsStepView(props: TournamentOptionsStepViewProps)
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}
+      contentContainerStyle={{
+        padding: spacing.lg,
+        gap: spacing.md,
+        maxWidth: formMaxWidth,
+        width: "100%",
+        alignSelf: "center"
+      }}
     >
       <Text style={[typography.title, { color: colors.text }]}>Tournament Options</Text>
 

@@ -1,5 +1,6 @@
 import { Pressable, Text, TextInput, View } from "react-native";
 
+import { useBreakpoint } from "../../../layout";
 import { colors, radius, spacing, typography } from "../../../theme";
 
 interface NameStepViewProps {
@@ -11,6 +12,7 @@ interface NameStepViewProps {
 }
 
 export function NameStepView(props: NameStepViewProps) {
+  const { formMaxWidth } = useBreakpoint();
   return (
     <View
       style={{
@@ -24,7 +26,7 @@ export function NameStepView(props: NameStepViewProps) {
       <View
         style={{
           width: "100%",
-          maxWidth: 420,
+          maxWidth: formMaxWidth,
           padding: spacing.lg,
           borderRadius: radius.lg,
           backgroundColor: colors.surface

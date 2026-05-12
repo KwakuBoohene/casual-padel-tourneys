@@ -2,6 +2,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import type { SchedulingMode } from "@padel/shared";
 
 import type { Estimate } from "../types";
+import { useBreakpoint } from "../../../layout";
 import { cardStyles, colors, radius, spacing, typography } from "../../../theme";
 
 interface MatchSettingsStepViewProps {
@@ -27,11 +28,18 @@ export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
   const minPlayersForCourts = Number.isFinite(courts) && courts > 0 ? courts * 4 : 0;
   const hasEnoughPlayersForCourts =
     Number.isFinite(courts) && courts > 0 && props.playersCount >= minPlayersForCourts;
+  const { formMaxWidth } = useBreakpoint();
 
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}
+      contentContainerStyle={{
+        padding: spacing.lg,
+        gap: spacing.md,
+        maxWidth: formMaxWidth,
+        width: "100%",
+        alignSelf: "center"
+      }}
     >
       <Text style={[typography.title, { color: colors.text }]}>Match Settings</Text>
       <Text style={{ color: colors.muted }}>Courts</Text>

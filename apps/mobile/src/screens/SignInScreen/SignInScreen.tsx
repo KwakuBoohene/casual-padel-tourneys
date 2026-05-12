@@ -5,6 +5,7 @@ import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, Pressable, Text, View } from "react-native";
 
+import { useBreakpoint } from "../../layout";
 import { colors, radius, spacing, typography } from "../../theme";
 import { logger } from "../../logger";
 
@@ -59,6 +60,7 @@ async function storeGuestId(guestId: string): Promise<void> {
 }
 
 export function SignInScreen(props: SignInScreenProps) {
+  const { formMaxWidth } = useBreakpoint();
   const redirectUri = AuthSession.makeRedirectUri({ scheme: APP_SCHEME });
   const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
   const googleAndroidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
@@ -157,55 +159,59 @@ export function SignInScreen(props: SignInScreenProps) {
         gap: spacing.lg
       }}
     >
-      <View style={{ alignItems: "center", gap: spacing.sm }}>
+      <View style={{ alignItems: "center", gap: spacing.sm, width: "100%", maxWidth: formMaxWidth }}>
         <Text style={[typography.title, { color: colors.text }]}>Casual Padel Tourneys</Text>
         <Text style={{ color: colors.muted, fontSize: 14 }}>Sign in to manage your tournaments.</Text>
       </View>
-      <Pressable
-        disabled={!request}
-        onPress={() => {
-          void promptAsync();
-        }}
-        style={{
-          paddingVertical: spacing.sm,
-          paddingHorizontal: spacing.lg,
-          borderRadius: radius.md,
-          backgroundColor: request ? colors.primary : colors.border,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: spacing.sm
-        }}
-      >
-        {!request ? <ActivityIndicator color="#020617" /> : null}
-        <Text
+      <View style={{ width: "100%", maxWidth: formMaxWidth, gap: spacing.md }}>
+        <Pressable
+          disabled={!request}
+          onPress={() => {
+            void promptAsync();
+          }}
           style={{
-            color: "#020617",
-            fontWeight: "700"
+            paddingVertical: spacing.sm,
+            paddingHorizontal: spacing.lg,
+            borderRadius: radius.md,
+            backgroundColor: request ? colors.primary : colors.border,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: spacing.sm
           }}
         >
-          Continue with Google
-        </Text>
-      </Pressable>
-      <Pressable
-        disabled={guestLoading}
-        onPress={() => { void continueAsGuest(); }}
-        style={{
-          paddingVertical: spacing.sm,
-          paddingHorizontal: spacing.lg,
-          borderRadius: radius.md,
-          backgroundColor: colors.surface,
-          borderWidth: 1,
-          borderColor: colors.border,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: spacing.sm
-        }}
-      >
-        {guestLoading ? <ActivityIndicator color={colors.text} /> : null}
-        <Text style={{ color: colors.text, fontWeight: "600" }}>Continue as Guest</Text>
-      </Pressable>
+          {!request ? <ActivityIndicator color="#020617" /> : null}
+          <Text
+            style={{
+              color: "#020617",
+              fontWeight: "700"
+            }}
+          >
+            Continue with Google
+          </Text>
+        </Pressable>
+        <Pressable
+          disabled={guestLoading}
+          onPress={() => {
+            void continueAsGuest();
+          }}
+          style={{
+            paddingVertical: spacing.sm,
+            paddingHorizontal: spacing.lg,
+            borderRadius: radius.md,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: spacing.sm
+          }}
+        >
+          {guestLoading ? <ActivityIndicator color={colors.text} /> : null}
+          <Text style={{ color: colors.text, fontWeight: "600" }}>Continue as Guest</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }

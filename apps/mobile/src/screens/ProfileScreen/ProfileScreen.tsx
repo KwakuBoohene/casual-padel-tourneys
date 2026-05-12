@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 
+import { useBreakpoint } from "../../layout";
 import { colors, radius, spacing, typography } from "../../theme";
 
 interface ProfileScreenProps {
@@ -11,13 +12,17 @@ interface ProfileScreenProps {
 export function ProfileScreen(props: ProfileScreenProps) {
   const displayInitial = (props.user.name ?? "G")[0]?.toUpperCase();
   const isGuest = props.user.isGuest === true;
+  const { formMaxWidth } = useBreakpoint();
 
   return (
     <ScrollView
       contentContainerStyle={{
         flexGrow: 1,
         backgroundColor: colors.background,
-        padding: spacing.lg
+        padding: spacing.lg,
+        maxWidth: formMaxWidth,
+        width: "100%",
+        alignSelf: "center"
       }}
     >
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.lg }}>

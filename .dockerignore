@@ -1,9 +1,32 @@
-node_modules
-.next
-dist
+# Dependencies (root pattern alone does not exclude apps/*/node_modules)
+**/node_modules
+
+# Next.js / build outputs (recreated in image)
+**/.next
+**/dist
 *.tsbuildinfo
+
+# Expo / React Native — never send host native build trees into the context
+**/.expo
+**/ios/build
+**/ios/Pods
+**/ios/*.xcworkspace/xcuserdata
+**/android/app/build
+**/android/build
+**/android/.gradle
+**/android/local.properties
+apps/mobile/android/*
+
+# Caches & tooling noise
+**/.turbo
+**/.cache
+**/coverage
+**/.nyc_output
 .git
+.DS_Store
+*.log
+
+# Secrets (keep example templates)
 .env
 .env.*
 !.env.example
-apps/mobile/android/*

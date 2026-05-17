@@ -32,15 +32,13 @@ export function RoundSection({
   };
 
   return (
-    <div
-      className={`
-        rounded-2xl border px-4 py-3 sm:px-6 sm:py-5 space-y-3 sm:space-y-4 transition-all
-        ${isLive ? "bg-slate-800/95 border-padel-primary shadow-2xl shadow-padel-primary/20" : "bg-slate-800/80 border-slate-700/60"}
-        ${isCollapsible ? "cursor-pointer hover:border-slate-600/80" : ""}
-      `}
-    >
+    <div className="space-y-3">
+      {/* Round Header - Outside the cards */}
       <div
-        className="flex items-center justify-between"
+        className={`
+          flex items-center justify-between
+          ${isCollapsible ? "px-4 py-3 rounded-lg bg-slate-800/60 border border-slate-700/50 cursor-pointer hover:bg-slate-800/80 hover:border-slate-600/70 transition-all" : ""}
+        `}
         onClick={toggleExpanded}
         role={isCollapsible ? "button" : undefined}
         aria-expanded={isCollapsible ? isExpanded : undefined}
@@ -76,6 +74,7 @@ export function RoundSection({
         </div>
       </div>
 
+      {/* Matches Container */}
       {isExpanded && <div className="space-y-3 animate-slide-down">{children}</div>}
     </div>
   );

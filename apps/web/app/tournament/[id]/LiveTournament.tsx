@@ -162,126 +162,155 @@ export function LiveTournament({
       />
 
       {/* Current Live Round */}
-      {currentRound && (
-        <div ref={liveRoundRef} className="scroll-mt-6">
-          <RoundSection
-            title={`Round ${currentRound.roundNumber}`}
-            roundNumber={currentRound.roundNumber}
-            matchCount={currentRound.matches.length}
-            completedMatches={getCompletedMatchCount(currentRound)}
-            isLive={true}
-            isCollapsible={false}
-          >
-            <div className="space-y-3">
-              {currentRound.matches.filter(matchesPlayerQuery).map((match) => (
-                <MatchCard
-                  key={match.id}
-                  court={match.court}
-                  teamA={getPlayerObjects(match.teamA)}
-                  teamB={getPlayerObjects(match.teamB)}
-                  scoreA={match.scoreA}
-                  scoreB={match.scoreB}
-                  status={getMatchStatus(match, currentRound.roundNumber)}
-                  highlightPlayers={highlightedPlayerIds}
-                />
-              ))}
+      {currentRound &&
+        (() => {
+          const filteredMatches = currentRound.matches.filter(matchesPlayerQuery);
+          if (filteredMatches.length === 0 && searchQuery) return null;
+
+          return (
+            <div ref={liveRoundRef} className="scroll-mt-6">
+              <RoundSection
+                title={`Round ${currentRound.roundNumber}`}
+                roundNumber={currentRound.roundNumber}
+                matchCount={currentRound.matches.length}
+                completedMatches={getCompletedMatchCount(currentRound)}
+                isLive={true}
+                isCollapsible={false}
+              >
+                <div className="space-y-3">
+                  {filteredMatches.map((match) => (
+                    <MatchCard
+                      key={match.id}
+                      court={match.court}
+                      teamA={getPlayerObjects(match.teamA)}
+                      teamB={getPlayerObjects(match.teamB)}
+                      scoreA={match.scoreA}
+                      scoreB={match.scoreB}
+                      status={getMatchStatus(match, currentRound.roundNumber)}
+                      highlightPlayers={highlightedPlayerIds}
+                    />
+                  ))}
+                </div>
+              </RoundSection>
             </div>
-          </RoundSection>
-        </div>
-      )}
+          );
+        })()}
 
       {/* Upcoming Rounds */}
-      {upcomingRounds.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-padel-primary px-1 flex items-center gap-2">
-            <span className="h-1 w-1 rounded-full bg-padel-primary animate-pulse-soft"></span>
-            Upcoming Rounds
-          </h3>
-          <div className="space-y-3">
-            {upcomingRounds.map((round) => {
-              const filteredMatches = round.matches.filter(matchesPlayerQuery);
-              if (filteredMatches.length === 0 && searchQuery) return null;
+      {upcomingRounds.length > 0 &&
+        (() => {
+          const hasAnyMatches = upcomingRounds.some(
+            (round) => round.matches.filter(matchesPlayerQuery).length > 0
+          );
+          if (!hasAnyMatches && searchQuery) return null;
 
-              return (
-                <RoundSection
-                  key={round.id}
-                  title={`Round ${round.roundNumber}`}
-                  roundNumber={round.roundNumber}
-                  matchCount={round.matches.length}
-                  completedMatches={getCompletedMatchCount(round)}
-                  isLive={false}
-                  isCollapsible={true}
-                  defaultExpanded={searchQuery.trim() !== ""}
-                >
-                  <div className="space-y-3">
-                    {filteredMatches.map((match) => (
-                      <MatchCard
-                        key={match.id}
-                        court={match.court}
-                        teamA={getPlayerObjects(match.teamA)}
-                        teamB={getPlayerObjects(match.teamB)}
-                        scoreA={match.scoreA}
-                        scoreB={match.scoreB}
-                        status={getMatchStatus(match, round.roundNumber)}
-                        highlightPlayers={highlightedPlayerIds}
-                      />
-                    ))}
-                  </div>
-                </RoundSection>
-              );
-            })}
-          </div>
-        </div>
-      )}
+          return (
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-padel-primary px-1 flex items-center gap-2">
+                <span className="h-1 w-1 rounded-full bg-padel-primary animate-pulse-soft"></span>
+                Upcoming Rounds
+              </h3>
+              <div className="space-y-3">
+                {upcomingRounds.map((round) => {
+                  const filteredMatches = round.matches.filter(matchesPlayerQuery);
+                  if (filteredMatches.length === 0 && searchQuery) return null;
+
+                  return (
+                    <RoundSection
+                      key={round.id}
+                      title={`Round ${round.roundNumber}`}
+                      roundNumber={round.roundNumber}
+                      matchCount={round.matches.length}
+                      completedMatches={getCompletedMatchCount(round)}
+                      isLive={false}
+                      isCollapsible={true}
+                      defaultExpanded={searchQuery.trim() !== ""}
+                    >
+                      <div className="space-y-3">
+                        {filteredMatches.map((match) => (
+                          <MatchCard
+                            key={match.id}
+                            court={match.court}
+                            teamA={getPlayerObjects(match.teamA)}
+                            teamB={getPlayerObjects(match.teamB)}
+                            scoreA={match.scoreA}
+                            scoreB={match.scoreB}
+                            status={getMatchStatus(match, round.roundNumber)}
+                            highlightPlayers={highlightedPlayerIds}
+                          />
+                        ))}
+                      </div>
+                    </RoundSection>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
 
       {/* Previous Rounds */}
-      {previousRounds.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-padel-muted/60 px-1 flex items-center gap-2">
-            <span className="h-1 w-1 rounded-full bg-padel-statusCompleted"></span>
-            Previous Rounds
-          </h3>
-          <div className="space-y-3">
-            {previousRounds.reverse().map((round) => {
-              const filteredMatches = round.matches.filter(matchesPlayerQuery);
-              if (filteredMatches.length === 0 && searchQuery) return null;
+      {previousRounds.length > 0 &&
+        (() => {
+          const hasAnyMatches = previousRounds.some(
+            (round) => round.matches.filter(matchesPlayerQuery).length > 0
+          );
+          if (!hasAnyMatches && searchQuery) return null;
 
-              return (
-                <RoundSection
-                  key={round.id}
-                  title={`Round ${round.roundNumber}`}
-                  roundNumber={round.roundNumber}
-                  matchCount={round.matches.length}
-                  completedMatches={getCompletedMatchCount(round)}
-                  isLive={false}
-                  isCollapsible={true}
-                  defaultExpanded={searchQuery.trim() !== ""}
-                >
-                  <div className="space-y-3">
-                    {filteredMatches.map((match) => (
-                      <MatchCard
-                        key={match.id}
-                        court={match.court}
-                        teamA={getPlayerObjects(match.teamA)}
-                        teamB={getPlayerObjects(match.teamB)}
-                        scoreA={match.scoreA}
-                        scoreB={match.scoreB}
-                        status={getMatchStatus(match, round.roundNumber)}
-                        highlightPlayers={highlightedPlayerIds}
-                      />
-                    ))}
-                  </div>
-                </RoundSection>
-              );
-            })}
-          </div>
-        </div>
-      )}
+          return (
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-padel-muted/60 px-1 flex items-center gap-2">
+                <span className="h-1 w-1 rounded-full bg-padel-statusCompleted"></span>
+                Previous Rounds
+              </h3>
+              <div className="space-y-3">
+                {previousRounds.reverse().map((round) => {
+                  const filteredMatches = round.matches.filter(matchesPlayerQuery);
+                  if (filteredMatches.length === 0 && searchQuery) return null;
+
+                  return (
+                    <RoundSection
+                      key={round.id}
+                      title={`Round ${round.roundNumber}`}
+                      roundNumber={round.roundNumber}
+                      matchCount={round.matches.length}
+                      completedMatches={getCompletedMatchCount(round)}
+                      isLive={false}
+                      isCollapsible={true}
+                      defaultExpanded={searchQuery.trim() !== ""}
+                    >
+                      <div className="space-y-3">
+                        {filteredMatches.map((match) => (
+                          <MatchCard
+                            key={match.id}
+                            court={match.court}
+                            teamA={getPlayerObjects(match.teamA)}
+                            teamB={getPlayerObjects(match.teamB)}
+                            scoreA={match.scoreA}
+                            scoreB={match.scoreB}
+                            status={getMatchStatus(match, round.roundNumber)}
+                            highlightPlayers={highlightedPlayerIds}
+                          />
+                        ))}
+                      </div>
+                    </RoundSection>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
 
       {/* No matches found message */}
       {searchQuery && filteredMatchCount === 0 && (
-        <div className="text-center py-12 text-padel-muted">
-          <p className="text-sm">No matches found for "{searchQuery}"</p>
+        <div className="flex flex-col items-center justify-center py-20 px-4">
+          <div className="text-center space-y-4 max-w-md">
+            <div className="text-6xl">🔍</div>
+            <h3 className="text-lg font-bold text-padel-text">No matches found</h3>
+            <p className="text-sm text-padel-muted">
+              No matches found for <span className="text-padel-primary font-semibold">"{searchQuery}"</span>
+            </p>
+            <p className="text-xs text-padel-muted/60">Try searching with a different player name</p>
+          </div>
         </div>
       )}
     </section>

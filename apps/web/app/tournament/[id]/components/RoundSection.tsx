@@ -44,9 +44,8 @@ export function RoundSection({
         aria-expanded={isCollapsible ? isExpanded : undefined}
       >
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <span className="text-xs sm:text-sm uppercase tracking-widest font-bold">
-            <span className="text-padel-primary">{title.split(" ")[0]}</span>
-            <span className="text-padel-text"> {title.split(" ").slice(1).join(" ")}</span>
+          <span className="text-xs sm:text-sm uppercase tracking-widest font-bold text-padel-text">
+            {title}
           </span>
           {completedMatches !== undefined && (
             <span className="text-[9px] sm:text-[10px] px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md bg-padel-primary/10 text-padel-primary border border-padel-primary/30 font-bold uppercase tracking-wider">

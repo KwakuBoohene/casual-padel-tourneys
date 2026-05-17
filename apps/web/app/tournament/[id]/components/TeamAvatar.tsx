@@ -55,7 +55,7 @@ export function TeamAvatar({ players, size = "md" }: TeamAvatarProps) {
             ${sizeClasses[size]}
             ${index > 0 ? offsetClasses[size] : ""}
             rounded-full
-            bg-gradient-to-br ${getGradientForId(player.id)}
+            bg-linear-to-br ${getGradientForId(player.id)}
             border-2 border-padel-surface
             flex items-center justify-center
             font-bold text-white

@@ -26,12 +26,12 @@ interface TournamentPayload {
 
 type MatchStatus = "live" | "next" | "completed" | "pending";
 
-export function LiveTournament({ 
-  initial, 
+export function LiveTournament({
+  initial,
   apiBaseUrl,
-  onConnectionChange 
-}: { 
-  initial: TournamentPayload; 
+  onConnectionChange
+}: {
+  initial: TournamentPayload;
   apiBaseUrl: string;
   onConnectionChange?: (state: { connected: boolean; lastUpdate: string }) => void;
 }) {
@@ -43,38 +43,38 @@ export function LiveTournament({
   useEffect(() => {
     const wsBase = apiBaseUrl.replace(/^http/, "ws");
     const socket = new WebSocket(`${wsBase}/ws/tournaments/${initial.id}`);
-    
+
     socket.onopen = () => {
       setIsConnected(true);
       onConnectionChange?.({ connected: true, lastUpdate: tournament.updatedAt });
     };
-    
+
     socket.onclose = () => {
       setIsConnected(false);
       onConnectionChange?.({ connected: false, lastUpdate: tournament.updatedAt });
     };
-    
+
     socket.onerror = () => {
       setIsConnected(false);
       onConnectionChange?.({ connected: false, lastUpdate: tournament.updatedAt });
     };
-    
+
     socket.onmessage = (event) => {
       const parsed = JSON.parse(event.data);
       let newTournament: TournamentPayload | null = null;
-      
+
       if (parsed?.payload?.payload) {
         newTournament = parsed.payload.payload;
       } else if (parsed?.payload) {
         newTournament = parsed.payload;
       }
-      
+
       if (newTournament) {
         setTournament(newTournament);
         onConnectionChange?.({ connected: true, lastUpdate: newTournament.updatedAt });
       }
     };
-    
+
     return () => socket.close();
   }, [apiBaseUrl, initial.id, onConnectionChange]);
 
@@ -89,11 +89,11 @@ export function LiveTournament({
 
   // Determine current round (highest round with any match having a score)
   const currentRoundNumber = useMemo(() => {
-    const roundsWithScores = tournament.rounds.filter(round =>
-      round.matches.some(match => match.scoreA !== undefined || match.scoreB !== undefined)
+    const roundsWithScores = tournament.rounds.filter((round) =>
+      round.matches.some((match) => match.scoreA !== undefined || match.scoreB !== undefined)
     );
     if (roundsWithScores.length === 0) return 1;
-    return Math.max(...roundsWithScores.map(r => r.roundNumber));
+    return Math.max(...roundsWithScores.map((r) => r.roundNumber));
   }, [tournament.rounds]);
 
   // Get match status
@@ -111,24 +111,22 @@ export function LiveTournament({
     const query = searchQuery.toLowerCase();
     const teamAPlayers = match.teamA.map((id: string) => playerById.get(id)?.name.toLowerCase() || "");
     const teamBPlayers = match.teamB.map((id: string) => playerById.get(id)?.name.toLowerCase() || "");
-    return [...teamAPlayers, ...teamBPlayers].some(name => name.includes(query));
+    return [...teamAPlayers, ...teamBPlayers].some((name) => name.includes(query));
   };
 
   // Get highlighted player IDs from search
   const highlightedPlayerIds = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const query = searchQuery.toLowerCase();
-    return tournament.players
-      .filter(p => p.name.toLowerCase().includes(query))
-      .map(p => p.id);
+    return tournament.players.filter((p) => p.name.toLowerCase().includes(query)).map((p) => p.id);
   }, [searchQuery, tournament.players]);
 
   // Organize rounds into current, previous, and upcoming
   const { currentRound, previousRounds, upcomingRounds } = useMemo(() => {
     const sorted = [...tournament.rounds].sort((a, b) => a.roundNumber - b.roundNumber);
-    const current = sorted.find(r => r.roundNumber === currentRoundNumber);
-    const previous = sorted.filter(r => r.roundNumber < currentRoundNumber);
-    const upcoming = sorted.filter(r => r.roundNumber > currentRoundNumber);
+    const current = sorted.find((r) => r.roundNumber === currentRoundNumber);
+    const previous = sorted.filter((r) => r.roundNumber < currentRoundNumber);
+    const upcoming = sorted.filter((r) => r.roundNumber > currentRoundNumber);
     return { currentRound: current, previousRounds: previous, upcomingRounds: upcoming };
   }, [tournament.rounds, currentRoundNumber]);
 
@@ -145,7 +143,7 @@ export function LiveTournament({
 
   // Convert player IDs to player objects
   const getPlayerObjects = (playerIds: [string, string]) => {
-    return playerIds.map(id => playerById.get(id) || { id, name: id });
+    return playerIds.map((id) => playerById.get(id) || { id, name: id });
   };
 
   // Count completed matches in a round
@@ -195,14 +193,15 @@ export function LiveTournament({
       {/* Upcoming Rounds */}
       {upcomingRounds.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-padel-muted px-1">
+          <h3 className="text-sm font-bold uppercase tracking-widest text-padel-primary px-1 flex items-center gap-2">
+            <span className="h-1 w-1 rounded-full bg-padel-primary animate-pulse-soft"></span>
             Upcoming Rounds
           </h3>
           <div className="space-y-3">
             {upcomingRounds.map((round) => {
               const filteredMatches = round.matches.filter(matchesPlayerQuery);
               if (filteredMatches.length === 0 && searchQuery) return null;
-              
+
               return (
                 <RoundSection
                   key={round.id}
@@ -238,14 +237,15 @@ export function LiveTournament({
       {/* Previous Rounds */}
       {previousRounds.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-padel-muted px-1">
+          <h3 className="text-sm font-bold uppercase tracking-widest text-padel-muted/60 px-1 flex items-center gap-2">
+            <span className="h-1 w-1 rounded-full bg-padel-statusCompleted"></span>
             Previous Rounds
           </h3>
           <div className="space-y-3">
             {previousRounds.reverse().map((round) => {
               const filteredMatches = round.matches.filter(matchesPlayerQuery);
               if (filteredMatches.length === 0 && searchQuery) return null;
-              
+
               return (
                 <RoundSection
                   key={round.id}

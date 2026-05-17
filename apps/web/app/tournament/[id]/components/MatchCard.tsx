@@ -26,9 +26,9 @@ function getStatusBadge(status: MatchStatus) {
     },
     next: {
       text: "NEXT UP",
-      bgColor: "bg-padel-statusNext/90",
+      bgColor: "bg-padel-statusNext",
       textColor: "text-padel-background",
-      borderColor: "",
+      borderColor: "border-padel-statusNext/50",
       animate: false
     },
     completed: {
@@ -55,6 +55,7 @@ function getStatusBadge(status: MatchStatus) {
         text-[10px] px-3 py-1 rounded-md font-extrabold uppercase tracking-wider
         ${badge.bgColor} ${badge.textColor} ${badge.borderColor ? `border ${badge.borderColor}` : ""}
         ${badge.animate ? "animate-pulse-soft shadow-lg shadow-padel-statusLive/30" : ""}
+        ${status === "next" ? "shadow-md shadow-padel-statusNext/20" : ""}
       `}
     >
       {badge.text}
@@ -95,29 +96,28 @@ export function MatchCard({
   return (
     <div
       className={`
-        rounded-xl border px-3 py-3 sm:px-5 sm:py-5
+        rounded-xl px-2.5 py-2.5 sm:px-4 sm:py-3.5
         transition-all duration-200
-        ${status === "live" ? "bg-slate-800/90 border-padel-statusLive/60 shadow-lg shadow-padel-statusLive/20" : ""}
-        ${status === "next" ? "bg-slate-800/80 border-padel-statusNext/50 shadow-md" : ""}
-        ${status === "completed" ? "bg-slate-800/50 border-padel-border/40 opacity-90" : ""}
-        ${status === "pending" ? "bg-slate-800/70 border-padel-border/50" : ""}
-        hover:scale-[1.02] hover:shadow-xl hover:border-opacity-80
+        ${status === "live" ? "bg-slate-800/90 shadow-lg shadow-padel-statusLive/20" : ""}
+        ${status === "next" ? "bg-slate-800/80 shadow-md" : ""}
+        ${status === "completed" ? "bg-slate-800/50 opacity-90" : ""}
+        ${status === "pending" ? "bg-slate-800/70" : ""}
         animate-scale-in
       `}
     >
       {/* Header: Status */}
-      <div className="flex items-center justify-end mb-2 sm:mb-3">{getStatusBadge(status)}</div>
+      <div className="flex items-center justify-end mb-1.5 sm:mb-2">{getStatusBadge(status)}</div>
 
       {/* Teams and Score */}
-      <div className="flex items-center gap-2 sm:gap-4">
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* Team A */}
         <div className={`flex-1 min-w-0 ${highlightTeamA ? "animate-pulse-soft" : ""}`}>
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-1.5">
             <TeamAvatar players={teamA} size="md" />
             <div className="w-full text-center">
-              <p className="text-[9px] sm:text-[10px] text-padel-muted uppercase tracking-widest mb-1">
-                <span>Team A</span>
-                {seedA && <span className="text-padel-primary font-bold ml-1.5">{seedA}</span>}
+              <p className="text-[9px] sm:text-[10px] uppercase tracking-widest mb-1">
+                <span className="text-padel-primary font-black">Team A</span>
+                {seedA && <span className="text-padel-primary font-black ml-1.5">#{seedA}</span>}
               </p>
               <div
                 className={`
@@ -142,7 +142,7 @@ export function MatchCard({
         </div>
 
         {/* Score */}
-        <div className="flex flex-col items-center justify-center px-3 py-2 sm:px-6 sm:py-3 rounded-lg sm:rounded-xl bg-padel-primary/95 border-2 border-padel-primary shrink-0 shadow-lg">
+        <div className="flex flex-col items-center justify-center shrink-0">
           {hasScore ? (
             <>
               <div className="flex items-center gap-1.5 sm:gap-3 mb-0.5 sm:mb-1">
@@ -166,12 +166,12 @@ export function MatchCard({
 
         {/* Team B */}
         <div className={`flex-1 min-w-0 ${highlightTeamB ? "animate-pulse-soft" : ""}`}>
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-1.5">
             <TeamAvatar players={teamB} size="md" />
             <div className="w-full text-center">
-              <p className="text-[9px] sm:text-[10px] text-padel-muted uppercase tracking-widest mb-1">
-                {seedB && <span className="text-padel-primary font-bold mr-1.5">{seedB}</span>}
-                <span>Team B</span>
+              <p className="text-[9px] sm:text-[10px] uppercase tracking-widest mb-1">
+                {seedB && <span className="text-padel-primary font-black mr-1.5">#{seedB}</span>}
+                <span className="text-padel-primary font-black">Team B</span>
               </p>
               <div
                 className={`

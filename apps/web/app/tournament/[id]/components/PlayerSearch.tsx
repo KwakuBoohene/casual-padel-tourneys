@@ -79,8 +79,11 @@ export function PlayerSearch({ value, onChange, matchCount, totalMatches }: Play
               "No matches found"
             ) : (
               <>
-                Showing <span className="font-semibold text-padel-primary">{matchCount}</span> of{" "}
-                {totalMatches} matches
+                Showing{" "}
+                <span className="font-bold text-padel-primary bg-padel-primary/10 px-1.5 py-0.5 rounded">
+                  {matchCount}
+                </span>{" "}
+                of <span className="font-semibold text-padel-text">{totalMatches}</span> matches
               </>
             )}
           </span>

@@ -81,7 +81,7 @@ export function TournamentViewer({
             <h1 className="text-2xl md:text-4xl font-black tracking-tight text-padel-primary">
               {initial.config.name}
             </h1>
-            <p className="mt-2 text-xs uppercase tracking-[0.25em] text-padel-primary font-bold">
+            <p className="mt-2 text-xs uppercase tracking-[0.25em] text-padel-text font-bold">
               {initial.config.mode} <span className="text-padel-muted">•</span> {initial.config.variant}
             </p>
           </div>

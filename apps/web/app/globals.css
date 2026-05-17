@@ -1,4 +1,36 @@
-@import 'tailwindcss';
+@import "tailwindcss";
+
+@theme {
+  --color-padel-background: #0f172a;
+  --color-padel-surface: #1e293b;
+  --color-padel-surface-alt: #020617;
+  --color-padel-text: #e5e7eb;
+  --color-padel-muted: #9ca3af;
+  --color-padel-primary: #adff2f;
+  --color-padel-danger: #f97373;
+  --color-padel-border: rgba(148, 163, 184, 0.4);
+  --color-padel-status-live: #adff2f;
+  --color-padel-status-next: #fbbf24;
+  --color-padel-status-completed: #4ade80;
+  --color-padel-status-pending: #6b7280;
+  --color-padel-connected: #10b981;
+  --color-padel-disconnected: #ef4444;
+
+  --font-display: system-ui, sans-serif;
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-float-delayed: float 6s ease-in-out 3s infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
 
 html,
 body {
@@ -10,4 +42,3 @@ body {
   background-color: #0f172a;
   color: #e5e7eb;
 }
-

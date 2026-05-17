@@ -26,8 +26,8 @@ function getStatusBadge(status: MatchStatus) {
     },
     next: {
       text: "NEXT UP",
-      bgColor: "bg-padel-statusNext",
-      textColor: "text-padel-background",
+      bgColor: "bg-padel-statusNext/20",
+      textColor: "text-padel-statusNext",
       borderColor: "border-padel-statusNext/50",
       animate: false
     },
@@ -146,18 +146,18 @@ export function MatchCard({
           {hasScore ? (
             <>
               <div className="flex items-center gap-1.5 sm:gap-3 mb-0.5 sm:mb-1">
-                <p className="text-xl sm:text-3xl font-black text-padel-background">{scoreA}</p>
-                <span className="text-lg sm:text-2xl text-padel-background/60 font-bold">-</span>
-                <p className="text-xl sm:text-3xl font-black text-padel-background">{scoreB}</p>
+                <p className="text-xl sm:text-3xl font-black text-padel-text">{scoreA}</p>
+                <span className="text-lg sm:text-2xl text-padel-muted font-bold">-</span>
+                <p className="text-xl sm:text-3xl font-black text-padel-text">{scoreB}</p>
               </div>
-              <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-padel-background/70 font-bold whitespace-nowrap">
+              <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-padel-muted font-bold whitespace-nowrap">
                 Court {court} • Set {setNumber}
               </p>
             </>
           ) : (
             <>
-              <p className="text-xs sm:text-sm font-bold text-padel-background uppercase">Pending</p>
-              <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-padel-background/70 font-semibold mt-0.5">
+              <p className="text-xs sm:text-sm font-bold text-padel-text uppercase">Pending</p>
+              <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-padel-muted font-semibold mt-0.5">
                 Court {court}
               </p>
             </>

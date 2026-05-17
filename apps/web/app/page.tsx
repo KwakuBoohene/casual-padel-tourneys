@@ -14,10 +14,14 @@ export default function HomePage() {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleJoin();
     }
+  };
+
+  const handleTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setToken(e.target.value);
   };
   return (
     <main className="min-h-screen bg-padel-background text-padel-text overflow-hidden">
@@ -63,7 +67,7 @@ export default function HomePage() {
                 <input
                   type="text"
                   value={token}
-                  onChange={(e) => setToken(e.target.value)}
+                  onChange={handleTokenChange}
                   onKeyPress={handleKeyPress}
                   placeholder="Enter share token..."
                   className="flex-1 px-4 py-3 rounded-xl bg-slate-800/80 border border-slate-700 text-padel-text placeholder:text-slate-500 focus:outline-none focus:border-padel-primary transition-colors"

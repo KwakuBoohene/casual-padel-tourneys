@@ -3,10 +3,7 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "types": ["react", "react-native"],
-    "baseUrl": ".",
-    "paths": {
-      "@padel/shared": ["../../packages/shared/src/index.ts"]
-    }
+    "baseUrl": "."
   },
   "include": ["**/*.ts", "**/*.tsx"]
 }

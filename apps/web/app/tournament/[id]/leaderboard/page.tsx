@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { LeaderboardHeaderActions } from "../../../../components/LeaderboardHeaderActions";
 
 const defaultApi = "http://localhost:3004";
 const internalApiBaseUrl = process.env.INTERNAL_API_BASE_URL ?? process.env.PUBLIC_API_BASE_URL ?? defaultApi;
@@ -122,14 +122,7 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
             {tournament.config.name} · {tournament.config.mode} / {tournament.config.variant}
           </p>
         </div>
-        <div className="flex items-center gap-3 text-xs text-padel-muted">
-          <Link
-            href={`/tournament/${route.id}`}
-            className="inline-flex items-center gap-2 rounded-full border border-padel-border px-4 py-2 bg-padel-surface hover:bg-padel-surfaceAlt transition"
-          >
-            <span className="text-[10px] uppercase tracking-[0.2em]">Back to live view</span>
-          </Link>
-        </div>
+        <LeaderboardHeaderActions tournamentId={route.id} />
       </header>
 
       <section className="rounded-2xl bg-padel-surface border border-padel-border p-5">

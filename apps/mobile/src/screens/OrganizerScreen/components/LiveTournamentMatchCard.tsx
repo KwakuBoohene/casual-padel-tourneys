@@ -1,6 +1,8 @@
 import { Pressable, Text, View } from "react-native";
 
-import { cardStyles, colors, radius, spacing } from "../../../theme";
+import { radius, spacing } from "../../../theme";
+import { useTheme } from "../../../theme/ThemeProvider";
+
 import type { LiveTournamentState } from "../types";
 
 export type LiveMatch = LiveTournamentState["rounds"][number]["matches"][number];
@@ -15,6 +17,8 @@ interface LiveTournamentMatchCardProps {
 }
 
 export function LiveTournamentMatchCard(props: LiveTournamentMatchCardProps) {
+  const { colors, cardStyles } = useTheme();
+
   const { match, canEditScores, scorePicker, scoreInputs, playerNameById, onOpenScorePicker } = props;
 
   return (

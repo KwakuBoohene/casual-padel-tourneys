@@ -3,7 +3,9 @@ import type { SchedulingMode } from "@padel/shared";
 
 import type { Estimate } from "../types";
 import { useBreakpoint } from "../../../layout";
-import { cardStyles, colors, radius, spacing, typography } from "../../../theme";
+import { radius, spacing, typography } from "../../../theme";
+import { useTheme } from "../../../theme/ThemeProvider";
+
 
 interface MatchSettingsStepViewProps {
   schedulingMode: SchedulingMode;
@@ -24,6 +26,8 @@ interface MatchSettingsStepViewProps {
 }
 
 export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
+  const { colors, cardStyles } = useTheme();
+
   const courts = Number(props.courtsText);
   const minPlayersForCourts = Number.isFinite(courts) && courts > 0 ? courts * 4 : 0;
   const hasEnoughPlayersForCourts =
@@ -169,7 +173,7 @@ export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
         >
           <Text
             style={{
-              color: "#020617",
+              color: "colors.onPrimary",
               fontWeight: "700"
             }}
           >

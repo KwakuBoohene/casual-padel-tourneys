@@ -1,20 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --color-padel-background: #0f172a;
-  --color-padel-surface: #1e293b;
-  --color-padel-surface-alt: #020617;
-  --color-padel-text: #e5e7eb;
-  --color-padel-muted: #9ca3af;
-  --color-padel-primary: #adff2f;
-  --color-padel-danger: #f97373;
-  --color-padel-border: rgba(148, 163, 184, 0.4);
-  --color-padel-status-live: #adff2f;
-  --color-padel-status-next: #fbbf24;
-  --color-padel-status-completed: #4ade80;
-  --color-padel-status-pending: #6b7280;
-  --color-padel-connected: #10b981;
-  --color-padel-disconnected: #ef4444;
+  --color-padel-background: var(--padel-background);
+  --color-padel-surface: var(--padel-surface);
+  --color-padel-surface-alt: var(--padel-surface-alt);
+  --color-padel-text: var(--padel-text);
+  --color-padel-muted: var(--padel-muted);
+  --color-padel-primary: var(--padel-primary);
+  --color-padel-on-primary: var(--padel-on-primary);
+  --color-padel-danger: var(--padel-danger);
+  --color-padel-border: var(--padel-border);
+  --color-padel-status-live: var(--padel-status-live);
+  --color-padel-status-next: var(--padel-status-next);
+  --color-padel-status-completed: var(--padel-status-completed);
+  --color-padel-status-pending: var(--padel-status-pending);
+  --color-padel-connected: var(--padel-connected);
+  --color-padel-disconnected: var(--padel-disconnected);
 
   --font-display: system-ui, sans-serif;
 
@@ -24,6 +25,44 @@
   --animate-slide-down: slide-down 0.3s ease-out;
   --animate-float: float 6s ease-in-out infinite;
   --animate-float-delayed: float 6s ease-in-out 3s infinite;
+}
+
+/* Default: dark */
+:root,
+[data-theme="dark"] {
+  --padel-background: #0f172a;
+  --padel-surface: #1e293b;
+  --padel-surface-alt: #020617;
+  --padel-text: #e5e7eb;
+  --padel-muted: #9ca3af;
+  --padel-primary: #adff2f;
+  --padel-on-primary: #020617;
+  --padel-danger: #f97373;
+  --padel-border: rgba(148, 163, 184, 0.4);
+  --padel-status-live: #adff2f;
+  --padel-status-next: #fbbf24;
+  --padel-status-completed: #4ade80;
+  --padel-status-pending: #6b7280;
+  --padel-connected: #10b981;
+  --padel-disconnected: #ef4444;
+}
+
+[data-theme="light"] {
+  --padel-background: #f8fafc;
+  --padel-surface: #ffffff;
+  --padel-surface-alt: #f1f5f9;
+  --padel-text: #0f172a;
+  --padel-muted: #64748b;
+  --padel-primary: #84cc16;
+  --padel-on-primary: #0f172a;
+  --padel-danger: #dc2626;
+  --padel-border: rgba(15, 23, 42, 0.12);
+  --padel-status-live: #65a30d;
+  --padel-status-next: #d97706;
+  --padel-status-completed: #16a34a;
+  --padel-status-pending: #94a3b8;
+  --padel-connected: #059669;
+  --padel-disconnected: #dc2626;
 }
 
 @keyframes pulse-soft {
@@ -84,6 +123,6 @@ body {
 }
 
 body {
-  background-color: #0f172a;
-  color: #e5e7eb;
+  background-color: var(--padel-background);
+  color: var(--padel-text);
 }

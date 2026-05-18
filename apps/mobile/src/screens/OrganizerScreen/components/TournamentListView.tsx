@@ -1,7 +1,10 @@
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 
 import { useBreakpoint } from "../../../layout";
-import { cardStyles, colors, radius, spacing, typography } from "../../../theme";
+import { radius, spacing, typography } from "../../../theme";
+import { ThemeToggle } from "../../../components/ThemeToggle";
+import { useTheme } from "../../../theme/ThemeProvider";
+
 import type { LiveTournamentState } from "../types";
 
 interface TournamentListViewProps {
@@ -17,6 +20,8 @@ interface TournamentListViewProps {
 }
 
 export function TournamentListView(props: TournamentListViewProps) {
+  const { colors, cardStyles } = useTheme();
+
   const { isWide } = useBreakpoint();
   const cardWrapStyle = isWide
     ? ({
@@ -51,20 +56,23 @@ export function TournamentListView(props: TournamentListViewProps) {
           <Text style={[typography.title, { color: colors.text }]}>Dashboard</Text>
           <Text style={{ fontSize: 12, color: colors.muted }}>Welcome back, Pro Organizer</Text>
         </View>
-        <Pressable
-          onPress={props.onOpenProfile}
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: radius.pill,
-            borderWidth: 2,
-            borderColor: colors.primary,
-            alignItems: "center",
-            justifyContent: "center"
-          }}
-        >
-          <Text style={{ color: colors.primary, fontWeight: "700", fontSize: 12 }}>Me</Text>
-        </Pressable>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
+          <ThemeToggle compact />
+          <Pressable
+            onPress={props.onOpenProfile}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: radius.pill,
+              borderWidth: 2,
+              borderColor: colors.primary,
+              alignItems: "center",
+              justifyContent: "center"
+            }}
+          >
+            <Text style={{ color: colors.primary, fontWeight: "700", fontSize: 12 }}>Me</Text>
+          </Pressable>
+        </View>
       </View>
 
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
@@ -221,7 +229,7 @@ export function TournamentListView(props: TournamentListViewProps) {
         >
           <Text
             style={{
-              color: "#020617",
+              color: "colors.onPrimary",
               fontWeight: "700"
             }}
           >

@@ -3,7 +3,9 @@ import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/s
 
 import type { Estimate } from "../types";
 import { useBreakpoint } from "../../../layout";
-import { cardStyles, colors, radius, spacing, typography } from "../../../theme";
+import { radius, spacing, typography } from "../../../theme";
+import { useTheme } from "../../../theme/ThemeProvider";
+
 
 interface RulesStepViewProps {
   mode: TournamentMode;
@@ -28,6 +30,8 @@ interface RulesStepViewProps {
 }
 
 export function RulesStepView(props: RulesStepViewProps) {
+  const { colors, cardStyles } = useTheme();
+
   const { formMaxWidth } = useBreakpoint();
   return (
     <ScrollView
@@ -214,7 +218,7 @@ export function RulesStepView(props: RulesStepViewProps) {
         >
           <Text
             style={{
-              color: "#020617",
+              color: "colors.onPrimary",
               fontWeight: "700"
             }}
           >

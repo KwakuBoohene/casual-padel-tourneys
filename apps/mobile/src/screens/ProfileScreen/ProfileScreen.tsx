@@ -1,7 +1,10 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { useBreakpoint } from "../../layout";
-import { colors, radius, spacing, typography } from "../../theme";
+import { radius, spacing, typography } from "../../theme";
+import { ThemeToggle } from "../../components/ThemeToggle";
+import { useTheme } from "../../theme/ThemeProvider";
+
 
 interface ProfileScreenProps {
   user: { id: string; name?: string; email: string; avatarUrl?: string; isGuest?: boolean };
@@ -10,6 +13,8 @@ interface ProfileScreenProps {
 }
 
 export function ProfileScreen(props: ProfileScreenProps) {
+  const { colors } = useTheme();
+
   const displayInitial = (props.user.name ?? "G")[0]?.toUpperCase();
   const isGuest = props.user.isGuest === true;
   const { formMaxWidth } = useBreakpoint();
@@ -90,6 +95,19 @@ export function ProfileScreen(props: ProfileScreenProps) {
             ) : null}
           </View>
         </View>
+      </View>
+
+      <View
+        style={{
+          backgroundColor: colors.surface,
+          borderRadius: radius.lg,
+          padding: spacing.lg,
+          borderWidth: 1,
+          borderColor: colors.border,
+          marginBottom: spacing.lg
+        }}
+      >
+        <ThemeToggle />
       </View>
 
       <Pressable

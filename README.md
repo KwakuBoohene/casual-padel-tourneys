@@ -39,10 +39,11 @@ Self-hosted, mobile-first platform for running Padel Americano and Mexicano tour
 cp .env.example .env
 ```
 
-2. Install dependencies:
+2. Install dependencies (uses lockfile; skips install scripts — run `npm run db:generate` after):
 
 ```bash
-npm install
+npm ci --ignore-scripts
+npm run db:generate
 ```
 
 3. Start local API + web + infra:

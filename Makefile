@@ -1,5 +1,6 @@
 install:
-	npm install
+	npm ci --ignore-scripts
+	npm run db:generate
 
 dev:
 	npm run dev

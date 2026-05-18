@@ -15,11 +15,9 @@ cp infra/.env.example infra/.env
 cd infra
 docker compose up -d db redis
 
-# In project root, install dependencies
+# In project root, install dependencies from lockfile
 cd ..
-npm install
-
-# Generate Prisma client and run migrations
+npm ci --ignore-scripts
 npm run db:generate
 npm run db:migrate
 
@@ -58,7 +56,7 @@ docker compose down
 ```bash
 cp .env.example .env
 docker compose -f infra/docker-compose.yml up -d db redis
-npm install
+npm ci --ignore-scripts
 npm run db:generate
 npm run db:migrate
 npm run dev
@@ -125,3 +123,6 @@ cat backup.sql | docker exec -i <postgres_container> psql -U padel -d padel
 - Enforce HTTPS at Nginx (Certbot).
 - Rate limit write endpoints.
 - Use organizer authentication token/JWT for mutations.
+- Install dependencies with `npm ci --ignore-scripts` (never `npm install` in CI/production); commit `package-lock.json` and review lockfile diffs on every dependency PR.
+- Direct dependencies use exact versions in `package.json`; Dependabot opens weekly update PRs.
+- Docker builds use `npm ci --ignore-scripts` and explicit `prisma generate` (no arbitrary package lifecycle scripts at install time).

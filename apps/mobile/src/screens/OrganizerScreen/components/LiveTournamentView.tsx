@@ -1,4 +1,5 @@
-import { Fragment, useEffect } from "react";
+import * as Clipboard from "expo-clipboard";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import type { PlayerGender } from "@padel/shared";
 
@@ -83,6 +84,15 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
     layoutTokens.liveSidebarMaxWidth,
     Math.max(layoutTokens.liveSidebarMinWidth, Math.round(width * 0.32))
   );
+
+  const shareUrl = `${props.viewerBaseUrl}/tournament/${props.tournament.publicToken}`;
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const onCopyShareLink = useCallback(async () => {
+    await Clipboard.setStringAsync(shareUrl);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  }, [shareUrl]);
 
   const canEditScores = !props.isTournamentCompleted || props.isEditingCompletedTournament;
   const roundsCount = props.sortedRounds.length;
@@ -432,9 +442,21 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
         }}
       >
         <Text style={{ fontWeight: "700", color: colors.text }}>Shareable Link</Text>
-        <Text
-          style={{ color: colors.muted }}
-        >{`${props.viewerBaseUrl}/tournament/${props.tournament.publicToken}`}</Text>
+        <Pressable
+          onPress={onCopyShareLink}
+          accessibilityRole="button"
+          accessibilityLabel="Copy shareable tournament link"
+          accessibilityHint="Copies the viewer link to your clipboard"
+        >
+          <Text style={{ color: linkCopied ? colors.primary : colors.muted }}>{shareUrl}</Text>
+          {linkCopied ? (
+            <Text style={{ marginTop: 4, fontSize: 12, color: colors.primary }}>Copied to clipboard</Text>
+          ) : (
+            <Text style={{ marginTop: 4, fontSize: 12, color: colors.muted }}>
+              Tap to copy
+            </Text>
+          )}
+        </Pressable>
       </View>
     </>
   );

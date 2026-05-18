@@ -1,13 +1,6 @@
-export const colors = {
-  background: "#0f172a",
-  surface: "#1e293b",
-  surfaceAlt: "#020617",
-  text: "#e5e7eb",
-  muted: "#9ca3af",
-  primary: "#ADFF2F",
-  danger: "#f97373",
-  border: "rgba(148, 163, 184, 0.4)"
-};
+import type { PadelColors } from "@padel/shared";
+
+export { getColors, darkColors, lightColors, type ThemeMode, type PadelColors } from "@padel/shared";
 
 export const spacing = {
   xs: 4,
@@ -31,13 +24,14 @@ export const typography = {
   body: { fontSize: 14 }
 };
 
-export const cardStyles = {
-  container: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border
-  }
-};
-
+export function getCardStyles(colors: PadelColors) {
+  return {
+    container: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: spacing.lg,
+      borderWidth: 1,
+      borderColor: colors.border
+    }
+  };
+}

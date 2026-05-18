@@ -25,8 +25,8 @@ export function PlayerSearch({ value, onChange, matchCount, totalMatches }: Play
           className="
             w-full
             px-3 py-2.5 pl-10 sm:px-4 sm:py-3 sm:pl-11
-            bg-slate-800/90
-            border border-slate-700/70
+            bg-padel-surface
+            border border-padel-border
             rounded-xl
             text-xs sm:text-sm text-padel-text
             placeholder:text-padel-muted
@@ -53,8 +53,8 @@ export function PlayerSearch({ value, onChange, matchCount, totalMatches }: Play
               h-6 w-6
               flex items-center justify-center
               rounded-full
-              bg-slate-700/60
-              hover:bg-slate-600/80
+              bg-padel-surfaceAlt
+              hover:bg-padel-border/40
               transition-colors
             "
             aria-label="Clear search"

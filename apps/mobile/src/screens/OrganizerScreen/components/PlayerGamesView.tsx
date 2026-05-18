@@ -1,7 +1,9 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { useBreakpoint } from "../../../layout";
-import { cardStyles, colors, spacing, typography } from "../../../theme";
+import { spacing, typography } from "../../../theme";
+import { useTheme } from "../../../theme/ThemeProvider";
+
 import type { PlayerGameRow } from "../types";
 
 interface PlayerGamesViewProps {
@@ -11,6 +13,8 @@ interface PlayerGamesViewProps {
 }
 
 export function PlayerGamesView(props: PlayerGamesViewProps) {
+  const { colors, cardStyles } = useTheme();
+
   const { formMaxWidth } = useBreakpoint();
   return (
     <ScrollView

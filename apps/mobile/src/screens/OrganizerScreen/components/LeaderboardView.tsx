@@ -1,7 +1,9 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { useBreakpoint } from "../../../layout";
-import { cardStyles, colors, radius, spacing, typography } from "../../../theme";
+import { radius, spacing, typography } from "../../../theme";
+import { useTheme } from "../../../theme/ThemeProvider";
+
 import type { LeaderboardRow, LiveTournamentState } from "../types";
 
 interface LeaderboardViewProps {
@@ -12,6 +14,8 @@ interface LeaderboardViewProps {
 }
 
 export function LeaderboardView(props: LeaderboardViewProps) {
+  const { colors, cardStyles } = useTheme();
+
   const { formMaxWidth } = useBreakpoint();
   return (
     <ScrollView

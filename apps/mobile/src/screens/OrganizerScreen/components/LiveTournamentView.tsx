@@ -3,7 +3,9 @@ import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-nativ
 import type { PlayerGender } from "@padel/shared";
 
 import { layoutTokens, useBreakpoint } from "../../../layout";
-import { cardStyles, colors, radius, spacing, typography } from "../../../theme";
+import { radius, spacing, typography } from "../../../theme";
+import { useTheme } from "../../../theme/ThemeProvider";
+
 import type { LiveTournamentState } from "../types";
 
 import { LiveTournamentMatchCard } from "./LiveTournamentMatchCard";
@@ -74,6 +76,8 @@ interface LiveTournamentViewProps {
 }
 
 export function LiveTournamentView(props: LiveTournamentViewProps) {
+  const { colors, cardStyles } = useTheme();
+
   const { isWide, formMaxWidth, width } = useBreakpoint();
   const sidebarWidth = Math.min(
     layoutTokens.liveSidebarMaxWidth,
@@ -131,7 +135,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
       >
         <Text
           style={{
-            color: "#020617",
+            color: "colors.onPrimary",
             fontWeight: "700"
           }}
         >
@@ -173,7 +177,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
           >
             <Text
               style={{
-                color: "#020617",
+                color: "colors.onPrimary",
                 fontWeight: "700"
               }}
             >
@@ -256,7 +260,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
               justifyContent: "center"
             }}
           >
-            <Text style={{ color: "#020617", fontWeight: "700" }}>Integrate Waiting Players</Text>
+            <Text style={{ color: "colors.onPrimary", fontWeight: "700" }}>Integrate Waiting Players</Text>
           </Pressable>
         ) : null}
       </View>
@@ -327,7 +331,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
         >
           <Text
             style={{
-              color: "#020617",
+              color: "colors.onPrimary",
               fontWeight: "700"
             }}
           >
@@ -366,7 +370,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
         >
           <Text
             style={{
-              color: "#020617",
+              color: "colors.onPrimary",
               fontWeight: "700"
             }}
           >
@@ -405,7 +409,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
         >
           <Text
             style={{
-              color: "#020617",
+              color: "colors.onPrimary",
               fontWeight: "700"
             }}
           >
@@ -521,7 +525,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
               >
                 <Text
                   style={{
-                    color: "#020617",
+                    color: "colors.onPrimary",
                     fontWeight: "700"
                   }}
                 >
@@ -583,7 +587,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
               >
                 <Text
                   style={{
-                    color: "#020617",
+                    color: "colors.onPrimary",
                     fontWeight: "700"
                   }}
                 >
@@ -668,7 +672,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
                 >
                   <Text
                     style={{
-                      color: "#020617",
+                      color: "colors.onPrimary",
                       fontWeight: "700"
                     }}
                   >
@@ -773,7 +777,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
             >
               <Text
                 style={{
-                  color: "#020617",
+                  color: "colors.onPrimary",
                   fontWeight: "700"
                 }}
               >
@@ -835,7 +839,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
                   >
                     <Text
                       style={{
-                        color: props.pendingPlayerGender === gender ? "#020617" : colors.text,
+                        color: props.pendingPlayerGender === gender ? "colors.onPrimary" : colors.text,
                         fontWeight: "600"
                       }}
                     >
@@ -879,7 +883,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
               >
                 <Text
                   style={{
-                    color: props.pendingPlayerNameDraft.trim() ? "#020617" : colors.muted,
+                    color: props.pendingPlayerNameDraft.trim() ? "colors.onPrimary" : colors.muted,
                     fontWeight: "700"
                   }}
                 >
@@ -942,7 +946,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
               >
                 <Text
                   style={{
-                    color: "#020617",
+                    color: "colors.onPrimary",
                     fontWeight: "700"
                   }}
                 >

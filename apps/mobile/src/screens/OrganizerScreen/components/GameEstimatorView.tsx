@@ -3,7 +3,9 @@ import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/s
 
 import { useBreakpoint } from "../../../layout";
 import type { Estimate } from "../types";
-import { cardStyles, colors, radius, spacing, typography } from "../../../theme";
+import { radius, spacing, typography } from "../../../theme";
+import { useTheme } from "../../../theme/ThemeProvider";
+
 
 interface GameEstimatorViewProps {
   mode: TournamentMode;
@@ -27,6 +29,8 @@ interface GameEstimatorViewProps {
 }
 
 export function GameEstimatorView(props: GameEstimatorViewProps) {
+  const { colors, cardStyles } = useTheme();
+
   const schedulingModeLabel = props.schedulingMode === "TARGET_GAMES" ? "Target Games" : "Tournament Time";
   const { isWide, formMaxWidth } = useBreakpoint();
 
@@ -51,7 +55,7 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
             >
               <Text
                 style={{
-                  color: props.mode === value ? "#020617" : colors.text,
+                  color: props.mode === value ? "colors.onPrimary" : colors.text,
                   fontWeight: "700"
                 }}
               >
@@ -79,7 +83,7 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
             >
               <Text
                 style={{
-                  color: props.variant === value ? "#020617" : colors.text,
+                  color: props.variant === value ? "colors.onPrimary" : colors.text,
                   fontWeight: "700"
                 }}
               >

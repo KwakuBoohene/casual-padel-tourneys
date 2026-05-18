@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { ThemeToggle } from "../../../components/ThemeToggle";
+
 import { LiveTournament } from "./LiveTournament";
 import { ConnectionStatus } from "./components/ConnectionStatus";
 
@@ -86,11 +88,12 @@ export function TournamentViewer({
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <button
               type="button"
               aria-label="Open viewer menu"
               onClick={() => setSettingsOpen(true)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 bg-slate-800/90 hover:bg-slate-700 transition"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-padel-border bg-padel-surface hover:bg-padel-surfaceAlt transition"
             >
               <span className="sr-only">Open menu</span>
               <svg
@@ -119,19 +122,19 @@ export function TournamentViewer({
 
       {settingsOpen ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 px-4">
-          <div className="w-full max-w-xs rounded-2xl bg-slate-800/95 border border-slate-700/80 p-5 space-y-3 shadow-2xl">
+          <div className="w-full max-w-xs rounded-2xl bg-padel-surface border border-padel-border p-5 space-y-3 shadow-2xl">
             <h2 className="text-sm font-semibold text-padel-text">Viewer menu</h2>
             <button
               type="button"
               onClick={handleOpenLeaderboard}
-              className="w-full rounded-xl bg-padel-primary text-padel-background text-sm font-semibold py-2.5 hover:bg-padel-primary/90 transition"
+              className="w-full rounded-xl bg-padel-primary text-padel-on-primary text-sm font-semibold py-2.5 hover:bg-padel-primary/90 transition"
             >
               Leaderboard
             </button>
             <button
               type="button"
               onClick={() => setSettingsOpen(false)}
-              className="w-full rounded-xl border border-slate-700 text-padel-text text-sm font-semibold py-2.5 bg-slate-700/50 hover:bg-slate-700/70 transition"
+              className="w-full rounded-xl border border-padel-border text-padel-text text-sm font-semibold py-2.5 bg-padel-surfaceAlt hover:bg-padel-surface transition"
             >
               Close
             </button>

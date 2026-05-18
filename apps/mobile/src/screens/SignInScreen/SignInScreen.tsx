@@ -6,7 +6,10 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, Pressable, Text, View } from "react-native";
 
 import { useBreakpoint } from "../../layout";
-import { colors, radius, spacing, typography } from "../../theme";
+import { radius, spacing, typography } from "../../theme";
+import { ThemeToggle } from "../../components/ThemeToggle";
+import { useTheme } from "../../theme/ThemeProvider";
+
 import { logger } from "../../logger";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -60,6 +63,8 @@ async function storeGuestId(guestId: string): Promise<void> {
 }
 
 export function SignInScreen(props: SignInScreenProps) {
+  const { colors } = useTheme();
+
   const { formMaxWidth } = useBreakpoint();
   const redirectUri = AuthSession.makeRedirectUri({ scheme: APP_SCHEME });
   const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
@@ -160,6 +165,7 @@ export function SignInScreen(props: SignInScreenProps) {
       }}
     >
       <View style={{ alignItems: "center", gap: spacing.sm, width: "100%", maxWidth: formMaxWidth }}>
+        <ThemeToggle compact />
         <Text style={[typography.title, { color: colors.text }]}>Casual Padel Tourneys</Text>
         <Text style={{ color: colors.muted, fontSize: 14 }}>Sign in to manage your tournaments.</Text>
       </View>
@@ -180,10 +186,10 @@ export function SignInScreen(props: SignInScreenProps) {
             gap: spacing.sm
           }}
         >
-          {!request ? <ActivityIndicator color="#020617" /> : null}
+          {!request ? <ActivityIndicator color="colors.onPrimary" /> : null}
           <Text
             style={{
-              color: "#020617",
+              color: "colors.onPrimary",
               fontWeight: "700"
             }}
           >

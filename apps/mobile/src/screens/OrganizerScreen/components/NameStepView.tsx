@@ -1,7 +1,9 @@
 import { Pressable, Text, TextInput, View } from "react-native";
 
 import { useBreakpoint } from "../../../layout";
-import { colors, radius, spacing, typography } from "../../../theme";
+import { radius, spacing, typography } from "../../../theme";
+import { useTheme } from "../../../theme/ThemeProvider";
+
 
 interface NameStepViewProps {
   name: string;
@@ -12,6 +14,8 @@ interface NameStepViewProps {
 }
 
 export function NameStepView(props: NameStepViewProps) {
+  const { colors } = useTheme();
+
   const { formMaxWidth } = useBreakpoint();
   return (
     <View
@@ -81,7 +85,7 @@ export function NameStepView(props: NameStepViewProps) {
           >
             <Text
               style={{
-                color: props.canContinue ? "#020617" : colors.text,
+                color: props.canContinue ? "colors.onPrimary" : colors.text,
                 fontWeight: "700"
               }}
             >

@@ -2,7 +2,9 @@ import { Modal, Pressable, Text, View } from "react-native";
 
 import { TournamentListView } from "./TournamentListView";
 import { useBreakpoint } from "../../../layout";
-import { colors, radius, spacing } from "../../../theme";
+import { radius, spacing } from "../../../theme";
+import { useTheme } from "../../../theme/ThemeProvider";
+
 import type { LiveTournamentState } from "../types";
 
 interface OrganizerListScreenProps {
@@ -26,6 +28,8 @@ interface OrganizerListScreenProps {
 }
 
 export function OrganizerListScreen(props: OrganizerListScreenProps) {
+  const { colors } = useTheme();
+
   const { formMaxWidth } = useBreakpoint();
   const modalInner = {
     backgroundColor: colors.surfaceAlt,
@@ -93,7 +97,7 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
             >
               <Text
                 style={{
-                  color: "#020617",
+                  color: "colors.onPrimary",
                   fontWeight: "700"
                 }}
               >
@@ -171,7 +175,7 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
               >
                 <Text
                   style={{
-                    color: "#020617",
+                    color: "colors.onPrimary",
                     fontWeight: "700"
                   }}
                 >

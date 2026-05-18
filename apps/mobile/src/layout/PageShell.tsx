@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { View } from "react-native";
 
-import { colors } from "../theme";
+import { useTheme } from "../theme/ThemeProvider";
 import { useBreakpoint } from "./useBreakpoint";
 
 interface PageShellProps {
@@ -13,6 +13,7 @@ interface PageShellProps {
  */
 export function PageShell({ children }: PageShellProps) {
   const { shellMaxWidth, shellPaddingHorizontal } = useBreakpoint();
+  const { colors } = useTheme();
 
   return (
     <View

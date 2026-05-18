@@ -37,7 +37,7 @@ export function RoundSection({
       <div
         className={`
           flex items-center justify-between
-          ${isCollapsible ? "px-4 py-3 rounded-lg bg-slate-800/60 border border-slate-700/50 cursor-pointer hover:bg-slate-800/80 hover:border-slate-600/70 transition-all" : ""}
+          ${isCollapsible ? "px-4 py-3 rounded-lg bg-padel-surface border border-padel-border cursor-pointer hover:bg-padel-surfaceAlt transition-all" : ""}
         `}
         onClick={toggleExpanded}
         role={isCollapsible ? "button" : undefined}
@@ -53,7 +53,7 @@ export function RoundSection({
             </span>
           )}
           {isLive && (
-            <span className="text-[10px] sm:text-[11px] px-2 py-1 sm:px-3 sm:py-1.5 rounded-full bg-padel-statusLive text-padel-background font-extrabold uppercase tracking-wider shadow-lg shadow-padel-statusLive/30">
+            <span className="text-[10px] sm:text-[11px] px-2 py-1 sm:px-3 sm:py-1.5 rounded-full bg-padel-statusLive text-padel-on-primary font-extrabold uppercase tracking-wider shadow-lg shadow-padel-statusLive/30">
               ● LIVE
             </span>
           )}

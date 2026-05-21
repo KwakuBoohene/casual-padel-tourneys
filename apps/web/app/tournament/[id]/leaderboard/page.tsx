@@ -8,7 +8,13 @@ interface TournamentViewModel {
   config: { name: string; mode: string; variant: string };
   updatedAt: string;
   players: Array<{ id: string; name: string }>;
-  leaderboard: Array<{ playerId: string; name: string; totalPoints: number; gamesPlayed: number; rank: number }>;
+  leaderboard: Array<{
+    playerId: string;
+    name: string;
+    totalPoints: number;
+    gamesPlayed: number;
+    rank: number;
+  }>;
   rounds: Array<{
     id: string;
     roundNumber: number;
@@ -42,6 +48,42 @@ type PlayerRow = {
   wins: number;
   losses: number;
   draws: number;
+};
+
+type PodiumStyle = {
+  label: string;
+  icon: string;
+  rankTextClass: string;
+  cardClass: string;
+  chipClass: string;
+  listAccentClass: string;
+};
+
+const podiumStyles: Record<number, PodiumStyle> = {
+  1: {
+    label: "Gold",
+    icon: "🏆",
+    rankTextClass: "text-[#e9c400]",
+    cardClass: "border-[#e9c400]/50 bg-[#e9c400]/10",
+    chipClass: "border-[#e9c400]/50 bg-[#e9c400]/15 text-[#fce77c]",
+    listAccentClass: "before:bg-[#e9c400]"
+  },
+  2: {
+    label: "Silver",
+    icon: "🥈",
+    rankTextClass: "text-[#c0c6d8]",
+    cardClass: "border-[#c0c6d8]/50 bg-[#c0c6d8]/10",
+    chipClass: "border-[#c0c6d8]/50 bg-[#c0c6d8]/15 text-[#e2e6ef]",
+    listAccentClass: "before:bg-[#c0c6d8]"
+  },
+  3: {
+    label: "Bronze",
+    icon: "🥉",
+    rankTextClass: "text-[#cd7f32]",
+    cardClass: "border-[#cd7f32]/50 bg-[#cd7f32]/10",
+    chipClass: "border-[#cd7f32]/50 bg-[#cd7f32]/15 text-[#f3c18c]",
+    listAccentClass: "before:bg-[#cd7f32]"
+  }
 };
 
 function computeLeaderboardRows(tournament: TournamentViewModel): PlayerRow[] {
@@ -111,12 +153,15 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
   }
 
   const rows = computeLeaderboardRows(tournament);
+  const outstandingPlayers = rows.slice(0, 3);
 
   return (
     <main className="min-h-screen bg-padel-background text-padel-text px-4 py-6 md:px-10 md:py-10">
       <header className="mb-8 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] text-padel-muted mb-1">Casual Padel Tourneys</p>
+          <p className="text-[10px] uppercase tracking-[0.25em] text-padel-muted mb-1">
+            Casual Padel Tourneys
+          </p>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Leaderboard</h1>
           <p className="mt-1 text-xs uppercase tracking-[0.25em] text-padel-muted">
             {tournament.config.name} · {tournament.config.mode} / {tournament.config.variant}
@@ -124,6 +169,49 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
         </div>
         <LeaderboardHeaderActions tournamentId={route.id} />
       </header>
+
+      {outstandingPlayers.length > 0 ? (
+        <section className="mb-6 rounded-2xl border border-padel-border bg-padel-surface p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-padel-muted">
+              Outstanding Players
+            </h2>
+            <span className="text-xs uppercase tracking-[0.2em] text-padel-muted">Top 3</span>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {outstandingPlayers.map((player) => {
+              const podium = podiumStyles[player.rank];
+              if (!podium) {
+                return null;
+              }
+
+              return (
+                <article
+                  key={player.playerId}
+                  className={`rounded-xl border p-4 transition ${podium.cardClass} ${player.rank === 1 ? "md:-translate-y-1" : ""}`}
+                >
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className={`text-xl ${podium.rankTextClass}`} aria-hidden="true">
+                      {podium.icon}
+                    </span>
+                    <span
+                      className={`rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] ${podium.chipClass}`}
+                    >
+                      {podium.label}
+                    </span>
+                  </div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-padel-muted">#{player.rank}</p>
+                  <h3 className="mt-1 text-base font-semibold text-padel-text">{player.name}</h3>
+                  <p className="mt-2 text-sm font-semibold text-padel-text">{player.totalPoints} pts</p>
+                  <p className="mt-1 text-xs text-padel-muted">
+                    W {player.wins} · D {player.draws} · L {player.losses}
+                  </p>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
 
       <section className="rounded-2xl bg-padel-surface border border-padel-border p-5">
         <div className="flex items-center justify-between mb-4">
@@ -134,23 +222,32 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
         </div>
 
         <ol className="divide-y divide-padel-border/60">
-          {rows.map((entry) => (
-            <li key={entry.playerId} className="flex items-center justify-between py-3">
-              <div className="flex items-center gap-4">
-                <span className="w-8 text-center text-sm font-bold text-padel-primary">#{entry.rank}</span>
-                <span className="text-sm font-medium">{entry.name}</span>
-              </div>
-              <div className="flex items-center gap-6 text-xs md:text-sm">
-                <span className="font-semibold text-padel-text">{entry.totalPoints} pts</span>
-                <span className="text-padel-muted">
-                  W {entry.wins} · D {entry.draws} · L {entry.losses}
-                </span>
-              </div>
-            </li>
-          ))}
+          {rows.map((entry) => {
+            const podium = podiumStyles[entry.rank];
+            return (
+              <li
+                key={entry.playerId}
+                className={`relative flex items-center justify-between py-3 ${podium ? `pl-3 before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded-full ${podium.listAccentClass} bg-padel-surfaceAlt/40` : ""}`}
+              >
+                <div className="flex items-center gap-4">
+                  <span
+                    className={`w-14 text-center text-sm font-bold ${podium ? podium.rankTextClass : "text-padel-primary"}`}
+                  >
+                    {podium ? `${podium.icon} #${entry.rank}` : `#${entry.rank}`}
+                  </span>
+                  <span className="text-sm font-medium">{entry.name}</span>
+                </div>
+                <div className="flex items-center gap-6 text-xs md:text-sm">
+                  <span className="font-semibold text-padel-text">{entry.totalPoints} pts</span>
+                  <span className="text-padel-muted">
+                    W {entry.wins} · D {entry.draws} · L {entry.losses}
+                  </span>
+                </div>
+              </li>
+            );
+          })}
         </ol>
       </section>
     </main>
   );
 }
-

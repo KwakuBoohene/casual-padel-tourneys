@@ -27,6 +27,7 @@ export function PlayerSearch({ value, onChange, matchCount, totalMatches }: Play
             px-3 py-2.5 pl-10 sm:px-4 sm:py-3 sm:pl-11
             bg-padel-surface
             border border-padel-border
+            surface-panel
             rounded-xl
             text-xs sm:text-sm text-padel-text
             placeholder:text-padel-muted

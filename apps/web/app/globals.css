@@ -43,26 +43,28 @@
   --color-padel-status-pending: #6b7280;
   --color-padel-connected: #10b981;
   --color-padel-disconnected: #ef4444;
+  --surface-shadow: 0 10px 22px rgba(2, 6, 23, 0.28);
   --hero-gradient-from: #0b1430;
   --hero-gradient-via: #0f172a;
   --hero-gradient-to: #0f172a;
 }
 
 [data-theme="light"] {
-  --color-padel-background: #f7fafc;
+  --color-padel-background: #f4f8fd;
   --color-padel-surface: #ffffff;
-  --color-padel-surface-alt: #edf2f8;
+  --color-padel-surface-alt: #f1f6fc;
   --color-padel-text: #0f172a;
-  --color-padel-muted: #58667c;
+  --color-padel-muted: #516178;
   --color-padel-primary: #0f766e;
   --color-padel-danger: #dc2626;
-  --color-padel-border: rgba(15, 23, 42, 0.18);
+  --color-padel-border: rgba(15, 23, 42, 0.16);
   --color-padel-status-live: #16a34a;
   --color-padel-status-next: #d97706;
   --color-padel-status-completed: #15803d;
   --color-padel-status-pending: #64748b;
   --color-padel-connected: #059669;
   --color-padel-disconnected: #dc2626;
+  --surface-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
   --hero-gradient-from: #c4d1e0;
   --hero-gradient-via: #e5ecf4;
   --hero-gradient-to: #f7fafc;
@@ -137,4 +139,8 @@ body {
     var(--hero-gradient-via) 46%,
     var(--hero-gradient-to) 100%
   );
+}
+
+.surface-panel {
+  box-shadow: var(--surface-shadow);
 }

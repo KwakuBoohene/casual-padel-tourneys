@@ -37,7 +37,7 @@ export function RoundSection({
       <div
         className={`
           flex items-center justify-between
-          ${isCollapsible ? "px-4 py-3 rounded-lg bg-padel-surface border border-padel-border cursor-pointer hover:bg-padel-surfaceAlt hover:border-padel-border/90 transition-all" : ""}
+          ${isCollapsible ? "surface-panel px-4 py-3 rounded-lg bg-padel-surface border border-padel-border cursor-pointer hover:bg-padel-surfaceAlt hover:border-padel-border/90 transition-all" : ""}
         `}
         onClick={toggleExpanded}
         role={isCollapsible ? "button" : undefined}

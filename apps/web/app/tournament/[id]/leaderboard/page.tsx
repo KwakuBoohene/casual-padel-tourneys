@@ -136,7 +136,7 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
         <LeaderboardHeaderActions tournamentId={route.id} />
       </header>
 
-      <PodiumShowcase players={outstandingPlayers} />
+      <PodiumShowcase players={outstandingPlayers} tournamentName={tournament.config.name} />
 
       <section className="rounded-2xl bg-padel-surface border border-padel-border p-5">
         <div className="flex items-center justify-between mb-4">

@@ -97,6 +97,7 @@ export function MatchCard({
     <div
       className={`
         rounded-xl border border-padel-border/70 px-2.5 py-2.5 sm:px-4 sm:py-3.5
+        surface-panel
         transition-all duration-200
         ${status === "live" ? "bg-padel-surface shadow-lg shadow-padel-statusLive/15" : ""}
         ${status === "next" ? "bg-padel-surfaceAlt shadow-md" : ""}

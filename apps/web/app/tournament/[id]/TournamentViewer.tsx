@@ -127,14 +127,14 @@ export function TournamentViewer({
             <button
               type="button"
               onClick={handleOpenLeaderboard}
-              className="w-full rounded-xl bg-padel-primary text-padel-on-primary text-sm font-semibold py-2.5 hover:bg-padel-primary/90 transition"
+              className="w-full rounded-xl bg-padel-primary text-white text-sm font-semibold py-2.5 hover:bg-padel-primary/90 transition"
             >
               Leaderboard
             </button>
             <button
               type="button"
               onClick={() => setSettingsOpen(false)}
-              className="w-full rounded-xl border border-padel-border text-padel-text text-sm font-semibold py-2.5 bg-padel-surfaceAlt hover:bg-padel-surface transition"
+              className="w-full rounded-xl border border-padel-border text-padel-text text-sm font-semibold py-2.5 bg-padel-surfaceAlt hover:bg-padel-surfaceAlt/80 transition"
             >
               Close
             </button>

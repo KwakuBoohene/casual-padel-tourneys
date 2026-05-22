@@ -20,7 +20,7 @@ function getStatusBadge(status: MatchStatus) {
     live: {
       text: "● LIVE",
       bgColor: "bg-padel-statusLive",
-      textColor: "text-padel-on-primary",
+      textColor: "text-white",
       borderColor: "",
       animate: true
     },
@@ -96,12 +96,12 @@ export function MatchCard({
   return (
     <div
       className={`
-        rounded-xl px-2.5 py-2.5 sm:px-4 sm:py-3.5
+        rounded-xl border border-padel-border/70 px-2.5 py-2.5 sm:px-4 sm:py-3.5
         transition-all duration-200
-        ${status === "live" ? "bg-padel-surface shadow-lg shadow-padel-statusLive/20 border border-padel-border" : ""}
-        ${status === "next" ? "bg-padel-surface/90 shadow-md border border-padel-border" : ""}
-        ${status === "completed" ? "bg-padel-surface/70 opacity-90 border border-padel-border" : ""}
-        ${status === "pending" ? "bg-padel-surface/80 border border-padel-border" : ""}
+        ${status === "live" ? "bg-padel-surface shadow-lg shadow-padel-statusLive/15" : ""}
+        ${status === "next" ? "bg-padel-surfaceAlt shadow-md" : ""}
+        ${status === "completed" ? "bg-padel-surface opacity-95" : ""}
+        ${status === "pending" ? "bg-padel-surfaceAlt/90" : ""}
         animate-scale-in
       `}
     >

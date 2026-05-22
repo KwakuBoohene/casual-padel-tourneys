@@ -171,7 +171,7 @@ export function LiveTournament({
             </p>
             <Link
               href={`/tournament/${tournament.id}/leaderboard`}
-              className="inline-flex items-center justify-center rounded-full bg-padel-primary px-4 py-2 text-sm font-semibold text-padel-background transition hover:bg-padel-primary/90"
+              className="inline-flex items-center justify-center rounded-full bg-padel-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-padel-primary/90"
             >
               Go to leaderboard
             </Link>

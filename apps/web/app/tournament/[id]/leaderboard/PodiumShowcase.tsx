@@ -164,16 +164,16 @@ export default function PodiumShowcase({
   }
 
   return (
-    <section className="mb-6 rounded-3xl border border-black/5 bg-[#f3f4f6] p-5 text-slate-800 md:p-7">
+    <section className="mb-6 rounded-3xl border border-padel-border bg-padel-surface p-5 text-padel-text md:p-7">
       <div className="mx-auto mb-6 max-w-md text-center">
-        <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+        <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-padel-muted">
           {tournamentName}
         </p>
-        <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-[#dbe5ef]">
+        <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full border border-padel-border bg-padel-surfaceAlt">
           <HeroAwardIcon color={podiumStyles[1].accentColor} />
         </div>
         <h2 className="text-3xl font-bold tracking-tight">Well played {champion?.name ?? "Champion"}!</h2>
-        <p className="mt-1 text-sm text-slate-600">You have been awarded the winner trophy</p>
+        <p className="mt-1 text-sm text-padel-muted">You have been awarded the winner trophy</p>
       </div>
 
       <div className="mb-8 flex items-center justify-center gap-3">
@@ -203,16 +203,16 @@ export default function PodiumShowcase({
               <div className="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-[#103d6f] text-sm font-bold text-white">
                 {initialsFromName(player.name)}
               </div>
-              <p className="mb-3 truncate px-1 text-lg font-medium text-slate-800">
+              <p className="mb-3 truncate px-1 text-lg font-medium text-padel-text">
                 {shortName(player.name)}
               </p>
               <div
                 className={`mx-auto flex w-full max-w-[160px] flex-col items-center justify-between rounded-t-3xl px-3 pb-4 pt-5 ${podium.podiumFillClass} ${isChampion ? "h-40" : "h-32"}`}
               >
                 <PodiumAwardIcon rank={player.rank} color={podium.accentColor} />
-                <p className="text-4xl font-semibold text-slate-800">{player.rank}</p>
+                <p className="text-4xl font-semibold text-padel-text">{player.rank}</p>
               </div>
-              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-padel-muted">
                 {podium.label}
               </p>
             </article>

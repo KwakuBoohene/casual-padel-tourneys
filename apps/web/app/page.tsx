@@ -33,7 +33,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center px-6 py-20">
         {/* Background Gradient */}
-        <div className="absolute inset-0 bg-linear-to-b from-padel-surfaceAlt via-padel-background to-padel-background opacity-90" />
+        <div className="hero-backdrop absolute inset-0" />
 
         {/* Glow effects */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -79,7 +79,7 @@ export default function HomePage() {
                 />
                 <button
                   onClick={handleJoin}
-                  className="px-8 py-3 rounded-xl bg-padel-primary text-padel-on-primary font-bold hover:scale-105 transition-transform"
+                  className="px-8 py-3 rounded-xl bg-padel-primary text-white font-bold hover:scale-105 transition-transform"
                 >
                   Join
                 </button>

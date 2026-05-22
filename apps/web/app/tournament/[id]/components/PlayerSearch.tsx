@@ -54,7 +54,7 @@ export function PlayerSearch({ value, onChange, matchCount, totalMatches }: Play
               flex items-center justify-center
               rounded-full
               bg-padel-surfaceAlt
-              hover:bg-padel-border/40
+              hover:bg-padel-surfaceAlt/80
               transition-colors
             "
             aria-label="Clear search"

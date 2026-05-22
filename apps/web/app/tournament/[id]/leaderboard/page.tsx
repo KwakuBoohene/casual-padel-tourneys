@@ -54,8 +54,9 @@ type PodiumStyle = {
   label: string;
   icon: string;
   rankTextClass: string;
-  cardClass: string;
-  chipClass: string;
+  badgeClass: string;
+  podiumFillClass: string;
+  crownColor: string;
   listAccentClass: string;
 };
 
@@ -64,27 +65,65 @@ const podiumStyles: Record<number, PodiumStyle> = {
     label: "Gold",
     icon: "🏆",
     rankTextClass: "text-[#e9c400]",
-    cardClass: "border-[#e9c400]/50 bg-[#e9c400]/10",
-    chipClass: "border-[#e9c400]/50 bg-[#e9c400]/15 text-[#fce77c]",
+    badgeClass: "bg-[#fff2b8] text-[#9b7d00]",
+    podiumFillClass: "bg-[#ebe5be]",
+    crownColor: "#e1b900",
     listAccentClass: "before:bg-[#e9c400]"
   },
   2: {
     label: "Silver",
     icon: "🥈",
     rankTextClass: "text-[#c0c6d8]",
-    cardClass: "border-[#c0c6d8]/50 bg-[#c0c6d8]/10",
-    chipClass: "border-[#c0c6d8]/50 bg-[#c0c6d8]/15 text-[#e2e6ef]",
+    badgeClass: "bg-[#e8f1e8] text-[#4b9b5f]",
+    podiumFillClass: "bg-[#ddd9dd]",
+    crownColor: "#b8b8b8",
     listAccentClass: "before:bg-[#c0c6d8]"
   },
   3: {
     label: "Bronze",
     icon: "🥉",
     rankTextClass: "text-[#cd7f32]",
-    cardClass: "border-[#cd7f32]/50 bg-[#cd7f32]/10",
-    chipClass: "border-[#cd7f32]/50 bg-[#cd7f32]/15 text-[#f3c18c]",
+    badgeClass: "bg-[#f1e4c6] text-[#b67631]",
+    podiumFillClass: "bg-[#e8d0b3]",
+    crownColor: "#ca7b2f",
     listAccentClass: "before:bg-[#cd7f32]"
   }
 };
+
+function initialsFromName(name: string): string {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+function shortName(name: string): string {
+  const parts = name.split(" ").filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0]} ${parts[1][0]}.`;
+  }
+  return name;
+}
+
+function CrownIcon({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 64 64" className="h-7 w-7" aria-hidden="true">
+      <path
+        d="M8 48h48l-4-24-14 10-6-14-6 14-14-10-4 24Z"
+        fill={color}
+        stroke={color}
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <rect x="12" y="48" width="40" height="6" rx="2" fill={color} />
+      <circle cx="18" cy="22" r="3" fill={color} />
+      <circle cx="32" cy="16" r="3" fill={color} />
+      <circle cx="46" cy="22" r="3" fill={color} />
+    </svg>
+  );
+}
 
 function computeLeaderboardRows(tournament: TournamentViewModel): PlayerRow[] {
   const stats = new Map<string, PlayerRow>();
@@ -154,6 +193,10 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
 
   const rows = computeLeaderboardRows(tournament);
   const outstandingPlayers = rows.slice(0, 3);
+  const champion = outstandingPlayers.find((player) => player.rank === 1);
+  const runnerUp = outstandingPlayers.find((player) => player.rank === 2);
+  const thirdPlace = outstandingPlayers.find((player) => player.rank === 3);
+  const podiumOrder = [runnerUp, champion, thirdPlace].filter((entry): entry is PlayerRow => Boolean(entry));
 
   return (
     <main className="min-h-screen bg-padel-background text-padel-text px-4 py-6 md:px-10 md:py-10">
@@ -171,40 +214,53 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
       </header>
 
       {outstandingPlayers.length > 0 ? (
-        <section className="mb-6 rounded-2xl border border-padel-border bg-padel-surface p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-padel-muted">
-              Outstanding Players
-            </h2>
-            <span className="text-xs uppercase tracking-[0.2em] text-padel-muted">Top 3</span>
+        <section className="mb-6 rounded-3xl border border-black/5 bg-[#f3f4f6] p-5 text-slate-800 md:p-7">
+          <div className="mx-auto mb-6 max-w-md text-center">
+            <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-[#dbe5ef] text-5xl">
+              🏆
+            </div>
+            <h2 className="text-3xl font-bold tracking-tight">Well played {champion?.name ?? "Champion"}!</h2>
+            <p className="mt-1 text-sm text-slate-600">You have been awarded the winner trophy</p>
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
-            {outstandingPlayers.map((player) => {
+
+          <div className="mb-8 grid gap-2 sm:grid-cols-3">
+            <div
+              className={`rounded-full px-4 py-2 text-center text-xl font-bold ${podiumStyles[2].badgeClass}`}
+            >
+              Wins {champion?.wins ?? 0}
+            </div>
+            <div className="rounded-full px-4 py-2 text-center text-xl font-bold bg-[#dce6fd] text-[#3d67db]">
+              Points {champion?.totalPoints ?? 0}
+            </div>
+            <div
+              className={`rounded-full px-4 py-2 text-center text-xl font-bold ${podiumStyles[1].badgeClass}`}
+            >
+              Diff {(champion?.wins ?? 0) - (champion?.losses ?? 0) >= 0 ? "+" : ""}
+              {(champion?.wins ?? 0) - (champion?.losses ?? 0)}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 items-end gap-3">
+            {podiumOrder.map((player) => {
               const podium = podiumStyles[player.rank];
-              if (!podium) {
-                return null;
-              }
+              const isChampion = player.rank === 1;
 
               return (
-                <article
-                  key={player.playerId}
-                  className={`rounded-xl border p-4 transition ${podium.cardClass} ${player.rank === 1 ? "md:-translate-y-1" : ""}`}
-                >
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className={`text-xl ${podium.rankTextClass}`} aria-hidden="true">
-                      {podium.icon}
-                    </span>
-                    <span
-                      className={`rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] ${podium.chipClass}`}
-                    >
-                      {podium.label}
-                    </span>
+                <article key={player.playerId} className="text-center">
+                  <div className="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-[#103d6f] text-sm font-bold text-white">
+                    {initialsFromName(player.name)}
                   </div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-padel-muted">#{player.rank}</p>
-                  <h3 className="mt-1 text-base font-semibold text-padel-text">{player.name}</h3>
-                  <p className="mt-2 text-sm font-semibold text-padel-text">{player.totalPoints} pts</p>
-                  <p className="mt-1 text-xs text-padel-muted">
-                    W {player.wins} · D {player.draws} · L {player.losses}
+                  <p className="mb-3 truncate px-1 text-lg font-medium text-slate-800">
+                    {shortName(player.name)}
+                  </p>
+                  <div
+                    className={`mx-auto flex w-full max-w-[160px] flex-col items-center justify-between rounded-t-3xl px-3 pb-4 pt-5 ${podium.podiumFillClass} ${isChampion ? "h-40" : "h-32"}`}
+                  >
+                    <CrownIcon color={podium.crownColor} />
+                    <p className="text-4xl font-semibold text-slate-800">{player.rank}</p>
+                  </div>
+                  <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    {podium.label}
                   </p>
                 </article>
               );

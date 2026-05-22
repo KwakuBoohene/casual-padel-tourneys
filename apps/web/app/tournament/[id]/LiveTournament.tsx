@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MatchCard } from "./components/MatchCard";
+import { isTournamentComplete } from "./components/outstandingPlayers";
 import { PlayerSearch } from "./components/PlayerSearch";
 import { RoundSection } from "./components/RoundSection";
 
@@ -9,7 +11,13 @@ interface TournamentPayload {
   id: string;
   updatedAt: string;
   players: Array<{ id: string; name: string }>;
-  leaderboard: Array<{ name: string; totalPoints: number; rank: number }>;
+  leaderboard: Array<{
+    playerId: string;
+    name: string;
+    totalPoints: number;
+    gamesPlayed: number;
+    rank: number;
+  }>;
   rounds: Array<{
     id: string;
     roundNumber: number;
@@ -121,6 +129,8 @@ export function LiveTournament({
     return tournament.players.filter((p) => p.name.toLowerCase().includes(query)).map((p) => p.id);
   }, [searchQuery, tournament.players]);
 
+  const tournamentComplete = useMemo(() => isTournamentComplete(tournament), [tournament]);
+
   // Organize rounds into current, previous, and upcoming
   const { currentRound, previousRounds, upcomingRounds } = useMemo(() => {
     const sorted = [...tournament.rounds].sort((a, b) => a.roundNumber - b.roundNumber);
@@ -153,6 +163,22 @@ export function LiveTournament({
 
   return (
     <section className="space-y-6">
+      {tournamentComplete ? (
+        <div className="rounded-xl border border-padel-primary/40 bg-padel-primary/10 p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <p className="text-sm font-semibold text-padel-text">
+              Tournament completed. View the final standings on the leaderboard.
+            </p>
+            <Link
+              href={`/tournament/${tournament.id}/leaderboard`}
+              className="inline-flex items-center justify-center rounded-full bg-padel-primary px-4 py-2 text-sm font-semibold text-padel-background transition hover:bg-padel-primary/90"
+            >
+              Go to leaderboard
+            </Link>
+          </div>
+        </div>
+      ) : null}
+
       {/* Player Search */}
       <PlayerSearch
         value={searchQuery}

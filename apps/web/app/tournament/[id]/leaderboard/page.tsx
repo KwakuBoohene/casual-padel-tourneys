@@ -107,9 +107,9 @@ function shortName(name: string): string {
   return name;
 }
 
-function TrophyIcon({ color }: { color: string }) {
+function TrophyIcon({ color, className = "h-10 w-10" }: { color: string; className?: string }) {
   return (
-    <svg viewBox="0 0 64 64" className="h-8 w-8" aria-hidden="true">
+    <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
       <path d="M20 8h24v8c0 7-5 13-12 13s-12-6-12-13V8Z" fill={color} />
       <path
         d="M20 12H10v2c0 6 5 11 11 11h2"
@@ -132,9 +132,9 @@ function TrophyIcon({ color }: { color: string }) {
   );
 }
 
-function MedalIcon({ color }: { color: string }) {
+function MedalIcon({ color, className = "h-10 w-10" }: { color: string; className?: string }) {
   return (
-    <svg viewBox="0 0 64 64" className="h-8 w-8" aria-hidden="true">
+    <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
       <path d="M18 6h10l4 16H22L18 6Z" fill="#6a7eab" />
       <path d="M36 6h10l-4 16H32L36 6Z" fill="#4b628f" />
       <circle cx="32" cy="38" r="16" fill={color} stroke="#1f2937" strokeWidth="1.5" />
@@ -147,16 +147,24 @@ function MedalIcon({ color }: { color: string }) {
   );
 }
 
-function PodiumAwardIcon({ rank, color }: { rank: number; color: string }) {
+function PodiumAwardIcon({
+  rank,
+  color,
+  className = "h-10 w-10"
+}: {
+  rank: number;
+  color: string;
+  className?: string;
+}) {
   if (rank === 1) {
-    return <TrophyIcon color={color} />;
+    return <TrophyIcon color={color} className={className} />;
   }
-  return <MedalIcon color={color} />;
+  return <MedalIcon color={color} className={className} />;
 }
 
 function HeroAwardIcon({ color }: { color: string }) {
   return (
-    <svg viewBox="0 0 64 64" className="h-10 w-10" aria-hidden="true">
+    <svg viewBox="0 0 64 64" className="h-12 w-12" aria-hidden="true">
       <path d="M20 8h24v8c0 7-5 13-12 13s-12-6-12-13V8Z" fill={color} />
       <path
         d="M20 12H10v2c0 6 5 11 11 11h2"
@@ -341,9 +349,18 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
               >
                 <div className="flex items-center gap-4">
                   <span
-                    className={`w-14 text-center text-sm font-bold ${podium ? podium.rankTextClass : "text-padel-primary"}`}
+                    className={`w-16 text-center text-sm font-bold ${podium ? podium.rankTextClass : "text-padel-primary"}`}
                   >
-                    {podium ? `${podium.icon} #${entry.rank}` : `#${entry.rank}`}
+                    {podium ? (
+                      <span className="inline-flex items-center gap-1">
+                        <span className="inline-flex h-5 w-5 items-center justify-center">
+                          <PodiumAwardIcon rank={entry.rank} color={podium.accentColor} className="h-5 w-5" />
+                        </span>
+                        <span>#{entry.rank}</span>
+                      </span>
+                    ) : (
+                      <span>#{entry.rank}</span>
+                    )}
                   </span>
                   <span className="text-sm font-medium">{entry.name}</span>
                 </div>

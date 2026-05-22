@@ -56,7 +56,7 @@ type PodiumStyle = {
   rankTextClass: string;
   badgeClass: string;
   podiumFillClass: string;
-  crownColor: string;
+  accentColor: string;
   listAccentClass: string;
 };
 
@@ -67,7 +67,7 @@ const podiumStyles: Record<number, PodiumStyle> = {
     rankTextClass: "text-[#e9c400]",
     badgeClass: "bg-[#fff2b8] text-[#9b7d00]",
     podiumFillClass: "bg-[#ebe5be]",
-    crownColor: "#e1b900",
+    accentColor: "#e1b900",
     listAccentClass: "before:bg-[#e9c400]"
   },
   2: {
@@ -76,7 +76,7 @@ const podiumStyles: Record<number, PodiumStyle> = {
     rankTextClass: "text-[#c0c6d8]",
     badgeClass: "bg-[#e8f1e8] text-[#4b9b5f]",
     podiumFillClass: "bg-[#ddd9dd]",
-    crownColor: "#b8b8b8",
+    accentColor: "#b8b8b8",
     listAccentClass: "before:bg-[#c0c6d8]"
   },
   3: {
@@ -85,7 +85,7 @@ const podiumStyles: Record<number, PodiumStyle> = {
     rankTextClass: "text-[#cd7f32]",
     badgeClass: "bg-[#f1e4c6] text-[#b67631]",
     podiumFillClass: "bg-[#e8d0b3]",
-    crownColor: "#ca7b2f",
+    accentColor: "#ca7b2f",
     listAccentClass: "before:bg-[#cd7f32]"
   }
 };
@@ -107,20 +107,74 @@ function shortName(name: string): string {
   return name;
 }
 
-function CrownIcon({ color }: { color: string }) {
+function TrophyIcon({ color }: { color: string }) {
   return (
-    <svg viewBox="0 0 64 64" className="h-7 w-7" aria-hidden="true">
+    <svg viewBox="0 0 64 64" className="h-8 w-8" aria-hidden="true">
+      <path d="M20 8h24v8c0 7-5 13-12 13s-12-6-12-13V8Z" fill={color} />
       <path
-        d="M8 48h48l-4-24-14 10-6-14-6 14-14-10-4 24Z"
-        fill={color}
+        d="M20 12H10v2c0 6 5 11 11 11h2"
+        fill="none"
         stroke={color}
-        strokeWidth="2"
-        strokeLinejoin="round"
+        strokeWidth="3"
+        strokeLinecap="round"
       />
-      <rect x="12" y="48" width="40" height="6" rx="2" fill={color} />
-      <circle cx="18" cy="22" r="3" fill={color} />
-      <circle cx="32" cy="16" r="3" fill={color} />
-      <circle cx="46" cy="22" r="3" fill={color} />
+      <path
+        d="M44 12h10v2c0 6-5 11-11 11h-2"
+        fill="none"
+        stroke={color}
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <rect x="28" y="29" width="8" height="11" rx="2" fill={color} />
+      <rect x="22" y="40" width="20" height="6" rx="2" fill={color} />
+      <rect x="18" y="48" width="28" height="6" rx="2" fill={color} />
+    </svg>
+  );
+}
+
+function MedalIcon({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 64 64" className="h-8 w-8" aria-hidden="true">
+      <path d="M18 6h10l4 16H22L18 6Z" fill="#6a7eab" />
+      <path d="M36 6h10l-4 16H32L36 6Z" fill="#4b628f" />
+      <circle cx="32" cy="38" r="16" fill={color} stroke="#1f2937" strokeWidth="1.5" />
+      <circle cx="32" cy="38" r="11" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="2" />
+      <path
+        d="M32 31l2.1 4.3 4.7.7-3.4 3.4.8 4.7-4.2-2.2-4.2 2.2.8-4.7-3.4-3.4 4.7-.7L32 31Z"
+        fill="rgba(255,255,255,0.9)"
+      />
+    </svg>
+  );
+}
+
+function PodiumAwardIcon({ rank, color }: { rank: number; color: string }) {
+  if (rank === 1) {
+    return <TrophyIcon color={color} />;
+  }
+  return <MedalIcon color={color} />;
+}
+
+function HeroAwardIcon({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 64 64" className="h-10 w-10" aria-hidden="true">
+      <path d="M20 8h24v8c0 7-5 13-12 13s-12-6-12-13V8Z" fill={color} />
+      <path
+        d="M20 12H10v2c0 6 5 11 11 11h2"
+        fill="none"
+        stroke={color}
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <path
+        d="M44 12h10v2c0 6-5 11-11 11h-2"
+        fill="none"
+        stroke={color}
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <rect x="28" y="29" width="8" height="11" rx="2" fill={color} />
+      <rect x="22" y="40" width="20" height="6" rx="2" fill={color} />
+      <rect x="18" y="48" width="28" height="6" rx="2" fill={color} />
     </svg>
   );
 }
@@ -216,8 +270,8 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
       {outstandingPlayers.length > 0 ? (
         <section className="mb-6 rounded-3xl border border-black/5 bg-[#f3f4f6] p-5 text-slate-800 md:p-7">
           <div className="mx-auto mb-6 max-w-md text-center">
-            <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-[#dbe5ef] text-5xl">
-              🏆
+            <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-[#dbe5ef]">
+              <HeroAwardIcon color={podiumStyles[1].accentColor} />
             </div>
             <h2 className="text-3xl font-bold tracking-tight">Well played {champion?.name ?? "Champion"}!</h2>
             <p className="mt-1 text-sm text-slate-600">You have been awarded the winner trophy</p>
@@ -256,7 +310,7 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
                   <div
                     className={`mx-auto flex w-full max-w-[160px] flex-col items-center justify-between rounded-t-3xl px-3 pb-4 pt-5 ${podium.podiumFillClass} ${isChampion ? "h-40" : "h-32"}`}
                   >
-                    <CrownIcon color={podium.crownColor} />
+                    <PodiumAwardIcon rank={player.rank} color={podium.accentColor} />
                     <p className="text-4xl font-semibold text-slate-800">{player.rank}</p>
                   </div>
                   <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">

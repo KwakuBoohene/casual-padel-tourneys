@@ -145,7 +145,13 @@ function HeroAwardIcon({ color }: { color: string }) {
   );
 }
 
-export default function PodiumShowcase({ players }: { players: PodiumPlayer[] }) {
+export default function PodiumShowcase({
+  players,
+  tournamentName
+}: {
+  players: PodiumPlayer[];
+  tournamentName: string;
+}) {
   const champion = players.find((player) => player.rank === 1);
   const runnerUp = players.find((player) => player.rank === 2);
   const thirdPlace = players.find((player) => player.rank === 3);
@@ -160,6 +166,9 @@ export default function PodiumShowcase({ players }: { players: PodiumPlayer[] })
   return (
     <section className="mb-6 rounded-3xl border border-black/5 bg-[#f3f4f6] p-5 text-slate-800 md:p-7">
       <div className="mx-auto mb-6 max-w-md text-center">
+        <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+          {tournamentName}
+        </p>
         <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-[#dbe5ef]">
           <HeroAwardIcon color={podiumStyles[1].accentColor} />
         </div>
@@ -167,14 +176,18 @@ export default function PodiumShowcase({ players }: { players: PodiumPlayer[] })
         <p className="mt-1 text-sm text-slate-600">You have been awarded the winner trophy</p>
       </div>
 
-      <div className="mb-8 grid gap-2 sm:grid-cols-3">
-        <div className={`rounded-full px-4 py-2 text-center text-xl font-bold ${podiumStyles[2].badgeClass}`}>
+      <div className="mb-8 flex items-center justify-center gap-3">
+        <div
+          className={`whitespace-nowrap rounded-full px-4 py-2 text-center text-xl font-bold ${podiumStyles[2].badgeClass}`}
+        >
           Wins {champion?.wins ?? 0}
         </div>
-        <div className="rounded-full px-4 py-2 text-center text-xl font-bold bg-[#dce6fd] text-[#3d67db]">
+        <div className="whitespace-nowrap rounded-full px-4 py-2 text-center text-xl font-bold bg-[#dce6fd] text-[#3d67db]">
           Points {champion?.totalPoints ?? 0}
         </div>
-        <div className={`rounded-full px-4 py-2 text-center text-xl font-bold ${podiumStyles[1].badgeClass}`}>
+        <div
+          className={`whitespace-nowrap rounded-full px-4 py-2 text-center text-xl font-bold ${podiumStyles[1].badgeClass}`}
+        >
           Diff {(champion?.wins ?? 0) - (champion?.losses ?? 0) >= 0 ? "+" : ""}
           {(champion?.wins ?? 0) - (champion?.losses ?? 0)}
         </div>

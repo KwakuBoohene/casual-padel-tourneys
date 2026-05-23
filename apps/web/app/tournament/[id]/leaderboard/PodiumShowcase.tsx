@@ -210,7 +210,7 @@ export default function PodiumShowcase({
                 className={`mx-auto flex w-full max-w-[160px] flex-col items-center justify-between rounded-t-3xl px-3 pb-4 pt-5 ${podium.podiumFillClass} ${isChampion ? "h-40" : "h-32"}`}
               >
                 <PodiumAwardIcon rank={player.rank} color={podium.accentColor} />
-                <p className="text-4xl font-semibold text-padel-text">{player.rank}</p>
+                <p className="text-4xl font-semibold text-[#1e293b]">{player.rank}</p>
               </div>
               <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-padel-muted">
                 {podium.label}

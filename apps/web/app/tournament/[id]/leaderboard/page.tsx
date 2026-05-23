@@ -122,7 +122,7 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
   const outstandingPlayers = rows.slice(0, 3);
 
   return (
-    <main className="min-h-screen bg-padel-background text-padel-text px-4 py-6 md:px-10 md:py-10">
+    <main className="min-h-screen bg-padel-background text-padel-text px-4 pt-20 pb-6 md:px-10 md:pt-28 md:pb-10">
       <header className="mb-8 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-[10px] uppercase tracking-[0.25em] text-padel-muted mb-1">

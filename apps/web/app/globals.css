@@ -152,7 +152,7 @@ body {
 .live-badge {
   background-color: var(--color-padel-live-badge-bg);
   color: #ffffff;
-  box-shadow: 0 8px 18px var(--color-padel-live-badge-shadow);
+  box-shadow: none;
 }
 
 [data-theme="light"] .live-match-card {

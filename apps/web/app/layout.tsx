@@ -178,10 +178,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             __html: `(() => {
   const key = "padel:web:theme";
   const root = document.documentElement;
-  const btn = document.getElementById("theme-switch");
-  const sunIcon = document.getElementById("theme-icon-sun");
-  const moonIcon = document.getElementById("theme-icon-moon");
-  if (!btn || !sunIcon || !moonIcon) return;
+  if (!root) return;
+
+  const getElements = () => {
+    const btn = document.getElementById("theme-switch");
+    const sunIcon = document.getElementById("theme-icon-sun");
+    const moonIcon = document.getElementById("theme-icon-moon");
+    return { btn, sunIcon, moonIcon };
+  };
 
   const getTheme = () => {
     const stored = window.localStorage.getItem(key);
@@ -191,7 +195,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
   const applyTheme = (theme) => {
     const isLight = theme === "light";
+    const { btn, sunIcon, moonIcon } = getElements();
     root.setAttribute("data-theme", theme);
+    if (!btn || !sunIcon || !moonIcon) return;
     btn.setAttribute("aria-label", isLight ? "Switch to dark mode" : "Switch to light mode");
     sunIcon.style.display = isLight ? "none" : "inline-flex";
     moonIcon.style.display = isLight ? "inline-flex" : "none";
@@ -201,11 +207,18 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   applyTheme(theme);
   window.localStorage.setItem(key, theme);
 
-  btn.addEventListener("click", () => {
-    theme = theme === "dark" ? "light" : "dark";
-    applyTheme(theme);
-    window.localStorage.setItem(key, theme);
-  });
+  if (!window.__padelThemeBound) {
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const btn = target.closest("#theme-switch");
+      if (!btn) return;
+      theme = theme === "dark" ? "light" : "dark";
+      applyTheme(theme);
+      window.localStorage.setItem(key, theme);
+    });
+    window.__padelThemeBound = true;
+  }
 })();`
           }}
         />

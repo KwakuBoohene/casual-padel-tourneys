@@ -55,7 +55,6 @@ function getStatusBadge(status: MatchStatus) {
         text-[10px] px-3 py-1 rounded-md font-extrabold uppercase tracking-wider
         ${badge.bgColor} ${badge.textColor} ${badge.borderColor ? `border ${badge.borderColor}` : ""}
         ${badge.animate ? "animate-pulse-soft" : ""}
-        ${status === "next" ? "shadow-md shadow-padel-status-next/20" : ""}
       `}
     >
       {badge.text}

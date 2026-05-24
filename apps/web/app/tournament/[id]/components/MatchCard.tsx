@@ -99,8 +99,8 @@ export function MatchCard({
         rounded-xl border border-padel-border/70 px-2.5 py-2.5 sm:px-4 sm:py-3.5
         surface-panel
         transition-all duration-200
-        ${status === "live" ? "bg-padel-surface shadow-lg shadow-padel-status-live/15" : ""}
-        ${status === "next" ? "bg-padel-surfaceAlt shadow-md" : ""}
+        ${status === "live" ? "bg-padel-surface" : ""}
+        ${status === "next" ? "bg-padel-surfaceAlt" : ""}
         ${status === "completed" ? "bg-padel-surface opacity-95" : ""}
         ${status === "pending" ? "bg-padel-surfaceAlt/90" : ""}
         animate-scale-in

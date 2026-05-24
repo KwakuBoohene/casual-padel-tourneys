@@ -45,6 +45,8 @@
   --color-padel-disconnected: #ef4444;
   --color-padel-live-badge-bg: #8cc63f;
   --color-padel-live-badge-shadow: rgba(140, 198, 63, 0.22);
+  --color-padel-complete-cta-bg: #8cc63f;
+  --color-padel-complete-cta-hover: #7cb436;
   --surface-shadow: 0 10px 22px rgba(2, 6, 23, 0.28);
   --hero-gradient-from: #0b1430;
   --hero-gradient-via: #0f172a;
@@ -68,6 +70,8 @@
   --color-padel-disconnected: #dc2626;
   --color-padel-live-badge-bg: #84cc16;
   --color-padel-live-badge-shadow: rgba(132, 204, 22, 0.22);
+  --color-padel-complete-cta-bg: #6ea72b;
+  --color-padel-complete-cta-hover: #5f9325;
   --surface-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
   --hero-gradient-from: #c4d1e0;
   --hero-gradient-via: #e5ecf4;
@@ -153,6 +157,15 @@ body {
   background-color: var(--color-padel-live-badge-bg);
   color: #ffffff;
   box-shadow: none;
+}
+
+.completed-leaderboard-cta {
+  background-color: var(--color-padel-complete-cta-bg);
+  color: #ffffff;
+}
+
+.completed-leaderboard-cta:hover {
+  background-color: var(--color-padel-complete-cta-hover);
 }
 
 [data-theme="light"] .live-match-card {

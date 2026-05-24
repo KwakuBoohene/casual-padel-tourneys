@@ -129,10 +129,7 @@ export function MatchCard({
                 {teamA.map((player, idx) => (
                   <p
                     key={player.id || idx}
-                    className={`
-                      text-xs sm:text-sm font-bold truncate
-                      ${winnerA ? "text-padel-primary" : "text-padel-text"}
-                    `}
+                    className="text-xs sm:text-sm font-bold truncate text-padel-text"
                   >
                     {player.name}
                   </p>
@@ -147,9 +144,23 @@ export function MatchCard({
           {hasScore ? (
             <>
               <div className="flex items-center gap-1.5 sm:gap-3 mb-0.5 sm:mb-1">
-                <p className="text-xl sm:text-3xl font-black text-padel-text">{scoreA}</p>
+                <p
+                  className={[
+                    "min-w-10 rounded-lg px-2 py-1 text-center text-xl sm:min-w-13 sm:text-3xl font-black transition-colors",
+                    winnerA ? "bg-padel-primary/18 text-padel-primary" : "text-padel-text"
+                  ].join(" ")}
+                >
+                  {scoreA}
+                </p>
                 <span className="text-lg sm:text-2xl text-padel-muted font-bold">-</span>
-                <p className="text-xl sm:text-3xl font-black text-padel-text">{scoreB}</p>
+                <p
+                  className={[
+                    "min-w-10 rounded-lg px-2 py-1 text-center text-xl sm:min-w-13 sm:text-3xl font-black transition-colors",
+                    winnerB ? "bg-padel-primary/18 text-padel-primary" : "text-padel-text"
+                  ].join(" ")}
+                >
+                  {scoreB}
+                </p>
               </div>
               <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-padel-muted font-bold whitespace-nowrap">
                 Court {court} • Set {setNumber}
@@ -183,10 +194,7 @@ export function MatchCard({
                 {teamB.map((player, idx) => (
                   <p
                     key={player.id || idx}
-                    className={`
-                      text-xs sm:text-sm font-bold truncate
-                      ${winnerB ? "text-padel-primary" : "text-padel-text"}
-                    `}
+                    className="text-xs sm:text-sm font-bold truncate text-padel-text"
                   >
                     {player.name}
                   </p>

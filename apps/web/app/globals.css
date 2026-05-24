@@ -154,3 +154,27 @@ body {
   color: #ffffff;
   box-shadow: 0 8px 18px var(--color-padel-live-badge-shadow);
 }
+
+[data-theme="light"] .live-match-card {
+  background-color: #0b0f16 !important;
+  border-color: rgba(15, 23, 42, 0.88) !important;
+}
+
+[data-theme="light"] .live-match-card .live-card-name,
+[data-theme="light"] .live-match-card .live-card-score {
+  color: #f8fafc;
+}
+
+[data-theme="light"] .live-match-card .live-card-meta,
+[data-theme="light"] .live-match-card .live-card-team-label {
+  color: #94a3b8;
+}
+
+[data-theme="light"] .live-match-card .live-card-accent {
+  color: #d7ff8a;
+}
+
+[data-theme="light"] .live-match-card .live-card-score.bg-padel-primary\/18 {
+  background-color: rgba(248, 250, 252, 0.14);
+  color: #f8fafc;
+}

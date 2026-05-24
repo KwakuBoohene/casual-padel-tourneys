@@ -1,14 +1,6 @@
-import { THEME_STORAGE_KEY, getColors, type PadelColors, type ThemeMode } from "@padel/shared";
+import { THEME_STORAGE_KEY, getColors, type PadelColors, type ThemeMode } from "@padel/shared/theme";
 import * as SecureStore from "expo-secure-store";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Platform } from "react-native";
 
 import { getCardStyles } from "../theme";

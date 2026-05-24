@@ -1,6 +1,6 @@
-import type { PadelColors } from "@padel/shared";
+import type { PadelColors } from "@padel/shared/theme";
 
-export { getColors, darkColors, lightColors, type ThemeMode, type PadelColors } from "@padel/shared";
+export { getColors, darkColors, lightColors, type ThemeMode, type PadelColors } from "@padel/shared/theme";
 
 export const spacing = {
   xs: 4,

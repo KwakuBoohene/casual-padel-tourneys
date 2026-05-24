@@ -146,7 +146,7 @@ body {
 }
 
 .surface-panel {
-  box-shadow: var(--surface-shadow);
+  box-shadow: none;
 }
 
 .live-badge {

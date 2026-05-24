@@ -1,15 +1,7 @@
 "use client";
 
 import { THEME_STORAGE_KEY, type ThemeMode } from "@padel/shared";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode
-} from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
 interface ThemeContextValue {
   mode: ThemeMode;
@@ -23,6 +15,10 @@ function readStoredMode(): ThemeMode {
   if (typeof window === "undefined") {
     return "dark";
   }
+  const documentTheme = document.documentElement.dataset.theme;
+  if (documentTheme === "light" || documentTheme === "dark") {
+    return documentTheme;
+  }
   const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
   return stored === "light" ? "light" : "dark";
 }
@@ -31,26 +27,25 @@ function applyModeToDocument(mode: ThemeMode) {
   document.documentElement.dataset.theme = mode;
 }
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [mode, setModeState] = useState<ThemeMode>("dark");
+function persistMode(mode: ThemeMode) {
+  window.localStorage.setItem(THEME_STORAGE_KEY, mode);
+  document.cookie = `${THEME_STORAGE_KEY}=${mode}; path=/; max-age=31536000; samesite=lax`;
+}
 
-  useEffect(() => {
-    const initial = readStoredMode();
-    setModeState(initial);
-    applyModeToDocument(initial);
-  }, []);
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [mode, setModeState] = useState<ThemeMode>(readStoredMode);
 
   const setMode = useCallback((next: ThemeMode) => {
     setModeState(next);
     applyModeToDocument(next);
-    window.localStorage.setItem(THEME_STORAGE_KEY, next);
+    persistMode(next);
   }, []);
 
   const toggleMode = useCallback(() => {
     setModeState((current) => {
       const next: ThemeMode = current === "dark" ? "light" : "dark";
       applyModeToDocument(next);
-      window.localStorage.setItem(THEME_STORAGE_KEY, next);
+      persistMode(next);
       return next;
     });
   }, []);

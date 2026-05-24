@@ -16,6 +16,7 @@ export function ThemeToggle({ className = "" }: ThemeToggleProps) {
       role="switch"
       aria-checked={isLight}
       aria-label={isLight ? "Switch to dark mode" : "Switch to day mode"}
+      suppressHydrationWarning
       onClick={toggleMode}
       className={`inline-flex items-center gap-2 rounded-full border border-padel-border bg-padel-surface px-3 py-1.5 text-xs font-semibold text-padel-text transition hover:bg-padel-surfaceAlt ${className}`}
     >

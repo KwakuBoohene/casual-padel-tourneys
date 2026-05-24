@@ -4,8 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-import { ThemeToggle } from "../components/ThemeToggle";
-
 export default function HomePage() {
   const [token, setToken] = useState("");
   const router = useRouter();
@@ -27,24 +25,8 @@ export default function HomePage() {
   };
   return (
     <main className="min-h-screen bg-padel-background text-padel-text overflow-hidden relative">
-      <div className="absolute top-4 right-4 z-20 md:top-6 md:right-6">
-        <ThemeToggle />
-      </div>
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center px-6 py-20">
-        {/* Background Gradient */}
-        <div className="absolute inset-0 bg-linear-to-b from-padel-surfaceAlt via-padel-background to-padel-background opacity-90" />
-
-        {/* Glow effects */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-20 right-10 w-64 h-64 opacity-20 animate-float">
-            <div className="w-full h-full rounded-full bg-padel-primary/20 blur-3xl" />
-          </div>
-          <div className="absolute bottom-20 left-10 w-80 h-80 opacity-20 animate-float-delayed">
-            <div className="w-full h-full rounded-full bg-padel-primary/20 blur-3xl" />
-          </div>
-        </div>
-
+      <section className="home-hero-surface relative min-h-screen flex items-center justify-center px-6 py-20">
         <div className="relative z-10 max-w-4xl mx-auto">
           {/* Content */}
           <div className="space-y-8 text-left">
@@ -79,7 +61,7 @@ export default function HomePage() {
                 />
                 <button
                   onClick={handleJoin}
-                  className="px-8 py-3 rounded-xl bg-padel-primary text-padel-on-primary font-bold hover:scale-105 transition-transform"
+                  className="join-cta px-8 py-3 rounded-xl font-bold hover:scale-105 transition-transform"
                 >
                   Join
                 </button>

@@ -1,4 +1,6 @@
 import { LeaderboardHeaderActions } from "../../../../components/LeaderboardHeaderActions";
+import Link from "next/link";
+import PodiumShowcase, { PodiumAwardIcon, podiumStyles } from "./PodiumShowcase";
 
 const defaultApi = "http://localhost:3004";
 const internalApiBaseUrl = process.env.INTERNAL_API_BASE_URL ?? process.env.PUBLIC_API_BASE_URL ?? defaultApi;
@@ -8,7 +10,13 @@ interface TournamentViewModel {
   config: { name: string; mode: string; variant: string };
   updatedAt: string;
   players: Array<{ id: string; name: string }>;
-  leaderboard: Array<{ playerId: string; name: string; totalPoints: number; gamesPlayed: number; rank: number }>;
+  leaderboard: Array<{
+    playerId: string;
+    name: string;
+    totalPoints: number;
+    gamesPlayed: number;
+    rank: number;
+  }>;
   rounds: Array<{
     id: string;
     roundNumber: number;
@@ -111,12 +119,15 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
   }
 
   const rows = computeLeaderboardRows(tournament);
+  const outstandingPlayers = rows.slice(0, 3);
 
   return (
-    <main className="min-h-screen bg-padel-background text-padel-text px-4 py-6 md:px-10 md:py-10">
+    <main className="min-h-screen bg-padel-background text-padel-text px-4 pt-20 pb-6 md:px-10 md:pt-28 md:pb-10">
       <header className="mb-8 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] text-padel-muted mb-1">Casual Padel Tourneys</p>
+          <p className="text-[10px] uppercase tracking-[0.25em] text-padel-muted mb-1">
+            Casual Padel Tourneys
+          </p>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Leaderboard</h1>
           <p className="mt-1 text-xs uppercase tracking-[0.25em] text-padel-muted">
             {tournament.config.name} · {tournament.config.mode} / {tournament.config.variant}
@@ -124,6 +135,8 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
         </div>
         <LeaderboardHeaderActions tournamentId={route.id} />
       </header>
+
+      <PodiumShowcase players={outstandingPlayers} tournamentName={tournament.config.name} />
 
       <section className="rounded-2xl bg-padel-surface border border-padel-border p-5">
         <div className="flex items-center justify-between mb-4">
@@ -134,23 +147,41 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
         </div>
 
         <ol className="divide-y divide-padel-border/60">
-          {rows.map((entry) => (
-            <li key={entry.playerId} className="flex items-center justify-between py-3">
-              <div className="flex items-center gap-4">
-                <span className="w-8 text-center text-sm font-bold text-padel-primary">#{entry.rank}</span>
-                <span className="text-sm font-medium">{entry.name}</span>
-              </div>
-              <div className="flex items-center gap-6 text-xs md:text-sm">
-                <span className="font-semibold text-padel-text">{entry.totalPoints} pts</span>
-                <span className="text-padel-muted">
-                  W {entry.wins} · D {entry.draws} · L {entry.losses}
-                </span>
-              </div>
-            </li>
-          ))}
+          {rows.map((entry) => {
+            const podium = podiumStyles[entry.rank];
+            return (
+              <li
+                key={entry.playerId}
+                className={`relative flex items-center justify-between py-3 ${podium ? `pl-3 before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded-full ${podium.listAccentClass} bg-padel-surfaceAlt/40` : ""}`}
+              >
+                <div className="flex items-center gap-4">
+                  <span
+                    className={`w-16 text-center text-sm font-bold ${podium ? podium.rankTextClass : "text-padel-primary"}`}
+                  >
+                    {podium ? (
+                      <span className="inline-flex items-center gap-1">
+                        <span className="inline-flex h-5 w-5 items-center justify-center">
+                          <PodiumAwardIcon rank={entry.rank} color={podium.accentColor} className="h-5 w-5" />
+                        </span>
+                        <span>#{entry.rank}</span>
+                      </span>
+                    ) : (
+                      <span>#{entry.rank}</span>
+                    )}
+                  </span>
+                  <span className="text-sm font-medium">{entry.name}</span>
+                </div>
+                <div className="flex items-center gap-6 text-xs md:text-sm">
+                  <span className="font-semibold text-padel-text">{entry.totalPoints} pts</span>
+                  <span className="text-padel-muted">
+                    W {entry.wins} · D {entry.draws} · L {entry.losses}
+                  </span>
+                </div>
+              </li>
+            );
+          })}
         </ol>
       </section>
     </main>
   );
 }
-

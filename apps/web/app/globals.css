@@ -54,9 +54,9 @@
 }
 
 [data-theme="light"] {
-  --color-padel-background: #f4f8fd;
+  --color-padel-background: #ffffff;
   --color-padel-surface: #ffffff;
-  --color-padel-surface-alt: #f1f6fc;
+  --color-padel-surface-alt: #ffffff;
   --color-padel-text: #0f172a;
   --color-padel-muted: #516178;
   --color-padel-primary: #0f766e;
@@ -73,9 +73,9 @@
   --color-padel-complete-cta-bg: #6ea72b;
   --color-padel-complete-cta-hover: #5f9325;
   --surface-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-  --hero-gradient-from: #c4d1e0;
-  --hero-gradient-via: #e5ecf4;
-  --hero-gradient-to: #f7fafc;
+  --hero-gradient-from: #ffffff;
+  --hero-gradient-via: #ffffff;
+  --hero-gradient-to: #ffffff;
 }
 
 @keyframes pulse-soft {
@@ -140,7 +140,7 @@ body {
   color: var(--color-padel-text);
 }
 
-.hero-backdrop {
+.home-hero-surface {
   background: linear-gradient(
     180deg,
     var(--hero-gradient-from) 0%,
@@ -190,4 +190,8 @@ body {
 [data-theme="light"] .live-match-card .live-card-score.bg-padel-primary\/18 {
   background-color: rgba(248, 250, 252, 0.14);
   color: #f8fafc;
+}
+
+[data-theme="light"] .home-hero-surface {
+  background: #ffffff !important;
 }

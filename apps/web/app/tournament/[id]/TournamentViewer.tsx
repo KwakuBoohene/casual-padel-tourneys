@@ -127,7 +127,7 @@ export function TournamentViewer({
             <button
               type="button"
               onClick={handleOpenLeaderboard}
-              className="w-full rounded-xl bg-padel-primary text-white text-sm font-semibold py-2.5 hover:bg-padel-primary/90 transition"
+              className="w-full rounded-xl border border-padel-primary/35 bg-padel-primary/18 text-padel-text text-sm font-semibold py-2.5 hover:bg-padel-primary/24 transition"
             >
               Leaderboard
             </button>

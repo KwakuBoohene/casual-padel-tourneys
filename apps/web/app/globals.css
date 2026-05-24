@@ -168,6 +168,25 @@ body {
   background-color: var(--color-padel-complete-cta-hover);
 }
 
+.join-cta {
+  background-color: #334155;
+  color: #f8fafc;
+  box-shadow: none;
+}
+
+.join-cta:hover {
+  background-color: #475569;
+}
+
+[data-theme="light"] .join-cta {
+  background-color: var(--color-padel-primary);
+  color: #ffffff;
+}
+
+[data-theme="light"] .join-cta:hover {
+  background-color: #166e68;
+}
+
 [data-theme="light"] .live-match-card {
   background-color: #0b0f16 !important;
   border-color: rgba(15, 23, 42, 0.88) !important;

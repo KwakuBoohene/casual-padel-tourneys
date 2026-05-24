@@ -61,7 +61,7 @@ export default function HomePage() {
                 />
                 <button
                   onClick={handleJoin}
-                  className="px-8 py-3 rounded-xl bg-padel-primary text-white font-bold hover:scale-105 transition-transform"
+                  className="join-cta px-8 py-3 rounded-xl font-bold hover:scale-105 transition-transform"
                 >
                   Join
                 </button>

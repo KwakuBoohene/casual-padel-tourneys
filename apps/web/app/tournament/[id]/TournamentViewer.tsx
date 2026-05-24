@@ -118,7 +118,12 @@ export function TournamentViewer({
         </div>
       </header>
 
-      <LiveTournament initial={initial} apiBaseUrl={apiBaseUrl} onConnectionChange={setConnectionState} />
+      <LiveTournament
+        initial={initial}
+        token={token}
+        apiBaseUrl={apiBaseUrl}
+        onConnectionChange={setConnectionState}
+      />
 
       {settingsOpen ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 px-4">

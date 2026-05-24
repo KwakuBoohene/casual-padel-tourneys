@@ -36,10 +36,12 @@ type MatchStatus = "live" | "next" | "completed" | "pending";
 
 export function LiveTournament({
   initial,
+  token,
   apiBaseUrl,
   onConnectionChange
 }: {
   initial: TournamentPayload;
+  token: string;
   apiBaseUrl: string;
   onConnectionChange?: (state: { connected: boolean; lastUpdate: string }) => void;
 }) {
@@ -170,7 +172,7 @@ export function LiveTournament({
               Tournament completed. View the final standings on the leaderboard.
             </p>
             <Link
-              href={`/tournament/${tournament.id}/leaderboard`}
+              href={`/tournament/${token}/leaderboard`}
               className="inline-flex items-center justify-center rounded-full bg-padel-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-padel-primary/90"
             >
               Go to leaderboard

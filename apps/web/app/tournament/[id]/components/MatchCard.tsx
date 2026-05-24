@@ -19,30 +19,30 @@ function getStatusBadge(status: MatchStatus) {
   const badges = {
     live: {
       text: "● LIVE",
-      bgColor: "bg-padel-statusLive",
-      textColor: "text-white",
+      bgColor: "live-badge",
+      textColor: "",
       borderColor: "",
       animate: true
     },
     next: {
       text: "NEXT UP",
-      bgColor: "bg-padel-statusNext/20",
-      textColor: "text-padel-statusNext",
-      borderColor: "border-padel-statusNext/50",
+      bgColor: "bg-padel-status-next/20",
+      textColor: "text-padel-status-next",
+      borderColor: "border-padel-status-next/50",
       animate: false
     },
     completed: {
       text: "✓ DONE",
-      bgColor: "bg-padel-statusCompleted/10",
-      textColor: "text-padel-statusCompleted",
-      borderColor: "border-padel-statusCompleted/30",
+      bgColor: "bg-padel-status-completed/10",
+      textColor: "text-padel-status-completed",
+      borderColor: "border-padel-status-completed/30",
       animate: false
     },
     pending: {
       text: "PENDING",
-      bgColor: "bg-padel-statusPending/20",
-      textColor: "text-padel-statusPending",
-      borderColor: "border-padel-statusPending/30",
+      bgColor: "bg-padel-status-pending/20",
+      textColor: "text-padel-status-pending",
+      borderColor: "border-padel-status-pending/30",
       animate: false
     }
   };
@@ -54,8 +54,8 @@ function getStatusBadge(status: MatchStatus) {
       className={`
         text-[10px] px-3 py-1 rounded-md font-extrabold uppercase tracking-wider
         ${badge.bgColor} ${badge.textColor} ${badge.borderColor ? `border ${badge.borderColor}` : ""}
-        ${badge.animate ? "animate-pulse-soft shadow-lg shadow-padel-statusLive/30" : ""}
-        ${status === "next" ? "shadow-md shadow-padel-statusNext/20" : ""}
+        ${badge.animate ? "animate-pulse-soft" : ""}
+        ${status === "next" ? "shadow-md shadow-padel-status-next/20" : ""}
       `}
     >
       {badge.text}
@@ -99,7 +99,7 @@ export function MatchCard({
         rounded-xl border border-padel-border/70 px-2.5 py-2.5 sm:px-4 sm:py-3.5
         surface-panel
         transition-all duration-200
-        ${status === "live" ? "bg-padel-surface shadow-lg shadow-padel-statusLive/15" : ""}
+        ${status === "live" ? "bg-padel-surface shadow-lg shadow-padel-status-live/15" : ""}
         ${status === "next" ? "bg-padel-surfaceAlt shadow-md" : ""}
         ${status === "completed" ? "bg-padel-surface opacity-95" : ""}
         ${status === "pending" ? "bg-padel-surfaceAlt/90" : ""}
@@ -127,10 +127,7 @@ export function MatchCard({
               `}
               >
                 {teamA.map((player, idx) => (
-                  <p
-                    key={player.id || idx}
-                    className="text-xs sm:text-sm font-bold truncate text-padel-text"
-                  >
+                  <p key={player.id || idx} className="text-xs sm:text-sm font-bold truncate text-padel-text">
                     {player.name}
                   </p>
                 ))}
@@ -192,10 +189,7 @@ export function MatchCard({
               `}
               >
                 {teamB.map((player, idx) => (
-                  <p
-                    key={player.id || idx}
-                    className="text-xs sm:text-sm font-bold truncate text-padel-text"
-                  >
+                  <p key={player.id || idx} className="text-xs sm:text-sm font-bold truncate text-padel-text">
                     {player.name}
                   </p>
                 ))}

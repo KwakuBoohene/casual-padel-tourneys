@@ -53,7 +53,7 @@ export function RoundSection({
             </span>
           )}
           {isLive && (
-            <span className="text-[10px] sm:text-[11px] px-2 py-1 sm:px-3 sm:py-1.5 rounded-full bg-padel-statusLive text-white font-extrabold uppercase tracking-wider shadow-lg shadow-padel-statusLive/30">
+            <span className="live-badge text-[10px] sm:text-[11px] px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-extrabold uppercase tracking-wider">
               ● LIVE
             </span>
           )}

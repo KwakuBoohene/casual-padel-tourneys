@@ -56,8 +56,8 @@ export function TournamentViewer({
     <main className="min-h-screen bg-padel-background text-padel-text px-4 py-6 md:px-10 md:py-10">
       <header className="mb-8 border-b border-padel-border pb-5 space-y-4">
         <div className="flex items-start justify-between gap-4">
-          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] text-padel-statusLive font-bold">
-            <span className="h-2 w-2 rounded-full bg-padel-statusLive animate-pulse-soft"></span>
+          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] text-padel-status-live font-bold">
+            <span className="h-2 w-2 rounded-full bg-padel-status-live animate-pulse-soft"></span>
             Live Tournament
           </span>
           <div className="text-right">

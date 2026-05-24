@@ -285,7 +285,7 @@ export function LiveTournament({
           return (
             <div className="space-y-3">
               <h3 className="text-sm font-bold uppercase tracking-widest text-padel-muted/60 px-1 flex items-center gap-2">
-                <span className="h-1 w-1 rounded-full bg-padel-statusCompleted"></span>
+                <span className="h-1 w-1 rounded-full bg-padel-status-completed"></span>
                 Previous Rounds
               </h3>
               <div className="space-y-3">

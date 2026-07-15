@@ -10,7 +10,7 @@
     "dev": "concurrently -n api,web,mobile -c cyan,magenta,yellow \"npm run dev --workspace @padel/api\" \"npm run dev --workspace @padel/web\" \"npm run dev --workspace @padel/mobile\"",
     "dev:core": "concurrently -n api,web -c cyan,magenta \"npm run dev --workspace @padel/api\" \"npm run dev --workspace @padel/web\"",
     "build": "npm run build --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present",
+    "lint": "npm run build --workspace @padel/shared && npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "simulate": "npm run simulate --workspace @padel/api",

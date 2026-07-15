@@ -20,6 +20,8 @@ jobs:
         run: npm run db:generate
       - name: Audit dependencies
         run: npm audit --audit-level=critical
+      - name: Build shared package
+        run: npm run build --workspace @padel/shared
       - name: Lint
         run: npm run lint
       - name: Typecheck

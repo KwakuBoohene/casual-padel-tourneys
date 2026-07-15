@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { ThemeToggle } from "../../../components/ThemeToggle";
-
 import { LiveTournament } from "./LiveTournament";
 import { ConnectionStatus } from "./components/ConnectionStatus";
 
@@ -56,8 +54,8 @@ export function TournamentViewer({
     <main className="min-h-screen bg-padel-background text-padel-text px-4 py-6 md:px-10 md:py-10">
       <header className="mb-8 border-b border-padel-border pb-5 space-y-4">
         <div className="flex items-start justify-between gap-4">
-          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] text-padel-statusLive font-bold">
-            <span className="h-2 w-2 rounded-full bg-padel-statusLive animate-pulse-soft"></span>
+          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] text-padel-status-live font-bold">
+            <span className="h-2 w-2 rounded-full bg-padel-status-live animate-pulse-soft"></span>
             Live Tournament
           </span>
           <div className="text-right">
@@ -87,27 +85,24 @@ export function TournamentViewer({
               {initial.config.mode} <span className="text-padel-muted">•</span> {initial.config.variant}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <button
-              type="button"
-              aria-label="Open viewer menu"
-              onClick={() => setSettingsOpen(true)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-padel-border bg-padel-surface hover:bg-padel-surfaceAlt transition"
+          <button
+            type="button"
+            aria-label="Open viewer menu"
+            onClick={() => setSettingsOpen(true)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-padel-border bg-padel-surface hover:bg-padel-surfaceAlt transition"
+          >
+            <span className="sr-only">Open menu</span>
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="h-4 w-4 text-padel-muted"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              fill="none"
             >
-              <span className="sr-only">Open menu</span>
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                className="h-4 w-4 text-padel-muted"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                fill="none"
-              >
-                <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Zm7.438-3.5a7.44 7.44 0 0 0-.093-1l1.902-1.486a.75.75 0 0 0 .18-.955l-1.8-3.118a.75.75 0 0 0-.908-.34l-2.24.896a7.52 7.52 0 0 0-1.732-1l-.34-2.39A.75.75 0 0 0 13.7 2h-3.4a.75.75 0 0 0-.743.632l-.34 2.39a7.52 7.52 0 0 0-1.732 1l-2.24-.896a.75.75 0 0 0-.908.34l-1.8 3.118a.75.75 0 0 0 .18.955L4.655 11a7.44 7.44 0 0 0 0 2L2.753 14.486a.75.75 0 0 0-.18.955l1.8 3.118a.75.75 0 0 0 .908.34l2.24-.896a7.52 7.52 0 0 0 1.732 1l.34 2.39A.75.75 0 0 0 10.3 22h3.4a.75.75 0 0 0 .743-.632l.34-2.39a7.52 7.52 0 0 0 1.732-1l2.24.896a.75.75 0 0 0 .908-.34l1.8-3.118a.75.75 0 0 0-.18-.955L19.345 13a7.44 7.44 0 0 0 .093-1Z" />
-              </svg>
-            </button>
-          </div>
+              <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Zm7.438-3.5a7.44 7.44 0 0 0-.093-1l1.902-1.486a.75.75 0 0 0 .18-.955l-1.8-3.118a.75.75 0 0 0-.908-.34l-2.24.896a7.52 7.52 0 0 0-1.732-1l-.34-2.39A.75.75 0 0 0 13.7 2h-3.4a.75.75 0 0 0-.743.632l-.34 2.39a7.52 7.52 0 0 0-1.732 1l-2.24-.896a.75.75 0 0 0-.908.34l-1.8 3.118a.75.75 0 0 0 .18.955L4.655 11a7.44 7.44 0 0 0 0 2L2.753 14.486a.75.75 0 0 0-.18.955l1.8 3.118a.75.75 0 0 0 .908.34l2.24-.896a7.52 7.52 0 0 0 1.732 1l.34 2.39A.75.75 0 0 0 10.3 22h3.4a.75.75 0 0 0 .743-.632l.34-2.39a7.52 7.52 0 0 0 1.732-1l2.24.896a.75.75 0 0 0 .908-.34l1.8-3.118a.75.75 0 0 0-.18-.955L19.345 13a7.44 7.44 0 0 0 .093-1Z" />
+            </svg>
+          </button>
         </div>
 
         <div className="flex items-center justify-between pt-2">
@@ -118,7 +113,12 @@ export function TournamentViewer({
         </div>
       </header>
 
-      <LiveTournament initial={initial} apiBaseUrl={apiBaseUrl} onConnectionChange={setConnectionState} />
+      <LiveTournament
+        initial={initial}
+        token={token}
+        apiBaseUrl={apiBaseUrl}
+        onConnectionChange={setConnectionState}
+      />
 
       {settingsOpen ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 px-4">
@@ -127,14 +127,14 @@ export function TournamentViewer({
             <button
               type="button"
               onClick={handleOpenLeaderboard}
-              className="w-full rounded-xl bg-padel-primary text-padel-on-primary text-sm font-semibold py-2.5 hover:bg-padel-primary/90 transition"
+              className="w-full rounded-xl border border-padel-primary/35 bg-padel-primary/18 text-padel-text text-sm font-semibold py-2.5 hover:bg-padel-primary/24 transition"
             >
               Leaderboard
             </button>
             <button
               type="button"
               onClick={() => setSettingsOpen(false)}
-              className="w-full rounded-xl border border-padel-border text-padel-text text-sm font-semibold py-2.5 bg-padel-surfaceAlt hover:bg-padel-surface transition"
+              className="w-full rounded-xl border border-padel-border text-padel-text text-sm font-semibold py-2.5 bg-padel-surfaceAlt hover:bg-padel-surfaceAlt/80 transition"
             >
               Close
             </button>

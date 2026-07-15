@@ -27,42 +27,55 @@
   --animate-float-delayed: float 6s ease-in-out 3s infinite;
 }
 
-/* Default: dark */
 :root,
 [data-theme="dark"] {
-  --padel-background: #0f172a;
-  --padel-surface: #1e293b;
-  --padel-surface-alt: #020617;
-  --padel-text: #e5e7eb;
-  --padel-muted: #9ca3af;
-  --padel-primary: #adff2f;
-  --padel-on-primary: #020617;
-  --padel-danger: #f97373;
-  --padel-border: rgba(148, 163, 184, 0.4);
-  --padel-status-live: #adff2f;
-  --padel-status-next: #fbbf24;
-  --padel-status-completed: #4ade80;
-  --padel-status-pending: #6b7280;
-  --padel-connected: #10b981;
-  --padel-disconnected: #ef4444;
+  --color-padel-background: #0f172a;
+  --color-padel-surface: #1e293b;
+  --color-padel-surface-alt: #020617;
+  --color-padel-text: #e5e7eb;
+  --color-padel-muted: #9ca3af;
+  --color-padel-primary: #adff2f;
+  --color-padel-danger: #f97373;
+  --color-padel-border: rgba(148, 163, 184, 0.4);
+  --color-padel-status-live: #adff2f;
+  --color-padel-status-next: #fbbf24;
+  --color-padel-status-completed: #4ade80;
+  --color-padel-status-pending: #6b7280;
+  --color-padel-connected: #10b981;
+  --color-padel-disconnected: #ef4444;
+  --color-padel-live-badge-bg: #8cc63f;
+  --color-padel-live-badge-shadow: rgba(140, 198, 63, 0.22);
+  --color-padel-complete-cta-bg: #8cc63f;
+  --color-padel-complete-cta-hover: #7cb436;
+  --surface-shadow: 0 10px 22px rgba(2, 6, 23, 0.28);
+  --hero-gradient-from: #0b1430;
+  --hero-gradient-via: #0f172a;
+  --hero-gradient-to: #0f172a;
 }
 
 [data-theme="light"] {
-  --padel-background: #f8fafc;
-  --padel-surface: #ffffff;
-  --padel-surface-alt: #f1f5f9;
-  --padel-text: #0f172a;
-  --padel-muted: #64748b;
-  --padel-primary: #84cc16;
-  --padel-on-primary: #0f172a;
-  --padel-danger: #dc2626;
-  --padel-border: rgba(15, 23, 42, 0.12);
-  --padel-status-live: #65a30d;
-  --padel-status-next: #d97706;
-  --padel-status-completed: #16a34a;
-  --padel-status-pending: #94a3b8;
-  --padel-connected: #059669;
-  --padel-disconnected: #dc2626;
+  --color-padel-background: #ffffff;
+  --color-padel-surface: #ffffff;
+  --color-padel-surface-alt: #ffffff;
+  --color-padel-text: #0f172a;
+  --color-padel-muted: #516178;
+  --color-padel-primary: #0f766e;
+  --color-padel-danger: #dc2626;
+  --color-padel-border: rgba(15, 23, 42, 0.16);
+  --color-padel-status-live: #16a34a;
+  --color-padel-status-next: #d97706;
+  --color-padel-status-completed: #15803d;
+  --color-padel-status-pending: #64748b;
+  --color-padel-connected: #059669;
+  --color-padel-disconnected: #dc2626;
+  --color-padel-live-badge-bg: #84cc16;
+  --color-padel-live-badge-shadow: rgba(132, 204, 22, 0.22);
+  --color-padel-complete-cta-bg: #6ea72b;
+  --color-padel-complete-cta-hover: #5f9325;
+  --surface-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  --hero-gradient-from: #ffffff;
+  --hero-gradient-via: #ffffff;
+  --hero-gradient-to: #ffffff;
 }
 
 @keyframes pulse-soft {
@@ -123,6 +136,81 @@ body {
 }
 
 body {
-  background-color: var(--padel-background);
-  color: var(--padel-text);
+  background-color: var(--color-padel-background);
+  color: var(--color-padel-text);
+}
+
+.home-hero-surface {
+  background: linear-gradient(
+    180deg,
+    var(--hero-gradient-from) 0%,
+    var(--hero-gradient-via) 46%,
+    var(--hero-gradient-to) 100%
+  );
+}
+
+.surface-panel {
+  box-shadow: none;
+}
+
+.live-badge {
+  background-color: var(--color-padel-live-badge-bg);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.completed-leaderboard-cta {
+  background-color: var(--color-padel-complete-cta-bg);
+  color: #ffffff;
+}
+
+.completed-leaderboard-cta:hover {
+  background-color: var(--color-padel-complete-cta-hover);
+}
+
+.join-cta {
+  background-color: #334155;
+  color: #f8fafc;
+  box-shadow: none;
+}
+
+.join-cta:hover {
+  background-color: #475569;
+}
+
+[data-theme="light"] .join-cta {
+  background-color: var(--color-padel-primary);
+  color: #ffffff;
+}
+
+[data-theme="light"] .join-cta:hover {
+  background-color: #166e68;
+}
+
+[data-theme="light"] .live-match-card {
+  background-color: #0b0f16 !important;
+  border-color: rgba(15, 23, 42, 0.88) !important;
+}
+
+[data-theme="light"] .live-match-card .live-card-name,
+[data-theme="light"] .live-match-card .live-card-score {
+  color: #f8fafc;
+}
+
+[data-theme="light"] .live-match-card .live-card-meta,
+[data-theme="light"] .live-match-card .live-card-team-label {
+  color: #94a3b8;
+}
+
+[data-theme="light"] .live-match-card .live-card-accent {
+  color: #d7ff8a;
+}
+
+[data-theme="light"] .live-match-card .live-card-score.bg-padel-primary\/18 {
+  background-color: rgba(248, 250, 252, 0.14);
+  color: #f8fafc;
+}
+
+[data-theme="light"] .home-hero-surface {
+  background: #ffffff !important;
 }

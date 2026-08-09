@@ -9,6 +9,7 @@ coverage
 apps/api/generated
 apps/web/tsconfig.tsbuildinfo
 .idea/
+plans/
 designs/
 apps/mobile/ios/*
 apps/mobile/android/app/src/main/res/*

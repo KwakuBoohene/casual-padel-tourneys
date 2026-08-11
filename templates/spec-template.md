@@ -3,7 +3,7 @@
 > Fill in each section. If a section doesn't apply, write "N/A" with a one-line reason.
 > Target: under 10 minutes. If it takes longer, the task is too big — break it down first with `padel-planner`.
 
-**Ticket path:** `plans/<feature-slug>/<nn>-<short-name>.md`
+**Ticket path:** `plans/design/<feature-slug>/<nn>-<short-name>.md` (design) or `plans/<feature-slug>/<nn>-<short-name>.md` (implementation)
 
 ## 1. Problem Description
 

@@ -14,3 +14,6 @@ designs/
 apps/mobile/ios/*
 apps/mobile/android/app/src/main/res/*
 casual-padel-tourneys.code-workspace
+
+# Cursor IDE local rules/skills (keep out of repo)
+.cursor/

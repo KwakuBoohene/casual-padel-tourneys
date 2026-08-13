@@ -13,6 +13,10 @@ Base URL: `http://localhost:3001`
 - `POST /auth/password/register/finish` — body: `{ email, registrationRecord }` → `{ ok: true }` (stores envelope only; no password hash)
 - `POST /auth/password/login/start` — body: `{ email, startLoginRequest }` → `{ loginResponse, loginId }`
 - `POST /auth/password/login/finish` — body: `{ email, loginId, finishLoginRequest }` → JWT; invalid credentials → generic `401`
+- `POST /auth/password/reset` — body: `{ email }` → always `200` generic message; emails RESET magic link when account exists
+- `POST /auth/password/reset/consume` — body: `{ token }` → `{ resetTicket }` (short-lived; not a full JWT)
+- `POST /auth/password/reset/register/start` — body: `{ resetTicket, registrationRequest }` → `{ registrationResponse }`
+- `POST /auth/password/reset/register/finish` — body: `{ resetTicket, registrationRecord }` → JWT; **replaces** password envelope; ticket is one-time
 - `POST /auth/verify/resend` — requires Bearer JWT; rate-limited; emails a verify magic link when still unverified
 - `POST /auth/attach/email` — guest JWT; sets email on same user id; sends confirm magic link
 - `POST /auth/attach/google` — guest JWT + `{ idToken }`; converts guest in place (`guestId` kept)

@@ -31,21 +31,23 @@ export function BottomSheet(props: BottomSheetProps) {
       animationType="slide"
       onRequestClose={dismissOnOverlay ? props.onDismiss : undefined}
     >
-      <Pressable
-        style={styles.overlay}
-        onPress={dismissOnOverlay ? props.onDismiss : undefined}
-        accessibilityRole="button"
-        accessibilityLabel="Dismiss"
-      >
+      {/*
+        Overlay is a View + absolute Pressable so Space in TextInputs (Expo web)
+        does not activate a focused button role and dismiss the sheet.
+      */}
+      <View style={styles.overlay}>
         <Pressable
-          onPress={(event) => event.stopPropagation()}
-          style={[styles.sheet, { maxWidth }]}
-        >
+          style={styles.overlayDismissHit}
+          onPress={dismissOnOverlay ? props.onDismiss : undefined}
+          accessible={false}
+          importantForAccessibility="no"
+        />
+        <View style={[styles.sheet, { maxWidth }]} accessibilityViewIsModal>
           <View style={styles.handle} />
           {props.title ? <Text style={styles.title}>{props.title}</Text> : null}
           {props.children}
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }

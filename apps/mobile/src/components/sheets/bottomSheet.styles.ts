@@ -10,6 +10,9 @@ export function createBottomSheetStyles(colors: PadelColors) {
       backgroundColor: overlay.dim,
       justifyContent: "flex-end"
     },
+    overlayDismissHit: {
+      ...StyleSheet.absoluteFillObject
+    },
     sheet: {
       backgroundColor: colors.surfaceAlt,
       borderTopLeftRadius: radius.lg,
@@ -19,7 +22,8 @@ export function createBottomSheetStyles(colors: PadelColors) {
       paddingBottom: spacing.xl,
       gap: spacing.md,
       width: "100%",
-      alignSelf: "center"
+      alignSelf: "center",
+      zIndex: 1
     },
     handle: {
       alignSelf: "center",

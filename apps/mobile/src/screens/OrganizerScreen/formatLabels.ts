@@ -5,7 +5,9 @@ export function formatTournamentMode(mode: TournamentMode): string {
 }
 
 export function formatTournamentVariant(variant: TournamentVariant): string {
-  return variant === "MIXED" ? "Mixed" : "Classic";
+  if (variant === "MIXED") return "Mixed";
+  if (variant === "TEAM") return "Team";
+  return "Classic";
 }
 
 export function formatTournamentModeVariant(

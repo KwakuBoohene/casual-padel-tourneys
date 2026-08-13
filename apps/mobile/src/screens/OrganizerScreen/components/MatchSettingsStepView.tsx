@@ -76,7 +76,15 @@ export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
       {field("Points per match", props.pointsText, props.onChangePoints, "Points per match")}
       {props.schedulingMode === "TARGET_GAMES"
         ? field("Target games per player", props.targetGamesText, props.onChangeTargetGames, "Target games")
-        : field("Tournament time (minutes)", props.tournamentTimeText, props.onChangeTournamentTime, "Minutes")}
+        : null}
+      {props.schedulingMode === "TOTAL_TIME"
+        ? field("Tournament time (minutes)", props.tournamentTimeText, props.onChangeTournamentTime, "Minutes")
+        : null}
+      {props.schedulingMode === "ROUND_ROBIN" ? (
+        <Text style={{ color: colors.muted, fontSize: 13 }}>
+          Regular scheduling plays every pairing automatically — no target games or time limit to enter.
+        </Text>
+      ) : null}
 
       <View style={cardStyles.container}>
         <Text style={[typography.sectionTitle, { color: colors.text }]}>Estimate</Text>

@@ -6,6 +6,8 @@ import type { Estimate } from "../types";
 import { radius, spacing, typography } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
+import { EstimatorEstimateCard } from "./EstimatorEstimateCard";
+import { EstimatorTypeCard } from "./EstimatorTypeCard";
 
 interface GameEstimatorViewProps {
   mode: TournamentMode;
@@ -30,185 +32,63 @@ interface GameEstimatorViewProps {
 
 export function GameEstimatorView(props: GameEstimatorViewProps) {
   const { colors, cardStyles } = useTheme();
-
-  const schedulingModeLabel = props.schedulingMode === "TARGET_GAMES" ? "Target Games" : "Tournament Time";
   const { isWide, formMaxWidth } = useBreakpoint();
+  const showAmericanoScheduling = props.mode === "AMERICANO";
+
+  const field = (label: string, value: string, onChange: (v: string) => void, placeholder: string) => (
+    <View style={{ gap: spacing.xs }}>
+      <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>{label}</Text>
+      <TextInput
+        keyboardType="numeric"
+        value={value}
+        onChangeText={onChange}
+        placeholder={placeholder}
+        placeholderTextColor={colors.muted}
+        style={{
+          borderWidth: 1,
+          borderColor: colors.border,
+          padding: spacing.sm,
+          borderRadius: radius.md,
+          backgroundColor: colors.surface,
+          color: colors.text
+        }}
+      />
+    </View>
+  );
 
   const typeCard = (
-    <View style={[cardStyles.container, { gap: spacing.md }]}>
-        <Text style={[typography.sectionTitle, { color: colors.text }]}>Tournament Type</Text>
-        <View style={{ flexDirection: "row", gap: spacing.sm }}>
-          {(["AMERICANO", "MEXICANO"] as TournamentMode[]).map((value) => (
-            <Pressable
-              key={value}
-              onPress={() => props.onChangeMode(value)}
-              style={{
-                flex: 1,
-                paddingVertical: spacing.sm,
-                borderRadius: radius.md,
-                backgroundColor: props.mode === value ? colors.primary : colors.surface,
-                borderWidth: 1,
-                borderColor: props.mode === value ? colors.primary : colors.border,
-                alignItems: "center",
-                justifyContent: "center"
-              }}
-            >
-              <Text
-                style={{
-                  color: props.mode === value ? "colors.onPrimary" : colors.text,
-                  fontWeight: "700"
-                }}
-              >
-                {value}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={{ flexDirection: "row", gap: spacing.sm }}>
-          {(["CLASSIC", "MIXED"] as TournamentVariant[]).map((value) => (
-            <Pressable
-              key={value}
-              onPress={() => props.onChangeVariant(value)}
-              style={{
-                flex: 1,
-                paddingVertical: spacing.sm,
-                borderRadius: radius.md,
-                backgroundColor: props.variant === value ? colors.primary : colors.surface,
-                borderWidth: 1,
-                borderColor: props.variant === value ? colors.primary : colors.border,
-                alignItems: "center",
-                justifyContent: "center"
-              }}
-            >
-              <Text
-                style={{
-                  color: props.variant === value ? "colors.onPrimary" : colors.text,
-                  fontWeight: "700"
-                }}
-              >
-                {value}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
+    <EstimatorTypeCard
+      mode={props.mode}
+      variant={props.variant}
+      schedulingMode={props.schedulingMode}
+      onChangeMode={props.onChangeMode}
+      onChangeVariant={props.onChangeVariant}
+      onChangeSchedulingMode={props.onChangeSchedulingMode}
+    />
   );
 
   const configCard = (
     <View style={[cardStyles.container, { gap: spacing.md }]}>
-        <Text style={[typography.sectionTitle, { color: colors.text }]}>Configuration</Text>
-        <Text style={{ color: colors.muted, marginBottom: spacing.sm }}>Quickly estimate how long a tournament will take.</Text>
-
-        <View style={{ gap: spacing.xs }}>
-          <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Players</Text>
-          <TextInput
-            keyboardType="numeric"
-            value={props.usersText}
-            onChangeText={props.onChangeUsers}
-            placeholder="Number of players"
-            style={{
-              borderWidth: 1,
-              borderColor: colors.border,
-              padding: spacing.sm,
-              borderRadius: radius.md,
-              backgroundColor: colors.surface,
-              color: colors.text
-            }}
-            placeholderTextColor={colors.muted}
-          />
-        </View>
-
-        <View style={{ gap: spacing.xs }}>
-          <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Courts</Text>
-          <TextInput
-            keyboardType="numeric"
-            value={props.courtsText}
-            onChangeText={props.onChangeCourts}
-            placeholder="Number of courts"
-            style={{
-              borderWidth: 1,
-              borderColor: colors.border,
-              padding: spacing.sm,
-              borderRadius: radius.md,
-              backgroundColor: colors.surface,
-              color: colors.text
-            }}
-            placeholderTextColor={colors.muted}
-          />
-        </View>
-
-        <View style={{ gap: spacing.xs }}>
-          <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Points Per Match</Text>
-          <TextInput
-            keyboardType="numeric"
-            value={props.pointsText}
-            onChangeText={props.onChangePoints}
-            placeholder="Points per match"
-            style={{
-              borderWidth: 1,
-              borderColor: colors.border,
-              padding: spacing.sm,
-              borderRadius: radius.md,
-              backgroundColor: colors.surface,
-              color: colors.text
-            }}
-            placeholderTextColor={colors.muted}
-          />
-        </View>
-
-        <View style={{ gap: spacing.xs }}>
-          <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>{schedulingModeLabel}</Text>
-          {props.schedulingMode === "TARGET_GAMES" ? (
-            <TextInput
-              keyboardType="numeric"
-              value={props.targetGamesText}
-              onChangeText={props.onChangeTargetGames}
-              placeholder="Target games per player"
-              style={{
-                borderWidth: 1,
-                borderColor: colors.border,
-                padding: spacing.sm,
-                borderRadius: radius.md,
-                backgroundColor: colors.surface,
-                color: colors.text
-              }}
-              placeholderTextColor={colors.muted}
-            />
-          ) : (
-            <TextInput
-              keyboardType="numeric"
-              value={props.tournamentTimeText}
-              onChangeText={props.onChangeTournamentTime}
-              placeholder="Tournament time (minutes)"
-              style={{
-                borderWidth: 1,
-                borderColor: colors.border,
-                padding: spacing.sm,
-                borderRadius: radius.md,
-                backgroundColor: colors.surface,
-                color: colors.text
-              }}
-              placeholderTextColor={colors.muted}
-            />
-          )}
-        </View>
-      </View>
+      <Text style={[typography.sectionTitle, { color: colors.text }]}>Configuration</Text>
+      {field("Players", props.usersText, props.onChangeUsers, "Number of players")}
+      {field("Courts", props.courtsText, props.onChangeCourts, "Number of courts")}
+      {field("Points Per Match", props.pointsText, props.onChangePoints, "Points per match")}
+      {props.schedulingMode === "TARGET_GAMES" && showAmericanoScheduling
+        ? field("Target Games", props.targetGamesText, props.onChangeTargetGames, "Target games per player")
+        : null}
+      {props.schedulingMode === "TOTAL_TIME" || props.mode === "MEXICANO"
+        ? field("Tournament Time", props.tournamentTimeText, props.onChangeTournamentTime, "Minutes")
+        : null}
+      {props.schedulingMode === "ROUND_ROBIN" && showAmericanoScheduling ? (
+        <Text style={{ color: colors.muted, fontSize: 12 }}>
+          Regular scheduling uses player count only — no target games or time limit.
+        </Text>
+      ) : null}
+    </View>
   );
 
   const estimateCard = (
-    <View style={[cardStyles.container, { marginTop: isWide ? 0 : spacing.sm }]}>
-        <Text style={[typography.sectionTitle, { color: colors.text }]}>Estimate</Text>
-        {props.estimate ? (
-          <>
-            <Text style={{ color: colors.text }}>Rounds: {props.estimate.rounds}</Text>
-            <Text style={{ color: colors.text }}>Games per player: {props.estimate.gamesPerPlayer}</Text>
-            <Text style={{ color: colors.text }}>Duration: {props.estimate.durationMinutes} min</Text>
-          </>
-        ) : (
-          <Text style={{ color: colors.muted }}>Enter valid configuration to see an estimate.</Text>
-        )}
-      </View>
+    <EstimatorEstimateCard estimate={props.estimate} style={{ marginTop: isWide ? 0 : spacing.sm }} />
   );
 
   return (
@@ -246,9 +126,7 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
             {typeCard}
             {configCard}
           </View>
-          <View style={{ flex: 1, minWidth: 280 }}>
-            {estimateCard}
-          </View>
+          <View style={{ flex: 1, minWidth: 280 }}>{estimateCard}</View>
         </View>
       ) : (
         <>
@@ -260,4 +138,3 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
     </ScrollView>
   );
 }
-

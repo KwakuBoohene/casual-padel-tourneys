@@ -24,20 +24,23 @@ interface TournamentOptionsStepViewProps {
 export function TournamentOptionsStepView(props: TournamentOptionsStepViewProps) {
   const { colors } = useTheme();
 
-  const renderOption = (label: string, active: boolean, onPress: () => void) => (
+  const renderOption = (label: string, detail: string | undefined, active: boolean, onPress: () => void) => (
     <Pressable
       onPress={onPress}
       style={{
         minHeight: touch.minSecondary,
         paddingHorizontal: spacing.lg,
+        paddingVertical: spacing.md,
         borderRadius: radius.lg,
         borderWidth: 1,
         borderColor: active ? colors.primary : colors.border,
         backgroundColor: active ? "rgba(173,255,47,0.16)" : colors.surface,
-        justifyContent: "center"
+        justifyContent: "center",
+        gap: 2
       }}
     >
       <Text style={{ color: colors.text, fontWeight: active ? "700" : "600", fontSize: 16 }}>{label}</Text>
+      {detail ? <Text style={{ color: colors.muted, fontSize: 12 }}>{detail}</Text> : null}
     </Pressable>
   );
 
@@ -60,12 +63,20 @@ export function TournamentOptionsStepView(props: TournamentOptionsStepViewProps)
         {!props.modeLocked ? (
           <View style={{ gap: spacing.sm, marginBottom: spacing.sm }}>
             <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Mode</Text>
-            {renderOption("Americano", props.mode === "AMERICANO", () => props.onChangeMode("AMERICANO"))}
-            {renderOption("Mexicano", props.mode === "MEXICANO", () => props.onChangeMode("MEXICANO"))}
+            {renderOption("Americano", undefined, props.mode === "AMERICANO", () => props.onChangeMode("AMERICANO"))}
+            {renderOption("Mexicano", undefined, props.mode === "MEXICANO", () => props.onChangeMode("MEXICANO"))}
           </View>
         ) : null}
-        {renderOption("Classic", props.variant === "CLASSIC", () => props.onChangeVariant("CLASSIC"))}
-        {renderOption("Mixed", props.variant === "MIXED", () => props.onChangeVariant("MIXED"))}
+        <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Variant</Text>
+        {renderOption("Classic", "Rotate partners each round", props.variant === "CLASSIC", () =>
+          props.onChangeVariant("CLASSIC")
+        )}
+        {renderOption("Mixed", "Each side is one man + one woman", props.variant === "MIXED", () =>
+          props.onChangeVariant("MIXED")
+        )}
+        {renderOption("Team", "Fixed pairs — teams play as units", props.variant === "TEAM", () =>
+          props.onChangeVariant("TEAM")
+        )}
       </View>
 
       {props.mode !== "MEXICANO" ? (
@@ -73,13 +84,23 @@ export function TournamentOptionsStepView(props: TournamentOptionsStepViewProps)
           <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Scheduling</Text>
           {renderOption(
             "Target Games",
+            "Stop after each player hits a game count",
             props.schedulingMode === "TARGET_GAMES",
             () => props.onChangeSchedulingMode("TARGET_GAMES")
           )}
           {renderOption(
             "Total Time",
+            "Fill as many rounds as fit the clock",
             props.schedulingMode === "TOTAL_TIME",
             () => props.onChangeSchedulingMode("TOTAL_TIME")
+          )}
+          {renderOption(
+            "Regular",
+            props.variant === "TEAM"
+              ? "Every team plays every team — no target games"
+              : "Everyone plays everyone — no target games",
+            props.schedulingMode === "ROUND_ROBIN",
+            () => props.onChangeSchedulingMode("ROUND_ROBIN")
           )}
         </View>
       ) : null}

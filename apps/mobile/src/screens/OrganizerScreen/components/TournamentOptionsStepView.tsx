@@ -74,9 +74,7 @@ export function TournamentOptionsStepView(props: TournamentOptionsStepViewProps)
         {renderOption("Mixed", "Each side is one man + one woman", props.variant === "MIXED", () =>
           props.onChangeVariant("MIXED")
         )}
-        {renderOption("Team", "Fixed pairs — teams play as units", props.variant === "TEAM", () =>
-          props.onChangeVariant("TEAM")
-        )}
+        {/* TEAM hidden until engine supports fixed pairs (epic-06 / TEAM work). */}
       </View>
 
       {props.mode !== "MEXICANO" ? (

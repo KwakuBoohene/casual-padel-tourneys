@@ -29,7 +29,6 @@ export function EstimatorTypeCard(props: EstimatorTypeCardProps) {
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
         <EstimatorChoice label="Classic" active={props.variant === "CLASSIC"} onPress={() => props.onChangeVariant("CLASSIC")} />
         <EstimatorChoice label="Mixed" active={props.variant === "MIXED"} onPress={() => props.onChangeVariant("MIXED")} />
-        <EstimatorChoice label="Team" active={props.variant === "TEAM"} onPress={() => props.onChangeVariant("TEAM")} />
       </View>
       {showAmericanoScheduling ? (
         <View style={{ gap: spacing.sm }}>

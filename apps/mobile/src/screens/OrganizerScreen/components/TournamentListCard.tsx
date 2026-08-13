@@ -4,7 +4,7 @@ import { radius, spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
 import type { LiveTournamentState } from "../types";
-import { formatTournamentModeVariant } from "../formatLabels";
+import { formatTournamentMode } from "../formatLabels";
 
 interface TournamentListCardProps {
   tournament: LiveTournamentState;
@@ -15,91 +15,38 @@ interface TournamentListCardProps {
 }
 
 export function TournamentListCard(props: TournamentListCardProps) {
-  const { colors, cardStyles } = useTheme();
-  const isLive = props.status === "LIVE";
+  const { colors } = useTheme();
+  const statusLabel = props.status === "LIVE" ? "Live" : "Done";
+  const subtitle = `${formatTournamentMode(props.tournament.config.mode)} · ${statusLabel}`;
 
   return (
     <Pressable
       onPress={props.onOpen}
+      onLongPress={props.onOpenOptions}
       style={[
-        cardStyles.container,
         {
-          marginTop: spacing.sm,
-          backgroundColor: isLive ? colors.surfaceAlt : colors.surface,
-          minHeight: touch.minSecondary
+          minHeight: touch.minSecondary,
+          borderRadius: radius.lg,
+          borderWidth: 1,
+          borderColor: colors.border,
+          backgroundColor: colors.surface,
+          padding: spacing.md,
+          gap: 6
         },
         props.wideCardStyle
       ]}
     >
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: spacing.sm
-        }}
-      >
-        <View style={{ flex: 1, paddingRight: spacing.sm }}>
-          <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }} numberOfLines={1}>
-            {props.tournament.config.name}
-          </Text>
-          <Text style={{ fontSize: 12, color: colors.muted }}>
-            {formatTournamentModeVariant(props.tournament.config.mode, props.tournament.config.variant)}
-          </Text>
-        </View>
-        <View
-          style={{
-            paddingHorizontal: spacing.sm,
-            paddingVertical: 4,
-            borderRadius: radius.pill,
-            backgroundColor: isLive ? "rgba(173,255,47,0.12)" : colors.surfaceAlt
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 10,
-              fontWeight: "700",
-              color: isLive ? colors.primary : colors.muted
-            }}
-          >
-            {props.status}
-          </Text>
-        </View>
-      </View>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: props.onOpenOptions ? spacing.sm : 0
-        }}
-      >
-        <Text style={{ fontSize: 12, color: colors.muted }}>
-          Players: {props.tournament.players.length}
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: spacing.sm }}>
+        <Text style={{ flex: 1, fontSize: 15, fontWeight: "700", color: colors.text }} numberOfLines={1}>
+          {props.tournament.config.name}
         </Text>
-        <Text style={{ fontSize: 12, color: colors.muted }}>
-          Updated: {new Date(props.tournament.updatedAt).toLocaleTimeString()}
-        </Text>
-      </View>
-      {props.onOpenOptions ? (
-        <View style={{ flexDirection: "row" }}>
-          <Pressable
-            onPress={props.onOpenOptions}
-            style={{
-              minHeight: touch.minSecondary,
-              paddingHorizontal: spacing.lg,
-              borderRadius: radius.md,
-              backgroundColor: colors.surface,
-              borderWidth: 1,
-              borderColor: colors.border,
-              alignItems: "center",
-              justifyContent: "center"
-            }}
-          >
-            <Text style={{ color: colors.text, fontWeight: "600" }}>Options</Text>
+        {props.onOpenOptions ? (
+          <Pressable onPress={props.onOpenOptions} hitSlop={10}>
+            <Text style={{ color: colors.primary, fontWeight: "600", fontSize: 13 }}>Options</Text>
           </Pressable>
-        </View>
-      ) : null}
+        ) : null}
+      </View>
+      <Text style={{ fontSize: 13, color: colors.muted }}>{subtitle}</Text>
     </Pressable>
   );
 }

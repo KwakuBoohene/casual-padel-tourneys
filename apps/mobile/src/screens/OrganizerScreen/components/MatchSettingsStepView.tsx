@@ -1,13 +1,14 @@
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Text, TextInput, View } from "react-native";
 import type { SchedulingMode } from "@padel/shared";
 
 import type { Estimate } from "../types";
-import { useBreakpoint } from "../../../layout";
 import { radius, spacing, typography } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
+import { WizardChrome } from "./WizardChrome";
 
 interface MatchSettingsStepViewProps {
+  modeLabel: string;
   schedulingMode: SchedulingMode;
   courtsText: string;
   pointsText: string;
@@ -27,104 +28,55 @@ interface MatchSettingsStepViewProps {
 
 export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
   const { colors, cardStyles } = useTheme();
-
   const courts = Number(props.courtsText);
   const minPlayersForCourts = Number.isFinite(courts) && courts > 0 ? courts * 4 : 0;
   const hasEnoughPlayersForCourts =
     Number.isFinite(courts) && courts > 0 && props.playersCount >= minPlayersForCourts;
-  const { formMaxWidth } = useBreakpoint();
 
-  return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={{
-        padding: spacing.lg,
-        gap: spacing.md,
-        maxWidth: formMaxWidth,
-        width: "100%",
-        alignSelf: "center"
-      }}
-    >
-      <Text style={[typography.title, { color: colors.text }]}>Match Settings</Text>
-      <Text style={{ color: colors.muted }}>Courts</Text>
+  const field = (label: string, value: string, onChange: (v: string) => void, placeholder: string) => (
+    <View style={{ gap: spacing.xs }}>
+      <Text style={{ color: colors.muted }}>{label}</Text>
       <TextInput
-        value={props.courtsText}
-        onChangeText={props.onChangeCourts}
+        value={value}
+        onChangeText={onChange}
         keyboardType="numeric"
+        placeholder={placeholder}
+        placeholderTextColor={colors.muted}
         style={{
           borderWidth: 1,
           borderColor: colors.border,
-          padding: spacing.sm,
-          borderRadius: radius.md,
+          padding: spacing.md,
+          borderRadius: radius.lg,
           backgroundColor: colors.surface,
-          color: colors.text
+          color: colors.text,
+          fontSize: 16
         }}
-        placeholder="Number of courts"
-        placeholderTextColor={colors.muted}
       />
+    </View>
+  );
+
+  return (
+    <WizardChrome
+      modeLabel={props.modeLabel}
+      stepIndex={4}
+      stepCount={4}
+      title="Match settings"
+      primaryLabel="Create Tournament"
+      primaryDisabled={!hasEnoughPlayersForCourts}
+      onPrimary={props.onCreate}
+      onBack={props.onBack}
+    >
+      {field("Courts", props.courtsText, props.onChangeCourts, "Number of courts")}
       {!hasEnoughPlayersForCourts ? (
         <Text style={{ color: colors.danger, fontSize: 12 }}>
           You need at least {minPlayersForCourts || 4} players for {props.courtsText || "1"} court
           {courts === 1 ? "" : "s"}.
         </Text>
       ) : null}
-
-      <Text style={{ color: colors.muted, marginTop: spacing.sm }}>Points per match</Text>
-      <TextInput
-        value={props.pointsText}
-        onChangeText={props.onChangePoints}
-        keyboardType="numeric"
-        style={{
-          borderWidth: 1,
-          borderColor: colors.border,
-          padding: spacing.sm,
-          borderRadius: radius.md,
-          backgroundColor: colors.surface,
-          color: colors.text
-        }}
-        placeholder="Points per match"
-        placeholderTextColor={colors.muted}
-      />
-
-      {props.schedulingMode === "TARGET_GAMES" ? (
-        <>
-          <Text style={{ color: colors.muted, marginTop: spacing.sm }}>Target games per player</Text>
-          <TextInput
-            value={props.targetGamesText}
-            onChangeText={props.onChangeTargetGames}
-            keyboardType="numeric"
-            style={{
-              borderWidth: 1,
-              borderColor: colors.border,
-              padding: spacing.sm,
-              borderRadius: radius.md,
-              backgroundColor: colors.surface,
-              color: colors.text
-            }}
-            placeholder="Target games per player"
-            placeholderTextColor={colors.muted}
-          />
-        </>
-      ) : (
-        <>
-          <Text style={{ color: colors.muted, marginTop: spacing.sm }}>Tournament time (minutes)</Text>
-          <TextInput
-            value={props.tournamentTimeText}
-            onChangeText={props.onChangeTournamentTime}
-            keyboardType="numeric"
-            style={{
-              borderWidth: 1,
-              borderColor: colors.border,
-              padding: spacing.sm,
-              borderRadius: radius.md,
-              backgroundColor: colors.surface,
-              color: colors.text
-            }}
-            placeholder="Tournament time in minutes"
-            placeholderTextColor={colors.muted}
-          />
-        </>
-      )}
+      {field("Points per match", props.pointsText, props.onChangePoints, "Points per match")}
+      {props.schedulingMode === "TARGET_GAMES"
+        ? field("Target games per player", props.targetGamesText, props.onChangeTargetGames, "Target games")
+        : field("Tournament time (minutes)", props.tournamentTimeText, props.onChangeTournamentTime, "Minutes")}
 
       <View style={cardStyles.container}>
         <Text style={[typography.sectionTitle, { color: colors.text }]}>Estimate</Text>
@@ -138,50 +90,8 @@ export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
           <Text style={{ color: colors.muted }}>Enter valid settings to see an estimate.</Text>
         )}
       </View>
-
       {props.responseText ? <Text style={{ color: colors.muted }}>{props.responseText}</Text> : null}
       {props.errorText ? <Text style={{ color: colors.danger }}>{props.errorText}</Text> : null}
-
-      <View style={{ flexDirection: "row", gap: spacing.sm }}>
-        <Pressable
-          onPress={props.onBack}
-          style={{
-            flex: 1,
-            paddingVertical: spacing.sm,
-            borderRadius: radius.md,
-            backgroundColor: colors.surface,
-            borderWidth: 1,
-            borderColor: colors.border,
-            alignItems: "center",
-            justifyContent: "center"
-          }}
-        >
-          <Text style={{ color: colors.text, fontWeight: "600" }}>Back</Text>
-        </Pressable>
-        <Pressable
-          onPress={props.onCreate}
-          style={{
-            flex: 1,
-            paddingVertical: spacing.sm,
-            borderRadius: radius.md,
-            backgroundColor: colors.primary,
-            alignItems: "center",
-            justifyContent: "center",
-            opacity: hasEnoughPlayersForCourts ? 1 : 0.5
-          }}
-          disabled={!hasEnoughPlayersForCourts}
-        >
-          <Text
-            style={{
-              color: "colors.onPrimary",
-              fontWeight: "700"
-            }}
-          >
-            Create Tournament
-          </Text>
-        </Pressable>
-      </View>
-    </ScrollView>
+    </WizardChrome>
   );
 }
-

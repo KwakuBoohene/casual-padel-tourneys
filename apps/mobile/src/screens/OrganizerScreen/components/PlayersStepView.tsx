@@ -1,23 +1,30 @@
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useState } from "react";
+import { Text, View } from "react-native";
 import type { PlayerGender, TournamentVariant } from "@padel/shared";
 
-import { useBreakpoint } from "../../../layout";
-import { radius, spacing, typography } from "../../../theme";
+import { AlertSheet } from "../../../components/sheets";
+import { spacing } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
+import { PLAYERS_PER_PAGE, usePlayerPages } from "../hooks/usePlayerPages";
+
+import { AddPlayerSheet } from "./AddPlayerSheet";
+import { PlayerPageRow } from "./PlayerPageRow";
+import { PlayerSuggestions } from "./PlayerSuggestions";
+import { PlayersPageActions } from "./PlayersPageActions";
+import { WizardChrome } from "./WizardChrome";
 
 interface PlayersStepViewProps {
+  modeLabel: string;
   players: string[];
   genders: Array<PlayerGender | undefined>;
   variant: TournamentVariant;
-  sanitizedPlayers: string[];
   canContinue: boolean;
   hasDuplicateNames: boolean;
   allSuggestions: string[];
-  onUpdatePlayer: (index: number, value: string) => void;
-  onUpdateGender: (index: number, value: PlayerGender) => void;
+  onAddPlayer: (name: string, gender?: PlayerGender) => void;
+  onUpdatePlayer: (index: number, name: string, gender?: PlayerGender) => void;
   onRemovePlayer: (index: number) => void;
-  onAddPlayer: () => void;
   onSelectSuggestion: (name: string) => void;
   onBack: () => void;
   onNext: () => void;
@@ -25,180 +32,107 @@ interface PlayersStepViewProps {
 
 export function PlayersStepView(props: PlayersStepViewProps) {
   const { colors } = useTheme();
+  const pages = usePlayerPages(props.players.length);
+  const [sheetMode, setSheetMode] = useState<"add" | "edit" | null>(null);
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [removeIndex, setRemoveIndex] = useState<number | null>(null);
+  const pagePlayers = props.players.slice(pages.pageStart, pages.pageEnd);
+  const subtitle = `${props.players.length} added · Page ${pages.pageIndex + 1} of ${pages.pageCount} · ${PLAYERS_PER_PAGE} per page`;
 
-  const { formMaxWidth } = useBreakpoint();
   return (
-    <ScrollView
-      contentContainerStyle={{
-        padding: spacing.lg,
-        gap: spacing.md,
-        backgroundColor: colors.background,
-        maxWidth: formMaxWidth,
-        width: "100%",
-        alignSelf: "center"
-      }}
-    >
-      <Text style={[typography.title, { color: colors.text }]}>Players</Text>
-      <Text style={{ color: colors.muted }}>Add at least 4 players to get started.</Text>
-
-      {props.players.map((player, index) => (
-        <View
-          key={index}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: spacing.sm
-          }}
-        >
-          <TextInput
-            value={player}
-            onChangeText={(value) => props.onUpdatePlayer(index, value)}
-            placeholder={`Player ${index + 1}`}
-            style={{
-              flex: 1,
-              borderWidth: 1,
-              borderColor: colors.border,
-              padding: spacing.sm,
-              borderRadius: radius.md,
-              backgroundColor: colors.surface,
-              color: colors.text
+    <>
+      <WizardChrome
+        modeLabel={props.modeLabel}
+        stepIndex={3}
+        stepCount={4}
+        title="Players"
+        subtitle={subtitle}
+        primaryLabel="Continue"
+        primaryDisabled={!props.canContinue}
+        onPrimary={props.onNext}
+        onBack={props.onBack}
+        footerExtra={
+          <PlayersPageActions
+            canGoPrevPage={pages.canGoPrevPage}
+            canGoNextPage={pages.canGoNextPage}
+            onPrevPage={pages.goPrevPage}
+            onNextPage={pages.goNextPage}
+            onAddPlayer={() => {
+              setEditIndex(null);
+              setSheetMode("add");
             }}
-            placeholderTextColor={colors.muted}
           />
-          {props.variant === "MIXED" ? (
-            <View style={{ flexDirection: "row", gap: spacing.xs }}>
-              {(["MALE", "FEMALE"] as PlayerGender[]).map((gender) => (
-                <Pressable
-                  key={gender}
-                  onPress={() => props.onUpdateGender(index, gender)}
-                  style={{
-                    paddingVertical: spacing.xs,
-                    paddingHorizontal: spacing.sm,
-                    borderRadius: radius.md,
-                    borderWidth: 1,
-                    borderColor: props.genders[index] === gender ? colors.primary : colors.border,
-                    backgroundColor: props.genders[index] === gender ? "rgba(173,255,47,0.16)" : colors.surface
-                  }}
-                >
-                  <Text style={{ color: colors.text, fontSize: 12 }}>{gender === "MALE" ? "M" : "F"}</Text>
-                </Pressable>
-              ))}
-            </View>
-          ) : null}
-          <Pressable
-            onPress={() => props.onRemovePlayer(index)}
-            style={{
-              padding: spacing.xs,
-              borderRadius: radius.md,
-              backgroundColor: colors.surfaceAlt
-            }}
-          >
-            <Text style={{ color: colors.muted, fontWeight: "700" }}>×</Text>
-          </Pressable>
-        </View>
-      ))}
-
-      <Pressable
-        onPress={props.onAddPlayer}
-        style={{
-          marginTop: spacing.sm,
-          paddingVertical: spacing.sm,
-          borderRadius: radius.md,
-          backgroundColor: colors.surface,
-          borderWidth: 1,
-          borderColor: colors.border,
-          alignItems: "center",
-          justifyContent: "center"
-        }}
+        }
       >
-        <Text style={{ color: colors.text, fontWeight: "600" }}>Add Player</Text>
-      </Pressable>
-
-      {props.hasDuplicateNames ? (
-        <Text style={{ color: colors.danger, fontSize: 12, marginTop: spacing.sm }}>
-          No two players can have the same name. Remove or change duplicates to continue.
-        </Text>
-      ) : null}
-
-      <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.lg }}>
-        <Pressable
-          onPress={props.onBack}
-          style={{
-            flex: 1,
-            paddingVertical: spacing.sm,
-            borderRadius: radius.md,
-            backgroundColor: colors.surface,
-            borderWidth: 1,
-            borderColor: colors.border,
-            alignItems: "center",
-            justifyContent: "center"
-          }}
-        >
-          <Text style={{ color: colors.text, fontWeight: "600" }}>Back</Text>
-        </Pressable>
-        <Pressable
-          disabled={!props.canContinue}
-          onPress={props.onNext}
-          style={{
-            flex: 1,
-            paddingVertical: spacing.sm,
-            borderRadius: radius.md,
-            backgroundColor: props.canContinue ? colors.primary : colors.surfaceAlt,
-            alignItems: "center",
-            justifyContent: "center",
-            opacity: props.canContinue ? 1 : 0.5
-          }}
-        >
-          <Text
-            style={{
-              color: "colors.onPrimary",
-              fontWeight: "700"
-            }}
-          >
-            Next
-          </Text>
-        </Pressable>
-      </View>
-
-      {props.allSuggestions.length > 0 ? (
-        <View style={{ marginTop: spacing.lg }}>
-          <Text style={{ fontSize: 12, color: colors.muted, marginBottom: spacing.xs }}>Suggestions (tap to add to next empty slot)</Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.xs }}>
-            {props.allSuggestions.slice(0, 12).map((suggestion) => {
-              const isUsed = props.players.some(
-                (p) => p.trim().toLowerCase() === suggestion.trim().toLowerCase()
-              );
+        <View style={{ gap: spacing.sm }}>
+          {pagePlayers.length === 0 ? (
+            <Text style={{ color: colors.muted }}>No players yet. Tap + Add player to start (min 4).</Text>
+          ) : (
+            pagePlayers.map((name, offset) => {
+              const index = pages.pageStart + offset;
               return (
-                <Pressable
-                  key={suggestion}
-                  onPress={() => !isUsed && props.onSelectSuggestion(suggestion)}
-                  disabled={isUsed}
-                  style={{
-                    paddingHorizontal: spacing.sm,
-                    paddingVertical: spacing.xs,
-                    borderRadius: radius.pill,
-                    backgroundColor: isUsed ? colors.surfaceAlt : colors.surface,
-                    borderWidth: 1,
-                    borderColor: isUsed ? colors.border : colors.primary,
-                    opacity: isUsed ? 0.5 : 1
+                <PlayerPageRow
+                  key={`${index}-${name}`}
+                  name={name}
+                  gender={props.genders[index]}
+                  showGender={props.variant === "MIXED"}
+                  onEdit={() => {
+                    setEditIndex(index);
+                    setSheetMode("edit");
                   }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      color: isUsed ? colors.muted : colors.text,
-                      fontWeight: isUsed ? "400" : "600"
-                    }}
-                  >
-                    {suggestion}
-                  </Text>
-                </Pressable>
+                  onRemove={() => setRemoveIndex(index)}
+                />
               );
-            })}
-          </View>
+            })
+          )}
         </View>
-      ) : null}
-    </ScrollView>
+        {props.hasDuplicateNames ? (
+          <Text style={{ color: colors.danger, fontSize: 12 }}>No two players can have the same name.</Text>
+        ) : null}
+        <PlayerSuggestions
+          suggestions={props.allSuggestions}
+          usedNames={props.players}
+          onSelect={(name) => {
+            props.onSelectSuggestion(name);
+            pages.goToLastPageForCount(props.players.length + 1);
+          }}
+        />
+      </WizardChrome>
+
+      <AddPlayerSheet
+        visible={sheetMode !== null}
+        variant={props.variant}
+        title={sheetMode === "edit" ? "Edit player" : "Add player"}
+        initialName={editIndex !== null ? props.players[editIndex] : ""}
+        initialGender={editIndex !== null ? props.genders[editIndex] : undefined}
+        onDismiss={() => setSheetMode(null)}
+        onSubmit={(name, gender) => {
+          if (sheetMode === "edit" && editIndex !== null) {
+            props.onUpdatePlayer(editIndex, name, gender);
+          } else {
+            props.onAddPlayer(name, gender);
+            pages.goToLastPageForCount(props.players.length + 1);
+          }
+          setSheetMode(null);
+        }}
+      />
+
+      <AlertSheet
+        visible={removeIndex !== null}
+        variant="warning"
+        title="Remove player?"
+        message="This player will be removed from the tournament roster."
+        primaryAction={{
+          label: "Remove",
+          destructive: true,
+          onPress: () => {
+            if (removeIndex !== null) props.onRemovePlayer(removeIndex);
+            setRemoveIndex(null);
+          }
+        }}
+        secondaryAction={{ label: "Cancel", onPress: () => setRemoveIndex(null) }}
+        onDismiss={() => setRemoveIndex(null)}
+      />
+    </>
   );
 }
-

@@ -1,5 +1,6 @@
 import { ProfileScreen } from "../../ProfileScreen/ProfileScreen";
 import { useOrganizerScreen } from "../hooks/useOrganizerScreen";
+import { formatTournamentMode } from "../formatLabels";
 
 import { GameEstimatorView } from "./GameEstimatorView";
 import { LeaderboardView } from "./LeaderboardView";
@@ -33,12 +34,11 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     sanitizedPlayers,
     canContinueFromPlayers,
     allKnownPlayerNames,
-    addPlayerInput,
+    addPlayer,
+    updatePlayer,
     removePlayerInput,
     selectSuggestion,
     hasDuplicatePlayerNames,
-    updatePlayerName,
-    updatePlayerGender,
     courtsText,
     pointsText,
     targetGamesText,
@@ -140,6 +140,8 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     handleSignOut
   } = org;
 
+  const modeLabel = formatTournamentMode(mode);
+
   if (step === "LIST") {
     return (
       <OrganizerListScreen
@@ -168,6 +170,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
   if (step === "NAME") {
     return (
       <NameStepView
+        modeLabel={modeLabel}
         name={name}
         canContinue={canContinueFromName}
         onChangeName={setName}
@@ -207,6 +210,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
       <TournamentOptionsStepView
         mode={mode}
         modeLocked={modeLockedFromList}
+        modeLabel={modeLabel}
         variant={variant}
         schedulingMode={effectiveSchedulingMode}
         onChangeMode={setMode}
@@ -221,17 +225,16 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
   if (step === "PLAYERS") {
     return (
       <PlayersStepView
+        modeLabel={modeLabel}
         players={players}
         genders={playerGenders}
         variant={variant}
-        sanitizedPlayers={sanitizedPlayers}
         canContinue={canContinueFromPlayers}
         hasDuplicateNames={hasDuplicatePlayerNames}
         allSuggestions={allKnownPlayerNames}
-        onUpdatePlayer={updatePlayerName}
-        onUpdateGender={updatePlayerGender}
+        onAddPlayer={addPlayer}
+        onUpdatePlayer={updatePlayer}
         onRemovePlayer={removePlayerInput}
-        onAddPlayer={addPlayerInput}
         onSelectSuggestion={selectSuggestion}
         onBack={() => setStep("OPTIONS")}
         onNext={() => {
@@ -357,6 +360,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
 
   return (
     <MatchSettingsStepView
+      modeLabel={modeLabel}
       schedulingMode={effectiveSchedulingMode}
       courtsText={courtsText}
       pointsText={pointsText}

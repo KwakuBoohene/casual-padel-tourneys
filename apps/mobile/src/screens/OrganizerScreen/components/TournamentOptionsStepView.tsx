@@ -1,15 +1,17 @@
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
-import { useBreakpoint } from "../../../layout";
-import { radius, spacing, touch, typography } from "../../../theme";
+import { radius, spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
 import { formatTournamentMode } from "../formatLabels";
 
+import { WizardChrome } from "./WizardChrome";
+
 interface TournamentOptionsStepViewProps {
   mode: TournamentMode;
   modeLocked: boolean;
+  modeLabel: string;
   variant: TournamentVariant;
   schedulingMode: SchedulingMode;
   onChangeMode: (value: TournamentMode) => void;
@@ -21,110 +23,66 @@ interface TournamentOptionsStepViewProps {
 
 export function TournamentOptionsStepView(props: TournamentOptionsStepViewProps) {
   const { colors } = useTheme();
-  const { formMaxWidth } = useBreakpoint();
 
-  const renderChoice = (label: string, active: boolean, onPress: () => void) => (
+  const renderOption = (label: string, active: boolean, onPress: () => void) => (
     <Pressable
       onPress={onPress}
       style={{
         minHeight: touch.minSecondary,
-        paddingVertical: spacing.sm,
-        paddingHorizontal: spacing.md,
-        borderRadius: radius.md,
+        paddingHorizontal: spacing.lg,
+        borderRadius: radius.lg,
         borderWidth: 1,
         borderColor: active ? colors.primary : colors.border,
         backgroundColor: active ? "rgba(173,255,47,0.16)" : colors.surface,
         justifyContent: "center"
       }}
     >
-      <Text style={{ color: colors.text, fontWeight: active ? "700" : "500" }}>{label}</Text>
+      <Text style={{ color: colors.text, fontWeight: active ? "700" : "600", fontSize: 16 }}>{label}</Text>
     </Pressable>
   );
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={{
-        padding: spacing.lg,
-        gap: spacing.md,
-        maxWidth: formMaxWidth,
-        width: "100%",
-        alignSelf: "center"
-      }}
+    <WizardChrome
+      modeLabel={props.modeLabel}
+      stepIndex={2}
+      stepCount={4}
+      title="Choose variant"
+      subtitle={
+        props.modeLocked
+          ? `Mode already set · ${formatTournamentMode(props.mode)}`
+          : undefined
+      }
+      primaryLabel="Next"
+      onPrimary={props.onNext}
+      onBack={props.onBack}
     >
-      <Text style={[typography.title, { color: colors.text }]}>Tournament Options</Text>
-
-      {props.modeLocked ? (
-        <View style={{ gap: spacing.xs }}>
-          <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Mode</Text>
-          <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>
-            {formatTournamentMode(props.mode)}
-          </Text>
-        </View>
-      ) : (
-        <View style={{ gap: spacing.sm }}>
-          <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Mode</Text>
-          <View style={{ flexDirection: "row", gap: spacing.sm }}>
-            {renderChoice("Americano", props.mode === "AMERICANO", () => props.onChangeMode("AMERICANO"))}
-            {renderChoice("Mexicano", props.mode === "MEXICANO", () => props.onChangeMode("MEXICANO"))}
-          </View>
-        </View>
-      )}
-
       <View style={{ gap: spacing.sm }}>
-        <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Variant</Text>
-        <View style={{ flexDirection: "row", gap: spacing.sm }}>
-          {renderChoice("Classic", props.variant === "CLASSIC", () => props.onChangeVariant("CLASSIC"))}
-          {renderChoice("Mixed", props.variant === "MIXED", () => props.onChangeVariant("MIXED"))}
-        </View>
+        {!props.modeLocked ? (
+          <View style={{ gap: spacing.sm, marginBottom: spacing.sm }}>
+            <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Mode</Text>
+            {renderOption("Americano", props.mode === "AMERICANO", () => props.onChangeMode("AMERICANO"))}
+            {renderOption("Mexicano", props.mode === "MEXICANO", () => props.onChangeMode("MEXICANO"))}
+          </View>
+        ) : null}
+        {renderOption("Classic", props.variant === "CLASSIC", () => props.onChangeVariant("CLASSIC"))}
+        {renderOption("Mixed", props.variant === "MIXED", () => props.onChangeVariant("MIXED"))}
       </View>
 
-      <View style={{ gap: spacing.sm }}>
-        <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Scheduling</Text>
-        <View style={{ flexDirection: "row", gap: spacing.sm }}>
-          {renderChoice(
+      {props.mode !== "MEXICANO" ? (
+        <View style={{ gap: spacing.sm, marginTop: spacing.md }}>
+          <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Scheduling</Text>
+          {renderOption(
             "Target Games",
             props.schedulingMode === "TARGET_GAMES",
             () => props.onChangeSchedulingMode("TARGET_GAMES")
           )}
-          {renderChoice(
+          {renderOption(
             "Total Time",
             props.schedulingMode === "TOTAL_TIME",
             () => props.onChangeSchedulingMode("TOTAL_TIME")
           )}
         </View>
-      </View>
-
-      <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.lg }}>
-        <Pressable
-          onPress={props.onBack}
-          style={{
-            flex: 1,
-            minHeight: touch.minSecondary,
-            borderRadius: radius.md,
-            backgroundColor: colors.surface,
-            borderWidth: 1,
-            borderColor: colors.border,
-            alignItems: "center",
-            justifyContent: "center"
-          }}
-        >
-          <Text style={{ color: colors.text, fontWeight: "600" }}>Back</Text>
-        </Pressable>
-        <Pressable
-          onPress={props.onNext}
-          style={{
-            flex: 1,
-            minHeight: touch.minPrimary,
-            borderRadius: radius.md,
-            backgroundColor: colors.primary,
-            alignItems: "center",
-            justifyContent: "center"
-          }}
-        >
-          <Text style={{ color: colors.onPrimary, fontWeight: "700" }}>Next</Text>
-        </Pressable>
-      </View>
-    </ScrollView>
+      ) : null}
+    </WizardChrome>
   );
 }

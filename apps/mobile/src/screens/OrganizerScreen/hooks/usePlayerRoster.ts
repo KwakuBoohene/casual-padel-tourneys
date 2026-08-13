@@ -10,13 +10,8 @@ export interface UsePlayerRosterParams {
 }
 
 export function usePlayerRoster({ variant, tournaments, suggestedPlayerNames }: UsePlayerRosterParams) {
-  const [players, setPlayers] = useState<string[]>(["", "", "", ""]);
-  const [playerGenders, setPlayerGenders] = useState<Array<PlayerGender | undefined>>([
-    undefined,
-    undefined,
-    undefined,
-    undefined
-  ]);
+  const [players, setPlayers] = useState<string[]>([]);
+  const [playerGenders, setPlayerGenders] = useState<Array<PlayerGender | undefined>>([]);
 
   const sanitizedPlayers = useMemo(() => players.map((value) => value.trim()).filter(Boolean), [players]);
 
@@ -26,65 +21,52 @@ export function usePlayerRoster({ variant, tournaments, suggestedPlayerNames }: 
   }, [players]);
 
   const canContinueFromPlayers = useMemo(() => {
-    if (sanitizedPlayers.length < 4) {
-      return false;
-    }
-    if (hasDuplicatePlayerNames) {
-      return false;
-    }
-    if (variant !== "MIXED") {
-      return true;
-    }
+    if (sanitizedPlayers.length < 4) return false;
+    if (hasDuplicatePlayerNames) return false;
+    if (variant !== "MIXED") return true;
     return players.every((value, index) => value.trim().length === 0 || Boolean(playerGenders[index]));
   }, [hasDuplicatePlayerNames, playerGenders, players, sanitizedPlayers.length, variant]);
 
   const allKnownPlayerNames = useMemo(() => {
     const names = new Set<string>();
     for (const suggestion of suggestedPlayerNames) {
-      if (suggestion.trim().length > 0) {
-        names.add(suggestion.trim());
-      }
+      if (suggestion.trim()) names.add(suggestion.trim());
     }
     for (const tournament of tournaments) {
       for (const player of tournament.players) {
-        if (player.name.trim().length > 0) {
-          names.add(player.name.trim());
-        }
+        if (player.name.trim()) names.add(player.name.trim());
       }
     }
     for (const playerName of players) {
-      const trimmed = playerName.trim();
-      if (trimmed.length > 0) {
-        names.add(trimmed);
-      }
+      if (playerName.trim()) names.add(playerName.trim());
     }
     return Array.from(names).sort((a, b) => a.localeCompare(b));
   }, [players, suggestedPlayerNames, tournaments]);
 
-  const addPlayerInput = () => {
-    setPlayers((previous) => [...previous, ""]);
-    setPlayerGenders((previous) => [...previous, undefined]);
+  const addPlayer = (name: string, gender?: PlayerGender) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setPlayers((previous) => [...previous, trimmed]);
+    setPlayerGenders((previous) => [...previous, gender]);
+  };
+
+  const updatePlayer = (index: number, name: string, gender?: PlayerGender) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setPlayers((previous) => previous.map((item, i) => (i === index ? trimmed : item)));
+    setPlayerGenders((previous) => previous.map((item, i) => (i === index ? gender : item)));
   };
 
   const removePlayerInput = (index: number) => {
-    setPlayers((previous) => previous.filter((_, itemIndex) => itemIndex !== index));
-    setPlayerGenders((previous) => previous.filter((_, itemIndex) => itemIndex !== index));
+    setPlayers((previous) => previous.filter((_, i) => i !== index));
+    setPlayerGenders((previous) => previous.filter((_, i) => i !== index));
   };
 
   const selectSuggestion = (name: string) => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    const emptyIndex = players.findIndex((p) => p.trim() === "");
-    if (emptyIndex >= 0) {
-      setPlayers((previous) => {
-        const next = [...previous];
-        next[emptyIndex] = trimmed;
-        return next;
-      });
-    } else {
-      setPlayers((previous) => [...previous, trimmed]);
-      setPlayerGenders((previous) => [...previous, undefined]);
-    }
+    if (players.some((p) => p.trim().toLowerCase() === trimmed.toLowerCase())) return;
+    addPlayer(trimmed, undefined);
   };
 
   return {
@@ -94,12 +76,13 @@ export function usePlayerRoster({ variant, tournaments, suggestedPlayerNames }: 
     hasDuplicatePlayerNames,
     canContinueFromPlayers,
     allKnownPlayerNames,
-    addPlayerInput,
+    addPlayer,
+    updatePlayer,
     removePlayerInput,
     selectSuggestion,
     updatePlayerName: (index: number, value: string) =>
-      setPlayers((previous) => previous.map((item, itemIndex) => (itemIndex === index ? value : item))),
+      setPlayers((previous) => previous.map((item, i) => (i === index ? value : item))),
     updatePlayerGender: (index: number, value: PlayerGender) =>
-      setPlayerGenders((previous) => previous.map((item, itemIndex) => (itemIndex === index ? value : item)))
+      setPlayerGenders((previous) => previous.map((item, i) => (i === index ? value : item)))
   };
 }

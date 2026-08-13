@@ -133,8 +133,9 @@ Outbound mail uses a provider-agnostic `Mailer` (`apps/api/src/lib/mail`). Set:
 | `MAILGUN_DOMAIN` | Sending domain |
 | `MAILGUN_API_BASE_URL` | Optional; default `https://api.mailgun.net` (use `https://api.eu.mailgun.net` for EU) |
 | `AUTH_MAGIC_LINK_BASE_URL` | Base URL/scheme for magic links (`?token=` appended); default `padel://auth/magic` |
+| `OPAQUE_SERVER_SETUP` | Long-term password-auth server key from `npx @serenity-kit/opaque create-server-setup` |
 
-In production, omit `MAIL_PROVIDER` or set `mailgun` and ensure key/domain/`MAIL_FROM` are set (factory fails closed otherwise).
+In production, omit `MAIL_PROVIDER` or set `mailgun` and ensure key/domain/`MAIL_FROM` are set (factory fails closed otherwise). Changing `OPAQUE_SERVER_SETUP` invalidates all stored password credentials.
 
 ## Security Baseline
 

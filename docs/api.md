@@ -9,6 +9,10 @@ Base URL: `http://localhost:3001`
 - `GET /auth/me` — requires Bearer JWT
 - `POST /auth/magic-link` — body: `{ email }` → always `200` generic message (no email enumeration); emails one-time link (15 min)
 - `POST /auth/magic-link/consume` — body: `{ token }` → JWT; marks email verified; consumed/expired tokens → `401`
+- `POST /auth/password/register/start` — body: `{ email, registrationRequest }` → `{ registrationResponse }`
+- `POST /auth/password/register/finish` — body: `{ email, registrationRecord }` → `{ ok: true }` (stores envelope only; no password hash)
+- `POST /auth/password/login/start` — body: `{ email, startLoginRequest }` → `{ loginResponse, loginId }`
+- `POST /auth/password/login/finish` — body: `{ email, loginId, finishLoginRequest }` → JWT; invalid credentials → generic `401`
 
 ## Health
 

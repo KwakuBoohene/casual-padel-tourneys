@@ -100,29 +100,56 @@ export async function registerAuthRoutes(server: FastifyInstance): Promise<void>
       }
 
       const googleId = payload.sub;
-      const email = payload.email;
+      const email = payload.email.toLowerCase();
       const name = payload.name ?? email;
       const avatarUrl = payload.picture ?? undefined;
       const verifiedAt = new Date();
 
-      const user = await prisma.user.upsert({
-        where: { googleId },
-        create: {
-          googleId,
-          email,
-          name,
-          avatarUrl,
-          emailVerifiedAt: verifiedAt,
-          isGuest: false
-        },
-        update: {
-          email,
-          name,
-          avatarUrl,
-          emailVerifiedAt: verifiedAt,
-          isGuest: false
+      let user = await prisma.user.findUnique({ where: { googleId } });
+      if (user) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            email,
+            name,
+            avatarUrl,
+            emailVerifiedAt: verifiedAt,
+            isGuest: false
+          }
+        });
+      } else {
+        const byEmail = await prisma.user.findUnique({ where: { email } });
+        if (byEmail) {
+          if (byEmail.googleId && byEmail.googleId !== googleId) {
+            reply.status(409);
+            return { message: "That account is already in use." } as never;
+          }
+          user = await prisma.user.update({
+            where: { id: byEmail.id },
+            data: {
+              googleId,
+              name,
+              avatarUrl,
+              emailVerifiedAt: verifiedAt,
+              isGuest: false
+            }
+          });
+          logger.info("POST /auth/google: linked googleId to existing email user", {
+            userId: user.id
+          });
+        } else {
+          user = await prisma.user.create({
+            data: {
+              googleId,
+              email,
+              name,
+              avatarUrl,
+              emailVerifiedAt: verifiedAt,
+              isGuest: false
+            }
+          });
         }
-      });
+      }
 
       logger.info("POST /auth/google: user authenticated", { userId: user.id, email: user.email });
       return authResponse(user);

@@ -14,7 +14,11 @@ Base URL: `http://localhost:3001`
 - `POST /auth/password/login/start` — body: `{ email, startLoginRequest }` → `{ loginResponse, loginId }`
 - `POST /auth/password/login/finish` — body: `{ email, loginId, finishLoginRequest }` → JWT; invalid credentials → generic `401`
 - `POST /auth/verify/resend` — requires Bearer JWT; rate-limited; emails a verify magic link when still unverified
+- `POST /auth/attach/email` — guest JWT; sets email on same user id; sends confirm magic link
+- `POST /auth/attach/google` — guest JWT + `{ idToken }`; converts guest in place (`guestId` kept)
+- `POST /auth/attach/password/register/start|finish` — guest JWT; password envelope on same user id
 - JWT claims include `emailVerified` and optional `verifyBy` (epoch ms). After `emailVerificationDueAt`, organizer tournament routes return `403` `{ code: "EMAIL_VERIFY_REQUIRED" }` (guests exempt).
+- Unauthenticated `POST /auth/google` links `googleId` onto an existing email user when present (no second row).
 
 ## Health
 

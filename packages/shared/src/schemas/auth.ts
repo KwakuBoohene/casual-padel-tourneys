@@ -31,9 +31,31 @@ export const passwordLoginFinishSchema = z.object({
   finishLoginRequest: protocolCiphertext
 });
 
+export const attachEmailSchema = z.object({
+  email: z.string().trim().email().max(320)
+});
+
+export const attachGoogleSchema = z.object({
+  idToken: z.string().trim().min(20).max(4096)
+});
+
+export const attachPasswordRegisterStartSchema = z.object({
+  email: z.string().trim().email().max(320),
+  registrationRequest: protocolCiphertext
+});
+
+export const attachPasswordRegisterFinishSchema = z.object({
+  email: z.string().trim().email().max(320),
+  registrationRecord: protocolCiphertext
+});
+
 export type RequestMagicLinkInput = z.infer<typeof requestMagicLinkSchema>;
 export type ConsumeMagicLinkInput = z.infer<typeof consumeMagicLinkSchema>;
 export type PasswordRegisterStartInput = z.infer<typeof passwordRegisterStartSchema>;
 export type PasswordRegisterFinishInput = z.infer<typeof passwordRegisterFinishSchema>;
 export type PasswordLoginStartInput = z.infer<typeof passwordLoginStartSchema>;
 export type PasswordLoginFinishInput = z.infer<typeof passwordLoginFinishSchema>;
+export type AttachEmailInput = z.infer<typeof attachEmailSchema>;
+export type AttachGoogleInput = z.infer<typeof attachGoogleSchema>;
+export type AttachPasswordRegisterStartInput = z.infer<typeof attachPasswordRegisterStartSchema>;
+export type AttachPasswordRegisterFinishInput = z.infer<typeof attachPasswordRegisterFinishSchema>;

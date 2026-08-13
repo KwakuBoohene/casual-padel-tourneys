@@ -10,7 +10,8 @@ export type SetupStep =
   | "LIVE"
   | "LEADERBOARD"
   | "PLAYER_GAMES"
-  | "PROFILE";
+  | "PROFILE"
+  | "ATTACH";
 
 export interface Estimate {
   rounds: number;

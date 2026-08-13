@@ -1,19 +1,29 @@
+import { ApiError } from "./errors";
 import { logger } from "../logger";
 
 const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
 
 let authToken: string | null = null;
 
-async function parseApiError(response: Response): Promise<string> {
+async function parseApiError(response: Response): Promise<ApiError> {
   try {
-    const body = (await response.json()) as { message?: string };
-    if (body?.message) {
-      return body.message;
-    }
+    const body = (await response.json()) as {
+      message?: string;
+      code?: string;
+      verifyBy?: number;
+    };
+    return new ApiError({
+      message: body?.message || response.statusText || `Request failed: ${response.status}`,
+      status: response.status,
+      code: body?.code,
+      verifyBy: body?.verifyBy
+    });
   } catch {
-    // Ignore parse failures and fall back to status text.
+    return new ApiError({
+      message: response.statusText || `Request failed: ${response.status}`,
+      status: response.status
+    });
   }
-  return response.statusText || `Request failed: ${response.status}`;
 }
 
 export function setAuthToken(token: string | null): void {
@@ -31,9 +41,9 @@ export async function apiGet<T>(path: string): Promise<T> {
       : undefined
   });
   if (!response.ok) {
-    const message = await parseApiError(response);
-    logger.error("apiGet failed", { path, status: response.status, message });
-    throw new Error(message);
+    const error = await parseApiError(response);
+    logger.error("apiGet failed", { path, status: error.status, message: error.message, code: error.code });
+    throw error;
   }
   return response.json() as Promise<T>;
 }
@@ -49,9 +59,9 @@ export async function apiPost<T>(path: string, payload: unknown): Promise<T> {
     body: JSON.stringify(payload)
   });
   if (!response.ok) {
-    const message = await parseApiError(response);
-    logger.error("apiPost failed", { path, status: response.status, message });
-    throw new Error(message);
+    const error = await parseApiError(response);
+    logger.error("apiPost failed", { path, status: error.status, message: error.message, code: error.code });
+    throw error;
   }
   return response.json() as Promise<T>;
 }
@@ -67,9 +77,14 @@ export async function apiDelete<T>(path: string): Promise<T> {
       : undefined
   });
   if (!response.ok) {
-    const message = await parseApiError(response);
-    logger.error("apiDelete failed", { path, status: response.status, message });
-    throw new Error(message);
+    const error = await parseApiError(response);
+    logger.error("apiDelete failed", {
+      path,
+      status: error.status,
+      message: error.message,
+      code: error.code
+    });
+    throw error;
   }
   return response.json() as Promise<T>;
 }

@@ -1,5 +1,6 @@
 import { Text, View } from "react-native";
 
+import type { AuthSession } from "../../api/auth";
 import { useBreakpoint } from "../../layout";
 import { spacing, typography } from "../../theme";
 import { ThemeToggle } from "../../components/ThemeToggle";
@@ -8,14 +9,12 @@ import { useTheme } from "../../theme/ThemeProvider";
 import { AuthErrorSheet } from "./components/AuthErrorSheet";
 import { AuthMethodList } from "./components/AuthMethodList";
 import { MagicLinkPanel } from "./components/MagicLinkPanel";
-import { PasswordEntryPanel } from "./components/PasswordEntryPanel";
 import { useSignIn } from "./hooks/useSignIn";
 
 interface SignInScreenProps {
-  onSignedIn: (params: {
-    token: string;
-    user: { id: string; name?: string; email: string; avatarUrl?: string; isGuest?: boolean };
-  }) => void;
+  onSignedIn: (session: AuthSession) => void;
+  onPassword: () => void;
+  onForgotPassword?: () => void;
 }
 
 export function SignInScreen(props: SignInScreenProps) {
@@ -50,23 +49,19 @@ export function SignInScreen(props: SignInScreenProps) {
               void signIn.sendMagicLink(email);
             }}
           />
-        ) : null}
-        {signIn.view === "password" ? (
-          <PasswordEntryPanel onBack={() => signIn.setView("methods")} />
-        ) : null}
-        {signIn.view === "methods" ? (
+        ) : (
           <AuthMethodList
             googleReady={signIn.googleReady}
             googleLoading={signIn.googleLoading}
             guestLoading={signIn.guestLoading}
             onGoogle={signIn.promptGoogle}
             onMagicLink={() => signIn.setView("magic")}
-            onPassword={() => signIn.setView("password")}
+            onPassword={props.onPassword}
             onGuest={() => {
               void signIn.continueAsGuest();
             }}
           />
-        ) : null}
+        )}
       </View>
 
       <AuthErrorSheet

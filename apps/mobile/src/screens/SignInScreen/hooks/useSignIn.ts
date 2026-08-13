@@ -16,7 +16,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 const APP_SCHEME = "padel";
 
-export type SignInView = "methods" | "magic" | "password";
+export type SignInView = "methods" | "magic";
 
 interface UseSignInParams {
   onSignedIn: (session: AuthSessionResult) => void;

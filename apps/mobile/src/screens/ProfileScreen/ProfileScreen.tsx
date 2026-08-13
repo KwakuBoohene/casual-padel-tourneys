@@ -5,11 +5,18 @@ import { radius, spacing, typography } from "../../theme";
 import { ThemeToggle } from "../../components/ThemeToggle";
 import { useTheme } from "../../theme/ThemeProvider";
 
-
 interface ProfileScreenProps {
-  user: { id: string; name?: string; email: string; avatarUrl?: string; isGuest?: boolean };
+  user: {
+    id: string;
+    name?: string;
+    email: string;
+    avatarUrl?: string;
+    isGuest?: boolean;
+    emailVerified?: boolean;
+  };
   onBack: () => void;
   onSignOut: () => void;
+  onAttachAccount?: () => void;
 }
 
 export function ProfileScreen(props: ProfileScreenProps) {
@@ -74,7 +81,9 @@ export function ProfileScreen(props: ProfileScreenProps) {
           </View>
           <View style={{ gap: 2 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
-              <Text style={{ color: colors.text, fontWeight: "700", fontSize: 18 }}>{props.user.name ?? "Organizer"}</Text>
+              <Text style={{ color: colors.text, fontWeight: "700", fontSize: 18 }}>
+                {props.user.name ?? "Organizer"}
+              </Text>
               {isGuest ? (
                 <View
                   style={{
@@ -96,6 +105,21 @@ export function ProfileScreen(props: ProfileScreenProps) {
           </View>
         </View>
       </View>
+
+      {isGuest && props.onAttachAccount ? (
+        <Pressable
+          onPress={props.onAttachAccount}
+          style={{
+            marginBottom: spacing.lg,
+            paddingVertical: spacing.sm,
+            borderRadius: radius.md,
+            backgroundColor: colors.primary,
+            alignItems: "center"
+          }}
+        >
+          <Text style={{ color: colors.onPrimary, fontWeight: "700" }}>Attach email or Google</Text>
+        </Pressable>
+      ) : null}
 
       <View
         style={{
@@ -128,4 +152,3 @@ export function ProfileScreen(props: ProfileScreenProps) {
     </ScrollView>
   );
 }
-

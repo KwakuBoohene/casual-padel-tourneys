@@ -1,11 +1,11 @@
-import { Modal, Pressable, Text, View } from "react-native";
+import { View } from "react-native";
 
-import { TournamentListView } from "./TournamentListView";
-import { useBreakpoint } from "../../../layout";
-import { radius, spacing } from "../../../theme";
-import { useTheme } from "../../../theme/ThemeProvider";
+import { AlertSheet, BottomSheet, SheetButton } from "../../../components/sheets";
+import { spacing } from "../../../theme";
 
 import type { LiveTournamentState } from "../types";
+
+import { TournamentListView } from "./TournamentListView";
 
 interface OrganizerListScreenProps {
   tournaments: LiveTournamentState[];
@@ -28,18 +28,7 @@ interface OrganizerListScreenProps {
 }
 
 export function OrganizerListScreen(props: OrganizerListScreenProps) {
-  const { colors } = useTheme();
-
-  const { formMaxWidth } = useBreakpoint();
-  const modalInner = {
-    backgroundColor: colors.surfaceAlt,
-    width: "100%" as const,
-    maxWidth: formMaxWidth,
-    padding: spacing.lg,
-    gap: spacing.sm,
-    borderRadius: radius.lg
-  };
-  const modalInnerWideGap = { ...modalInner, gap: spacing.md };
+  const isDelete = props.pendingTournamentAction === "DELETE";
 
   return (
     <>
@@ -54,138 +43,36 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
         onOpenOptions={props.onOpenOptions}
         onOpenProfile={props.onOpenProfile}
       />
-      <Modal
-        transparent
+
+      <BottomSheet
         visible={props.showTournamentOptionsModal}
-        animationType="fade"
-        onRequestClose={props.onCloseOptionsModal}
+        title="Tournament Options"
+        onDismiss={props.onCloseOptionsModal}
       >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.4)",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 24
-          }}
-        >
-          <View style={modalInner}>
-            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>Tournament Options</Text>
-            <Pressable
-              onPress={props.onRequestEdit}
-              style={{
-                paddingVertical: spacing.sm,
-                borderRadius: radius.md,
-                backgroundColor: colors.surface,
-                borderWidth: 1,
-                borderColor: colors.border,
-                alignItems: "center",
-                justifyContent: "center"
-              }}
-            >
-              <Text style={{ color: colors.text, fontWeight: "600" }}>Edit Tournament</Text>
-            </Pressable>
-            <Pressable
-              onPress={props.onRequestDelete}
-              style={{
-                paddingVertical: spacing.sm,
-                borderRadius: radius.md,
-                backgroundColor: colors.danger,
-                alignItems: "center",
-                justifyContent: "center"
-              }}
-            >
-              <Text
-                style={{
-                  color: "colors.onPrimary",
-                  fontWeight: "700"
-                }}
-              >
-                Delete Tournament
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={props.onCloseOptionsModal}
-              style={{
-                paddingVertical: spacing.sm,
-                borderRadius: radius.md,
-                backgroundColor: colors.surface,
-                borderWidth: 1,
-                borderColor: colors.border,
-                alignItems: "center",
-                justifyContent: "center"
-              }}
-            >
-              <Text style={{ color: colors.text, fontWeight: "600" }}>Cancel</Text>
-            </Pressable>
-          </View>
+        <View style={{ gap: spacing.sm }}>
+          <SheetButton label="Edit Tournament" onPress={props.onRequestEdit} />
+          <SheetButton label="Delete Tournament" variant="danger" onPress={props.onRequestDelete} />
+          <SheetButton label="Cancel" onPress={props.onCloseOptionsModal} />
         </View>
-      </Modal>
-      <Modal
-        transparent
+      </BottomSheet>
+
+      <AlertSheet
         visible={props.showTournamentActionConfirmModal}
-        animationType="fade"
-        onRequestClose={props.onCancelActionConfirm}
-      >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.4)",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 24
-          }}
-        >
-          <View style={modalInnerWideGap}>
-            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>
-              {props.pendingTournamentAction === "DELETE" ? "Delete Tournament?" : "Edit Tournament?"}
-            </Text>
-            <Text style={{ color: colors.muted }}>
-              {props.pendingTournamentAction === "DELETE"
-                ? "Are you sure you want to delete this tournament?"
-                : "Are you sure you want to edit this tournament?"}
-            </Text>
-            <View style={{ flexDirection: "row", gap: spacing.sm }}>
-              <Pressable
-                onPress={props.onCancelActionConfirm}
-                style={{
-                  flex: 1,
-                  paddingVertical: spacing.sm,
-                  borderRadius: radius.md,
-                  backgroundColor: colors.surface,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                <Text style={{ color: colors.text, fontWeight: "600" }}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                onPress={props.onConfirmAction}
-                style={{
-                  flex: 1,
-                  paddingVertical: spacing.sm,
-                  borderRadius: radius.md,
-                  backgroundColor:
-                    props.pendingTournamentAction === "DELETE" ? colors.danger : colors.primary,
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                <Text
-                  style={{
-                    color: "colors.onPrimary",
-                    fontWeight: "700"
-                  }}
-                >
-                  Yes
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        variant={isDelete ? "warning" : "info"}
+        title={isDelete ? "Delete Tournament?" : "Edit Tournament?"}
+        message={
+          isDelete
+            ? "Are you sure you want to delete this tournament?"
+            : "Are you sure you want to edit this tournament?"
+        }
+        primaryAction={{
+          label: "Yes",
+          onPress: props.onConfirmAction,
+          destructive: isDelete
+        }}
+        secondaryAction={{ label: "Cancel", onPress: props.onCancelActionConfirm }}
+        onDismiss={props.onCancelActionConfirm}
+      />
     </>
   );
 }

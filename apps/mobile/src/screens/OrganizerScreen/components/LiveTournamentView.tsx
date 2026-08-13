@@ -1,10 +1,11 @@
 import * as Clipboard from "expo-clipboard";
 import { Fragment, useCallback, useEffect, useState } from "react";
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import type { PlayerGender } from "@padel/shared";
 
+import { AlertSheet, BottomSheet, SheetButton } from "../../../components/sheets";
 import { layoutTokens, useBreakpoint } from "../../../layout";
-import { radius, spacing, typography } from "../../../theme";
+import { radius, spacing, touch, typography } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
 import type { LiveTournamentState } from "../types";
@@ -79,7 +80,7 @@ interface LiveTournamentViewProps {
 export function LiveTournamentView(props: LiveTournamentViewProps) {
   const { colors, cardStyles } = useTheme();
 
-  const { isWide, formMaxWidth, width } = useBreakpoint();
+  const { isWide, width } = useBreakpoint();
   const sidebarWidth = Math.min(
     layoutTokens.liveSidebarMaxWidth,
     Math.max(layoutTokens.liveSidebarMinWidth, Math.round(width * 0.32))
@@ -107,14 +108,6 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
   }, [props.focusSubmitMatchId, props.onSubmitFocusHandled]);
 
   const scrollPad = { padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background };
-  const modalInner = {
-    backgroundColor: colors.surfaceAlt,
-    width: "100%" as const,
-    maxWidth: formMaxWidth,
-    padding: spacing.lg,
-    gap: spacing.md,
-    borderRadius: radius.lg
-  };
 
   const mainColumn = (
     <>
@@ -496,489 +489,166 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
         </ScrollView>
       )}
 
-      <Modal
-        transparent
+      <AlertSheet
         visible={props.showEditConfirmModal}
-        animationType="fade"
-        onRequestClose={props.onCloseEditConfirm}
-      >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.4)",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 24
-          }}
-        >
-          <View style={modalInner}>
-            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>
-              Edit Completed Tournament?
-            </Text>
-            <Text style={{ color: colors.muted }}>
-              Are you sure you want to unlock this tournament and edit round scores?
-            </Text>
-            <View style={{ flexDirection: "row", gap: spacing.sm }}>
-              <Pressable
-                onPress={props.onCloseEditConfirm}
-                style={{
-                  flex: 1,
-                  paddingVertical: spacing.sm,
-                  borderRadius: radius.md,
-                  backgroundColor: colors.surface,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                <Text style={{ color: colors.text, fontWeight: "600" }}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                onPress={props.onConfirmEditGame}
-                style={{
-                  flex: 1,
-                  paddingVertical: spacing.sm,
-                  borderRadius: radius.md,
-                  backgroundColor: colors.primary,
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                <Text
-                  style={{
-                    color: "colors.onPrimary",
-                    fontWeight: "700"
-                  }}
-                >
-                  Yes, Edit Game
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        variant="warning"
+        title="Edit Completed Tournament?"
+        message="Are you sure you want to unlock this tournament and edit round scores?"
+        primaryAction={{ label: "Yes, Edit Game", onPress: props.onConfirmEditGame }}
+        secondaryAction={{ label: "Cancel", onPress: props.onCloseEditConfirm }}
+        onDismiss={props.onCloseEditConfirm}
+      />
 
-      <Modal
-        transparent
+      <AlertSheet
         visible={props.showAdjustCourtsConfirmModal}
-        animationType="fade"
-        onRequestClose={props.onCloseAdjustCourtsConfirm}
-      >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.4)",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 24
-          }}
-        >
-          <View style={modalInner}>
-            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>Adjust Courts?</Text>
-            <Text style={{ color: colors.muted }}>
-              Are you sure you want to change courts from {props.currentCourts} to {props.proposedCourts}?
-              Remaining rounds will be recalculated.
-            </Text>
-            <View style={{ flexDirection: "row", gap: spacing.sm }}>
-              <Pressable
-                onPress={props.onCloseAdjustCourtsConfirm}
-                style={{
-                  flex: 1,
-                  paddingVertical: spacing.sm,
-                  borderRadius: radius.md,
-                  backgroundColor: colors.surface,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                <Text style={{ color: colors.text, fontWeight: "600" }}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                onPress={props.onConfirmAdjustCourts}
-                style={{
-                  flex: 1,
-                  paddingVertical: spacing.sm,
-                  borderRadius: radius.md,
-                  backgroundColor: colors.primary,
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                <Text
-                  style={{
-                    color: "colors.onPrimary",
-                    fontWeight: "700"
-                  }}
-                >
-                  Yes, Reassign Games
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        variant="warning"
+        title="Adjust Courts?"
+        message={`Are you sure you want to change courts from ${props.currentCourts} to ${props.proposedCourts}? Remaining rounds will be recalculated.`}
+        primaryAction={{ label: "Yes, Reassign Games", onPress: props.onConfirmAdjustCourts }}
+        secondaryAction={{ label: "Cancel", onPress: props.onCloseAdjustCourtsConfirm }}
+        onDismiss={props.onCloseAdjustCourtsConfirm}
+      />
 
-      <Modal
-        transparent
+      <BottomSheet
         visible={props.showLiveOptionsModal}
-        animationType="fade"
-        onRequestClose={props.onCloseLiveOptions}
+        title="Live Options"
+        onDismiss={props.onCloseLiveOptions}
       >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.4)",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 24
-          }}
-        >
-          <View style={modalInner}>
-            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>Live Options</Text>
-            {props.canAdjustCourts ? (
-              <>
-                <Text style={{ fontWeight: "700", color: colors.text }}>Adjust Courts</Text>
-                <Text style={{ color: colors.muted }}>Current courts: {props.currentCourts}</Text>
-                <Text style={{ color: colors.muted }}>Proposed courts: {props.proposedCourts}</Text>
-                <Text style={{ color: colors.muted }}>Allowed range: 1 - {props.maxCourts}</Text>
-                <View style={{ flexDirection: "row", gap: spacing.sm }}>
-                  <Pressable
-                    onPress={() => props.onChangeProposedCourts(Math.max(1, props.proposedCourts - 1))}
-                    disabled={props.proposedCourts <= 1}
-                    style={{
-                      flex: 1,
-                      paddingVertical: spacing.sm,
-                      borderRadius: radius.md,
-                      backgroundColor: colors.surface,
-                      borderWidth: 1,
-                      borderColor: colors.border,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      opacity: props.proposedCourts <= 1 ? 0.4 : 1
-                    }}
-                  >
-                    <Text style={{ color: colors.text, fontWeight: "700" }}>-</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() =>
-                      props.onChangeProposedCourts(Math.min(props.maxCourts, props.proposedCourts + 1))
-                    }
-                    disabled={props.proposedCourts >= props.maxCourts}
-                    style={{
-                      flex: 1,
-                      paddingVertical: spacing.sm,
-                      borderRadius: radius.md,
-                      backgroundColor: colors.surface,
-                      borderWidth: 1,
-                      borderColor: colors.border,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      opacity: props.proposedCourts >= props.maxCourts ? 0.4 : 1
-                    }}
-                  >
-                    <Text style={{ color: colors.text, fontWeight: "700" }}>+</Text>
-                  </Pressable>
-                </View>
-                <Pressable
-                  onPress={props.onOpenAdjustCourtsConfirm}
-                  style={{
-                    paddingVertical: spacing.sm,
-                    borderRadius: radius.md,
-                    backgroundColor: colors.primary,
-                    alignItems: "center",
-                    justifyContent: "center"
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "colors.onPrimary",
-                      fontWeight: "700"
-                    }}
-                  >
-                    Apply Court Change
-                  </Text>
-                </Pressable>
-              </>
-            ) : (
-              <Text style={{ color: colors.muted }}>No court adjustment options available right now.</Text>
-            )}
-            <Pressable
-              onPress={props.onCloseLiveOptions}
-              style={{
-                paddingVertical: spacing.sm,
-                borderRadius: radius.md,
-                backgroundColor: colors.surface,
-                borderWidth: 1,
-                borderColor: colors.border,
-                alignItems: "center",
-                justifyContent: "center"
-              }}
-            >
-              <Text style={{ color: colors.text, fontWeight: "600" }}>Close</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        transparent
-        visible={Boolean(props.scorePicker)}
-        animationType="slide"
-        onRequestClose={props.onCloseScorePicker}
-      >
-        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.3)" }}>
-          <View
-            style={{
-              backgroundColor: colors.surfaceAlt,
-              padding: spacing.lg,
-              borderTopLeftRadius: radius.lg,
-              borderTopRightRadius: radius.lg,
-              gap: spacing.md,
-              maxHeight: "45%"
-            }}
-          >
-            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>Select Score</Text>
-            <Text style={{ color: colors.muted }}>
-              Possible scores (1 to {props.tournament.config.pointsPerMatch})
-            </Text>
-            <ScrollView contentContainerStyle={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
-              {Array.from({ length: props.tournament.config.pointsPerMatch }, (_, index) => index + 1).map(
-                (score) => (
-                  <Pressable
-                    key={`score-${score}`}
-                    onPress={() => props.onSelectScoreFromPicker(score)}
-                    style={{
-                      minWidth: 40,
-                      paddingVertical: spacing.xs,
-                      borderRadius: radius.md,
-                      backgroundColor: colors.surface,
-                      borderWidth: 1,
-                      borderColor: colors.border,
-                      alignItems: "center",
-                      justifyContent: "center"
-                    }}
-                  >
-                    <Text style={{ color: colors.text, fontWeight: "600" }}>{score}</Text>
-                  </Pressable>
-                )
-              )}
-            </ScrollView>
-            <Pressable
-              onPress={() => {
-                if (props.scorePicker) {
-                  props.onResetScoreForMatch(props.scorePicker.matchId);
-                  props.onCloseScorePicker();
+        {props.canAdjustCourts ? (
+          <View style={{ gap: spacing.sm }}>
+            <Text style={{ fontWeight: "700", color: colors.text }}>Adjust Courts</Text>
+            <Text style={{ color: colors.muted }}>Current courts: {props.currentCourts}</Text>
+            <Text style={{ color: colors.muted }}>Proposed courts: {props.proposedCourts}</Text>
+            <Text style={{ color: colors.muted }}>Allowed range: 1 - {props.maxCourts}</Text>
+            <View style={{ flexDirection: "row", gap: spacing.sm }}>
+              <SheetButton
+                label="-"
+                style={{ flex: 1 }}
+                disabled={props.proposedCourts <= 1}
+                onPress={() => props.onChangeProposedCourts(Math.max(1, props.proposedCourts - 1))}
+              />
+              <SheetButton
+                label="+"
+                style={{ flex: 1 }}
+                disabled={props.proposedCourts >= props.maxCourts}
+                onPress={() =>
+                  props.onChangeProposedCourts(Math.min(props.maxCourts, props.proposedCourts + 1))
                 }
-              }}
-              style={{
-                marginTop: spacing.sm,
-                paddingVertical: spacing.sm,
-                borderRadius: radius.md,
-                backgroundColor: colors.surface,
-                borderWidth: 1,
-                borderColor: colors.border,
-                alignItems: "center",
-                justifyContent: "center"
-              }}
-            >
-              <Text style={{ color: colors.text, fontWeight: "600" }}>Reset</Text>
-            </Pressable>
-            <Pressable
-              onPress={props.onCloseScorePicker}
-              style={{
-                marginTop: spacing.xs,
-                paddingVertical: spacing.sm,
-                borderRadius: radius.md,
-                backgroundColor: colors.primary,
-                alignItems: "center",
-                justifyContent: "center"
-              }}
-            >
-              <Text
+              />
+            </View>
+            <SheetButton label="Apply Court Change" variant="primary" onPress={props.onOpenAdjustCourtsConfirm} />
+          </View>
+        ) : (
+          <Text style={{ color: colors.muted }}>No court adjustment options available right now.</Text>
+        )}
+        <SheetButton label="Close" onPress={props.onCloseLiveOptions} />
+      </BottomSheet>
+
+      <BottomSheet
+        visible={Boolean(props.scorePicker)}
+        title="Select Score"
+        onDismiss={props.onCloseScorePicker}
+      >
+        <Text style={{ color: colors.muted }}>
+          Possible scores (1 to {props.tournament.config.pointsPerMatch})
+        </Text>
+        <ScrollView
+          style={{ maxHeight: 180 }}
+          contentContainerStyle={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}
+        >
+          {Array.from({ length: props.tournament.config.pointsPerMatch }, (_, index) => index + 1).map(
+            (score) => (
+              <Pressable
+                key={`score-${score}`}
+                onPress={() => props.onSelectScoreFromPicker(score)}
                 style={{
-                  color: "colors.onPrimary",
-                  fontWeight: "700"
+                  minWidth: touch.minSecondary,
+                  minHeight: touch.minSecondary,
+                  paddingVertical: spacing.xs,
+                  borderRadius: radius.md,
+                  backgroundColor: colors.surface,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  alignItems: "center",
+                  justifyContent: "center"
                 }}
               >
-                Close
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
+                <Text style={{ color: colors.text, fontWeight: "600" }}>{score}</Text>
+              </Pressable>
+            )
+          )}
+        </ScrollView>
+        <SheetButton
+          label="Reset"
+          onPress={() => {
+            if (props.scorePicker) {
+              props.onResetScoreForMatch(props.scorePicker.matchId);
+              props.onCloseScorePicker();
+            }
+          }}
+        />
+        <SheetButton label="Close" variant="primary" onPress={props.onCloseScorePicker} />
+      </BottomSheet>
 
-      {/* Add Pending Player Modal */}
-      <Modal
-        transparent
+      <BottomSheet
         visible={props.showAddPendingPlayerModal}
-        animationType="fade"
-        onRequestClose={props.onCloseAddPendingPlayer}
+        title="Add Player to Queue"
+        onDismiss={props.onCloseAddPendingPlayer}
       >
-        <View
+        <TextInput
+          placeholder="Player name"
+          value={props.pendingPlayerNameDraft}
+          onChangeText={props.onChangePendingPlayerName}
+          placeholderTextColor={colors.muted}
           style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.4)",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 24
+            borderWidth: 1,
+            borderColor: colors.border,
+            padding: spacing.sm,
+            minHeight: touch.minSecondary,
+            borderRadius: radius.md,
+            backgroundColor: colors.surface,
+            color: colors.text
           }}
-        >
-          <View style={modalInner}>
-            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>Add Player to Queue</Text>
-            <TextInput
-              placeholder="Player name"
-              value={props.pendingPlayerNameDraft}
-              onChangeText={props.onChangePendingPlayerName}
-              placeholderTextColor={colors.muted}
-              style={{
-                borderWidth: 1,
-                borderColor: colors.border,
-                padding: spacing.sm,
-                borderRadius: radius.md,
-                backgroundColor: colors.surface,
-                color: colors.text
-              }}
-            />
-            {props.tournament.config.variant === "MIXED" ? (
-              <View style={{ flexDirection: "row", gap: spacing.sm }}>
-                {(["MALE", "FEMALE"] as const).map((gender) => (
-                  <Pressable
-                    key={gender}
-                    onPress={() => props.onChangePendingPlayerGender(gender)}
-                    style={{
-                      flex: 1,
-                      paddingVertical: spacing.sm,
-                      borderRadius: radius.md,
-                      backgroundColor: props.pendingPlayerGender === gender ? colors.primary : colors.surface,
-                      borderWidth: 1,
-                      borderColor: props.pendingPlayerGender === gender ? colors.primary : colors.border,
-                      alignItems: "center",
-                      justifyContent: "center"
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: props.pendingPlayerGender === gender ? "colors.onPrimary" : colors.text,
-                        fontWeight: "600"
-                      }}
-                    >
-                      {gender === "MALE" ? "M" : "F"}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            ) : null}
-            {props.errorText ? (
-              <Text style={{ color: colors.danger, fontSize: 12 }}>{props.errorText}</Text>
-            ) : null}
-            <View style={{ flexDirection: "row", gap: spacing.sm }}>
-              <Pressable
-                onPress={props.onCloseAddPendingPlayer}
-                style={{
-                  flex: 1,
-                  paddingVertical: spacing.sm,
-                  borderRadius: radius.md,
-                  backgroundColor: colors.surface,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                <Text style={{ color: colors.text, fontWeight: "600" }}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                onPress={props.onSubmitAddPendingPlayer}
-                disabled={!props.pendingPlayerNameDraft.trim()}
-                style={{
-                  flex: 1,
-                  paddingVertical: spacing.sm,
-                  borderRadius: radius.md,
-                  backgroundColor: props.pendingPlayerNameDraft.trim() ? colors.primary : colors.surfaceAlt,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  opacity: props.pendingPlayerNameDraft.trim() ? 1 : 0.5
-                }}
-              >
-                <Text
-                  style={{
-                    color: props.pendingPlayerNameDraft.trim() ? "colors.onPrimary" : colors.muted,
-                    fontWeight: "700"
-                  }}
-                >
-                  Add Player
-                </Text>
-              </Pressable>
-            </View>
+        />
+        {props.tournament.config.variant === "MIXED" ? (
+          <View style={{ flexDirection: "row", gap: spacing.sm }}>
+            {(["MALE", "FEMALE"] as const).map((gender) => (
+              <SheetButton
+                key={gender}
+                label={gender === "MALE" ? "M" : "F"}
+                variant={props.pendingPlayerGender === gender ? "primary" : "secondary"}
+                style={{ flex: 1 }}
+                onPress={() => props.onChangePendingPlayerGender(gender)}
+              />
+            ))}
           </View>
+        ) : null}
+        {props.errorText ? (
+          <Text style={{ color: colors.danger, fontSize: 12 }}>{props.errorText}</Text>
+        ) : null}
+        <View style={{ flexDirection: "row", gap: spacing.sm }}>
+          <SheetButton label="Cancel" style={{ flex: 1 }} onPress={props.onCloseAddPendingPlayer} />
+          <SheetButton
+            label="Add Player"
+            variant="primary"
+            style={{ flex: 1 }}
+            disabled={!props.pendingPlayerNameDraft.trim()}
+            onPress={props.onSubmitAddPendingPlayer}
+          />
         </View>
-      </Modal>
+      </BottomSheet>
 
-      {/* Integrate Confirm Modal */}
-      <Modal
-        transparent
+      <AlertSheet
         visible={props.showIntegrateConfirmModal}
-        animationType="fade"
-        onRequestClose={props.onCloseIntegrateConfirm}
-      >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.4)",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 24
-          }}
-        >
-          <View style={modalInner}>
-            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.text }}>Integrate Players?</Text>
-            <Text style={{ color: colors.muted }}>
-              Integrate {props.tournament.pendingPlayers.length} waiting player
-              {props.tournament.pendingPlayers.length !== 1 ? "s" : ""} into the tournament?
-            </Text>
-            <View style={{ flexDirection: "row", gap: spacing.sm }}>
-              <Pressable
-                onPress={props.onCloseIntegrateConfirm}
-                style={{
-                  flex: 1,
-                  paddingVertical: spacing.sm,
-                  borderRadius: radius.md,
-                  backgroundColor: colors.surface,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                <Text style={{ color: colors.text, fontWeight: "600" }}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                onPress={props.onConfirmIntegratePendingPlayers}
-                style={{
-                  flex: 1,
-                  paddingVertical: spacing.sm,
-                  borderRadius: radius.md,
-                  backgroundColor: colors.primary,
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                <Text
-                  style={{
-                    color: "colors.onPrimary",
-                    fontWeight: "700"
-                  }}
-                >
-                  Confirm
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        variant="info"
+        title="Integrate Players?"
+        message={`Integrate ${props.tournament.pendingPlayers.length} waiting player${
+          props.tournament.pendingPlayers.length !== 1 ? "s" : ""
+        } into the tournament?`}
+        primaryAction={{ label: "Confirm", onPress: props.onConfirmIntegratePendingPlayers }}
+        secondaryAction={{ label: "Cancel", onPress: props.onCloseIntegrateConfirm }}
+        onDismiss={props.onCloseIntegrateConfirm}
+      />
 
       {props.errorText ? <Text style={{ color: colors.danger }}>Error: {props.errorText}</Text> : null}
     </Fragment>

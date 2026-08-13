@@ -7,7 +7,8 @@ export const spacing = {
   sm: 8,
   md: 12,
   lg: 16,
-  xl: 20
+  xl: 20,
+  xxl: 24
 };
 
 export const radius = {
@@ -15,6 +16,18 @@ export const radius = {
   md: 10,
   lg: 16,
   pill: 999
+};
+
+/** Touch targets from KOH/AM foundations (dp ≈ px at 1x). */
+export const touch = {
+  minPrimary: 56,
+  minSecondary: 48,
+  sheetHandleWidth: 40,
+  sheetHandleHeight: 4
+};
+
+export const overlay = {
+  dim: "rgba(0,0,0,0.45)"
 };
 
 export const typography = {

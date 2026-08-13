@@ -20,7 +20,7 @@ export async function createApp() {
   await server.register(cors, {
     origin: true,
     methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "x-organizer-token", "Authorization"]
+    allowedHeaders: ["Content-Type", "x-organizer-token", "Authorization", "x-public-token"]
   });
   await server.register(rateLimit, { max: 100, timeWindow: "1 minute" });
   await server.register(websocket);

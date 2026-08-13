@@ -42,6 +42,7 @@ import {
 } from "../lib/store.js";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../lib/auth.js";
+import { assertOrganizer } from "../lib/organizerAccess.js";
 import { publishEvent } from "../realtime/events.js";
 import { broadcastToTournament } from "../realtime/socketHub.js";
 import { logger } from "../lib/logger.js";
@@ -62,7 +63,7 @@ function mapTournamentMutationErrorStatus(message: string): number {
   if (message.includes("not found")) {
     return 404;
   }
-  if (message.includes("Version mismatch")) {
+  if (message.includes("Version mismatch") || message.includes("already scored")) {
     return 409;
   }
   if (
@@ -72,7 +73,7 @@ function mapTournamentMutationErrorStatus(message: string): number {
   ) {
     return 400;
   }
-  return 500;
+  return 409;
 }
 
 function mapDbTournamentToState(
@@ -173,31 +174,34 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     return { data };
   });
 
-  server.get("/tournaments/:id", async (request, reply) => {
+  server.get("/tournaments/:id", { preHandler: requireAuth }, async (request, reply) => {
     const params = request.params as { id: string };
-    const row = await prisma.tournament.findUnique({
-      where: { id: params.id },
-      include: {
-        players: true,
-        rounds: {
-          include: {
-            matches: true
-          }
-        },
-        pendingPlayers: true
-      }
-    });
-    if (!row) {
+    if (!request.user) {
+      reply.status(401);
+      return { message: "Unauthorized" };
+    }
+
+    try {
+      const data = await loadTournamentState(params.id);
+      assertOrganizer(request.user.id, data);
+      request.log.info({ id: params.id }, "GET /tournaments/:id");
+      return { data };
+    } catch (error) {
       reply.status(404);
       request.log.warn({ id: params.id }, "GET /tournaments/:id not found");
-      return { message: "Tournament not found." };
+      return { message: (error as Error).message || "Tournament not found." };
     }
-    request.log.info({ id: params.id }, "GET /tournaments/:id");
-    return { data: mapDbTournamentToState(row) };
   });
 
   server.get("/public/:token", async (request, reply) => {
     const params = request.params as { token: string };
+    const inMemory = getTournamentByPublicToken(params.token);
+    if (inMemory) {
+      const { organizerId: _organizerId, ...publicData } = inMemory;
+      request.log.info({ token: params.token }, "GET /public/:token");
+      return { data: publicData };
+    }
+
     const row = await prisma.tournament.findUnique({
       where: { publicToken: params.token },
       include: {
@@ -215,8 +219,9 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       request.log.warn({ token: params.token }, "GET /public/:token not found");
       return { message: "Public tournament not found." };
     }
+    const { organizerId: _organizerId, ...publicData } = mapDbTournamentToState(row);
     request.log.info({ token: params.token }, "GET /public/:token");
-    return { data: mapDbTournamentToState(row) };
+    return { data: publicData };
   });
 
   server.post("/tournaments", { preHandler: requireAuth }, async (request, reply) => {
@@ -319,7 +324,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       return { errors: parsed.error.flatten() };
     }
     try {
-      await ensureTournamentInMemory(parsed.data.tournamentId);
+      await ensureOrganizerTournament(parsed.data.tournamentId, request.user!.id);
       assertVersion(parsed.data.tournamentId, parsed.data.expectedVersion);
       const tournament = submitScore(
         parsed.data.tournamentId,
@@ -340,8 +345,9 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       );
       return { data: tournament };
     } catch (error) {
-      reply.status(409);
-      return { message: (error as Error).message };
+      const message = (error as Error).message;
+      reply.status(mapTournamentMutationErrorStatus(message));
+      return { message };
     }
   });
 
@@ -352,7 +358,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       return { errors: parsed.error.flatten() };
     }
     try {
-      await ensureTournamentInMemory(parsed.data.tournamentId);
+      await ensureOrganizerTournament(parsed.data.tournamentId, request.user!.id);
       const tournament = renamePlayer(parsed.data.tournamentId, parsed.data.playerId, parsed.data.newName);
       await persistTournament(tournament);
       const event = { type: "PLAYER_RENAMED" as const, tournamentId: tournament.id, payload: tournament };
@@ -379,7 +385,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       return { errors: parsed.error.flatten() };
     }
     try {
-      await ensureTournamentInMemory(parsed.data.tournamentId);
+      await ensureOrganizerTournament(parsed.data.tournamentId, request.user!.id);
       const tournament = renameTournament(parsed.data.tournamentId, parsed.data.newName);
       await persistTournament(tournament);
       const event = { type: "TOURNAMENT_RENAMED" as const, tournamentId: tournament.id, payload: tournament };
@@ -400,7 +406,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       return { errors: parsed.error.flatten() };
     }
     try {
-      await ensureTournamentInMemory(parsed.data.tournamentId);
+      await ensureOrganizerTournament(parsed.data.tournamentId, request.user!.id);
       assertVersion(parsed.data.tournamentId, parsed.data.expectedVersion);
       const tournament = adjustCourts(parsed.data.tournamentId, parsed.data.courts);
       await persistTournament(tournament);
@@ -416,8 +422,9 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       );
       return { data: tournament };
     } catch (error) {
-      reply.status(409);
-      return { message: (error as Error).message };
+      const message = (error as Error).message;
+      reply.status(mapTournamentMutationErrorStatus(message));
+      return { message };
     }
   });
 
@@ -428,7 +435,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       return { errors: parsed.error.flatten() };
     }
     try {
-      await ensureTournamentInMemory(parsed.data.tournamentId);
+      await ensureOrganizerTournament(parsed.data.tournamentId, request.user!.id);
       const tournament = substitutePlayer(
         parsed.data.tournamentId,
         parsed.data.playerId,
@@ -459,7 +466,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       return { errors: parsed.error.flatten() };
     }
     try {
-      await ensureTournamentInMemory(parsed.data.tournamentId);
+      await ensureOrganizerTournament(parsed.data.tournamentId, request.user!.id);
       assertVersion(parsed.data.tournamentId, parsed.data.expectedVersion);
       const tournament = addPendingPlayer(parsed.data.tournamentId, parsed.data.name, parsed.data.gender);
       await persistTournament(tournament);
@@ -492,7 +499,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       return { errors: parsed.error.flatten() };
     }
     try {
-      await ensureTournamentInMemory(parsed.data.tournamentId);
+      await ensureOrganizerTournament(parsed.data.tournamentId, request.user!.id);
       assertVersion(parsed.data.tournamentId, parsed.data.expectedVersion);
       const tournament = integratePendingPlayers(parsed.data.tournamentId);
       await persistTournament(tournament);
@@ -519,16 +526,24 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
 
   server.delete("/tournaments/:id", { preHandler: requireAuth }, async (request, reply) => {
     const params = request.params as { id: string };
+    if (!request.user) {
+      reply.status(401);
+      return { message: "Unauthorized" };
+    }
     try {
-      // Best-effort removal from in-memory store; ignore if it was already evicted.
+      await ensureOrganizerTournament(params.id, request.user.id);
       try {
         deleteTournament(params.id);
       } catch {
-        // no-op
+        // already removed from memory
       }
-      await prisma.tournament.delete({
-        where: { id: params.id }
-      });
+      try {
+        await prisma.tournament.delete({
+          where: { id: params.id }
+        });
+      } catch {
+        // may only exist in memory when DB persist failed
+      }
       const event = {
         type: "TOURNAMENT_DELETED" as const,
         tournamentId: params.id,
@@ -545,28 +560,48 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
   });
 }
 
+async function loadTournamentState(tournamentId: string) {
+  const existing = getTournament(tournamentId);
+  if (existing) {
+    return existing;
+  }
+  try {
+    const row = await prisma.tournament.findUnique({
+      where: { id: tournamentId },
+      include: {
+        players: true,
+        rounds: {
+          include: {
+            matches: true
+          }
+        },
+        pendingPlayers: true
+      }
+    });
+    if (!row) {
+      throw new Error("Tournament not found.");
+    }
+    return mapDbTournamentToState(row);
+  } catch (error) {
+    if ((error as Error).message === "Tournament not found.") {
+      throw error;
+    }
+    throw new Error("Tournament not found.");
+  }
+}
+
 async function ensureTournamentInMemory(tournamentId: string): Promise<void> {
   const existing = getTournament(tournamentId);
   if (existing) {
     return;
   }
-  const row = await prisma.tournament.findUnique({
-    where: { id: tournamentId },
-    include: {
-      players: true,
-      rounds: {
-        include: {
-          matches: true
-        }
-      },
-      pendingPlayers: true
-    }
-  });
-  if (!row) {
-    throw new Error("Tournament not found.");
-  }
-  const state = mapDbTournamentToState(row);
+  const state = await loadTournamentState(tournamentId);
   putTournament(state);
+}
+
+async function ensureOrganizerTournament(tournamentId: string, userId: string): Promise<void> {
+  await ensureTournamentInMemory(tournamentId);
+  assertOrganizer(userId, getTournament(tournamentId));
 }
 
 async function persistTournament(tournament: {
@@ -579,65 +614,70 @@ async function persistTournament(tournament: {
   updatedAt: string;
   pendingPlayers: DomainPendingPlayer[];
   integrationWaveCount: number;
-}) {
-  await prisma.player.deleteMany({ where: { tournamentId: tournament.id } });
-  await prisma.round.deleteMany({ where: { tournamentId: tournament.id } });
-  await prisma.pendingPlayer.deleteMany({ where: { tournamentId: tournament.id } });
+}): Promise<void> {
+  try {
+    await prisma.player.deleteMany({ where: { tournamentId: tournament.id } });
+    await prisma.round.deleteMany({ where: { tournamentId: tournament.id } });
+    await prisma.pendingPlayer.deleteMany({ where: { tournamentId: tournament.id } });
 
-  await prisma.tournament.update({
-    where: { id: tournament.id },
-    data: {
-      name: tournament.config.name,
-      mode: tournament.config.mode,
-      variant: tournament.config.variant,
-      schedulingMode: tournament.config.schedulingMode as SchedulingMode,
-      courts: tournament.config.courts,
-      pointsPerMatch: tournament.config.pointsPerMatch,
-      targetGamesPerPlayer: tournament.config.targetGamesPerPlayer ?? null,
-      tournamentTimeMinutes: tournament.config.tournamentTimeMinutes ?? null,
-      integrationWaveCount: tournament.integrationWaveCount,
-      enableAutoIntegration: tournament.config.enableAutoIntegration ?? false,
-      integrationThreshold: tournament.config.integrationThreshold ?? 2,
-      version: tournament.version,
-      updatedAt: new Date(tournament.updatedAt),
-      players: {
-        create: tournament.players.map((player) => ({
-          id: player.id,
-          name: player.name,
-          gender: player.gender ?? null,
-          gamesPlayed: player.gamesPlayed,
-          totalPoints: player.totalPoints,
-          handicap: player.handicap ?? null,
-          integrationWave: player.integrationWave ?? null,
-          integratedAt: null // Not currently tracked in domain model
-        }))
-      },
-      pendingPlayers: {
-        create: tournament.pendingPlayers.map((pp) => ({
-          id: pp.id,
-          name: pp.name,
-          gender: pp.gender ?? null,
-          createdAt: new Date(pp.createdAt)
-        }))
-      },
-      rounds: {
-        create: tournament.rounds.map((round) => ({
-          id: round.id,
-          roundNumber: round.roundNumber,
-          isLocked: round.isLocked,
-          matches: {
-            create: round.matches.map((match) => ({
-              id: match.id,
-              court: match.court,
-              teamA: match.teamA,
-              teamB: match.teamB,
-              scoreA: match.scoreA ?? null,
-              scoreB: match.scoreB ?? null,
-              completed: match.completed
-            }))
-          }
-        }))
+    await prisma.tournament.update({
+      where: { id: tournament.id },
+      data: {
+        name: tournament.config.name,
+        mode: tournament.config.mode,
+        variant: tournament.config.variant,
+        schedulingMode: tournament.config.schedulingMode as SchedulingMode,
+        courts: tournament.config.courts,
+        pointsPerMatch: tournament.config.pointsPerMatch,
+        targetGamesPerPlayer: tournament.config.targetGamesPerPlayer ?? null,
+        tournamentTimeMinutes: tournament.config.tournamentTimeMinutes ?? null,
+        integrationWaveCount: tournament.integrationWaveCount,
+        enableAutoIntegration: tournament.config.enableAutoIntegration ?? false,
+        integrationThreshold: tournament.config.integrationThreshold ?? 2,
+        version: tournament.version,
+        updatedAt: new Date(tournament.updatedAt),
+        players: {
+          create: tournament.players.map((player) => ({
+            id: player.id,
+            name: player.name,
+            gender: player.gender ?? null,
+            gamesPlayed: player.gamesPlayed,
+            totalPoints: player.totalPoints,
+            handicap: player.handicap ?? null,
+            integrationWave: player.integrationWave ?? null,
+            integratedAt: null // Not currently tracked in domain model
+          }))
+        },
+        pendingPlayers: {
+          create: tournament.pendingPlayers.map((pp) => ({
+            id: pp.id,
+            name: pp.name,
+            gender: pp.gender ?? null,
+            createdAt: new Date(pp.createdAt)
+          }))
+        },
+        rounds: {
+          create: tournament.rounds.map((round) => ({
+            id: round.id,
+            roundNumber: round.roundNumber,
+            isLocked: round.isLocked,
+            matches: {
+              create: round.matches.map((match) => ({
+                id: match.id,
+                court: match.court,
+                teamA: match.teamA,
+                teamB: match.teamB,
+                scoreA: match.scoreA ?? null,
+                scoreB: match.scoreB ?? null,
+                completed: match.completed
+              }))
+            }
+          }))
+        }
       }
-    }
-  });
+    });
+  } catch (error) {
+    // Memory store remains source of truth for the live session when DB is unavailable.
+    logger.error({ err: error, tournamentId: tournament.id }, "Failed to persist tournament");
+  }
 }

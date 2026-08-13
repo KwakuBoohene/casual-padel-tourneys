@@ -52,7 +52,9 @@ export function LiveTournament({
 
   useEffect(() => {
     const wsBase = apiBaseUrl.replace(/^http/, "ws");
-    const socket = new WebSocket(`${wsBase}/ws/tournaments/${initial.id}`);
+    const socket = new WebSocket(
+      `${wsBase}/ws/tournaments/${initial.id}?token=${encodeURIComponent(token)}`
+    );
 
     socket.onopen = () => {
       setIsConnected(true);
@@ -86,7 +88,7 @@ export function LiveTournament({
     };
 
     return () => socket.close();
-  }, [apiBaseUrl, initial.id, onConnectionChange]);
+  }, [apiBaseUrl, initial.id, token, onConnectionChange]);
 
   // Create player lookup maps
   const playerById = useMemo(() => {

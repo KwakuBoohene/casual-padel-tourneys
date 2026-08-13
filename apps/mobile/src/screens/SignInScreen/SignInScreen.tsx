@@ -1,157 +1,27 @@
-import * as AuthSession from "expo-auth-session";
-import * as Google from "expo-auth-session/providers/google";
-import * as SecureStore from "expo-secure-store";
-import * as WebBrowser from "expo-web-browser";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, Platform, Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { useBreakpoint } from "../../layout";
-import { radius, spacing, typography } from "../../theme";
+import { spacing, typography } from "../../theme";
 import { ThemeToggle } from "../../components/ThemeToggle";
 import { useTheme } from "../../theme/ThemeProvider";
 
-import { logger } from "../../logger";
-
-WebBrowser.maybeCompleteAuthSession();
-
-/**
- * Must match "scheme" in app.json.
- * Using a custom scheme makes the redirect URI e.g. padel:// (dev build), which Google OAuth allows.
- * Add the exact redirect URI in Google Cloud Console: APIs & Services → Credentials → your OAuth client → Authorized redirect URIs.
- */
-const APP_SCHEME = "padel";
-const GUEST_ID_KEY = "guestId";
+import { AuthErrorSheet } from "./components/AuthErrorSheet";
+import { AuthMethodList } from "./components/AuthMethodList";
+import { MagicLinkPanel } from "./components/MagicLinkPanel";
+import { PasswordEntryPanel } from "./components/PasswordEntryPanel";
+import { useSignIn } from "./hooks/useSignIn";
 
 interface SignInScreenProps {
-  onSignedIn: (params: { token: string; user: { id: string; name?: string; email: string; avatarUrl?: string; isGuest?: boolean } }) => void;
-}
-
-function generateGuestId(): string {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
-
-async function getStoredGuestId(): Promise<string | null> {
-  if (Platform.OS === "web") {
-    const anyGlobal = globalThis as typeof globalThis & {
-      localStorage?: { getItem(key: string): string | null };
-    };
-    if (typeof anyGlobal !== "undefined" && anyGlobal.localStorage) {
-      return anyGlobal.localStorage.getItem(GUEST_ID_KEY);
-    }
-    return null;
-  }
-
-  return SecureStore.getItemAsync(GUEST_ID_KEY);
-}
-
-async function storeGuestId(guestId: string): Promise<void> {
-  if (Platform.OS === "web") {
-    const anyGlobal = globalThis as typeof globalThis & {
-      localStorage?: { setItem(key: string, value: string): void };
-    };
-    if (typeof anyGlobal !== "undefined" && anyGlobal.localStorage) {
-      anyGlobal.localStorage.setItem(GUEST_ID_KEY, guestId);
-    }
-    return;
-  }
-
-  await SecureStore.setItemAsync(GUEST_ID_KEY, guestId);
+  onSignedIn: (params: {
+    token: string;
+    user: { id: string; name?: string; email: string; avatarUrl?: string; isGuest?: boolean };
+  }) => void;
 }
 
 export function SignInScreen(props: SignInScreenProps) {
   const { colors } = useTheme();
-
   const { formMaxWidth } = useBreakpoint();
-  const redirectUri = AuthSession.makeRedirectUri({ scheme: APP_SCHEME });
-  const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
-  const googleAndroidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    webClientId: googleWebClientId,
-    androidClientId: googleAndroidClientId,
-    redirectUri
-  });
-  const [guestLoading, setGuestLoading] = useState(false);
-
-  useEffect(() => {
-    logger.debug("SignInScreen: auth request initialised", {
-      hasRequest: Boolean(request),
-      redirectUri: request?.redirectUri,
-      hasGoogleWebClientId: Boolean(googleWebClientId),
-      hasGoogleAndroidClientId: Boolean(googleAndroidClientId)
-    });
-  }, [googleAndroidClientId, googleWebClientId, request]);
-
-  useEffect(() => {
-    if (response?.type === "success" && response.params.id_token) {
-      logger.info("SignInScreen: received Google id_token");
-      void exchangeIdToken(response.params.id_token);
-    } else if (response?.type && response.type !== "success") {
-      logger.warn("SignInScreen: Google response not successful", { type: response.type });
-    }
-  }, [response]);
-
-  async function exchangeIdToken(idToken: string) {
-    const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
-    logger.debug("SignInScreen: exchanging idToken with API", { apiBaseUrl });
-    try {
-      const result = await fetch(`${apiBaseUrl}/auth/google`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ idToken })
-      });
-      if (!result.ok) {
-        logger.error("SignInScreen: /auth/google failed", { status: result.status });
-        return;
-      }
-      const json = (await result.json()) as {
-        token: string;
-        user: { id: string; name?: string; email: string; avatarUrl?: string; isGuest?: boolean };
-      };
-      logger.info("SignInScreen: exchange succeeded", { userId: json.user.id });
-      props.onSignedIn(json);
-    } catch (error) {
-      logger.error("SignInScreen: network error during idToken exchange", { error });
-    }
-  }
-
-  async function continueAsGuest() {
-    setGuestLoading(true);
-    const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
-    try {
-      let guestId = await getStoredGuestId();
-      if (!guestId) {
-        guestId = generateGuestId();
-        await storeGuestId(guestId);
-      }
-      logger.debug("SignInScreen: continuing as guest", { guestId });
-
-      const result = await fetch(`${apiBaseUrl}/auth/guest`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ guestId })
-      });
-      if (!result.ok) {
-        logger.error("SignInScreen: /auth/guest failed", { status: result.status });
-        return;
-      }
-      const json = (await result.json()) as {
-        token: string;
-        user: { id: string; name?: string; email: string; isGuest: boolean };
-      };
-      logger.info("SignInScreen: guest sign-in succeeded", { userId: json.user.id });
-      props.onSignedIn(json);
-    } catch (error) {
-      logger.error("SignInScreen: network error during guest sign-in", { error });
-    } finally {
-      setGuestLoading(false);
-    }
-  }
+  const signIn = useSignIn({ onSignedIn: props.onSignedIn });
 
   return (
     <View
@@ -169,56 +39,41 @@ export function SignInScreen(props: SignInScreenProps) {
         <Text style={[typography.title, { color: colors.text }]}>Casual Padel Tourneys</Text>
         <Text style={{ color: colors.muted, fontSize: 14 }}>Sign in to manage your tournaments.</Text>
       </View>
-      <View style={{ width: "100%", maxWidth: formMaxWidth, gap: spacing.md }}>
-        <Pressable
-          disabled={!request}
-          onPress={() => {
-            void promptAsync();
-          }}
-          style={{
-            paddingVertical: spacing.sm,
-            paddingHorizontal: spacing.lg,
-            borderRadius: radius.md,
-            backgroundColor: request ? colors.primary : colors.border,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: spacing.sm
-          }}
-        >
-          {!request ? <ActivityIndicator color="colors.onPrimary" /> : null}
-          <Text
-            style={{
-              color: "colors.onPrimary",
-              fontWeight: "700"
+
+      <View style={{ width: "100%", maxWidth: formMaxWidth }}>
+        {signIn.view === "magic" ? (
+          <MagicLinkPanel
+            loading={signIn.magicLoading}
+            sentMessage={signIn.magicSentMessage}
+            onBack={() => signIn.setView("methods")}
+            onSend={(email) => {
+              void signIn.sendMagicLink(email);
             }}
-          >
-            Continue with Google
-          </Text>
-        </Pressable>
-        <Pressable
-          disabled={guestLoading}
-          onPress={() => {
-            void continueAsGuest();
-          }}
-          style={{
-            paddingVertical: spacing.sm,
-            paddingHorizontal: spacing.lg,
-            borderRadius: radius.md,
-            backgroundColor: colors.surface,
-            borderWidth: 1,
-            borderColor: colors.border,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: spacing.sm
-          }}
-        >
-          {guestLoading ? <ActivityIndicator color={colors.text} /> : null}
-          <Text style={{ color: colors.text, fontWeight: "600" }}>Continue as Guest</Text>
-        </Pressable>
+          />
+        ) : null}
+        {signIn.view === "password" ? (
+          <PasswordEntryPanel onBack={() => signIn.setView("methods")} />
+        ) : null}
+        {signIn.view === "methods" ? (
+          <AuthMethodList
+            googleReady={signIn.googleReady}
+            googleLoading={signIn.googleLoading}
+            guestLoading={signIn.guestLoading}
+            onGoogle={signIn.promptGoogle}
+            onMagicLink={() => signIn.setView("magic")}
+            onPassword={() => signIn.setView("password")}
+            onGuest={() => {
+              void signIn.continueAsGuest();
+            }}
+          />
+        ) : null}
       </View>
+
+      <AuthErrorSheet
+        visible={Boolean(signIn.errorMessage)}
+        message={signIn.errorMessage ?? ""}
+        onDismiss={signIn.clearError}
+      />
     </View>
   );
 }
-

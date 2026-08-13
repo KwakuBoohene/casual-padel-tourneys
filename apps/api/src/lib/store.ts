@@ -125,8 +125,14 @@ export function submitScore(
 ): TournamentState {
   const tournament = requireTournament(tournamentId);
   const lookup = findMatch(tournament.rounds, matchId);
-  if (lookup.match.completed) {
-    throw new Error("Match already scored.");
+  const wasCompleted = lookup.match.completed;
+  if (
+    wasCompleted &&
+    lookup.match.scoreA !== undefined &&
+    lookup.match.scoreB !== undefined
+  ) {
+    // Reverse prior awards so organizers can correct a round without double-counting.
+    awardPoints(tournament.players, lookup.match, -lookup.match.scoreA, -lookup.match.scoreB);
   }
   lookup.match.scoreA = scoreA;
   lookup.match.scoreB = scoreB;
@@ -140,6 +146,7 @@ export function submitScore(
     matchId,
     scoreA,
     scoreB,
+    replaced: wasCompleted,
     version: tournament.version
   });
   return tournament;

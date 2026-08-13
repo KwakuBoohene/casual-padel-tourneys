@@ -17,6 +17,16 @@ export interface UseCreateTournamentParams {
   adoptTournament: (data: LiveTournamentState, editMode: boolean) => void;
 }
 
+export type EstimatorCreateDraft = {
+  mode: TournamentMode;
+  variant: TournamentVariant;
+  schedulingMode: SchedulingMode;
+  courtsText: string;
+  pointsText: string;
+  targetGamesText: string;
+  tournamentTimeText: string;
+};
+
 export function useCreateTournament({
   tournaments,
   suggestedPlayerNames,
@@ -34,6 +44,13 @@ export function useCreateTournament({
   const [responseText, setResponseText] = useState("No tournament created yet.");
   const effectiveSchedulingMode: SchedulingMode = mode === "MEXICANO" ? "TOTAL_TIME" : schedulingMode;
 
+  const roster = usePlayerRoster({ variant, tournaments, suggestedPlayerNames });
+  const settings = useMatchSettings({
+    mode,
+    effectiveSchedulingMode,
+    playersCount: roster.sanitizedPlayers.length
+  });
+
   const startCreateWithMode = (preset: TournamentMode) => {
     setErrorText("");
     setName("");
@@ -44,17 +61,16 @@ export function useCreateTournament({
     setStep("NAME");
   };
 
-  const cancelCreateToList = () => {
-    setModeLockedFromList(false);
-    setStep("LIST");
+  const startCreateFromEstimator = (draft: EstimatorCreateDraft) => {
+    setErrorText("");
+    setName("");
+    setMode(draft.mode);
+    setModeLockedFromList(true);
+    setVariant(draft.variant);
+    setSchedulingMode(draft.mode === "MEXICANO" ? "TOTAL_TIME" : draft.schedulingMode);
+    settings.applySettings(draft);
+    setStep("NAME");
   };
-
-  const roster = usePlayerRoster({ variant, tournaments, suggestedPlayerNames });
-  const settings = useMatchSettings({
-    mode,
-    effectiveSchedulingMode,
-    playersCount: roster.sanitizedPlayers.length
-  });
 
   const createTournament = () =>
     submitCreateTournament({
@@ -88,7 +104,11 @@ export function useCreateTournament({
     setMode,
     modeLockedFromList,
     startCreateWithMode,
-    cancelCreateToList,
+    startCreateFromEstimator,
+    cancelCreateToList: () => {
+      setModeLockedFromList(false);
+      setStep("LIST");
+    },
     variant,
     setVariant,
     schedulingMode,

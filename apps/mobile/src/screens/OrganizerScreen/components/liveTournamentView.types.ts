@@ -56,6 +56,7 @@ export interface LiveTournamentViewProps {
   onConfirmAdjustCourts: () => void;
   onSaveGameEdits: () => void;
   onOpenScorePicker: (matchId: string, side: "scoreA" | "scoreB") => void;
+  onChangeScorePickerSide: (side: "scoreA" | "scoreB") => void;
   onCloseScorePicker: () => void;
   onSelectScoreFromPicker: (value: number) => void;
   onResetScoreForMatch: (matchId: string) => void;

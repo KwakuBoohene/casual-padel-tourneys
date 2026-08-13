@@ -63,7 +63,7 @@ function mapTournamentMutationErrorStatus(message: string): number {
   if (message.includes("not found")) {
     return 404;
   }
-  if (message.includes("Version mismatch") || message.includes("already scored")) {
+  if (message.includes("Version mismatch")) {
     return 409;
   }
   if (

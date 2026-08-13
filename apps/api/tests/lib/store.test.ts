@@ -272,7 +272,7 @@ test("submitScore updates leaderboard", () => {
   assert.equal(updated.leaderboard[0].totalPoints, 24, "Top player should have 24 points");
 });
 
-test("submitScore rejects resubmission for completed match", () => {
+test("submitScore replaces completed match scores without double-counting", () => {
   const config: TournamentConfig = {
     name: "Test",
     mode: "AMERICANO",
@@ -287,15 +287,17 @@ test("submitScore rejects resubmission for completed match", () => {
   const tournament = createTournament(config, "org_idempotency");
   const match = tournament.rounds[0].matches[0];
   const [playerA] = match.teamA;
+  const [playerB] = match.teamB;
 
   submitScore(tournament.id, match.id, 24, 16);
-  const pointsAfterFirstSubmit = tournament.players.find((p) => p.id === playerA)?.totalPoints;
+  assert.equal(tournament.players.find((p) => p.id === playerA)?.totalPoints, 24);
+  assert.equal(tournament.players.find((p) => p.id === playerB)?.totalPoints, 16);
 
-  assert.throws(() => submitScore(tournament.id, match.id, 24, 16), /Match already scored\./);
-
-  const pointsAfterSecondSubmitAttempt = tournament.players.find((p) => p.id === playerA)?.totalPoints;
-  assert.equal(pointsAfterFirstSubmit, 24);
-  assert.equal(pointsAfterSecondSubmitAttempt, 24);
+  const updated = submitScore(tournament.id, match.id, 18, 6);
+  assert.equal(updated.rounds[0].matches[0].scoreA, 18);
+  assert.equal(updated.rounds[0].matches[0].scoreB, 6);
+  assert.equal(updated.players.find((p) => p.id === playerA)?.totalPoints, 18);
+  assert.equal(updated.players.find((p) => p.id === playerB)?.totalPoints, 6);
 });
 
 // ============================================================================

@@ -1,13 +1,16 @@
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useState } from "react";
+import { ScrollView, Text, View } from "react-native";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
+import { AlertSheet } from "../../../components/sheets";
 import { useBreakpoint } from "../../../layout";
 import type { Estimate } from "../types";
-import { radius, spacing, typography } from "../../../theme";
+import { spacing, typography } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
-import { EstimatorEstimateCard } from "./EstimatorEstimateCard";
-import { EstimatorTypeCard } from "./EstimatorTypeCard";
+import { EstimatorFooter } from "./EstimatorFooter";
+import { EstimatorFormFields } from "./EstimatorFormFields";
+import { EstimatorResultCard } from "./EstimatorResultCard";
 
 interface GameEstimatorViewProps {
   mode: TournamentMode;
@@ -28,113 +31,85 @@ interface GameEstimatorViewProps {
   onChangeTargetGames: (value: string) => void;
   onChangeTournamentTime: (value: string) => void;
   onBack: () => void;
+  onUseInNewTournament: () => void;
+}
+
+function toInt(text: string, fallback: number): number {
+  const n = Number(text);
+  return Number.isFinite(n) && Number.isInteger(n) ? n : fallback;
 }
 
 export function GameEstimatorView(props: GameEstimatorViewProps) {
-  const { colors, cardStyles } = useTheme();
-  const { isWide, formMaxWidth } = useBreakpoint();
-  const showAmericanoScheduling = props.mode === "AMERICANO";
-
-  const field = (label: string, value: string, onChange: (v: string) => void, placeholder: string) => (
-    <View style={{ gap: spacing.xs }}>
-      <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>{label}</Text>
-      <TextInput
-        keyboardType="numeric"
-        value={value}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        placeholderTextColor={colors.muted}
-        style={{
-          borderWidth: 1,
-          borderColor: colors.border,
-          padding: spacing.sm,
-          borderRadius: radius.md,
-          backgroundColor: colors.surface,
-          color: colors.text
-        }}
-      />
-    </View>
-  );
-
-  const typeCard = (
-    <EstimatorTypeCard
-      mode={props.mode}
-      variant={props.variant}
-      schedulingMode={props.schedulingMode}
-      onChangeMode={props.onChangeMode}
-      onChangeVariant={props.onChangeVariant}
-      onChangeSchedulingMode={props.onChangeSchedulingMode}
-    />
-  );
-
-  const configCard = (
-    <View style={[cardStyles.container, { gap: spacing.md }]}>
-      <Text style={[typography.sectionTitle, { color: colors.text }]}>Configuration</Text>
-      {field("Players", props.usersText, props.onChangeUsers, "Number of players")}
-      {field("Courts", props.courtsText, props.onChangeCourts, "Number of courts")}
-      {field("Points Per Match", props.pointsText, props.onChangePoints, "Points per match")}
-      {props.schedulingMode === "TARGET_GAMES" && showAmericanoScheduling
-        ? field("Target Games", props.targetGamesText, props.onChangeTargetGames, "Target games per player")
-        : null}
-      {props.schedulingMode === "TOTAL_TIME" || props.mode === "MEXICANO"
-        ? field("Tournament Time", props.tournamentTimeText, props.onChangeTournamentTime, "Minutes")
-        : null}
-      {props.schedulingMode === "ROUND_ROBIN" && showAmericanoScheduling ? (
-        <Text style={{ color: colors.muted, fontSize: 12 }}>
-          Regular scheduling uses player count only — no target games or time limit.
-        </Text>
-      ) : null}
-    </View>
-  );
-
-  const estimateCard = (
-    <EstimatorEstimateCard estimate={props.estimate} style={{ marginTop: isWide ? 0 : spacing.sm }} />
-  );
+  const { colors } = useTheme();
+  const { formMaxWidth } = useBreakpoint();
+  const [showError, setShowError] = useState(false);
+  const players = toInt(props.usersText, 8);
+  const courts = toInt(props.courtsText, 2);
+  const points = toInt(props.pointsText, 24);
+  const minPlayers = courts * 4;
+  const impossible = !props.estimate || players < minPlayers || courts < 1 || points < 1;
 
   return (
-    <ScrollView
-      contentContainerStyle={{
-        paddingHorizontal: spacing.xl,
-        paddingVertical: spacing.xl,
-        gap: spacing.xl,
-        backgroundColor: colors.background,
-        maxWidth: formMaxWidth,
-        width: "100%",
-        alignSelf: "center"
-      }}
-    >
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <Text style={[typography.title, { color: colors.text }]}>Game Estimator</Text>
-        <Pressable
-          onPress={props.onBack}
-          style={{
-            paddingVertical: spacing.sm,
-            paddingHorizontal: spacing.md,
-            borderRadius: radius.md,
-            backgroundColor: colors.surface,
-            borderWidth: 1,
-            borderColor: colors.border
-          }}
-        >
-          <Text style={{ color: colors.text, fontWeight: "600" }}>Back</Text>
-        </Pressable>
-      </View>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: spacing.xl,
+          paddingTop: spacing.xxl,
+          paddingBottom: spacing.md,
+          gap: spacing.md,
+          maxWidth: formMaxWidth,
+          width: "100%",
+          alignSelf: "center",
+          flexGrow: 1
+        }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={[typography.title, { color: colors.text }]}>Game estimator</Text>
+        <Text style={{ fontSize: 14, color: colors.muted }}>Plan before you create</Text>
+        <EstimatorFormFields
+          mode={props.mode}
+          variant={props.variant}
+          schedulingMode={props.schedulingMode}
+          players={players}
+          courts={courts}
+          points={points}
+          targetGames={toInt(props.targetGamesText, 8)}
+          tournamentTime={toInt(props.tournamentTimeText, 90)}
+          onChangeMode={props.onChangeMode}
+          onChangeVariant={props.onChangeVariant}
+          onChangeSchedulingMode={props.onChangeSchedulingMode}
+          onChangeUsers={props.onChangeUsers}
+          onChangeCourts={props.onChangeCourts}
+          onChangePoints={props.onChangePoints}
+          onChangeTargetGames={props.onChangeTargetGames}
+          onChangeTournamentTime={props.onChangeTournamentTime}
+        />
+        <EstimatorResultCard estimate={props.estimate} />
+      </ScrollView>
 
-      {isWide ? (
-        <View style={{ flexDirection: "row", alignItems: "flex-start", gap: spacing.lg, flexWrap: "wrap" }}>
-          <View style={{ flex: 1, minWidth: 280, gap: spacing.lg }}>
-            {typeCard}
-            {configCard}
-          </View>
-          <View style={{ flex: 1, minWidth: 280 }}>{estimateCard}</View>
-        </View>
-      ) : (
-        <>
-          {typeCard}
-          {configCard}
-          {estimateCard}
-        </>
-      )}
-    </ScrollView>
+      <EstimatorFooter
+        formMaxWidth={formMaxWidth}
+        primaryLabel={props.mode === "MEXICANO" ? "Use in new Mexicano" : "Use in new Americano"}
+        onBack={props.onBack}
+        onPrimary={() => {
+          if (impossible) setShowError(true);
+          else props.onUseInNewTournament();
+        }}
+      />
+
+      <AlertSheet
+        visible={showError}
+        variant="error"
+        title="Cannot estimate tournament"
+        message={
+          players < minPlayers
+            ? `You need at least ${minPlayers} players for ${courts} court${courts === 1 ? "" : "s"}.`
+            : "Enter a valid player, court, and points configuration to continue."
+        }
+        primaryAction={{ label: "OK", onPress: () => setShowError(false) }}
+        onDismiss={() => setShowError(false)}
+      />
+    </View>
   );
 }

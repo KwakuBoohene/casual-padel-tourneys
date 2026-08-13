@@ -1,7 +1,8 @@
 import { Pressable, Text, TextInput, View } from "react-native";
 
-import { radius, spacing, typography } from "../../../theme";
+import { radius, spacing, touch, typography } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
+import { formatTournamentMode } from "../formatLabels";
 
 import type { LiveTournamentState } from "../types";
 
@@ -11,109 +12,111 @@ interface LiveTournamentHeaderProps {
   tournament: LiveTournamentState;
   tournamentNameDraft: string;
   isEditingCompletedTournament: boolean;
-  roundsLeft: number;
-  estimatedMinutesLeft: number;
-  onBackToList: () => void;
-  onViewLeaderboard: () => void;
-  onOpenLiveOptions: () => void;
+  roundsCount: number;
+  displayedRoundNumber: number | null;
+  canGoPrev: boolean;
+  canGoNext: boolean;
   onChangeTournamentName: (value: string) => void;
   onSaveTournamentName: () => void;
-  onRefresh: () => void;
   onOpenAddPendingPlayer: () => void;
   onOpenIntegrateConfirm: () => void;
+  onPrevRound: () => void;
+  onNextRound: () => void;
 }
 
 export function LiveTournamentHeader(props: LiveTournamentHeaderProps) {
   const { colors } = useTheme();
+  const modeLabel = `${formatTournamentMode(props.tournament.config.mode)} scoring`;
+  const roundLabel =
+    props.displayedRoundNumber != null && props.roundsCount > 0
+      ? `Round ${props.displayedRoundNumber} of ${props.roundsCount}`
+      : "No round";
 
   return (
-    <>
-      <Text style={[typography.title, { color: colors.text }]}>Live Tournament</Text>
-      <Pressable
-        onPress={props.onBackToList}
-        style={{
-          paddingVertical: spacing.sm,
-          borderRadius: radius.md,
-          backgroundColor: colors.surface,
-          borderWidth: 1,
-          borderColor: colors.border,
-          alignItems: "center"
-        }}
-      >
-        <Text style={{ color: colors.text, fontWeight: "600" }}>Back To Tournament List</Text>
-      </Pressable>
-      <Pressable
-        onPress={props.onViewLeaderboard}
-        style={{
-          paddingVertical: spacing.sm,
-          borderRadius: radius.md,
-          backgroundColor: colors.primary,
-          alignItems: "center"
-        }}
-      >
-        <Text style={{ color: colors.onPrimary, fontWeight: "700" }}>View Leaderboard</Text>
-      </Pressable>
-      <Pressable
-        onPress={props.onOpenLiveOptions}
-        style={{
-          paddingVertical: spacing.sm,
-          borderRadius: radius.md,
-          backgroundColor: colors.surface,
-          borderWidth: 1,
-          borderColor: colors.border,
-          alignItems: "center"
-        }}
-      >
-        <Text style={{ color: colors.text, fontWeight: "600" }}>Options</Text>
-      </Pressable>
+    <View style={{ gap: spacing.md }}>
       {props.isEditingCompletedTournament ? (
-        <>
-          <Text style={{ color: colors.text }}>Edit Tournament Name</Text>
+        <View style={{ gap: spacing.sm }}>
           <TextInput
             value={props.tournamentNameDraft}
             onChangeText={props.onChangeTournamentName}
-            style={{ borderWidth: 1, padding: 8, color: colors.text, borderColor: colors.border }}
+            style={{
+              borderWidth: 1,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+              padding: spacing.sm,
+              color: colors.text,
+              fontSize: 22,
+              fontWeight: "700"
+            }}
           />
           <Pressable
             onPress={props.onSaveTournamentName}
             style={{
-              marginTop: spacing.sm,
-              paddingVertical: spacing.sm,
-              borderRadius: radius.md,
+              minHeight: touch.minSecondary,
+              borderRadius: radius.lg,
               backgroundColor: colors.primary,
-              alignItems: "center"
+              alignItems: "center",
+              justifyContent: "center"
             }}
           >
-            <Text style={{ color: colors.onPrimary, fontWeight: "700" }}>Save Tournament Name</Text>
+            <Text style={{ color: colors.onPrimary, fontWeight: "700" }}>Save tournament name</Text>
           </Pressable>
-        </>
+        </View>
       ) : (
-        <Text style={{ color: colors.text }}>
-          {props.tournament.config.name} ({props.tournament.config.mode}/{props.tournament.config.variant})
+        <Text style={[typography.title, { fontSize: 22, color: colors.text }]}>
+          {props.tournament.config.name}
         </Text>
       )}
-      <Text style={{ color: colors.muted }}>Current Version: {props.tournament.version}</Text>
-      <Text style={{ color: colors.muted }}>Rounds Left: {props.roundsLeft}</Text>
-      <Text style={{ color: colors.muted }}>Estimated Time Left: {props.estimatedMinutesLeft} minutes</Text>
-      <Pressable
-        onPress={props.onRefresh}
-        style={{
-          marginTop: spacing.sm,
-          paddingVertical: spacing.sm,
-          borderRadius: radius.md,
-          backgroundColor: colors.surface,
-          borderWidth: 1,
-          borderColor: colors.border,
-          alignItems: "center"
-        }}
-      >
-        <Text style={{ color: colors.text, fontWeight: "600" }}>Refresh</Text>
-      </Pressable>
+
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm }}>
+        <Text style={{ flex: 1, fontSize: 14, color: colors.muted }}>
+          {modeLabel} · {roundLabel}
+        </Text>
+        {props.roundsCount > 1 ? (
+          <View style={{ flexDirection: "row", gap: spacing.xs }}>
+            <Pressable
+              onPress={props.onPrevRound}
+              disabled={!props.canGoPrev}
+              style={{
+                minWidth: touch.minSecondary,
+                minHeight: touch.minSecondary,
+                borderRadius: radius.md,
+                borderWidth: 1,
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: props.canGoPrev ? 1 : 0.4
+              }}
+            >
+              <Text style={{ color: colors.text, fontWeight: "700" }}>←</Text>
+            </Pressable>
+            <Pressable
+              onPress={props.onNextRound}
+              disabled={!props.canGoNext}
+              style={{
+                minWidth: touch.minSecondary,
+                minHeight: touch.minSecondary,
+                borderRadius: radius.md,
+                borderWidth: 1,
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: props.canGoNext ? 1 : 0.4
+              }}
+            >
+              <Text style={{ color: colors.text, fontWeight: "700" }}>→</Text>
+            </Pressable>
+          </View>
+        ) : null}
+      </View>
+
       <LiveTournamentPendingBanner
         pendingPlayers={props.tournament.pendingPlayers}
         onOpenAddPendingPlayer={props.onOpenAddPendingPlayer}
         onOpenIntegrateConfirm={props.onOpenIntegrateConfirm}
       />
-    </>
+    </View>
   );
 }

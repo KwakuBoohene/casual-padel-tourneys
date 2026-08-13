@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 import { BottomSheet, SheetButton } from "../../../components/sheets";
 import { radius, spacing, touch } from "../../../theme";
@@ -10,97 +10,98 @@ interface LiveTournamentOptionsSheetProps {
   proposedCourts: number;
   maxCourts: number;
   canAdjustCourts: boolean;
+  canFinish: boolean;
   onClose: () => void;
   onChangeProposedCourts: (value: number) => void;
   onOpenAdjustCourtsConfirm: () => void;
+  onCopyShareLink: () => void;
+  onOpenAddPendingPlayer: () => void;
+  onFinishTournament: () => void;
+  onBackToList: () => void;
+}
+
+function OptionRow(props: { label: string; onPress: () => void }) {
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      onPress={props.onPress}
+      style={{
+        minHeight: touch.minSecondary,
+        borderRadius: radius.lg,
+        borderWidth: 1,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        paddingHorizontal: spacing.md,
+        justifyContent: "center"
+      }}
+    >
+      <Text style={{ color: colors.text, fontWeight: "600", fontSize: 16 }}>{props.label}</Text>
+    </Pressable>
+  );
 }
 
 export function LiveTournamentOptionsSheet(props: LiveTournamentOptionsSheetProps) {
   const { colors } = useTheme();
 
   return (
-    <BottomSheet visible={props.visible} title="Live Options" onDismiss={props.onClose}>
-      {props.canAdjustCourts ? (
-        <View style={{ gap: spacing.sm }}>
-          <Text style={{ fontWeight: "700", color: colors.text }}>Adjust Courts</Text>
-          <Text style={{ color: colors.muted }}>Current courts: {props.currentCourts}</Text>
-          <Text style={{ color: colors.muted }}>Proposed courts: {props.proposedCourts}</Text>
-          <Text style={{ color: colors.muted }}>Allowed range: 1 - {props.maxCourts}</Text>
-          <View style={{ flexDirection: "row", gap: spacing.sm }}>
-            <SheetButton
-              label="-"
-              style={{ flex: 1 }}
-              disabled={props.proposedCourts <= 1}
-              onPress={() => props.onChangeProposedCourts(Math.max(1, props.proposedCourts - 1))}
-            />
-            <SheetButton
-              label="+"
-              style={{ flex: 1 }}
-              disabled={props.proposedCourts >= props.maxCourts}
-              onPress={() =>
-                props.onChangeProposedCourts(Math.min(props.maxCourts, props.proposedCourts + 1))
-              }
-            />
-          </View>
-          <SheetButton label="Apply Court Change" variant="primary" onPress={props.onOpenAdjustCourtsConfirm} />
-        </View>
-      ) : (
-        <Text style={{ color: colors.muted }}>No court adjustment options available right now.</Text>
-      )}
-      <SheetButton label="Close" onPress={props.onClose} />
-    </BottomSheet>
-  );
-}
-
-interface LiveTournamentScorePickerSheetProps {
-  visible: boolean;
-  pointsPerMatch: number;
-  scorePicker: { matchId: string; side: "scoreA" | "scoreB" } | null;
-  onClose: () => void;
-  onSelect: (value: number) => void;
-  onReset: (matchId: string) => void;
-}
-
-export function LiveTournamentScorePickerSheet(props: LiveTournamentScorePickerSheetProps) {
-  const { colors } = useTheme();
-
-  return (
-    <BottomSheet visible={props.visible} title="Select Score" onDismiss={props.onClose}>
-      <Text style={{ color: colors.muted }}>Possible scores (1 to {props.pointsPerMatch})</Text>
-      <ScrollView
-        style={{ maxHeight: 180 }}
-        contentContainerStyle={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}
-      >
-        {Array.from({ length: props.pointsPerMatch }, (_, index) => index + 1).map((score) => (
-          <Pressable
-            key={`score-${score}`}
-            onPress={() => props.onSelect(score)}
-            style={{
-              minWidth: touch.minSecondary,
-              minHeight: touch.minSecondary,
-              paddingVertical: spacing.xs,
-              borderRadius: radius.md,
-              backgroundColor: colors.surface,
-              borderWidth: 1,
-              borderColor: colors.border,
-              alignItems: "center",
-              justifyContent: "center"
-            }}
-          >
-            <Text style={{ color: colors.text, fontWeight: "600" }}>{score}</Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-      <SheetButton
-        label="Reset"
-        onPress={() => {
-          if (props.scorePicker) {
-            props.onReset(props.scorePicker.matchId);
+    <BottomSheet visible={props.visible} title="Options" onDismiss={props.onClose}>
+      <View style={{ gap: spacing.sm }}>
+        <OptionRow
+          label="Copy viewer link"
+          onPress={() => {
+            props.onCopyShareLink();
             props.onClose();
-          }
-        }}
-      />
-      <SheetButton label="Close" variant="primary" onPress={props.onClose} />
+          }}
+        />
+        <OptionRow
+          label="Add pending"
+          onPress={() => {
+            props.onClose();
+            props.onOpenAddPendingPlayer();
+          }}
+        />
+        {props.canAdjustCourts ? (
+          <View style={{ gap: spacing.sm }}>
+            <Text style={{ fontWeight: "700", color: colors.text }}>Adjust courts</Text>
+            <Text style={{ color: colors.muted }}>
+              Current {props.currentCourts} · Proposed {props.proposedCourts} · Max {props.maxCourts}
+            </Text>
+            <View style={{ flexDirection: "row", gap: spacing.sm }}>
+              <SheetButton
+                label="-"
+                style={{ flex: 1 }}
+                disabled={props.proposedCourts <= 1}
+                onPress={() => props.onChangeProposedCourts(Math.max(1, props.proposedCourts - 1))}
+              />
+              <SheetButton
+                label="+"
+                style={{ flex: 1 }}
+                disabled={props.proposedCourts >= props.maxCourts}
+                onPress={() =>
+                  props.onChangeProposedCourts(Math.min(props.maxCourts, props.proposedCourts + 1))
+                }
+              />
+            </View>
+            <SheetButton label="Apply court change" variant="primary" onPress={props.onOpenAdjustCourtsConfirm} />
+          </View>
+        ) : null}
+        {props.canFinish ? (
+          <OptionRow
+            label="Finish tournament"
+            onPress={() => {
+              props.onClose();
+              props.onFinishTournament();
+            }}
+          />
+        ) : null}
+        <OptionRow
+          label="Back to list"
+          onPress={() => {
+            props.onClose();
+            props.onBackToList();
+          }}
+        />
+      </View>
     </BottomSheet>
   );
 }

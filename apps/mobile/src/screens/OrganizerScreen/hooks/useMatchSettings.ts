@@ -31,12 +31,25 @@ export function useMatchSettings({ mode, effectiveSchedulingMode, playersCount }
     [courtsText, effectiveSchedulingMode, mode, pointsText, playersCount, targetGamesText, tournamentTimeText]
   );
 
+  const applySettings = (next: {
+    courtsText: string;
+    pointsText: string;
+    targetGamesText: string;
+    tournamentTimeText: string;
+  }) => {
+    setCourtsText(sanitizeWholeNumberInput(next.courtsText));
+    setPointsText(sanitizeWholeNumberInput(next.pointsText));
+    setTargetGamesText(sanitizeWholeNumberInput(next.targetGamesText));
+    setTournamentTimeText(sanitizeWholeNumberInput(next.tournamentTimeText));
+  };
+
   return {
     courtsText,
     pointsText,
     targetGamesText,
     tournamentTimeText,
     estimate,
+    applySettings,
     onChangeCourtsValue: (value: string) => setCourtsText(sanitizeWholeNumberInput(value)),
     onChangePointsValue: (value: string) => setPointsText(sanitizeWholeNumberInput(value)),
     onChangeTargetGamesValue: (value: string) => setTargetGamesText(sanitizeWholeNumberInput(value)),

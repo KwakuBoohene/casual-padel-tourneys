@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 
-import { radius, spacing } from "../../../theme";
+import { radius, spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
 import type { LiveTournamentState } from "../types";
@@ -10,106 +10,53 @@ export type LiveMatch = LiveTournamentState["rounds"][number]["matches"][number]
 interface LiveTournamentMatchCardProps {
   match: LiveMatch;
   canEditScores: boolean;
-  scorePicker: { matchId: string; side: "scoreA" | "scoreB" } | null;
   scoreInputs: Record<string, { scoreA: string; scoreB: string }>;
   playerNameById: Map<string, string>;
   onOpenScorePicker: (matchId: string, side: "scoreA" | "scoreB") => void;
 }
 
-export function LiveTournamentMatchCard(props: LiveTournamentMatchCardProps) {
-  const { colors, cardStyles } = useTheme();
+function namePair(ids: [string, string], names: Map<string, string>): string {
+  return `${names.get(ids[0]) ?? ids[0]} / ${names.get(ids[1]) ?? ids[1]}`;
+}
 
-  const { match, canEditScores, scorePicker, scoreInputs, playerNameById, onOpenScorePicker } = props;
+export function LiveTournamentMatchCard(props: LiveTournamentMatchCardProps) {
+  const { colors } = useTheme();
+  const { match, canEditScores, scoreInputs, playerNameById, onOpenScorePicker } = props;
+  const draft = scoreInputs[match.id];
+  const scoreA = draft?.scoreA !== undefined && draft.scoreA !== "" ? draft.scoreA : match.scoreA?.toString();
+  const scoreB = draft?.scoreB !== undefined && draft.scoreB !== "" ? draft.scoreB : match.scoreB?.toString();
+  const hasScore = scoreA != null && scoreB != null && scoreA !== "" && scoreB !== "";
+  const isDone = match.completed || (hasScore && !canEditScores);
+  const status = !hasScore
+    ? "Tap to enter score"
+    : isDone
+      ? `${scoreA}–${scoreB} · Done`
+      : match.completed
+        ? `${scoreA}–${scoreB} · Tap to edit`
+        : `${scoreA}–${scoreB} · Ready`;
+  const statusColor = isDone ? colors.muted : colors.primary;
 
   return (
-    <View
-      style={[
-        cardStyles.container,
-        {
-          padding: spacing.md,
-          gap: spacing.sm
-        }
-      ]}
+    <Pressable
+      disabled={!canEditScores}
+      onPress={() => onOpenScorePicker(match.id, "scoreA")}
+      style={{
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        padding: spacing.md,
+        gap: 6,
+        minHeight: touch.minPrimary + spacing.md
+      }}
     >
-      <Text style={{ fontWeight: "700", color: colors.text }}>Court {match.court}</Text>
-
-      <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: spacing.xs }}>
-        <View style={{ flex: 1, alignItems: "flex-start" }}>
-          <Text style={{ fontSize: 10, color: colors.muted, textTransform: "uppercase" }}>Team A</Text>
-          <Text style={{ color: colors.text, fontWeight: "600" }}>
-            {playerNameById.get(match.teamA[0]) ?? match.teamA[0]}
-          </Text>
-          <Text style={{ color: colors.text, fontWeight: "600" }}>
-            {playerNameById.get(match.teamA[1]) ?? match.teamA[1]}
-          </Text>
-        </View>
-
-        <View style={{ width: 40, alignItems: "center", justifyContent: "center" }}>
-          <Text style={{ color: colors.muted, fontWeight: "700" }}>vs</Text>
-        </View>
-
-        <View style={{ flex: 1, alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 10, color: colors.muted, textTransform: "uppercase" }}>Team B</Text>
-          <Text style={{ color: colors.text, fontWeight: "600", textAlign: "right" }}>
-            {playerNameById.get(match.teamB[0]) ?? match.teamB[0]}
-          </Text>
-          <Text style={{ color: colors.text, fontWeight: "600", textAlign: "right" }}>
-            {playerNameById.get(match.teamB[1]) ?? match.teamB[1]}
-          </Text>
-        </View>
-      </View>
-      {canEditScores ? (
-        <View style={{ flexDirection: "row", gap: spacing.sm, justifyContent: "center" }}>
-          <Pressable
-            onPress={() => onOpenScorePicker(match.id, "scoreA")}
-            style={{
-              width: 84,
-              height: 84,
-              borderRadius: radius.md,
-              backgroundColor: colors.surface,
-              borderWidth: 1,
-              borderColor:
-                scorePicker?.matchId === match.id && scorePicker.side === "scoreA"
-                  ? colors.primary
-                  : colors.border,
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 4
-            }}
-          >
-            <Text style={{ fontSize: 10, color: colors.muted, textTransform: "uppercase" }}>Team A</Text>
-            <Text style={{ color: colors.text, fontSize: 24, fontWeight: "700" }}>
-              {scoreInputs[match.id]?.scoreA ?? match.scoreA?.toString() ?? "-"}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => onOpenScorePicker(match.id, "scoreB")}
-            style={{
-              width: 84,
-              height: 84,
-              borderRadius: radius.md,
-              backgroundColor: colors.surface,
-              borderWidth: 1,
-              borderColor:
-                scorePicker?.matchId === match.id && scorePicker.side === "scoreB"
-                  ? colors.primary
-                  : colors.border,
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 4
-            }}
-          >
-            <Text style={{ fontSize: 10, color: colors.muted, textTransform: "uppercase" }}>Team B</Text>
-            <Text style={{ color: colors.text, fontSize: 24, fontWeight: "700" }}>
-              {scoreInputs[match.id]?.scoreB ?? match.scoreB?.toString() ?? "-"}
-            </Text>
-          </Pressable>
-        </View>
-      ) : (
-        <Text style={{ color: colors.text }}>
-          Final Score: {match.scoreA ?? "-"} - {match.scoreB ?? "-"}
-        </Text>
-      )}
-    </View>
+      <Text style={{ color: colors.primary, fontWeight: "700", fontSize: 12 }}>Court {match.court}</Text>
+      <Text style={{ color: colors.text, fontWeight: "600", fontSize: 15 }}>
+        {namePair(match.teamA, playerNameById)}
+        {"  vs  "}
+        {namePair(match.teamB, playerNameById)}
+      </Text>
+      <Text style={{ color: statusColor, fontWeight: "500", fontSize: 13 }}>{status}</Text>
+    </Pressable>
   );
 }

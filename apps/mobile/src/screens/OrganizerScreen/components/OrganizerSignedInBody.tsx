@@ -24,6 +24,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     setMode,
     modeLockedFromList,
     startCreateWithMode,
+    startCreateFromEstimator,
     cancelCreateToList,
     variant,
     setVariant,
@@ -201,6 +202,17 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         onChangeTargetGames={onChangeEstimatorTargetGamesValue}
         onChangeTournamentTime={onChangeEstimatorTournamentTimeValue}
         onBack={() => setStep("LIST")}
+        onUseInNewTournament={() =>
+          startCreateFromEstimator({
+            mode: estimatorMode,
+            variant: estimatorVariant,
+            schedulingMode: effectiveEstimatorSchedulingMode,
+            courtsText: estimatorCourtsText,
+            pointsText: estimatorPointsText,
+            targetGamesText: estimatorTargetGamesText,
+            tournamentTimeText: estimatorTournamentTimeText
+          })
+        }
       />
     );
   }
@@ -301,6 +313,9 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
             return;
           }
           setScorePicker({ matchId, side });
+        }}
+        onChangeScorePickerSide={(side) => {
+          setScorePicker((previous) => (previous ? { ...previous, side } : previous));
         }}
         onCloseScorePicker={() => setScorePicker(null)}
         onSelectScoreFromPicker={pickScoreFromSheet}

@@ -581,7 +581,7 @@ The player integration feature is **fully implemented, tested, and production-re
 **Robust Validation** - Comprehensive error handling and eligibility checks  
 **Real-time Updates** - Socket.IO events for live tournament updates  
 **Backward Compatible** - Existing tournaments unaffected  
-**Score Integrity** - Resubmitting a score for a completed match is rejected (`Match already scored.`), preventing duplicate point awards  
+**Score Integrity** - Resubmitting a score for a completed match replaces prior points (revoke + re-award) so organizers can correct a round without double-counting.  
 **Name Deduplication** - Duplicate player names are auto-resolved with a numeric suffix rather than rejected
 
 ### Production Readiness

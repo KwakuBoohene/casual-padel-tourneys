@@ -36,21 +36,15 @@ export function applyPickedScore(input: {
   value: number;
   pointsPerMatch: number;
 }): ScoreDraftMap {
-  const { previous, existing, match, matchId, side, value, pointsPerMatch } = input;
+  const { previous, match, matchId, side, value, pointsPerMatch } = input;
   const oppositeSide: ScoreSide = side === "scoreA" ? "scoreB" : "scoreA";
-  const currentA = existing?.scoreA ?? matchScoreText(match, "scoreA");
-  const currentB = existing?.scoreB ?? matchScoreText(match, "scoreB");
-  const bothFilledBefore = currentA.trim().length > 0 && currentB.trim().length > 0;
-  const oppositeCurrent = oppositeSide === "scoreA" ? currentA : currentB;
-
+  // Americano points-to-N: editing either side always complements the other.
   const next = {
     scoreA: previous[matchId]?.scoreA ?? matchScoreText(match, "scoreA"),
     scoreB: previous[matchId]?.scoreB ?? matchScoreText(match, "scoreB")
   };
   next[side] = String(value);
-  if (!bothFilledBefore && oppositeCurrent.trim().length === 0) {
-    next[oppositeSide] = String(Math.max(0, pointsPerMatch - value));
-  }
+  next[oppositeSide] = String(Math.max(0, pointsPerMatch - value));
   return { ...previous, [matchId]: next };
 }
 

@@ -12,7 +12,7 @@ export function useGameEstimator() {
   const [estimatorUsersText, setEstimatorUsersText] = useState("8");
   const [estimatorCourtsText, setEstimatorCourtsText] = useState("2");
   const [estimatorPointsText, setEstimatorPointsText] = useState("24");
-  const [estimatorTargetGamesText, setEstimatorTargetGamesText] = useState("4");
+  const [estimatorTargetGamesText, setEstimatorTargetGamesText] = useState("8");
   const [estimatorTournamentTimeText, setEstimatorTournamentTimeText] = useState("90");
 
   const effectiveEstimatorSchedulingMode: SchedulingMode =

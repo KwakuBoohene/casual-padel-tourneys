@@ -9,5 +9,5 @@
       "@padel/shared": ["../../packages/shared/src/index.ts"]
     }
   },
-  "include": ["src/**/*.ts", "src/types/**/*.d.ts", "../../packages/shared/src/**/*.ts"]
+  "include": ["src/**/*.ts", "tests/**/*.ts", "src/types/**/*.d.ts", "../../packages/shared/src/**/*.ts"]
 }

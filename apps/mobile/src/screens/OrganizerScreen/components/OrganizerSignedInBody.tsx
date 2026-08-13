@@ -21,6 +21,9 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     canContinueFromName,
     mode,
     setMode,
+    modeLockedFromList,
+    startCreateWithMode,
+    cancelCreateToList,
     variant,
     setVariant,
     setSchedulingMode,
@@ -147,7 +150,8 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         showTournamentActionConfirmModal={showTournamentActionConfirmModal}
         pendingTournamentAction={pendingTournamentAction}
         onRefresh={() => void loadTournaments()}
-        onCreateNew={() => setStep("NAME")}
+        onCreateAmericano={() => startCreateWithMode("AMERICANO")}
+        onCreateMexicano={() => startCreateWithMode("MEXICANO")}
         onOpenEstimator={() => setStep("ESTIMATOR")}
         onOpenTournament={(id) => void openTournament(id)}
         onOpenOptions={openTournamentOptions}
@@ -167,7 +171,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         name={name}
         canContinue={canContinueFromName}
         onChangeName={setName}
-        onBack={() => setStep("LIST")}
+        onBack={cancelCreateToList}
         onNext={() => setStep("OPTIONS")}
       />
     );
@@ -202,6 +206,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     return (
       <TournamentOptionsStepView
         mode={mode}
+        modeLocked={modeLockedFromList}
         variant={variant}
         schedulingMode={effectiveSchedulingMode}
         onChangeMode={setMode}

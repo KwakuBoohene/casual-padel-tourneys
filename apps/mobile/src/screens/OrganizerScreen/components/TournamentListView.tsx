@@ -7,12 +7,18 @@ import { useTheme } from "../../../theme/ThemeProvider";
 
 import type { LiveTournamentState } from "../types";
 
+import { TournamentListBottomNav } from "./TournamentListBottomNav";
+import { TournamentListCard } from "./TournamentListCard";
+import { TournamentListCreateActions } from "./TournamentListCreateActions";
+
 interface TournamentListViewProps {
   tournaments: LiveTournamentState[];
   refreshing: boolean;
   errorText: string;
   onRefresh: () => void;
-  onCreateNew: () => void;
+  onCreateAmericano: () => void;
+  onCreateMexicano: () => void;
+  onCreateKingOfTheHill: () => void;
   onOpenEstimator: () => void;
   onOpenTournament: (id: string) => void;
   onOpenOptions: (id: string) => void;
@@ -21,22 +27,12 @@ interface TournamentListViewProps {
 
 export function TournamentListView(props: TournamentListViewProps) {
   const { colors, cardStyles } = useTheme();
-
   const { isWide } = useBreakpoint();
   const cardWrapStyle = isWide
-    ? ({
-        flexDirection: "row",
-        flexWrap: "wrap",
-        gap: spacing.md
-      } as const)
+    ? ({ flexDirection: "row", flexWrap: "wrap", gap: spacing.md } as const)
     : undefined;
   const wideCardStyle = isWide
-    ? ({
-        flexGrow: 1,
-        flexBasis: "47%",
-        minWidth: 260,
-        maxWidth: 520
-      } as const)
+    ? ({ flexGrow: 1, flexBasis: "47%", minWidth: 260, maxWidth: 520 } as const)
     : undefined;
 
   const activeTournaments = props.tournaments.filter(
@@ -89,114 +85,32 @@ export function TournamentListView(props: TournamentListViewProps) {
       ) : (
         <View style={cardWrapStyle}>
           {activeTournaments.map((tournament) => (
-            <Pressable
+            <TournamentListCard
               key={tournament.id}
-              onPress={() => props.onOpenTournament(tournament.id)}
-              style={[
-                cardStyles.container,
-                {
-                  marginTop: spacing.sm,
-                  backgroundColor: colors.surfaceAlt
-                },
-                wideCardStyle
-              ]}
-            >
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
-                <View>
-                  <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>{tournament.config.name}</Text>
-                  <Text style={{ fontSize: 12, color: colors.muted }}>
-                    {tournament.config.mode} / {tournament.config.variant}
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    paddingHorizontal: spacing.sm,
-                    paddingVertical: 4,
-                    borderRadius: radius.pill,
-                    backgroundColor: "rgba(173,255,47,0.12)"
-                  }}
-                >
-                  <Text style={{ fontSize: 10, fontWeight: "700", color: colors.primary }}>LIVE</Text>
-                </View>
-              </View>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
-                <Text style={{ fontSize: 12, color: colors.muted }}>Players: {tournament.players.length}</Text>
-                <Text style={{ fontSize: 12, color: colors.muted }}>
-                  Updated: {new Date(tournament.updatedAt).toLocaleTimeString()}
-                </Text>
-              </View>
-              <View style={{ flexDirection: "row" }}>
-                <Pressable
-                  onPress={() => props.onOpenOptions(tournament.id)}
-                  style={{
-                    paddingVertical: spacing.sm,
-                    paddingHorizontal: spacing.lg,
-                    borderRadius: radius.md,
-                    backgroundColor: colors.surface,
-                    borderWidth: 1,
-                    borderColor: colors.border
-                  }}
-                >
-                  <Text style={{ color: colors.text, fontWeight: "600" }}>Options</Text>
-                </Pressable>
-              </View>
-            </Pressable>
+              tournament={tournament}
+              status="LIVE"
+              wideCardStyle={wideCardStyle}
+              onOpen={() => props.onOpenTournament(tournament.id)}
+              onOpenOptions={() => props.onOpenOptions(tournament.id)}
+            />
           ))}
         </View>
       )}
 
       {completedTournaments.length > 0 ? (
         <>
-          <View
-            style={{
-              marginTop: spacing.lg,
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: spacing.sm
-            }}
-          >
+          <View style={{ marginTop: spacing.lg, marginBottom: spacing.sm }}>
             <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>History</Text>
           </View>
           <View style={cardWrapStyle}>
             {completedTournaments.map((tournament) => (
-              <Pressable
+              <TournamentListCard
                 key={tournament.id}
-                onPress={() => props.onOpenTournament(tournament.id)}
-                style={[
-                  cardStyles.container,
-                  {
-                    marginTop: spacing.sm,
-                    backgroundColor: colors.surface
-                  },
-                  wideCardStyle
-                ]}
-              >
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm }}>
-                <View>
-                  <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>{tournament.config.name}</Text>
-                  <Text style={{ fontSize: 12, color: colors.muted }}>
-                    {tournament.config.mode} / {tournament.config.variant}
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    paddingHorizontal: spacing.sm,
-                    paddingVertical: 4,
-                    borderRadius: radius.pill,
-                    backgroundColor: colors.surfaceAlt
-                  }}
-                >
-                  <Text style={{ fontSize: 10, fontWeight: "700", color: colors.muted }}>COMPLETED</Text>
-                </View>
-              </View>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <Text style={{ fontSize: 12, color: colors.muted }}>Players: {tournament.players.length}</Text>
-                <Text style={{ fontSize: 12, color: colors.muted }}>
-                  Updated: {new Date(tournament.updatedAt).toLocaleTimeString()}
-                </Text>
-              </View>
-            </Pressable>
+                tournament={tournament}
+                status="COMPLETED"
+                wideCardStyle={wideCardStyle}
+                onOpen={() => props.onOpenTournament(tournament.id)}
+              />
             ))}
           </View>
         </>
@@ -204,101 +118,14 @@ export function TournamentListView(props: TournamentListViewProps) {
 
       {props.errorText ? <Text style={{ color: colors.danger }}>Error: {props.errorText}</Text> : null}
 
-      <View
-        style={{
-          marginTop: spacing.lg,
-          flexDirection: "row",
-          flexWrap: isWide ? "wrap" : "nowrap",
-          gap: spacing.sm,
-          justifyContent: isWide ? "flex-start" : "flex-start"
-        }}
-      >
-        <Pressable
-          onPress={props.onCreateNew}
-          style={{
-            flex: isWide ? 0 : 1,
-            flexGrow: isWide ? 1 : undefined,
-            minWidth: isWide ? 160 : undefined,
-            maxWidth: isWide ? 320 : undefined,
-            paddingVertical: spacing.sm,
-            borderRadius: radius.md,
-            backgroundColor: colors.primary,
-            alignItems: "center",
-            justifyContent: "center"
-          }}
-        >
-          <Text
-            style={{
-              color: "colors.onPrimary",
-              fontWeight: "700"
-            }}
-          >
-            Create New
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={props.onOpenEstimator}
-          style={{
-            flex: isWide ? 0 : 1,
-            flexGrow: isWide ? 1 : undefined,
-            minWidth: isWide ? 160 : undefined,
-            maxWidth: isWide ? 320 : undefined,
-            paddingVertical: spacing.sm,
-            borderRadius: radius.md,
-            backgroundColor: colors.surface,
-            borderWidth: 1,
-            borderColor: colors.border,
-            alignItems: "center",
-            justifyContent: "center"
-          }}
-        >
-          <Text
-            style={{
-              color: colors.text,
-              fontWeight: "600"
-            }}
-          >
-            Game Estimator
-          </Text>
-        </Pressable>
-      </View>
+      <TournamentListCreateActions
+        onCreateAmericano={props.onCreateAmericano}
+        onCreateMexicano={props.onCreateMexicano}
+        onCreateKingOfTheHill={props.onCreateKingOfTheHill}
+        onOpenEstimator={props.onOpenEstimator}
+      />
 
-      <View
-        style={{
-          marginTop: spacing.lg,
-          paddingTop: spacing.sm,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          flexDirection: "row",
-          justifyContent: "space-between"
-        }}
-      >
-        {["Home", "History", "Profile"].map((label, index) => (
-          <View key={label} style={{ alignItems: "center", flex: 1 }}>
-            <View
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: radius.pill,
-                backgroundColor: index === 0 ? colors.primary : colors.muted,
-                marginBottom: 4
-              }}
-            />
-            <Text
-              style={{
-                fontSize: 10,
-                fontWeight: "700",
-                letterSpacing: 1,
-                textTransform: "uppercase",
-                color: index === 0 ? colors.primary : colors.muted
-              }}
-            >
-              {label}
-            </Text>
-          </View>
-        ))}
-      </View>
+      <TournamentListBottomNav />
     </ScrollView>
   );
 }
-

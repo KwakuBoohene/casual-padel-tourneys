@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { View } from "react-native";
 
 import { AlertSheet, BottomSheet, SheetButton } from "../../../components/sheets";
@@ -15,7 +16,8 @@ interface OrganizerListScreenProps {
   showTournamentActionConfirmModal: boolean;
   pendingTournamentAction: "EDIT" | "DELETE" | null;
   onRefresh: () => void;
-  onCreateNew: () => void;
+  onCreateAmericano: () => void;
+  onCreateMexicano: () => void;
   onOpenEstimator: () => void;
   onOpenTournament: (id: string) => void;
   onOpenOptions: (id: string) => void;
@@ -29,6 +31,7 @@ interface OrganizerListScreenProps {
 
 export function OrganizerListScreen(props: OrganizerListScreenProps) {
   const isDelete = props.pendingTournamentAction === "DELETE";
+  const [showKohComingSoon, setShowKohComingSoon] = useState(false);
 
   return (
     <>
@@ -37,7 +40,9 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
         refreshing={props.refreshing}
         errorText={props.errorText}
         onRefresh={props.onRefresh}
-        onCreateNew={props.onCreateNew}
+        onCreateAmericano={props.onCreateAmericano}
+        onCreateMexicano={props.onCreateMexicano}
+        onCreateKingOfTheHill={() => setShowKohComingSoon(true)}
         onOpenEstimator={props.onOpenEstimator}
         onOpenTournament={props.onOpenTournament}
         onOpenOptions={props.onOpenOptions}
@@ -72,6 +77,15 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
         }}
         secondaryAction={{ label: "Cancel", onPress: props.onCancelActionConfirm }}
         onDismiss={props.onCancelActionConfirm}
+      />
+
+      <AlertSheet
+        visible={showKohComingSoon}
+        variant="info"
+        title="King of the Hill is next"
+        message="King of the Hill create flow ships in a later epic. Americano and Mexicano are ready now."
+        primaryAction={{ label: "Got it", onPress: () => setShowKohComingSoon(false) }}
+        onDismiss={() => setShowKohComingSoon(false)}
       />
     </>
   );

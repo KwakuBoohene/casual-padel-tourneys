@@ -2,12 +2,14 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 import { useBreakpoint } from "../../../layout";
-import { radius, spacing, typography } from "../../../theme";
+import { radius, spacing, touch, typography } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
+import { formatTournamentMode } from "../formatLabels";
 
 interface TournamentOptionsStepViewProps {
   mode: TournamentMode;
+  modeLocked: boolean;
   variant: TournamentVariant;
   schedulingMode: SchedulingMode;
   onChangeMode: (value: TournamentMode) => void;
@@ -19,18 +21,20 @@ interface TournamentOptionsStepViewProps {
 
 export function TournamentOptionsStepView(props: TournamentOptionsStepViewProps) {
   const { colors } = useTheme();
-
   const { formMaxWidth } = useBreakpoint();
+
   const renderChoice = (label: string, active: boolean, onPress: () => void) => (
     <Pressable
       onPress={onPress}
       style={{
+        minHeight: touch.minSecondary,
         paddingVertical: spacing.sm,
         paddingHorizontal: spacing.md,
         borderRadius: radius.md,
         borderWidth: 1,
         borderColor: active ? colors.primary : colors.border,
-        backgroundColor: active ? "rgba(173,255,47,0.16)" : colors.surface
+        backgroundColor: active ? "rgba(173,255,47,0.16)" : colors.surface,
+        justifyContent: "center"
       }}
     >
       <Text style={{ color: colors.text, fontWeight: active ? "700" : "500" }}>{label}</Text>
@@ -50,35 +54,28 @@ export function TournamentOptionsStepView(props: TournamentOptionsStepViewProps)
     >
       <Text style={[typography.title, { color: colors.text }]}>Tournament Options</Text>
 
-      <View style={{ gap: spacing.sm }}>
-        <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Mode</Text>
-        <View style={{ flexDirection: "row", gap: spacing.sm }}>
-          {renderChoice(
-            "Americano",
-            props.mode === "AMERICANO",
-            () => props.onChangeMode("AMERICANO")
-          )}
-          {renderChoice(
-            "Mexicano",
-            props.mode === "MEXICANO",
-            () => props.onChangeMode("MEXICANO")
-          )}
+      {props.modeLocked ? (
+        <View style={{ gap: spacing.xs }}>
+          <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Mode</Text>
+          <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>
+            {formatTournamentMode(props.mode)}
+          </Text>
         </View>
-      </View>
+      ) : (
+        <View style={{ gap: spacing.sm }}>
+          <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Mode</Text>
+          <View style={{ flexDirection: "row", gap: spacing.sm }}>
+            {renderChoice("Americano", props.mode === "AMERICANO", () => props.onChangeMode("AMERICANO"))}
+            {renderChoice("Mexicano", props.mode === "MEXICANO", () => props.onChangeMode("MEXICANO"))}
+          </View>
+        </View>
+      )}
 
       <View style={{ gap: spacing.sm }}>
         <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Variant</Text>
         <View style={{ flexDirection: "row", gap: spacing.sm }}>
-          {renderChoice(
-            "Classic",
-            props.variant === "CLASSIC",
-            () => props.onChangeVariant("CLASSIC")
-          )}
-          {renderChoice(
-            "Mixed",
-            props.variant === "MIXED",
-            () => props.onChangeVariant("MIXED")
-          )}
+          {renderChoice("Classic", props.variant === "CLASSIC", () => props.onChangeVariant("CLASSIC"))}
+          {renderChoice("Mixed", props.variant === "MIXED", () => props.onChangeVariant("MIXED"))}
         </View>
       </View>
 
@@ -103,7 +100,7 @@ export function TournamentOptionsStepView(props: TournamentOptionsStepViewProps)
           onPress={props.onBack}
           style={{
             flex: 1,
-            paddingVertical: spacing.sm,
+            minHeight: touch.minSecondary,
             borderRadius: radius.md,
             backgroundColor: colors.surface,
             borderWidth: 1,
@@ -118,24 +115,16 @@ export function TournamentOptionsStepView(props: TournamentOptionsStepViewProps)
           onPress={props.onNext}
           style={{
             flex: 1,
-            paddingVertical: spacing.sm,
+            minHeight: touch.minPrimary,
             borderRadius: radius.md,
             backgroundColor: colors.primary,
             alignItems: "center",
             justifyContent: "center"
           }}
         >
-          <Text
-            style={{
-              color: "colors.onPrimary",
-              fontWeight: "700"
-            }}
-          >
-            Next
-          </Text>
+          <Text style={{ color: colors.onPrimary, fontWeight: "700" }}>Next</Text>
         </Pressable>
       </View>
     </ScrollView>
   );
 }
-

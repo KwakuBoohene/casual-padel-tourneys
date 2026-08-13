@@ -1,16 +1,9 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
-import { apiPost } from "../../../api/client";
-import { isEmailVerifyRequired } from "../../../api/errors";
-import type {
-  CreateTournamentResponse,
-  LiveTournamentState,
-  SetupStep,
-  TournamentListResponse
-} from "../types";
+import type { LiveTournamentState, SetupStep, TournamentListResponse } from "../types";
 
-import { prepareCreateTournamentRequest } from "./createTournamentRequest";
+import { submitCreateTournament } from "./submitCreateTournament";
 import { useMatchSettings } from "./useMatchSettings";
 import { usePlayerRoster } from "./usePlayerRoster";
 
@@ -35,11 +28,27 @@ export function useCreateTournament({
 }: UseCreateTournamentParams) {
   const [name, setName] = useState("");
   const [mode, setMode] = useState<TournamentMode>("AMERICANO");
+  const [modeLockedFromList, setModeLockedFromList] = useState(false);
   const [variant, setVariant] = useState<TournamentVariant>("CLASSIC");
   const [schedulingMode, setSchedulingMode] = useState<SchedulingMode>("TARGET_GAMES");
   const [responseText, setResponseText] = useState("No tournament created yet.");
-
   const effectiveSchedulingMode: SchedulingMode = mode === "MEXICANO" ? "TOTAL_TIME" : schedulingMode;
+
+  const startCreateWithMode = (preset: TournamentMode) => {
+    setErrorText("");
+    setName("");
+    setMode(preset);
+    setModeLockedFromList(true);
+    setVariant("CLASSIC");
+    setSchedulingMode(preset === "MEXICANO" ? "TOTAL_TIME" : "TARGET_GAMES");
+    setStep("NAME");
+  };
+
+  const cancelCreateToList = () => {
+    setModeLockedFromList(false);
+    setStep("LIST");
+  };
+
   const roster = usePlayerRoster({ variant, tournaments, suggestedPlayerNames });
   const settings = useMatchSettings({
     mode,
@@ -47,9 +56,8 @@ export function useCreateTournament({
     playersCount: roster.sanitizedPlayers.length
   });
 
-  const createTournament = async () => {
-    setErrorText("");
-    const prepared = prepareCreateTournamentRequest({
+  const createTournament = () =>
+    submitCreateTournament({
       name,
       mode,
       variant,
@@ -61,29 +69,14 @@ export function useCreateTournament({
       courtsText: settings.courtsText,
       pointsText: settings.pointsText,
       targetGamesText: settings.targetGamesText,
-      tournamentTimeText: settings.tournamentTimeText
+      tournamentTimeText: settings.tournamentTimeText,
+      setErrorText,
+      setResponseText,
+      setTournaments,
+      setStep,
+      markEmailVerifyRequired,
+      adoptTournament
     });
-    if (!prepared.ok) {
-      setErrorText(prepared.error);
-      return;
-    }
-    try {
-      const response = await apiPost<CreateTournamentResponse>("/tournaments", prepared.payload);
-      setResponseText(`Created ${response.data.id}\nShare token: ${response.data.publicToken}`);
-      adoptTournament(response.data, false);
-      setTournaments((previous) => [
-        response.data,
-        ...previous.filter((item) => item.id !== response.data.id)
-      ]);
-      setStep("LIVE");
-    } catch (error) {
-      if (isEmailVerifyRequired(error)) {
-        markEmailVerifyRequired(error.verifyBy);
-        return;
-      }
-      setErrorText((error as Error).message);
-    }
-  };
 
   return {
     ...roster,
@@ -93,6 +86,9 @@ export function useCreateTournament({
     canContinueFromName: name.trim().length >= 2,
     mode,
     setMode,
+    modeLockedFromList,
+    startCreateWithMode,
+    cancelCreateToList,
     variant,
     setVariant,
     schedulingMode,

@@ -26,16 +26,48 @@ enum SchedulingMode {
 }
 
 model User {
-  id          String       @id @default(cuid())
-  email       String       @unique
-  name        String
-  avatarUrl   String?
-  googleId    String?      @unique
-  guestId     String?      @unique
-  isGuest     Boolean      @default(false)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  tournaments Tournament[]
+  id                     String           @id @default(cuid())
+  email                  String           @unique
+  name                   String
+  avatarUrl              String?
+  googleId               String?          @unique
+  guestId                String?          @unique
+  isGuest                Boolean          @default(false)
+  emailVerifiedAt        DateTime?
+  emailVerificationDueAt DateTime?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  tournaments            Tournament[]
+  magicLinkTokens        MagicLinkToken[]
+  opaqueRecord           OpaqueRecord?
+}
+
+enum MagicLinkPurpose {
+  LOGIN
+  VERIFY
+  RESET
+}
+
+model MagicLinkToken {
+  id         String           @id @default(cuid())
+  userId     String
+  tokenHash  String           @unique
+  purpose    MagicLinkPurpose
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime         @default(now())
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model OpaqueRecord {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  envelope  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Tournament {

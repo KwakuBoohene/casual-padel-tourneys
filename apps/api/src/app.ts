@@ -7,6 +7,7 @@ import { Redis } from "ioredis";
 import { registerTournamentRoutes } from "./routes/tournaments.js";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { registerMagicLinkRoutes } from "./routes/authMagicLink.js";
+import { registerPasswordAuthRoutes } from "./routes/authPassword.js";
 import { mountSocketHub } from "./realtime/socketHub.js";
 import { logger } from "./lib/logger.js";
 
@@ -36,6 +37,7 @@ export async function createApp() {
   logger.info("createApp: registering routes");
   await registerAuthRoutes(server);
   await registerMagicLinkRoutes(server);
+  await registerPasswordAuthRoutes(server);
   await registerTournamentRoutes(server);
   logger.info("createApp: server ready");
   return server;

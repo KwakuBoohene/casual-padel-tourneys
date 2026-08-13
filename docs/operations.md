@@ -127,7 +127,7 @@ Outbound mail uses a provider-agnostic `Mailer` (`apps/api/src/lib/mail`). Set:
 
 | Variable | Purpose |
 |----------|---------|
-| `MAIL_PROVIDER` | `console` (log only) or `mailgun` |
+| `MAIL_PROVIDER` | `console` (log only — includes full message text / magic links) or `mailgun` |
 | `MAIL_FROM` | From header, required for Mailgun |
 | `MAILGUN_API_KEY` | Mailgun private API key |
 | `MAILGUN_DOMAIN` | Sending domain |

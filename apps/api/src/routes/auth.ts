@@ -1,10 +1,11 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { OAuth2Client } from "google-auth-library";
-import jwt from "jsonwebtoken";
 
 import { prisma } from "../lib/prisma.js";
 import type { AuthUser } from "../lib/authTypes.js";
-import { requireAuth } from "../lib/auth.js";
+import { requireAuth, signAuthToken, toAuthUser } from "../lib/auth.js";
+import { getMailer } from "../lib/mail/index.js";
+import { createMagicToken } from "../lib/magicTokens.js";
 import { logger } from "../lib/logger.js";
 
 interface GoogleAuthBody {
@@ -14,6 +15,8 @@ interface GoogleAuthBody {
 interface GuestAuthBody {
   guestId: string;
 }
+
+const MAGIC_LINK_TTL_MS = 15 * 60 * 1000;
 
 function getGoogleAudiences(): string[] {
   const configuredAudiences = [
@@ -31,24 +34,49 @@ function getGoogleAudiences(): string[] {
   );
 }
 
+function buildMagicLinkUrl(rawToken: string): string {
+  const base = process.env.AUTH_MAGIC_LINK_BASE_URL?.trim() || "padel://auth/magic";
+  const separator = base.includes("?") ? "&" : "?";
+  return `${base}${separator}token=${encodeURIComponent(rawToken)}`;
+}
+
+function authResponse(user: {
+  id: string;
+  email: string;
+  name: string;
+  isGuest: boolean;
+  avatarUrl?: string | null;
+  emailVerifiedAt?: Date | null;
+  emailVerificationDueAt?: Date | null;
+}): { token: string; user: AuthUser & { avatarUrl?: string } } {
+  const token = signAuthToken(user);
+  const authUser = toAuthUser(user);
+  return {
+    token,
+    user: {
+      ...authUser,
+      avatarUrl: user.avatarUrl ?? undefined
+    }
+  };
+}
+
 export async function registerAuthRoutes(server: FastifyInstance): Promise<void> {
   const googleAudiences = getGoogleAudiences();
-  const jwtSecret = process.env.JWT_SECRET;
 
   const googleClient = googleAudiences.length > 0 ? new OAuth2Client() : null;
 
   server.post(
     "/auth/google",
-    async (request: FastifyRequest<{ Body: GoogleAuthBody }>, reply: FastifyReply): Promise<{
-      token: string;
-      user: AuthUser & { avatarUrl?: string };
-    }> => {
-      if (!googleClient || googleAudiences.length === 0 || !jwtSecret) {
+    async (
+      request: FastifyRequest<{ Body: GoogleAuthBody }>,
+      reply: FastifyReply
+    ): Promise<{ token: string; user: AuthUser & { avatarUrl?: string } }> => {
+      if (!googleClient || googleAudiences.length === 0 || !process.env.JWT_SECRET) {
         reply.status(500);
         logger.error("POST /auth/google: Google auth not configured", {
           hasClient: Boolean(googleClient),
           googleAudienceCount: googleAudiences.length,
-          hasJwtSecret: Boolean(jwtSecret)
+          hasJwtSecret: Boolean(process.env.JWT_SECRET)
         });
         throw new Error("Google auth is not configured on the server.");
       }
@@ -75,6 +103,7 @@ export async function registerAuthRoutes(server: FastifyInstance): Promise<void>
       const email = payload.email;
       const name = payload.name ?? email;
       const avatarUrl = payload.picture ?? undefined;
+      const verifiedAt = new Date();
 
       const user = await prisma.user.upsert({
         where: { googleId },
@@ -82,49 +111,31 @@ export async function registerAuthRoutes(server: FastifyInstance): Promise<void>
           googleId,
           email,
           name,
-          avatarUrl
+          avatarUrl,
+          emailVerifiedAt: verifiedAt,
+          isGuest: false
         },
         update: {
           email,
           name,
-          avatarUrl
+          avatarUrl,
+          emailVerifiedAt: verifiedAt,
+          isGuest: false
         }
       });
 
-      const token = jwt.sign(
-        {
-          sub: user.id,
-          email: user.email,
-          name: user.name,
-          isGuest: false
-        },
-        jwtSecret,
-        {
-          expiresIn: "7d"
-        }
-      );
-
       logger.info("POST /auth/google: user authenticated", { userId: user.id, email: user.email });
-      return {
-        token,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          avatarUrl: user.avatarUrl ?? undefined,
-          isGuest: false
-        }
-      };
+      return authResponse(user);
     }
   );
 
   server.post(
     "/auth/guest",
-    async (request: FastifyRequest<{ Body: GuestAuthBody }>, reply: FastifyReply): Promise<{
-      token: string;
-      user: AuthUser & { avatarUrl?: string };
-    }> => {
-      if (!jwtSecret) {
+    async (
+      request: FastifyRequest<{ Body: GuestAuthBody }>,
+      reply: FastifyReply
+    ): Promise<{ token: string; user: AuthUser & { avatarUrl?: string } }> => {
+      if (!process.env.JWT_SECRET) {
         reply.status(500);
         logger.error("POST /auth/guest: JWT_SECRET missing");
         throw new Error("JWT_SECRET is not configured.");
@@ -160,33 +171,17 @@ export async function registerAuthRoutes(server: FastifyInstance): Promise<void>
         logger.info("POST /auth/guest: returning guest authenticated", { userId: user.id });
       }
 
-      const token = jwt.sign(
-        {
-          sub: user.id,
-          email: user.email,
-          name: user.name,
-          isGuest: true
-        },
-        jwtSecret,
-        { expiresIn: "7d" }
-      );
-
-      return {
-        token,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          isGuest: true
-        }
-      };
+      return authResponse(user);
     }
   );
 
   server.get(
     "/auth/me",
     { preHandler: requireAuth },
-    async (request: FastifyRequest, reply: FastifyReply): Promise<{ user: AuthUser & { avatarUrl?: string } }> => {
+    async (
+      request: FastifyRequest,
+      reply: FastifyReply
+    ): Promise<{ user: AuthUser & { avatarUrl?: string } }> => {
       if (!request.user) {
         reply.status(401);
         logger.warn("GET /auth/me: no user on request");
@@ -202,14 +197,68 @@ export async function registerAuthRoutes(server: FastifyInstance): Promise<void>
       }
       return {
         user: {
-          id: userRecord.id,
-          email: userRecord.email,
-          name: userRecord.name,
-          avatarUrl: userRecord.avatarUrl ?? undefined,
-          isGuest: userRecord.isGuest
+          ...toAuthUser(userRecord),
+          avatarUrl: userRecord.avatarUrl ?? undefined
         }
       };
     }
   );
-}
 
+  server.post(
+    "/auth/verify/resend",
+    {
+      preHandler: requireAuth,
+      config: {
+        rateLimit: {
+          max: 5,
+          timeWindow: "15 minutes"
+        }
+      }
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      if (!request.user || request.user.isGuest) {
+        reply.status(400);
+        return { message: "Verification is not available for this account." };
+      }
+
+      const user = await prisma.user.findUnique({ where: { id: request.user.id } });
+      if (!user || user.isGuest) {
+        reply.status(400);
+        return { message: "Verification is not available for this account." };
+      }
+
+      const message = "If your account needs verification, a link is on the way.";
+      if (user.emailVerifiedAt) {
+        return { message };
+      }
+
+      try {
+        const { rawToken, tokenHash } = createMagicToken();
+        await prisma.magicLinkToken.create({
+          data: {
+            userId: user.id,
+            tokenHash,
+            purpose: "VERIFY",
+            expiresAt: new Date(Date.now() + MAGIC_LINK_TTL_MS)
+          }
+        });
+
+        const link = buildMagicLinkUrl(rawToken);
+        await getMailer().send({
+          to: user.email,
+          subject: "Verify your Casual Padel email",
+          text: `Verify your email (expires in 15 minutes):\n\n${link}\n`,
+          html: `<p>Verify your email (expires in 15 minutes):</p><p><a href="${link}">Verify email</a></p>`
+        });
+        logger.info("POST /auth/verify/resend: sent", { userId: user.id });
+      } catch (error) {
+        logger.error("POST /auth/verify/resend: failed", {
+          errorName: (error as Error).name
+        });
+      }
+
+      reply.status(200);
+      return { message };
+    }
+  );
+}

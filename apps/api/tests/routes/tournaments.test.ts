@@ -3,11 +3,34 @@ import assert from "node:assert/strict";
 import jwt from "jsonwebtoken";
 
 import { createApp } from "../../src/app.js";
+import { prisma } from "../../src/lib/prisma.js";
 
 const JWT_SECRET = "test-secret-key-for-unit-tests";
 
 function signUser(id: string, email = `${id}@example.com`): string {
-  return jwt.sign({ sub: id, email, name: "Test User" }, JWT_SECRET, { expiresIn: "1h" });
+  return jwt.sign(
+    { sub: id, email, name: "Test User", emailVerified: true, isGuest: false },
+    JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+}
+
+async function ensureVerifiedUser(id: string, email = `${id}@example.com`): Promise<void> {
+  await prisma.user.upsert({
+    where: { id },
+    create: {
+      id,
+      email,
+      name: "Test User",
+      isGuest: false,
+      emailVerifiedAt: new Date()
+    },
+    update: {
+      email,
+      emailVerifiedAt: new Date(),
+      isGuest: false
+    }
+  });
 }
 
 const createPayload = {
@@ -38,6 +61,8 @@ async function withApp<T>(fn: (app: Awaited<ReturnType<typeof createApp>>) => Pr
   delete process.env.REDIS_URL;
   const app = await createApp();
   try {
+    await ensureVerifiedUser("owner-1");
+    await ensureVerifiedUser("intruder-2");
     return await fn(app);
   } finally {
     await app.close();

@@ -1,8 +1,8 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import jwt from "jsonwebtoken";
 import { consumeMagicLinkSchema, requestMagicLinkSchema } from "@padel/shared";
 
-import { createMailerFromEnv, type Mailer } from "../lib/mail/index.js";
+import { signAuthToken, toAuthUser } from "../lib/auth.js";
+import { getMailer, setMailerOverride, type Mailer } from "../lib/mail/index.js";
 import { createMagicToken, hashMagicToken } from "../lib/magicTokens.js";
 import { prisma } from "../lib/prisma.js";
 import { logger } from "../lib/logger.js";
@@ -11,15 +11,9 @@ const MAGIC_LINK_TTL_MS = 15 * 60 * 1000;
 const VERIFY_DUE_MS = 24 * 60 * 60 * 1000;
 const GENERIC_REQUEST_MESSAGE = "If an account exists for that email, a sign-in link is on the way.";
 
-/** Test-only override so integration tests can capture the emailed link. */
-let mailerOverride: Mailer | null = null;
-
+/** @deprecated Use setMailerOverride from lib/mail — kept for existing tests. */
 export function setMagicLinkMailerOverride(mailer: Mailer | null): void {
-  mailerOverride = mailer;
-}
-
-function getMailer(): Mailer {
-  return mailerOverride ?? createMailerFromEnv();
+  setMailerOverride(mailer);
 }
 
 function normalizeEmail(email: string): string {
@@ -35,22 +29,6 @@ function buildMagicLinkUrl(rawToken: string): string {
   const base = process.env.AUTH_MAGIC_LINK_BASE_URL?.trim() || "padel://auth/magic";
   const separator = base.includes("?") ? "&" : "?";
   return `${base}${separator}token=${encodeURIComponent(rawToken)}`;
-}
-
-function signUserJwt(
-  jwtSecret: string,
-  user: { id: string; email: string; name: string; isGuest: boolean }
-): string {
-  return jwt.sign(
-    {
-      sub: user.id,
-      email: user.email,
-      name: user.name,
-      isGuest: user.isGuest
-    },
-    jwtSecret,
-    { expiresIn: "7d" }
-  );
 }
 
 export async function registerMagicLinkRoutes(server: FastifyInstance): Promise<void> {
@@ -113,8 +91,7 @@ export async function registerMagicLinkRoutes(server: FastifyInstance): Promise<
       return { errors: parsed.error.flatten() };
     }
 
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
+    if (!process.env.JWT_SECRET) {
       reply.status(500);
       logger.error("POST /auth/magic-link/consume: JWT_SECRET missing");
       return { message: "Authentication is not configured." };
@@ -126,7 +103,12 @@ export async function registerMagicLinkRoutes(server: FastifyInstance): Promise<
       include: { user: true }
     });
 
-    if (!record || record.consumedAt || record.expiresAt.getTime() <= Date.now()) {
+    if (
+      !record ||
+      record.consumedAt ||
+      record.expiresAt.getTime() <= Date.now() ||
+      (record.purpose !== "LOGIN" && record.purpose !== "VERIFY")
+    ) {
       reply.status(401);
       return { message: "Invalid or expired sign-in link." };
     }
@@ -136,7 +118,7 @@ export async function registerMagicLinkRoutes(server: FastifyInstance): Promise<
       prisma.user.update({
         where: { id: record.userId },
         data: {
-          emailVerifiedAt: record.user.emailVerifiedAt ?? now,
+          emailVerifiedAt: now,
           isGuest: false
         }
       }),
@@ -146,16 +128,16 @@ export async function registerMagicLinkRoutes(server: FastifyInstance): Promise<
       })
     ]);
 
-    const token = signUserJwt(jwtSecret, user);
-    logger.info("POST /auth/magic-link/consume: signed in", { userId: user.id });
+    const token = signAuthToken(user);
+    logger.info("POST /auth/magic-link/consume: signed in", {
+      userId: user.id,
+      purpose: record.purpose
+    });
     return {
       token,
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        avatarUrl: user.avatarUrl ?? undefined,
-        isGuest: user.isGuest
+        ...toAuthUser(user),
+        avatarUrl: user.avatarUrl ?? undefined
       }
     };
   });

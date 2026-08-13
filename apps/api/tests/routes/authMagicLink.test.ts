@@ -6,7 +6,7 @@ import { createApp } from "../../src/app.js";
 import type { MailMessage, Mailer } from "../../src/lib/mail/index.js";
 import { prisma } from "../../src/lib/prisma.js";
 import { hashMagicToken } from "../../src/lib/magicTokens.js";
-import { setMagicLinkMailerOverride } from "../../src/routes/authMagicLink.js";
+import { setMailerOverride } from "../../src/lib/mail/index.js";
 
 const JWT_SECRET = "test-secret-key-for-magic-link";
 
@@ -46,12 +46,12 @@ async function withMagicApp<T>(fn: (app: Awaited<ReturnType<typeof createApp>>, 
   process.env.AUTH_MAGIC_LINK_BASE_URL = "padel://auth/magic";
 
   const mailer = new CapturingMailer();
-  setMagicLinkMailerOverride(mailer);
+  setMailerOverride(mailer);
   const app = await createApp();
   try {
     return await fn(app, mailer);
   } finally {
-    setMagicLinkMailerOverride(null);
+    setMailerOverride(null);
     await app.close();
     for (const [key, value] of Object.entries(original)) {
       if (value === undefined) delete process.env[key];

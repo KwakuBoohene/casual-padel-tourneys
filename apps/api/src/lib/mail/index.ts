@@ -4,6 +4,13 @@ import type { Mailer } from "./types.js";
 
 export type MailProvider = "mailgun" | "console";
 
+let mailerOverride: Mailer | null = null;
+
+/** Test-only: force a specific mailer for outbound sends. */
+export function setMailerOverride(mailer: Mailer | null): void {
+  mailerOverride = mailer;
+}
+
 function requireEnv(name: string): string {
   const value = process.env[name]?.trim();
   if (!value) {
@@ -34,6 +41,10 @@ export function createMailerFromEnv(): Mailer {
   }
 
   throw new Error(`Unsupported MAIL_PROVIDER "${provider}". Use mailgun or console.`);
+}
+
+export function getMailer(): Mailer {
+  return mailerOverride ?? createMailerFromEnv();
 }
 
 function defaultProvider(): MailProvider {

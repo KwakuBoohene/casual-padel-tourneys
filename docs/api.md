@@ -13,6 +13,8 @@ Base URL: `http://localhost:3001`
 - `POST /auth/password/register/finish` — body: `{ email, registrationRecord }` → `{ ok: true }` (stores envelope only; no password hash)
 - `POST /auth/password/login/start` — body: `{ email, startLoginRequest }` → `{ loginResponse, loginId }`
 - `POST /auth/password/login/finish` — body: `{ email, loginId, finishLoginRequest }` → JWT; invalid credentials → generic `401`
+- `POST /auth/verify/resend` — requires Bearer JWT; rate-limited; emails a verify magic link when still unverified
+- JWT claims include `emailVerified` and optional `verifyBy` (epoch ms). After `emailVerificationDueAt`, organizer tournament routes return `403` `{ code: "EMAIL_VERIFY_REQUIRED" }` (guests exempt).
 
 ## Health
 

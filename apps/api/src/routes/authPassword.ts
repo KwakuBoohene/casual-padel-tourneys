@@ -1,5 +1,4 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import jwt from "jsonwebtoken";
 import {
   passwordLoginFinishSchema,
   passwordLoginStartSchema,
@@ -7,6 +6,7 @@ import {
   passwordRegisterStartSchema
 } from "@padel/shared";
 
+import { signAuthToken, toAuthUser } from "../lib/auth.js";
 import { logger } from "../lib/logger.js";
 import {
   storePasswordLoginAttempt,
@@ -29,22 +29,6 @@ function normalizeEmail(email: string): string {
 function nameFromEmail(email: string): string {
   const local = email.split("@")[0] ?? "Player";
   return local.replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || "Player";
-}
-
-function signUserJwt(
-  jwtSecret: string,
-  user: { id: string; email: string; name: string; isGuest: boolean }
-): string {
-  return jwt.sign(
-    {
-      sub: user.id,
-      email: user.email,
-      name: user.name,
-      isGuest: user.isGuest
-    },
-    jwtSecret,
-    { expiresIn: "7d" }
-  );
 }
 
 async function ensureConfigured(reply: FastifyReply): Promise<string | null> {
@@ -247,16 +231,13 @@ export async function registerPasswordAuthRoutes(server: FastifyInstance): Promi
       return { message: GENERIC_LOGIN_FAILURE };
     }
 
-    const token = signUserJwt(jwtSecret, user);
+    const token = signAuthToken(user);
     logger.info("POST /auth/password/login/finish: signed in", { userId: user.id });
     return {
       token,
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        avatarUrl: user.avatarUrl ?? undefined,
-        isGuest: user.isGuest
+        ...toAuthUser(user),
+        avatarUrl: user.avatarUrl ?? undefined
       }
     };
   });

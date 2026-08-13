@@ -41,7 +41,7 @@ import {
   substitutePlayer
 } from "../lib/store.js";
 import { prisma } from "../lib/prisma.js";
-import { requireAuth } from "../lib/auth.js";
+import { requireOrganizerAccess } from "../lib/auth.js";
 import { assertOrganizer } from "../lib/organizerAccess.js";
 import { publishEvent } from "../realtime/events.js";
 import { broadcastToTournament } from "../realtime/socketHub.js";
@@ -152,7 +152,7 @@ function mapDbTournamentToState(
 export async function registerTournamentRoutes(server: FastifyInstance): Promise<void> {
   server.get("/health", async () => ({ status: "ok" }));
 
-  server.get("/tournaments", { preHandler: requireAuth }, async (request) => {
+  server.get("/tournaments", { preHandler: requireOrganizerAccess }, async (request) => {
     if (!request.user) {
       return { data: [] };
     }
@@ -174,7 +174,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     return { data };
   });
 
-  server.get("/tournaments/:id", { preHandler: requireAuth }, async (request, reply) => {
+  server.get("/tournaments/:id", { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const params = request.params as { id: string };
     if (!request.user) {
       reply.status(401);
@@ -224,7 +224,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     return { data: publicData };
   });
 
-  server.post("/tournaments", { preHandler: requireAuth }, async (request, reply) => {
+  server.post("/tournaments", { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const parsed = createTournamentSchema.safeParse(request.body);
     if (!parsed.success) {
       reply.status(400);
@@ -298,7 +298,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     return { data: tournament };
   });
 
-  server.get("/players/suggestions", { preHandler: requireAuth }, async (request, reply) => {
+  server.get("/players/suggestions", { preHandler: requireOrganizerAccess }, async (request, reply) => {
     if (!request.user) {
       reply.status(401);
       return { names: [] };
@@ -317,7 +317,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     return { names: rows.map((row: { name: string }) => row.name) };
   });
 
-  server.post("/tournaments/score", { preHandler: requireAuth }, async (request, reply) => {
+  server.post("/tournaments/score", { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const parsed = submitScoreSchema.safeParse(request.body);
     if (!parsed.success) {
       reply.status(400);
@@ -351,7 +351,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     }
   });
 
-  server.post("/tournaments/rename-player", { preHandler: requireAuth }, async (request, reply) => {
+  server.post("/tournaments/rename-player", { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const parsed = renamePlayerSchema.safeParse(request.body);
     if (!parsed.success) {
       reply.status(400);
@@ -378,7 +378,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     }
   });
 
-  server.post("/tournaments/rename", { preHandler: requireAuth }, async (request, reply) => {
+  server.post("/tournaments/rename", { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const parsed = renameTournamentSchema.safeParse(request.body);
     if (!parsed.success) {
       reply.status(400);
@@ -399,7 +399,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     }
   });
 
-  server.post("/tournaments/adjust-courts", { preHandler: requireAuth }, async (request, reply) => {
+  server.post("/tournaments/adjust-courts", { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const parsed = adjustCourtsSchema.safeParse(request.body);
     if (!parsed.success) {
       reply.status(400);
@@ -428,7 +428,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     }
   });
 
-  server.post("/tournaments/substitute-player", { preHandler: requireAuth }, async (request, reply) => {
+  server.post("/tournaments/substitute-player", { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const parsed = substitutePlayerSchema.safeParse(request.body);
     if (!parsed.success) {
       reply.status(400);
@@ -459,7 +459,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     }
   });
 
-  server.post("/tournaments/add-pending-player", { preHandler: requireAuth }, async (request, reply) => {
+  server.post("/tournaments/add-pending-player", { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const parsed = addPendingPlayerSchema.safeParse(request.body);
     if (!parsed.success) {
       reply.status(400);
@@ -492,7 +492,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     }
   });
 
-  server.post("/tournaments/integrate-pending", { preHandler: requireAuth }, async (request, reply) => {
+  server.post("/tournaments/integrate-pending", { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const parsed = integratePendingPlayersSchema.safeParse(request.body);
     if (!parsed.success) {
       reply.status(400);
@@ -524,7 +524,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     }
   });
 
-  server.delete("/tournaments/:id", { preHandler: requireAuth }, async (request, reply) => {
+  server.delete("/tournaments/:id", { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const params = request.params as { id: string };
     if (!request.user) {
       reply.status(401);

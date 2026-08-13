@@ -2,6 +2,14 @@
 
 Base URL: `http://localhost:3001`
 
+## Auth
+
+- `POST /auth/google` — body: `{ idToken }` → JWT
+- `POST /auth/guest` — body: `{ guestId }` → JWT
+- `GET /auth/me` — requires Bearer JWT
+- `POST /auth/magic-link` — body: `{ email }` → always `200` generic message (no email enumeration); emails one-time link (15 min)
+- `POST /auth/magic-link/consume` — body: `{ token }` → JWT; marks email verified; consumed/expired tokens → `401`
+
 ## Health
 
 - `GET /health`

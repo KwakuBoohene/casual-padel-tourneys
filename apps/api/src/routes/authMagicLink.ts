@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import jwt from "jsonwebtoken";
 import { consumeMagicLinkSchema, requestMagicLinkSchema } from "@padel/shared";
 
-import { createMailerFromEnv } from "../lib/mail/index.js";
+import { createMailerFromEnv, type Mailer } from "../lib/mail/index.js";
 import { createMagicToken, hashMagicToken } from "../lib/magicTokens.js";
 import { prisma } from "../lib/prisma.js";
 import { logger } from "../lib/logger.js";
@@ -10,6 +10,17 @@ import { logger } from "../lib/logger.js";
 const MAGIC_LINK_TTL_MS = 15 * 60 * 1000;
 const VERIFY_DUE_MS = 24 * 60 * 60 * 1000;
 const GENERIC_REQUEST_MESSAGE = "If an account exists for that email, a sign-in link is on the way.";
+
+/** Test-only override so integration tests can capture the emailed link. */
+let mailerOverride: Mailer | null = null;
+
+export function setMagicLinkMailerOverride(mailer: Mailer | null): void {
+  mailerOverride = mailer;
+}
+
+function getMailer(): Mailer {
+  return mailerOverride ?? createMailerFromEnv();
+}
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -51,12 +62,6 @@ export async function registerMagicLinkRoutes(server: FastifyInstance): Promise<
     }
 
     const email = normalizeEmail(parsed.data.email);
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      reply.status(500);
-      logger.error("POST /auth/magic-link: JWT_SECRET missing");
-      return { message: "Authentication is not configured." };
-    }
 
     try {
       const now = new Date();
@@ -84,8 +89,7 @@ export async function registerMagicLinkRoutes(server: FastifyInstance): Promise<
       });
 
       const link = buildMagicLinkUrl(rawToken);
-      const mailer = createMailerFromEnv();
-      await mailer.send({
+      await getMailer().send({
         to: email,
         subject: "Your Casual Padel sign-in link",
         text: `Sign in with this link (expires in 15 minutes):\n\n${link}\n`,

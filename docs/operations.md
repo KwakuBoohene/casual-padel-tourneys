@@ -89,6 +89,10 @@ docker compose -f infra/docker-compose.yml up -d --build
   - Extends `Player` table with gender, handicap, integrationWave, integratedAt fields
   - Extends `Tournament` table with integrationWaveCount, enableAutoIntegration, integrationThreshold
   - Creates indexes for performance optimization
+- `20260813150000_auth_email_foundation`: Email auth foundation
+  - User `emailVerifiedAt` / `emailVerificationDueAt`
+  - `MagicLinkToken` (hashed one-time tokens)
+  - `OpaqueRecord` (password envelope storage; no hash column)
 
 ## Backup And Restore
 
@@ -116,6 +120,21 @@ cat backup.sql | docker exec -i <postgres_container> psql -U padel -d padel
 - Add health checks for API and web.
 - Integrate Sentry (later phase) for backend and web errors.
 - Add uptime alerting for API and viewer domains.
+
+## Email (Mailer)
+
+Outbound mail uses a provider-agnostic `Mailer` (`apps/api/src/lib/mail`). Set:
+
+| Variable | Purpose |
+|----------|---------|
+| `MAIL_PROVIDER` | `console` (log only) or `mailgun` |
+| `MAIL_FROM` | From header, required for Mailgun |
+| `MAILGUN_API_KEY` | Mailgun private API key |
+| `MAILGUN_DOMAIN` | Sending domain |
+| `MAILGUN_API_BASE_URL` | Optional; default `https://api.mailgun.net` (use `https://api.eu.mailgun.net` for EU) |
+| `AUTH_MAGIC_LINK_BASE_URL` | Base URL/scheme for magic links (`?token=` appended); default `padel://auth/magic` |
+
+In production, omit `MAIL_PROVIDER` or set `mailgun` and ensure key/domain/`MAIL_FROM` are set (factory fails closed otherwise).
 
 ## Security Baseline
 

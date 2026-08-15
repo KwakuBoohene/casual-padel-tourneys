@@ -1,8 +1,21 @@
 import { createId } from "@padel/shared";
-import type { LeaderboardEntry, Match, Player, Round, TournamentConfig, PendingPlayer } from "@padel/shared";
+import type {
+  LeaderboardEntry,
+  Match,
+  MatchSet,
+  Player,
+  Round,
+  TournamentConfig,
+  PendingPlayer
+} from "@padel/shared";
 
 import { generateMexicano } from "../engine/mexicanoScheduler.js";
 import { generateTournament, recalculateRemainingTournament } from "../engine/americanoScheduler.js";
+import {
+  awardDeltasForWinner,
+  evaluateMatch,
+  type Side
+} from "../engine/regularScoring.js";
 import type { TournamentState } from "../types/state.js";
 import { logger } from "./logger.js";
 import {
@@ -95,7 +108,7 @@ export function createTournament(config: TournamentConfig, organizerId: string):
     players: generated.players,
     rounds: generated.rounds,
     version: 0,
-    leaderboard: buildLeaderboard(generated.players),
+    leaderboard: buildLeaderboard(generated.players, config.scoringMode),
     publicToken: createId("public"),
     organizerId,
     createdAt,
@@ -124,6 +137,9 @@ export function submitScore(
   scoreB: number
 ): TournamentState {
   const tournament = requireTournament(tournamentId);
+  if ((tournament.config.scoringMode ?? "AMERICANO_POINTS") === "REGULAR") {
+    throw new Error("Use submitRegularScore for Regular scoring tournaments.");
+  }
   const lookup = findMatch(tournament.rounds, matchId);
   const wasCompleted = lookup.match.completed;
   if (
@@ -139,7 +155,7 @@ export function submitScore(
   lookup.match.completed = true;
   lookup.round.isLocked = lookup.round.matches.every((match) => match.completed);
   awardPoints(tournament.players, lookup.match, scoreA, scoreB);
-  tournament.leaderboard = buildLeaderboard(tournament.players);
+  tournament.leaderboard = buildLeaderboard(tournament.players, tournament.config.scoringMode);
   touch(tournament);
   logger.info("store/submitScore", {
     tournamentId,
@@ -152,6 +168,76 @@ export function submitScore(
   return tournament;
 }
 
+export function submitRegularScore(
+  tournamentId: string,
+  matchId: string,
+  sets: MatchSet[],
+  options: { complete: boolean; matchTbA?: number; matchTbB?: number }
+): TournamentState {
+  const tournament = requireTournament(tournamentId);
+  if ((tournament.config.scoringMode ?? "AMERICANO_POINTS") !== "REGULAR") {
+    throw new Error("submitRegularScore requires REGULAR scoring mode.");
+  }
+  const regular = tournament.config.regularScoring;
+  if (!regular) {
+    throw new Error("Tournament is missing regularScoring config.");
+  }
+
+  const lookup = findMatch(tournament.rounds, matchId);
+  const wasCompleted = lookup.match.completed;
+  if (wasCompleted && lookup.match.sets && lookup.match.sets.length > 0) {
+    const prior = evaluateMatch(lookup.match.sets, regular, {
+      a: lookup.match.matchTbA,
+      b: lookup.match.matchTbB
+    });
+    if (prior.complete && prior.winner) {
+      applyRegularAward(tournament.players, lookup.match, prior.winner, prior, -1);
+    }
+  }
+
+  lookup.match.sets = sets.map((set) => ({ ...set }));
+  lookup.match.matchTbA = options.matchTbA;
+  lookup.match.matchTbB = options.matchTbB;
+  lookup.match.scoreA = undefined;
+  lookup.match.scoreB = undefined;
+
+  if (!options.complete) {
+    lookup.match.completed = false;
+    lookup.round.isLocked = lookup.round.matches.every((match) => match.completed);
+    tournament.leaderboard = buildLeaderboard(tournament.players, tournament.config.scoringMode);
+    touch(tournament);
+    logger.info("store/submitRegularScore", {
+      tournamentId,
+      matchId,
+      complete: false,
+      version: tournament.version
+    });
+    return tournament;
+  }
+
+  const evaluation = evaluateMatch(sets, regular, {
+    a: options.matchTbA,
+    b: options.matchTbB
+  });
+  if (!evaluation.complete || !evaluation.winner) {
+    throw new Error(evaluation.error ?? "Regular match is not complete.");
+  }
+
+  lookup.match.completed = true;
+  applyRegularAward(tournament.players, lookup.match, evaluation.winner, evaluation, 1);
+  lookup.round.isLocked = lookup.round.matches.every((match) => match.completed);
+  tournament.leaderboard = buildLeaderboard(tournament.players, tournament.config.scoringMode);
+  touch(tournament);
+  logger.info("store/submitRegularScore", {
+    tournamentId,
+    matchId,
+    complete: true,
+    winner: evaluation.winner,
+    version: tournament.version
+  });
+  return tournament;
+}
+
 export function renamePlayer(tournamentId: string, playerId: string, newName: string): TournamentState {
   const tournament = requireTournament(tournamentId);
   const player = tournament.players.find((item) => item.id === playerId);
@@ -159,7 +245,7 @@ export function renamePlayer(tournamentId: string, playerId: string, newName: st
     throw new Error("Player not found.");
   }
   player.name = newName;
-  tournament.leaderboard = buildLeaderboard(tournament.players);
+  tournament.leaderboard = buildLeaderboard(tournament.players, tournament.config.scoringMode);
   touch(tournament);
   logger.info("store/renamePlayer", { tournamentId, playerId, newName });
   return tournament;
@@ -239,15 +325,73 @@ function awardPoints(players: Player[], match: Match, scoreA: number, scoreB: nu
   }
 }
 
-function buildLeaderboard(players: Player[]): LeaderboardEntry[] {
+function applyRegularAward(
+  players: Player[],
+  match: Match,
+  winner: Side,
+  evaluation: {
+    setsWonA: number;
+    setsWonB: number;
+    gamesWonA: number;
+    gamesWonB: number;
+  },
+  sign: 1 | -1
+): void {
+  const { winner: winDelta, loser: loseDelta } = awardDeltasForWinner(winner, evaluation);
+  const apply = (playerId: string, delta: typeof winDelta): void => {
+    const player = players.find((item) => item.id === playerId);
+    if (!player) {
+      return;
+    }
+    player.matchesWon = (player.matchesWon ?? 0) + sign * delta.matchesWon;
+    player.matchesLost = (player.matchesLost ?? 0) + sign * delta.matchesLost;
+    player.setsWon = (player.setsWon ?? 0) + sign * delta.setsWon;
+    player.setsLost = (player.setsLost ?? 0) + sign * delta.setsLost;
+    player.gamesWon = (player.gamesWon ?? 0) + sign * delta.gamesWon;
+    player.gamesLost = (player.gamesLost ?? 0) + sign * delta.gamesLost;
+  };
+  const winnerIds = winner === "A" ? match.teamA : match.teamB;
+  const loserIds = winner === "A" ? match.teamB : match.teamA;
+  for (const playerId of winnerIds) {
+    apply(playerId, winDelta);
+  }
+  for (const playerId of loserIds) {
+    apply(playerId, loseDelta);
+  }
+}
+
+function buildLeaderboard(
+  players: Player[],
+  scoringMode?: TournamentConfig["scoringMode"]
+): LeaderboardEntry[] {
+  const regular = scoringMode === "REGULAR";
   return [...players]
-    .sort((a, b) => b.totalPoints - a.totalPoints)
+    .sort((a, b) => {
+      if (!regular) {
+        return b.totalPoints - a.totalPoints;
+      }
+      const byMatches = (b.matchesWon ?? 0) - (a.matchesWon ?? 0);
+      if (byMatches !== 0) {
+        return byMatches;
+      }
+      const bySets = (b.setsWon ?? 0) - (a.setsWon ?? 0);
+      if (bySets !== 0) {
+        return bySets;
+      }
+      return (b.gamesWon ?? 0) - (a.gamesWon ?? 0);
+    })
     .map((player, index) => ({
       playerId: player.id,
       name: player.name,
       totalPoints: player.totalPoints,
       gamesPlayed: player.gamesPlayed,
-      rank: index + 1
+      rank: index + 1,
+      matchesWon: player.matchesWon,
+      matchesLost: player.matchesLost,
+      setsWon: player.setsWon,
+      setsLost: player.setsLost,
+      gamesWon: player.gamesWon,
+      gamesLost: player.gamesLost
     }));
 }
 
@@ -383,7 +527,7 @@ export function integratePendingPlayers(tournamentId: string): TournamentState {
   );
 
   // Update leaderboard
-  tournament.leaderboard = buildLeaderboard(tournament.players);
+  tournament.leaderboard = buildLeaderboard(tournament.players, tournament.config.scoringMode);
 
   touch(tournament);
 

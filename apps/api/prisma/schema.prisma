@@ -25,6 +25,17 @@ enum SchedulingMode {
   ROUND_ROBIN
 }
 
+enum ScoringMode {
+  AMERICANO_POINTS
+  REGULAR
+}
+
+enum RegularSetFormat {
+  BO3_GAMES
+  BO5_GAMES
+  FULL_SET
+}
+
 model User {
   id                     String           @id @default(cuid())
   email                  String           @unique
@@ -78,6 +89,12 @@ model Tournament {
   schedulingMode        SchedulingMode    @default(TARGET_GAMES)
   courts                Int
   pointsPerMatch        Int
+  scoringMode           ScoringMode       @default(AMERICANO_POINTS)
+  regularSetFormat      RegularSetFormat?
+  regularGameWinBy      Int?
+  regularSetsToWin      Int?
+  regularSetTiebreakTo  Int?
+  regularMatchTiebreak  Boolean?
   targetGamesPerPlayer  Int?
   tournamentTimeMinutes Int?
   publicToken           String            @unique
@@ -101,6 +118,12 @@ model Player {
   gender          String?
   gamesPlayed     Int        @default(0)
   totalPoints     Int        @default(0)
+  matchesWon      Int        @default(0)
+  matchesLost     Int        @default(0)
+  setsWon         Int        @default(0)
+  setsLost        Int        @default(0)
+  gamesWon        Int        @default(0)
+  gamesLost       Int        @default(0)
   handicap        Float?
   integrationWave Int?
   integratedAt    DateTime?
@@ -130,13 +153,30 @@ model Round {
 }
 
 model Match {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   roundId   String
   court     Int
   teamA     String[]
   teamB     String[]
   scoreA    Int?
   scoreB    Int?
-  completed Boolean  @default(false)
-  round     Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  matchTbA  Int?
+  matchTbB  Int?
+  completed Boolean    @default(false)
+  round     Round      @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  sets      MatchSet[]
+}
+
+model MatchSet {
+  id        String @id @default(cuid())
+  matchId   String
+  setNumber Int
+  gamesA    Int
+  gamesB    Int
+  tbA       Int?
+  tbB       Int?
+  match     Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, setNumber])
+  @@index([matchId])
 }

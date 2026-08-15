@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type {
   Match as DbMatch,
+  MatchSet as DbMatchSet,
   PendingPlayer as DbPendingPlayer,
   Player as DbPlayer,
   Round as DbRound,
@@ -10,6 +11,7 @@ import type {
   LeaderboardEntry,
   PendingPlayer as DomainPendingPlayer,
   Player as DomainPlayer,
+  RegularScoringConfig,
   Round as DomainRound,
   SchedulingMode,
   TournamentConfig
@@ -47,42 +49,67 @@ import { publishEvent } from "../realtime/events.js";
 import { broadcastToTournament } from "../realtime/socketHub.js";
 import { logger } from "../lib/logger.js";
 
-function buildLeaderboard(players: DomainPlayer[]): LeaderboardEntry[] {
+function buildLeaderboard(
+  players: DomainPlayer[],
+  scoringMode?: TournamentConfig["scoringMode"]
+): LeaderboardEntry[] {
+  const regular = scoringMode === "REGULAR";
   return [...players]
-    .sort((a, b) => b.totalPoints - a.totalPoints)
+    .sort((a, b) => {
+      if (!regular) {
+        return b.totalPoints - a.totalPoints;
+      }
+      const byMatches = (b.matchesWon ?? 0) - (a.matchesWon ?? 0);
+      if (byMatches !== 0) {
+        return byMatches;
+      }
+      const bySets = (b.setsWon ?? 0) - (a.setsWon ?? 0);
+      if (bySets !== 0) {
+        return bySets;
+      }
+      return (b.gamesWon ?? 0) - (a.gamesWon ?? 0);
+    })
     .map((player, index) => ({
       playerId: player.id,
       name: player.name,
       totalPoints: player.totalPoints,
       gamesPlayed: player.gamesPlayed,
-      rank: index + 1
+      rank: index + 1,
+      matchesWon: player.matchesWon,
+      matchesLost: player.matchesLost,
+      setsWon: player.setsWon,
+      setsLost: player.setsLost,
+      gamesWon: player.gamesWon,
+      gamesLost: player.gamesLost
     }));
 }
 
-function mapTournamentMutationErrorStatus(message: string): number {
-  if (message.includes("not found")) {
-    return 404;
+function regularConfigFromRow(tournament: DbTournament): RegularScoringConfig | undefined {
+  if (tournament.scoringMode !== "REGULAR" || !tournament.regularSetFormat) {
+    return undefined;
   }
-  if (message.includes("Version mismatch")) {
-    return 409;
-  }
-  if (
-    message.includes("Need at least 2 pending players") ||
-    message.includes("Maximum integration waves") ||
-    message.includes("Cannot integrate during incomplete round")
-  ) {
-    return 400;
-  }
-  return 409;
+  return {
+    setFormat: tournament.regularSetFormat,
+    gameWinBy: (tournament.regularGameWinBy === 2 ? 2 : 1) as 1 | 2,
+    setsToWin: tournament.regularSetsToWin ?? 1,
+    setTiebreakTo:
+      tournament.regularSetTiebreakTo === 7 || tournament.regularSetTiebreakTo === 10
+        ? tournament.regularSetTiebreakTo
+        : undefined,
+    matchTiebreak: tournament.regularMatchTiebreak ?? undefined
+  };
 }
+
+type DbMatchWithSets = DbMatch & { sets: DbMatchSet[] };
 
 function mapDbTournamentToState(
   tournament: DbTournament & {
     players: DbPlayer[];
-    rounds: Array<DbRound & { matches: DbMatch[] }>;
+    rounds: Array<DbRound & { matches: DbMatchWithSets[] }>;
     pendingPlayers: DbPendingPlayer[];
   }
 ) {
+  const regularScoring = regularConfigFromRow(tournament);
   const config: TournamentConfig = {
     name: tournament.name,
     mode: tournament.mode,
@@ -91,6 +118,8 @@ function mapDbTournamentToState(
     players: tournament.players.map((player) => ({ name: player.name })),
     courts: tournament.courts,
     pointsPerMatch: tournament.pointsPerMatch,
+    scoringMode: tournament.scoringMode,
+    regularScoring,
     targetGamesPerPlayer: tournament.targetGamesPerPlayer ?? undefined,
     tournamentTimeMinutes: tournament.tournamentTimeMinutes ?? undefined,
     enableAutoIntegration: tournament.enableAutoIntegration,
@@ -104,7 +133,13 @@ function mapDbTournamentToState(
     gamesPlayed: player.gamesPlayed,
     totalPoints: player.totalPoints,
     handicap: player.handicap ?? undefined,
-    integrationWave: player.integrationWave ?? undefined
+    integrationWave: player.integrationWave ?? undefined,
+    matchesWon: player.matchesWon,
+    matchesLost: player.matchesLost,
+    setsWon: player.setsWon,
+    setsLost: player.setsLost,
+    gamesWon: player.gamesWon,
+    gamesLost: player.gamesLost
   }));
 
   const pendingPlayers: DomainPendingPlayer[] = tournament.pendingPlayers.map((pp) => ({
@@ -129,7 +164,19 @@ function mapDbTournamentToState(
         teamB: match.teamB as [string, string],
         scoreA: match.scoreA ?? undefined,
         scoreB: match.scoreB ?? undefined,
-        completed: match.completed
+        completed: match.completed,
+        matchTbA: match.matchTbA ?? undefined,
+        matchTbB: match.matchTbB ?? undefined,
+        sets: match.sets
+          .slice()
+          .sort((a, b) => a.setNumber - b.setNumber)
+          .map((set) => ({
+            setNumber: set.setNumber,
+            gamesA: set.gamesA,
+            gamesB: set.gamesB,
+            tbA: set.tbA ?? undefined,
+            tbB: set.tbB ?? undefined
+          }))
       }))
     }));
 
@@ -139,7 +186,7 @@ function mapDbTournamentToState(
     players,
     rounds,
     version: tournament.version,
-    leaderboard: buildLeaderboard(players),
+    leaderboard: buildLeaderboard(players, config.scoringMode),
     publicToken: tournament.publicToken,
     createdAt: tournament.createdAt.toISOString(),
     updatedAt: tournament.updatedAt.toISOString(),
@@ -148,6 +195,37 @@ function mapDbTournamentToState(
     integrationWaveCount: tournament.integrationWaveCount
   };
 }
+
+function mapTournamentMutationErrorStatus(message: string): number {
+  if (message.includes("not found")) {
+    return 404;
+  }
+  if (message.includes("Version mismatch")) {
+    return 409;
+  }
+  if (
+    message.includes("Need at least 2 pending players") ||
+    message.includes("Maximum integration waves") ||
+    message.includes("Cannot integrate during incomplete round")
+  ) {
+    return 400;
+  }
+  return 409;
+}
+
+const tournamentInclude = {
+  players: true,
+  rounds: {
+    include: {
+      matches: {
+        include: {
+          sets: true
+        }
+      }
+    }
+  },
+  pendingPlayers: true
+} as const;
 
 export async function registerTournamentRoutes(server: FastifyInstance): Promise<void> {
   server.get("/health", async () => ({ status: "ok" }));
@@ -158,15 +236,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     }
     const rows = await prisma.tournament.findMany({
       where: { organizerId: request.user.id },
-      include: {
-        players: true,
-        rounds: {
-          include: {
-            matches: true
-          }
-        },
-        pendingPlayers: true
-      },
+      include: tournamentInclude,
       orderBy: { createdAt: "desc" }
     });
     const data = rows.map(mapDbTournamentToState);
@@ -204,15 +274,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
 
     const row = await prisma.tournament.findUnique({
       where: { publicToken: params.token },
-      include: {
-        players: true,
-        rounds: {
-          include: {
-            matches: true
-          }
-        },
-        pendingPlayers: true
-      }
+      include: tournamentInclude
     });
     if (!row) {
       reply.status(404);
@@ -256,6 +318,12 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
           schedulingMode: tournament.config.schedulingMode,
           courts: tournament.config.courts,
           pointsPerMatch: tournament.config.pointsPerMatch,
+          scoringMode: tournament.config.scoringMode ?? "AMERICANO_POINTS",
+          regularSetFormat: tournament.config.regularScoring?.setFormat ?? null,
+          regularGameWinBy: tournament.config.regularScoring?.gameWinBy ?? null,
+          regularSetsToWin: tournament.config.regularScoring?.setsToWin ?? null,
+          regularSetTiebreakTo: tournament.config.regularScoring?.setTiebreakTo ?? null,
+          regularMatchTiebreak: tournament.config.regularScoring?.matchTiebreak ?? null,
           targetGamesPerPlayer: tournament.config.targetGamesPerPlayer ?? null,
           tournamentTimeMinutes: tournament.config.tournamentTimeMinutes ?? null,
           publicToken: tournament.publicToken,
@@ -273,6 +341,12 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
               gender: player.gender ?? null,
               gamesPlayed: player.gamesPlayed,
               totalPoints: player.totalPoints,
+              matchesWon: player.matchesWon ?? 0,
+              matchesLost: player.matchesLost ?? 0,
+              setsWon: player.setsWon ?? 0,
+              setsLost: player.setsLost ?? 0,
+              gamesWon: player.gamesWon ?? 0,
+              gamesLost: player.gamesLost ?? 0,
               handicap: player.handicap ?? null,
               integrationWave: player.integrationWave ?? null,
               integratedAt: null
@@ -291,7 +365,18 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
                   teamB: match.teamB,
                   scoreA: match.scoreA ?? null,
                   scoreB: match.scoreB ?? null,
-                  completed: match.completed
+                  matchTbA: match.matchTbA ?? null,
+                  matchTbB: match.matchTbB ?? null,
+                  completed: match.completed,
+                  sets: {
+                    create: (match.sets ?? []).map((set) => ({
+                      setNumber: set.setNumber,
+                      gamesA: set.gamesA,
+                      gamesB: set.gamesB,
+                      tbA: set.tbA ?? null,
+                      tbB: set.tbB ?? null
+                    }))
+                  }
                 }))
               }
             }))
@@ -578,15 +663,7 @@ async function loadTournamentState(tournamentId: string) {
   try {
     const row = await prisma.tournament.findUnique({
       where: { id: tournamentId },
-      include: {
-        players: true,
-        rounds: {
-          include: {
-            matches: true
-          }
-        },
-        pendingPlayers: true
-      }
+      include: tournamentInclude
     });
     if (!row) {
       throw new Error("Tournament not found.");
@@ -639,6 +716,12 @@ async function persistTournament(tournament: {
         schedulingMode: tournament.config.schedulingMode as SchedulingMode,
         courts: tournament.config.courts,
         pointsPerMatch: tournament.config.pointsPerMatch,
+        scoringMode: tournament.config.scoringMode ?? "AMERICANO_POINTS",
+        regularSetFormat: tournament.config.regularScoring?.setFormat ?? null,
+        regularGameWinBy: tournament.config.regularScoring?.gameWinBy ?? null,
+        regularSetsToWin: tournament.config.regularScoring?.setsToWin ?? null,
+        regularSetTiebreakTo: tournament.config.regularScoring?.setTiebreakTo ?? null,
+        regularMatchTiebreak: tournament.config.regularScoring?.matchTiebreak ?? null,
         targetGamesPerPlayer: tournament.config.targetGamesPerPlayer ?? null,
         tournamentTimeMinutes: tournament.config.tournamentTimeMinutes ?? null,
         integrationWaveCount: tournament.integrationWaveCount,
@@ -653,6 +736,12 @@ async function persistTournament(tournament: {
             gender: player.gender ?? null,
             gamesPlayed: player.gamesPlayed,
             totalPoints: player.totalPoints,
+            matchesWon: player.matchesWon ?? 0,
+            matchesLost: player.matchesLost ?? 0,
+            setsWon: player.setsWon ?? 0,
+            setsLost: player.setsLost ?? 0,
+            gamesWon: player.gamesWon ?? 0,
+            gamesLost: player.gamesLost ?? 0,
             handicap: player.handicap ?? null,
             integrationWave: player.integrationWave ?? null,
             integratedAt: null // Not currently tracked in domain model
@@ -679,7 +768,18 @@ async function persistTournament(tournament: {
                 teamB: match.teamB,
                 scoreA: match.scoreA ?? null,
                 scoreB: match.scoreB ?? null,
-                completed: match.completed
+                matchTbA: match.matchTbA ?? null,
+                matchTbB: match.matchTbB ?? null,
+                completed: match.completed,
+                sets: {
+                  create: (match.sets ?? []).map((set) => ({
+                    setNumber: set.setNumber,
+                    gamesA: set.gamesA,
+                    gamesB: set.gamesB,
+                    tbA: set.tbA ?? null,
+                    tbB: set.tbB ?? null
+                  }))
+                }
               }))
             }
           }))

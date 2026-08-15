@@ -21,6 +21,13 @@ export interface Player {
   totalPoints: number;
   handicap?: number;
   integrationWave?: number;
+  /** Regular standings — omitted / 0 for Americano points tournaments. */
+  matchesWon?: number;
+  matchesLost?: number;
+  setsWon?: number;
+  setsLost?: number;
+  gamesWon?: number;
+  gamesLost?: number;
 }
 
 export interface PendingPlayer {
@@ -28,6 +35,15 @@ export interface PendingPlayer {
   name: string;
   gender?: PlayerGender;
   createdAt: string;
+}
+
+/** One set line for Regular scoring (games counts; optional set tiebreak points). */
+export interface MatchSet {
+  setNumber: number;
+  gamesA: number;
+  gamesB: number;
+  tbA?: number;
+  tbB?: number;
 }
 
 export interface Match {
@@ -39,6 +55,11 @@ export interface Match {
   scoreA?: number;
   scoreB?: number;
   completed: boolean;
+  /** Regular scoring set lines (draft or complete). */
+  sets?: MatchSet[];
+  /** Match tiebreak points when sets are even and match TB is enabled. */
+  matchTbA?: number;
+  matchTbB?: number;
 }
 
 export interface Round {

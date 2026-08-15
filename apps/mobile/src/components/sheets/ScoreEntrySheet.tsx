@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Text } from "react-native";
 
 import { touch } from "../../theme";
@@ -21,6 +22,8 @@ export interface ScoreEntrySheetProps {
   secondarySaveLabel?: string;
   plusDisabledA?: boolean;
   plusDisabledB?: boolean;
+  /** Optional slot below score rows (e.g. KOH win-method teaser). */
+  extraContent?: ReactNode;
   onChangeScoreA: (next: number) => void;
   onChangeScoreB: (next: number) => void;
   onUndo: () => void;
@@ -55,6 +58,7 @@ export function ScoreEntrySheet(props: ScoreEntrySheetProps) {
         plusDisabled={props.plusDisabledB}
         onChange={props.onChangeScoreB}
       />
+      {props.extraContent}
       <SheetButton label="Undo" disabled={!props.canUndo} onPress={props.onUndo} style={{ minHeight: touch.minPrimary }} />
       {props.secondarySaveLabel && props.onSecondarySave ? (
         <SheetButton

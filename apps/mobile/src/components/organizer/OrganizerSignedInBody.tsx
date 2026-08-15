@@ -3,7 +3,7 @@ import { KohScreen } from "../../screens/KohScreen";
 import { useOrganizerScreen } from "../../hooks/organizer/useOrganizerScreen";
 import { formatTournamentMode } from "../../utilities/organizer/formatLabels";
 
-import { KohLiveStub } from "../koh/KohLiveStub";
+import { KohLiveHub } from "../koh/live/KohLiveHub";
 import { GameEstimatorView } from "./estimator/GameEstimatorView";
 import { LeaderboardView } from "./leaderboard/LeaderboardView";
 import { MatchSettingsStepView } from "./create/MatchSettingsStepView";
@@ -181,6 +181,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     kohHub,
     adoptKohHub,
     clearKohHub,
+    setKohHub,
     setErrorText,
     markEmailVerifyRequired
   } = org;
@@ -234,8 +235,12 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
 
   if (step === "KOH_LIVE" && kohHub) {
     return (
-      <KohLiveStub
+      <KohLiveHub
         hub={kohHub}
+        setHub={setKohHub}
+        errorText={errorText}
+        setErrorText={setErrorText}
+        markEmailVerifyRequired={markEmailVerifyRequired}
         onBackToList={() => {
           clearKohHub();
           setStep("LIST");

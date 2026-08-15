@@ -1,4 +1,13 @@
-import type { KohCourt, KohPromotionRule, KohUnit, RegularScoringConfig } from "@padel/shared";
+import type {
+  KohCourt,
+  KohCourtChange,
+  KohPendingPromote,
+  KohPromotionRule,
+  KohTempSwap,
+  KohUnit,
+  MatchSet,
+  RegularScoringConfig
+} from "@padel/shared";
 
 export type KohCreateStep =
   | "NAME"
@@ -43,7 +52,7 @@ export interface KohCreateDraft {
   selectedUnitId: string | null;
 }
 
-/** Organizer hub returned by KOH create/assign/get. */
+/** Organizer hub returned by KOH create/assign/get/score. */
 export interface KohTournamentHub {
   id: string;
   publicToken: string;
@@ -64,13 +73,31 @@ export interface KohTournamentHub {
   courts: Array<
     KohCourt & {
       unitCount: number;
-      activeMatch?: unknown;
-      tempSwap?: unknown;
+      activeMatch: {
+        id: string;
+        unitAId: string;
+        unitBId: string;
+        completed: boolean;
+        sets: Array<
+          MatchSet & {
+            winMethodsA?: Array<"REGULAR" | "GOLDEN" | "STAR">;
+            winMethodsB?: Array<"REGULAR" | "GOLDEN" | "STAR">;
+          }
+        >;
+      } | null;
+      tempSwap?: KohTempSwap | null;
     }
   >;
   ready: boolean;
   balanceHint: string | null;
-  pendingPromote?: unknown;
+  pendingPromote?: KohPendingPromote | null;
+  lastMatchEvent?: {
+    type: "KING_WIN" | "KING_LOSS";
+    courtId: string;
+    winnerUnitId: string;
+    loserUnitId: string;
+  };
+  lastCourtChange?: KohCourtChange | null;
 }
 
-export type { KohUnit };
+export type { KohUnit, KohCourtChange, KohPendingPromote };

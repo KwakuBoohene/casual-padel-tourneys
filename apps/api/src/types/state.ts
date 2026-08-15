@@ -1,4 +1,4 @@
-import type { LeaderboardEntry, Match, PendingPlayer, Player, Round, TournamentConfig } from "@padel/shared";
+import type { LeaderboardEntry, Match, PendingPlayer, Player, Round, TournamentConfig, FixedPair } from "@padel/shared";
 
 export interface TournamentState {
   id: string;
@@ -14,6 +14,8 @@ export interface TournamentState {
   organizerId?: string;
   pendingPlayers: PendingPlayer[];
   integrationWaveCount: number;
+  /** Team Mexicano fixed pairs (absent for Classic / Mixed). */
+  fixedPairs?: FixedPair[];
 }
 
 export interface MatchLookup {

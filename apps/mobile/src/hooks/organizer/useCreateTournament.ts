@@ -79,6 +79,7 @@ export function useCreateTournament({
       schedulingMode: effectiveSchedulingMode,
       players: roster.players,
       playerGenders: roster.playerGenders,
+      teams: roster.teams,
       sanitizedPlayersCount: roster.sanitizedPlayers.length,
       hasDuplicatePlayerNames: roster.hasDuplicatePlayerNames,
       courtsText: settings.courtsText,

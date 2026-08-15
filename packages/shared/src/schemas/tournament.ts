@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { MEXICANO_MIN_PLAYERS } from "../mexicano/ladder.js";
+import { MEXICANO_MIN_PLAYERS, MEXICANO_MIN_TEAMS } from "../mexicano/ladder.js";
 
 export const tournamentModeSchema = z.enum(["AMERICANO", "MEXICANO", "KING_OF_THE_HILL"]);
 /** @deprecated Prefer tournamentModeSchema — kept for existing imports. */
@@ -22,13 +22,25 @@ export const regularScoringSchema = z.object({
   matchTiebreak: z.boolean().optional()
 });
 
+const tournamentPlayerInputSchema = z.object({
+  name: z.string().min(1),
+  gender: playerGenderSchema.optional()
+});
+
+export const fixedTeamInputSchema = z.object({
+  playerA: tournamentPlayerInputSchema,
+  playerB: tournamentPlayerInputSchema,
+  name: z.string().min(1).optional()
+});
+
 export const createTournamentSchema = z
   .object({
     name: z.string().min(2),
     mode: americanoMexicanoModeSchema,
     variant: variantSchema,
     schedulingMode: schedulingModeSchema,
-    players: z.array(z.object({ name: z.string().min(1), gender: playerGenderSchema.optional() })).min(4),
+    players: z.array(tournamentPlayerInputSchema).default([]),
+    teams: z.array(fixedTeamInputSchema).optional(),
     courts: z.number().int().min(1),
     pointsPerMatch: z.number().int().min(1).optional(),
     scoringMode: scoringModeSchema.default("AMERICANO_POINTS"),
@@ -50,16 +62,31 @@ export const createTournamentSchema = z
         message: "Provide tournamentTimeMinutes for TOTAL_TIME mode."
       });
     }
-    if (isMexicano && value.players.length < MEXICANO_MIN_PLAYERS) {
+    if (isMexicano && value.variant === "TEAM") {
+      const teams = value.teams ?? [];
+      if (teams.length < MEXICANO_MIN_TEAMS) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["teams"],
+          message: `Team Mexicano requires at least ${MEXICANO_MIN_TEAMS} fixed pairs.`
+        });
+      }
+    } else if (isMexicano && value.players.length < MEXICANO_MIN_PLAYERS) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["players"],
         message: `Mexicano requires at least ${MEXICANO_MIN_PLAYERS} players.`
       });
+    } else if (!isMexicano && value.players.length < 4) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["players"],
+        message: "Provide at least 4 players."
+      });
     }
     if (value.variant === "MIXED") {
-      for (let index = 0; index < value.players.length; index += 1) {
-        if (!value.players[index].gender) {
+      for (const player of value.players) {
+        if (!player.gender) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: "Gender is required for every player in MIXED variant."

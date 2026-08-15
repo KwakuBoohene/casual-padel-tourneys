@@ -1,0 +1,62 @@
+import { Text, TextInput, View } from "react-native";
+
+import { BottomSheet, SheetButton } from "../../sheets";
+import { radius, spacing, touch } from "../../../theme";
+import { useTheme } from "../../../theme/ThemeProvider";
+
+interface MexicanoAddPairSheetProps {
+  visible: boolean;
+  title: string;
+  playerA: string;
+  playerB: string;
+  errorText: string;
+  onChangePlayerA: (value: string) => void;
+  onChangePlayerB: (value: string) => void;
+  onSave: () => void;
+  onDismiss: () => void;
+}
+
+export function MexicanoAddPairSheet(props: MexicanoAddPairSheetProps) {
+  const { colors } = useTheme();
+
+  const field = (label: string, value: string, onChange: (value: string) => void) => (
+    <View
+      style={{
+        minHeight: touch.minSecondary,
+        borderRadius: radius.lg,
+        borderWidth: 1,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        justifyContent: "center"
+      }}
+    >
+      <Text style={{ fontSize: 11, color: colors.muted, fontWeight: "600" }}>{label}</Text>
+      <TextInput
+        value={value}
+        onChangeText={onChange}
+        placeholder="Player name"
+        placeholderTextColor={colors.muted}
+        style={{ color: colors.text, fontSize: 17, fontWeight: "600", paddingVertical: spacing.xs }}
+      />
+    </View>
+  );
+
+  return (
+    <BottomSheet visible={props.visible} title={props.title} onDismiss={props.onDismiss}>
+      <View style={{ gap: spacing.md }}>
+        <Text style={{ color: colors.muted, fontSize: 13 }}>
+          Fixed pair for the whole night — partners stay together.
+        </Text>
+        {field("PLAYER 1", props.playerA, props.onChangePlayerA)}
+        {field("PLAYER 2", props.playerB, props.onChangePlayerB)}
+        {props.errorText ? (
+          <Text style={{ color: colors.danger, fontSize: 13 }}>{props.errorText}</Text>
+        ) : null}
+        <SheetButton label="Save pair" onPress={props.onSave} />
+        <SheetButton label="Cancel" onPress={props.onDismiss} />
+      </View>
+    </BottomSheet>
+  );
+}

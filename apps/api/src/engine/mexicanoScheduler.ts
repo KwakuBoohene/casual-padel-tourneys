@@ -1,9 +1,11 @@
 import {
   buildMexicanoLadderAssignments,
+  buildMexicanoTeamLadderAssignments,
   createId,
   sortMexicanoStandings
 } from "@padel/shared";
 import type {
+  FixedPair,
   Match,
   Player,
   PlayerGender,
@@ -15,6 +17,7 @@ import type {
 export interface ScheduledTournament {
   players: Player[];
   rounds: Round[];
+  fixedPairs?: FixedPair[];
 }
 
 export interface BuildNextMexicanoRoundInput {
@@ -22,6 +25,7 @@ export interface BuildNextMexicanoRoundInput {
   courts: number;
   variant: TournamentVariant;
   roundNumber: number;
+  fixedPairs?: FixedPair[];
   /** Optional deterministic RNG in [0, 1). Unused for ladder rounds. */
   random?: () => number;
 }
@@ -34,6 +38,10 @@ export function generateMexicano(
   config: TournamentConfig,
   options?: { random?: () => number }
 ): ScheduledTournament {
+  if (config.variant === "TEAM") {
+    return generateTeamMexicano(config, options);
+  }
+
   const players: Player[] = config.players.map((input) => ({
     id: createId("player"),
     name: input.name,
@@ -52,10 +60,15 @@ export function generateMexicano(
 }
 
 /**
- * Next Mexicano round from current standings (1+3 vs 2+4, …).
- * MIXED: prefer each side male+female; if impossible, keep classic ladder sides.
+ * Next Mexicano round from current standings.
+ * Classic/Mixed: 1+3 vs 2+4 individuals.
+ * Team: fixed pairs ranked; 1 vs 2, 3 vs 4, …
  */
 export function buildNextMexicanoRound(input: BuildNextMexicanoRoundInput): Round {
+  if (input.variant === "TEAM") {
+    return buildNextTeamMexicanoRound(input);
+  }
+
   const ordered = sortMexicanoStandings(
     input.players.map((player) => ({
       playerId: player.id,
@@ -92,6 +105,132 @@ export function buildNextMexicanoRound(input: BuildNextMexicanoRoundInput): Roun
   };
 }
 
+function generateTeamMexicano(
+  config: TournamentConfig,
+  options?: { random?: () => number }
+): ScheduledTournament {
+  const teamsInput = config.teams ?? [];
+  if (teamsInput.length === 0) {
+    throw new Error("Team Mexicano requires fixed teams.");
+  }
+
+  const players: Player[] = [];
+  const fixedPairs: FixedPair[] = [];
+  for (const team of teamsInput) {
+    const pairId = createId("pair");
+    const playerA: Player = {
+      id: createId("player"),
+      name: team.playerA.name,
+      gender: team.playerA.gender,
+      gamesPlayed: 0,
+      totalPoints: 0,
+      pairId
+    };
+    const playerB: Player = {
+      id: createId("player"),
+      name: team.playerB.name,
+      gender: team.playerB.gender,
+      gamesPlayed: 0,
+      totalPoints: 0,
+      pairId
+    };
+    players.push(playerA, playerB);
+    fixedPairs.push({
+      id: pairId,
+      playerAId: playerA.id,
+      playerBId: playerB.id,
+      name: team.name
+    });
+  }
+
+  const round = buildTeamLotteryRound({
+    fixedPairs,
+    players,
+    courts: config.courts,
+    roundNumber: 1,
+    random: options?.random
+  });
+  return { players, rounds: [round], fixedPairs };
+}
+
+function buildNextTeamMexicanoRound(input: BuildNextMexicanoRoundInput): Round {
+  const fixedPairs = requireFixedPairs(input.fixedPairs);
+  const byPair = new Map(fixedPairs.map((pair) => [pair.id, pair]));
+  const byId = new Map(input.players.map((player) => [player.id, player]));
+
+  const teamRows = fixedPairs.map((pair) => {
+    const a = byId.get(pair.playerAId);
+    const b = byId.get(pair.playerBId);
+    return {
+      playerId: pair.id,
+      totalPoints: Math.max(a?.totalPoints ?? 0, b?.totalPoints ?? 0),
+      gamesPlayed: Math.max(a?.gamesPlayed ?? 0, b?.gamesPlayed ?? 0)
+    };
+  });
+  const ordered = sortMexicanoStandings(teamRows);
+  const { courts } = buildMexicanoTeamLadderAssignments(
+    ordered.map((row) => row.playerId),
+    input.courts
+  );
+
+  const matches: Match[] = courts.map((assignment) => {
+    const pairA = byPair.get(assignment.teamAId)!;
+    const pairB = byPair.get(assignment.teamBId)!;
+    return {
+      id: createId("match"),
+      round: input.roundNumber,
+      court: assignment.court,
+      teamA: [pairA.playerAId, pairA.playerBId],
+      teamB: [pairB.playerAId, pairB.playerBId],
+      completed: false
+    };
+  });
+
+  return {
+    id: createId("round"),
+    roundNumber: input.roundNumber,
+    matches,
+    isLocked: false
+  };
+}
+
+function buildTeamLotteryRound(input: {
+  fixedPairs: FixedPair[];
+  players: Player[];
+  courts: number;
+  roundNumber: number;
+  random?: () => number;
+}): Round {
+  const random = input.random ?? Math.random;
+  const shuffled = [...input.fixedPairs];
+  shuffleInPlace(shuffled, random);
+  const { courts } = buildMexicanoTeamLadderAssignments(
+    shuffled.map((pair) => pair.id),
+    input.courts
+  );
+  const byPair = new Map(input.fixedPairs.map((pair) => [pair.id, pair]));
+
+  const matches: Match[] = courts.map((assignment) => {
+    const pairA = byPair.get(assignment.teamAId)!;
+    const pairB = byPair.get(assignment.teamBId)!;
+    return {
+      id: createId("match"),
+      round: input.roundNumber,
+      court: assignment.court,
+      teamA: [pairA.playerAId, pairA.playerBId],
+      teamB: [pairB.playerAId, pairB.playerBId],
+      completed: false
+    };
+  });
+
+  return {
+    id: createId("round"),
+    roundNumber: input.roundNumber,
+    matches,
+    isLocked: false
+  };
+}
+
 function buildLotteryRound(input: BuildNextMexicanoRoundInput): Round {
   const random = input.random ?? Math.random;
   const shuffled = [...input.players];
@@ -108,7 +247,7 @@ function buildLotteryRound(input: BuildNextMexicanoRoundInput): Round {
     const sides = pairCourtSides(defaultA, defaultB, input.variant, byId);
     matches.push({
       id: createId("match"),
-      round: input.roundNumber,
+      round: matches.length + 1 > 0 ? input.roundNumber : input.roundNumber,
       court: matches.length + 1,
       teamA: sides.teamA,
       teamB: sides.teamB,
@@ -122,6 +261,13 @@ function buildLotteryRound(input: BuildNextMexicanoRoundInput): Round {
     matches,
     isLocked: false
   };
+}
+
+function requireFixedPairs(fixedPairs: FixedPair[] | undefined): FixedPair[] {
+  if (!fixedPairs || fixedPairs.length === 0) {
+    throw new Error("Team Mexicano round requires fixedPairs.");
+  }
+  return fixedPairs;
 }
 
 function pairCourtSides(

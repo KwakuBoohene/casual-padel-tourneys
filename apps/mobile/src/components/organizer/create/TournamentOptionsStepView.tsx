@@ -69,7 +69,9 @@ export function TournamentOptionsStepView(props: TournamentOptionsStepViewProps)
         ) : null}
         {isMexicano ? (
           <Text style={{ color: colors.muted, fontSize: 13, marginBottom: spacing.sm }}>
-            Round 1 is a lottery. After that, each next round is built from the leaderboard (1+3 vs 2+4).
+            {props.variant === "TEAM"
+              ? "Round 1 shuffles fixed pairs. Later rounds: strongest teams face strongest (1 vs 2, 3 vs 4)."
+              : "Round 1 is a lottery. After that, each next round is built from the leaderboard (1+3 vs 2+4)."}
           </Text>
         ) : null}
         <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Variant</Text>
@@ -87,6 +89,14 @@ export function TournamentOptionsStepView(props: TournamentOptionsStepViewProps)
           props.variant === "MIXED",
           () => props.onChangeVariant("MIXED")
         )}
+        {isMexicano
+          ? renderOption(
+              "Team",
+              "Fixed pairs ranked · 1 vs 2, 3 vs 4",
+              props.variant === "TEAM",
+              () => props.onChangeVariant("TEAM")
+            )
+          : null}
       </View>
 
       {!isMexicano ? (

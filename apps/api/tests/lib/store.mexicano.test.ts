@@ -123,3 +123,45 @@ test("endMexicanoNight keeps a fully scored latest round", () => {
   assert.equal(ended.rounds.length, 1);
   assert.ok(ended.rounds[0].matches.every((match) => match.completed));
 });
+
+test("Team Mexicano advance keeps pairs together", () => {
+  const teams = [
+    { playerA: { name: "A1" }, playerB: { name: "A2" } },
+    { playerA: { name: "B1" }, playerB: { name: "B2" } },
+    { playerA: { name: "C1" }, playerB: { name: "C2" } },
+    { playerA: { name: "D1" }, playerB: { name: "D2" } }
+  ];
+  const tournament = createTournament(
+    {
+      name: "Team Mx",
+      mode: "MEXICANO",
+      variant: "TEAM",
+      schedulingMode: "TOTAL_TIME",
+      players: teams.flatMap((team) => [team.playerA, team.playerB]),
+      teams,
+      courts: 2,
+      pointsPerMatch: 24
+    },
+    "org_team_mx"
+  );
+  assert.equal(tournament.fixedPairs?.length, 4);
+  for (const match of tournament.rounds[0].matches) {
+    submitScore(tournament.id, match.id, 14, 10);
+  }
+  const advanced = advanceMexicanoRound(tournament.id);
+  assert.equal(advanced.rounds.length, 2);
+  for (const match of advanced.rounds[1].matches) {
+    const pairA = tournament.fixedPairs!.find(
+      (pair) =>
+        (pair.playerAId === match.teamA[0] && pair.playerBId === match.teamA[1]) ||
+        (pair.playerAId === match.teamA[1] && pair.playerBId === match.teamA[0])
+    );
+    const pairB = tournament.fixedPairs!.find(
+      (pair) =>
+        (pair.playerAId === match.teamB[0] && pair.playerBId === match.teamB[1]) ||
+        (pair.playerAId === match.teamB[1] && pair.playerBId === match.teamB[0])
+    );
+    assert.ok(pairA);
+    assert.ok(pairB);
+  }
+});

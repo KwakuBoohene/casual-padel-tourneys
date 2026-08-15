@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   buildMexicanoLadderAssignments,
+  buildMexicanoTeamLadderAssignments,
   sortMexicanoStandings
 } from "../../src/mexicano/ladder.js";
 
@@ -51,4 +52,25 @@ test("maxCourts truncates even when more groups of four exist", () => {
   const { courts, sittingOut } = buildMexicanoLadderAssignments(ids, 2);
   assert.equal(courts.length, 2);
   assert.deepEqual(sittingOut, ["p9", "p10", "p11", "p12"]);
+});
+
+test("team ladder maps 1 vs 2 and 3 vs 4", () => {
+  const { courts, sittingOut } = buildMexicanoTeamLadderAssignments(
+    ["t1", "t2", "t3", "t4"],
+    2
+  );
+  assert.equal(sittingOut.length, 0);
+  assert.deepEqual(courts, [
+    { court: 1, teamAId: "t1", teamBId: "t2" },
+    { court: 2, teamAId: "t3", teamBId: "t4" }
+  ]);
+});
+
+test("5 teams leaves one sitting out", () => {
+  const { courts, sittingOut } = buildMexicanoTeamLadderAssignments(
+    ["t1", "t2", "t3", "t4", "t5"],
+    3
+  );
+  assert.equal(courts.length, 2);
+  assert.deepEqual(sittingOut, ["t5"]);
 });

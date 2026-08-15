@@ -162,3 +162,56 @@ test("generateMexicano MIXED lottery forms mixed sides when possible", () => {
     }
   }
 });
+
+test("Team Mexicano keeps fixed pairs and ladders 1 vs 2", () => {
+  const teams = [
+    { playerA: { name: "A1" }, playerB: { name: "A2" } },
+    { playerA: { name: "B1" }, playerB: { name: "B2" } },
+    { playerA: { name: "C1" }, playerB: { name: "C2" } },
+    { playerA: { name: "D1" }, playerB: { name: "D2" } }
+  ];
+  const { players, rounds, fixedPairs } = generateMexicano(
+    baseConfig({
+      variant: "TEAM",
+      players: teams.flatMap((team) => [team.playerA, team.playerB]),
+      teams,
+      courts: 2
+    }),
+    { random: seqRandom([0, 0, 0, 0]) }
+  );
+  assert.ok(fixedPairs);
+  assert.equal(fixedPairs!.length, 4);
+  assert.equal(players.every((player) => Boolean(player.pairId)), true);
+  assert.equal(rounds[0].matches.length, 2);
+
+  // Force standings: pairs ordered A > B > C > D by points on playerA of each pair.
+  const byName = new Map(players.map((player) => [player.name, player]));
+  const setPairPoints = (a: string, b: string, points: number) => {
+    byName.get(a)!.totalPoints = points;
+    byName.get(b)!.totalPoints = points;
+    byName.get(a)!.gamesPlayed = 1;
+    byName.get(b)!.gamesPlayed = 1;
+  };
+  setPairPoints("A1", "A2", 40);
+  setPairPoints("B1", "B2", 30);
+  setPairPoints("C1", "C2", 20);
+  setPairPoints("D1", "D2", 10);
+
+  const next = buildNextMexicanoRound({
+    players,
+    courts: 2,
+    variant: "TEAM",
+    roundNumber: 2,
+    fixedPairs
+  });
+  assert.equal(next.matches.length, 2);
+  const pairOf = (name: string) => byName.get(name)!.pairId!;
+  const m0 = next.matches[0];
+  assert.deepEqual(new Set(m0.teamA), new Set([byName.get("A1")!.id, byName.get("A2")!.id]));
+  assert.deepEqual(new Set(m0.teamB), new Set([byName.get("B1")!.id, byName.get("B2")!.id]));
+  assert.equal(pairOf("A1"), pairOf("A2"));
+  assert.notEqual(pairOf("A1"), pairOf("B1"));
+  const m1 = next.matches[1];
+  assert.deepEqual(new Set(m1.teamA), new Set([byName.get("C1")!.id, byName.get("C2")!.id]));
+  assert.deepEqual(new Set(m1.teamB), new Set([byName.get("D1")!.id, byName.get("D2")!.id]));
+});

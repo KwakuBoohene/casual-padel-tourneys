@@ -13,6 +13,7 @@ import { isEmailVerifyRequired } from "../../api/errors";
 import type { CreateTournamentResponse, LiveTournamentState, SetupStep } from "../../types/organizer/tournament";
 
 import { prepareCreateTournamentRequest } from "./createTournamentRequest";
+import type { TeamPairDraft } from "../../hooks/organizer/usePlayerRoster";
 
 export async function submitCreateTournament(input: {
   name: string;
@@ -21,6 +22,7 @@ export async function submitCreateTournament(input: {
   schedulingMode: SchedulingMode;
   players: string[];
   playerGenders: Array<PlayerGender | undefined>;
+  teams?: TeamPairDraft[];
   sanitizedPlayersCount: number;
   hasDuplicatePlayerNames: boolean;
   courtsText: string;
@@ -44,6 +46,7 @@ export async function submitCreateTournament(input: {
     schedulingMode: input.schedulingMode,
     players: input.players,
     playerGenders: input.playerGenders,
+    teams: input.teams,
     sanitizedPlayersCount: input.sanitizedPlayersCount,
     hasDuplicatePlayerNames: input.hasDuplicatePlayerNames,
     courtsText: input.courtsText,

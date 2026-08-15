@@ -6,7 +6,9 @@ import type {
   TournamentMode,
   TournamentVariant
 } from "@padel/shared";
-import { MEXICANO_MIN_PLAYERS } from "@padel/shared";
+import { MEXICANO_MIN_PLAYERS, MEXICANO_MIN_TEAMS } from "@padel/shared";
+
+import type { TeamPairDraft } from "../../hooks/organizer/usePlayerRoster";
 
 export interface CreateTournamentDraft {
   name: string;
@@ -15,6 +17,7 @@ export interface CreateTournamentDraft {
   schedulingMode: SchedulingMode;
   players: string[];
   playerGenders: Array<PlayerGender | undefined>;
+  teams?: TeamPairDraft[];
   sanitizedPlayersCount: number;
   hasDuplicatePlayerNames: boolean;
   courtsText: string;
@@ -31,6 +34,10 @@ export interface CreateTournamentPayload {
   variant: TournamentVariant;
   schedulingMode: SchedulingMode;
   players: Array<{ name: string; gender: PlayerGender | undefined }>;
+  teams?: Array<{
+    playerA: { name: string; gender?: PlayerGender };
+    playerB: { name: string; gender?: PlayerGender };
+  }>;
   courts: number;
   pointsPerMatch?: number;
   scoringMode: ScoringMode;
@@ -51,6 +58,7 @@ export function prepareCreateTournamentRequest(
   const targetGames = Number(draft.targetGamesText);
   const tournamentTime = Number(draft.tournamentTimeText);
   const scoringMode = draft.scoringMode;
+  const isTeamMexicano = draft.mode === "MEXICANO" && draft.variant === "TEAM";
 
   if (!Number.isInteger(courts) || courts < 1) {
     return { ok: false, error: "Courts must be a whole number greater than 0." };
@@ -76,7 +84,15 @@ export function prepareCreateTournamentRequest(
       error: `${courts} court${courts === 1 ? "" : "s"} require at least ${courts * 4} players.`
     };
   }
-  if (draft.mode === "MEXICANO" && draft.sanitizedPlayersCount < MEXICANO_MIN_PLAYERS) {
+  if (isTeamMexicano) {
+    const teamCount = draft.teams?.length ?? 0;
+    if (teamCount < MEXICANO_MIN_TEAMS) {
+      return {
+        ok: false,
+        error: `Team Mexicano needs at least ${MEXICANO_MIN_TEAMS} fixed pairs.`
+      };
+    }
+  } else if (draft.mode === "MEXICANO" && draft.sanitizedPlayersCount < MEXICANO_MIN_PLAYERS) {
     return {
       ok: false,
       error: `Mexicano needs at least ${MEXICANO_MIN_PLAYERS} players. Next rounds are built from the leaderboard.`
@@ -93,28 +109,43 @@ export function prepareCreateTournamentRequest(
     }
   }
 
-  const players = draft.players
-    .map((playerName, index) => ({
-      name: playerName.trim(),
-      gender: draft.variant === "MIXED" ? draft.playerGenders[index] : undefined
-    }))
-    .filter((item) => item.name.length > 0);
+  const teams = isTeamMexicano
+    ? (draft.teams ?? []).map((team) => ({
+        playerA: { name: team.playerA.trim() },
+        playerB: { name: team.playerB.trim() }
+      }))
+    : undefined;
+
+  const players = isTeamMexicano
+    ? (teams ?? []).flatMap((team) => [team.playerA, team.playerB])
+    : draft.players
+        .map((playerName, index) => ({
+          name: playerName.trim(),
+          gender: draft.variant === "MIXED" ? draft.playerGenders[index] : undefined
+        }))
+        .filter((item) => item.name.length > 0);
+
+  const base = {
+    name: draft.name.trim(),
+    mode: draft.mode,
+    variant: draft.variant,
+    schedulingMode: draft.schedulingMode,
+    players,
+    teams,
+    courts,
+    targetGamesPerPlayer:
+      draft.mode !== "MEXICANO" && draft.schedulingMode === "TARGET_GAMES" ? targetGames : undefined,
+    tournamentTimeMinutes:
+      draft.mode !== "MEXICANO" && draft.schedulingMode === "TOTAL_TIME" ? tournamentTime : undefined
+  };
 
   if (scoringMode === "REGULAR") {
     return {
       ok: true,
       payload: {
-        name: draft.name.trim(),
-        mode: draft.mode,
-        variant: draft.variant,
-        schedulingMode: draft.schedulingMode,
-        players,
-        courts,
+        ...base,
         scoringMode: "REGULAR",
-        regularScoring: draft.regularScoring,
-        targetGamesPerPlayer: draft.schedulingMode === "TARGET_GAMES" ? targetGames : undefined,
-        tournamentTimeMinutes:
-          draft.mode !== "MEXICANO" && draft.schedulingMode === "TOTAL_TIME" ? tournamentTime : undefined
+        regularScoring: draft.regularScoring
       }
     };
   }
@@ -122,18 +153,9 @@ export function prepareCreateTournamentRequest(
   return {
     ok: true,
     payload: {
-      name: draft.name.trim(),
-      mode: draft.mode,
-      variant: draft.variant,
-      schedulingMode: draft.schedulingMode,
-      players,
-      courts,
+      ...base,
       pointsPerMatch,
-      scoringMode: "AMERICANO_POINTS",
-      targetGamesPerPlayer:
-        draft.mode !== "MEXICANO" && draft.schedulingMode === "TARGET_GAMES" ? targetGames : undefined,
-      tournamentTimeMinutes:
-        draft.mode !== "MEXICANO" && draft.schedulingMode === "TOTAL_TIME" ? tournamentTime : undefined
+      scoringMode: "AMERICANO_POINTS"
     }
   };
 }

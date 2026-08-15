@@ -153,6 +153,8 @@ model Player {
   handicap        Float?
   integrationWave Int?
   integratedAt    DateTime?
+  /** Shared by both partners in Team Mexicano. */
+  pairId          String?
   organizerPlayerId String?
   tournament      Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   organizerPlayer OrganizerPlayer? @relation(fields: [organizerPlayerId], references: [id], onDelete: SetNull)

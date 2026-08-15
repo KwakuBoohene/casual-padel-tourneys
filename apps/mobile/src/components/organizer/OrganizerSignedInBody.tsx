@@ -13,6 +13,7 @@ import { OrganizerListScreen } from "./list/OrganizerListScreen";
 import { OrganizerLiveScreen } from "./live/OrganizerLiveScreen";
 import { PlayerGamesView } from "./leaderboard/PlayerGamesView";
 import { PlayersStepView } from "./create/PlayersStepView";
+import { TeamPlayersStepView } from "./create/TeamPlayersStepView";
 import { TournamentOptionsStepView } from "./create/TournamentOptionsStepView";
 
 export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrganizerScreen> }) {
@@ -35,11 +36,17 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     effectiveSchedulingMode,
     players,
     playerGenders,
+    teams,
+    isTeamMexicano,
     sanitizedPlayers,
     minPlayers,
+    minTeams,
     canContinueFromPlayers,
     allKnownPlayerNames,
     addPlayer,
+    addTeam,
+    updateTeam,
+    removeTeam,
     updatePlayer,
     removePlayerInput,
     selectSuggestion,
@@ -340,6 +347,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         onChangeMode={(value) => {
           setMode(value);
           if (value === "MEXICANO") setSchedulingMode("TOTAL_TIME");
+          if (value !== "MEXICANO" && variant === "TEAM") setVariant("CLASSIC");
           prepareSettingsForMode(value);
         }}
         onChangeVariant={setVariant}
@@ -351,6 +359,27 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
   }
 
   if (step === "PLAYERS") {
+    if (isTeamMexicano) {
+      return (
+        <TeamPlayersStepView
+          modeLabel={modeLabel}
+          teams={teams}
+          minTeams={minTeams}
+          canContinue={canContinueFromPlayers}
+          hasDuplicateNames={hasDuplicatePlayerNames}
+          onAddTeam={addTeam}
+          onUpdateTeam={updateTeam}
+          onRemoveTeam={removeTeam}
+          onBack={() => setStep("OPTIONS")}
+          onNext={() => {
+            const suggestedCourts = Math.max(1, Math.floor(sanitizedPlayers.length / 4) || 1);
+            onChangeCourtsValue(String(suggestedCourts));
+            prepareSettingsForMode("MEXICANO");
+            setStep("SETTINGS");
+          }}
+        />
+      );
+    }
     return (
       <PlayersStepView
         modeLabel={modeLabel}

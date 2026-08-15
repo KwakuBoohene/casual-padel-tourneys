@@ -1,13 +1,18 @@
 /**
  * True Mexicano ladder helpers (result-driven pairing).
  *
- * After round 1 (lottery), courts are filled from the current table:
- * court i plays ranks (4i-3)+(4i-1) vs (4i-2)+(4i) — e.g. 1+3 vs 2+4.
+ * Classic / Mixed (individuals): after round 1 (lottery), courts are filled from
+ * the current table: court i plays ranks (4i-3)+(4i-1) vs (4i-2)+(4i) — e.g. 1+3 vs 2+4.
+ *
+ * Team Mexicano (fixed pairs): units are teams; court i plays team ranks (2i-1) vs (2i)
+ * — e.g. 1 vs 2, 3 vs 4. Partners never split.
  *
  * This is not Americano fairness / partner-rotation math.
  */
 
 export const MEXICANO_MIN_PLAYERS = 8;
+/** Minimum fixed pairs for Team Mexicano (= 8 players). */
+export const MEXICANO_MIN_TEAMS = 4;
 
 export interface MexicanoStandingRow {
   playerId: string;
@@ -25,6 +30,18 @@ export interface MexicanoCourtAssignment {
 export interface MexicanoLadderResult {
   courts: MexicanoCourtAssignment[];
   /** Lowest ranks that did not fit on a court this round. */
+  sittingOut: string[];
+}
+
+export interface MexicanoTeamCourtAssignment {
+  court: number;
+  /** Fixed-pair unit ids (not player ids). */
+  teamAId: string;
+  teamBId: string;
+}
+
+export interface MexicanoTeamLadderResult {
+  courts: MexicanoTeamCourtAssignment[];
   sittingOut: string[];
 }
 
@@ -47,7 +64,7 @@ export function sortMexicanoStandings<T extends MexicanoStandingRow>(rows: T[]):
 }
 
 /**
- * Map an already-ordered standings list onto courts.
+ * Map an already-ordered standings list onto courts (individual Mexicano).
  * Capacity = min(floor(n/4), maxCourts) courts; leftover ids sit out.
  */
 export function buildMexicanoLadderAssignments(
@@ -74,5 +91,32 @@ export function buildMexicanoLadderAssignments(
   return {
     courts,
     sittingOut: orderedPlayerIds.slice(courtCount * 4)
+  };
+}
+
+/**
+ * Map ordered **team** ids onto courts (Team Mexicano).
+ * Capacity = min(floor(n/2), maxCourts); leftover teams sit out.
+ * Court i: rank (2i-1) vs (2i).
+ */
+export function buildMexicanoTeamLadderAssignments(
+  orderedTeamIds: string[],
+  maxCourts: number
+): MexicanoTeamLadderResult {
+  const courtCount = Math.min(Math.floor(orderedTeamIds.length / 2), Math.max(0, maxCourts));
+  const courts: MexicanoTeamCourtAssignment[] = [];
+
+  for (let i = 0; i < courtCount; i += 1) {
+    const base = i * 2;
+    courts.push({
+      court: i + 1,
+      teamAId: orderedTeamIds[base],
+      teamBId: orderedTeamIds[base + 1]
+    });
+  }
+
+  return {
+    courts,
+    sittingOut: orderedTeamIds.slice(courtCount * 2)
   };
 }

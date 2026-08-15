@@ -8,6 +8,7 @@ import type {
   Tournament as DbTournament
 } from "@prisma/client";
 import type {
+  FixedPair,
   LeaderboardEntry,
   PendingPlayer as DomainPendingPlayer,
   Player as DomainPlayer,
@@ -108,6 +109,26 @@ function regularConfigFromRow(tournament: DbTournament): RegularScoringConfig | 
 
 type DbMatchWithSets = DbMatch & { sets: DbMatchSet[] };
 
+function fixedPairsFromPlayers(players: DomainPlayer[]): FixedPair[] {
+  const byPair = new Map<string, DomainPlayer[]>();
+  for (const player of players) {
+    if (!player.pairId) continue;
+    const group = byPair.get(player.pairId) ?? [];
+    group.push(player);
+    byPair.set(player.pairId, group);
+  }
+  const pairs: FixedPair[] = [];
+  for (const [pairId, group] of byPair) {
+    if (group.length < 2) continue;
+    pairs.push({
+      id: pairId,
+      playerAId: group[0].id,
+      playerBId: group[1].id
+    });
+  }
+  return pairs;
+}
+
 function mapDbTournamentToState(
   tournament: DbTournament & {
     players: DbPlayer[];
@@ -140,6 +161,7 @@ function mapDbTournamentToState(
     totalPoints: player.totalPoints,
     handicap: player.handicap ?? undefined,
     integrationWave: player.integrationWave ?? undefined,
+    pairId: player.pairId ?? undefined,
     matchesWon: player.matchesWon,
     matchesLost: player.matchesLost,
     setsWon: player.setsWon,
@@ -147,6 +169,8 @@ function mapDbTournamentToState(
     gamesWon: player.gamesWon,
     gamesLost: player.gamesLost
   }));
+
+  const fixedPairs = fixedPairsFromPlayers(players);
 
   const pendingPlayers: DomainPendingPlayer[] = tournament.pendingPlayers.map((pp) => ({
     id: pp.id,
@@ -199,7 +223,8 @@ function mapDbTournamentToState(
     endedAt: tournament.endedAt ? tournament.endedAt.toISOString() : null,
     organizerId: tournament.organizerId ?? undefined,
     pendingPlayers,
-    integrationWaveCount: tournament.integrationWaveCount
+    integrationWaveCount: tournament.integrationWaveCount,
+    fixedPairs: fixedPairs.length > 0 ? fixedPairs : undefined
   };
 }
 
@@ -391,9 +416,15 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       return { errors: parsed.error.flatten() };
     }
     const data = parsed.data;
+    const playersFromTeams =
+      data.variant === "TEAM" && data.teams && data.teams.length > 0
+        ? data.teams.flatMap((team) => [team.playerA, team.playerB])
+        : data.players;
     const tournament = createTournament(
       {
         ...data,
+        players: playersFromTeams,
+        teams: data.variant === "TEAM" ? data.teams : undefined,
         scoringMode: data.scoringMode,
         regularScoring: data.regularScoring,
         // Regular scoring ignores points-to-N; keep a stand-in for legacy time estimates until epic-03 ticket 06.
@@ -443,6 +474,7 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
               gamesLost: player.gamesLost ?? 0,
               handicap: player.handicap ?? null,
               integrationWave: player.integrationWave ?? null,
+              pairId: player.pairId ?? null,
               integratedAt: null
             }))
           },
@@ -918,6 +950,7 @@ async function persistTournament(tournament: {
             gamesLost: player.gamesLost ?? 0,
             handicap: player.handicap ?? null,
             integrationWave: player.integrationWave ?? null,
+            pairId: player.pairId ?? null,
             integratedAt: null // Not currently tracked in domain model
           }))
         },

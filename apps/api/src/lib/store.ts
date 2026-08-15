@@ -121,7 +121,8 @@ export function createTournament(config: TournamentConfig, organizerId: string):
     updatedAt: createdAt,
     pendingPlayers: [],
     integrationWaveCount: 0,
-    endedAt: null
+    endedAt: null,
+    fixedPairs: "fixedPairs" in generated ? generated.fixedPairs : undefined
   };
   tournaments.set(id, state);
   recordAccess(id);
@@ -374,7 +375,8 @@ export function advanceMexicanoRound(tournamentId: string): TournamentState {
     players: tournament.players,
     courts: tournament.config.courts,
     variant: tournament.config.variant,
-    roundNumber: lastLocked.roundNumber + 1
+    roundNumber: lastLocked.roundNumber + 1,
+    fixedPairs: tournament.fixedPairs
   });
   if (next.matches.length === 0) {
     throw new Error("Not enough players to build another Mexicano round.");

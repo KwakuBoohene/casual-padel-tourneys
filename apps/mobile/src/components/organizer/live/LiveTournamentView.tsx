@@ -10,7 +10,7 @@ import { LiveTournamentActions } from "./LiveTournamentActions";
 import { LiveTournamentHeader } from "./LiveTournamentHeader";
 import { LiveTournamentMatchCard } from "./LiveTournamentMatchCard";
 import { LiveTournamentSheets } from "./LiveTournamentSheets";
-import type { LiveTournamentViewProps } from "./liveTournamentView.types";
+import type { LiveTournamentViewProps } from "../../../types/organizer/liveTournamentView";
 
 export type { LiveTournamentViewProps };
 

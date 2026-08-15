@@ -1,4 +1,4 @@
-import type { Estimate, LeaderboardRow, LiveTournamentState, PlayerGameRow } from "./types";
+import type { Estimate, LeaderboardRow, LiveTournamentState, PlayerGameRow } from "../../types/organizer/tournament";
 
 export function computeEstimate(input: {
   courtsText: string;

@@ -4,7 +4,7 @@ import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/s
 import { radius, spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
-import { formatTournamentMode } from "../formatLabels";
+import { formatTournamentMode } from "../../../utilities/organizer/formatLabels";
 
 import { WizardChrome } from "./WizardChrome";
 

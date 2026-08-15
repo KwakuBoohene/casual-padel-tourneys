@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 
-import { apiDelete, apiGet } from "../../../api/client";
-import { isEmailVerifyRequired } from "../../../api/errors";
-import type { TournamentListResponse } from "../types";
+import { apiDelete, apiGet } from "../../api/client";
+import { isEmailVerifyRequired } from "../../api/errors";
+import type { TournamentListResponse } from "../../types/organizer/tournament";
 
 export interface UseTournamentListParams {
   authReady: boolean;

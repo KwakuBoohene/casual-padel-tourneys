@@ -1,7 +1,7 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 
 import { apiPost } from "../../../api/client";
-import type { LiveTournamentState, SetupStep, TournamentListResponse, TournamentResponse } from "../types";
+import type { LiveTournamentState, SetupStep, TournamentListResponse, TournamentResponse } from "../../../types/organizer/tournament";
 
 export interface UseLiveTournamentActionsParams {
   liveTournament: LiveTournamentState | null;

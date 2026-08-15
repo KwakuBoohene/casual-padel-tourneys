@@ -1,16 +1,16 @@
-import { ProfileScreen } from "../../ProfileScreen/ProfileScreen";
-import { useOrganizerScreen } from "../hooks/useOrganizerScreen";
-import { formatTournamentMode } from "../formatLabels";
+import { ProfileScreen } from "../../screens/ProfileScreen";
+import { useOrganizerScreen } from "../../hooks/organizer/useOrganizerScreen";
+import { formatTournamentMode } from "../../utilities/organizer/formatLabels";
 
-import { GameEstimatorView } from "./GameEstimatorView";
-import { LeaderboardView } from "./LeaderboardView";
-import { MatchSettingsStepView } from "./MatchSettingsStepView";
-import { NameStepView } from "./NameStepView";
-import { OrganizerListScreen } from "./OrganizerListScreen";
-import { OrganizerLiveScreen } from "./OrganizerLiveScreen";
-import { PlayerGamesView } from "./PlayerGamesView";
-import { PlayersStepView } from "./PlayersStepView";
-import { TournamentOptionsStepView } from "./TournamentOptionsStepView";
+import { GameEstimatorView } from "./estimator/GameEstimatorView";
+import { LeaderboardView } from "./leaderboard/LeaderboardView";
+import { MatchSettingsStepView } from "./create/MatchSettingsStepView";
+import { NameStepView } from "./create/NameStepView";
+import { OrganizerListScreen } from "./list/OrganizerListScreen";
+import { OrganizerLiveScreen } from "./live/OrganizerLiveScreen";
+import { PlayerGamesView } from "./leaderboard/PlayerGamesView";
+import { PlayersStepView } from "./create/PlayersStepView";
+import { TournamentOptionsStepView } from "./create/TournamentOptionsStepView";
 
 export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrganizerScreen> }) {
   const {

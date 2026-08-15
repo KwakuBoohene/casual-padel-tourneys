@@ -1,9 +1,9 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
-import type { LiveTournamentState, SetupStep, TournamentListResponse } from "../types";
+import type { LiveTournamentState, SetupStep, TournamentListResponse } from "../../types/organizer/tournament";
 
-import { submitCreateTournament } from "./submitCreateTournament";
+import { submitCreateTournament } from "../../utilities/organizer/submitCreateTournament";
 import { useMatchSettings } from "./useMatchSettings";
 import { usePlayerRoster } from "./usePlayerRoster";
 

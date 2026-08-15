@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import { logger } from "../../../logger";
 
-import { deleteLocalValue, readLocalValue, writeLocalValue } from "./localValueStorage";
+import { deleteLocalValue, readLocalValue, writeLocalValue } from "../../../utilities/organizer/localValueStorage";
 
 export type ScoreDraftMap = Record<string, { scoreA: string; scoreB: string }>;
 

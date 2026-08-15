@@ -1,15 +1,15 @@
 import { Text, View } from "react-native";
 
-import type { AuthSession } from "../../api/auth";
-import { useBreakpoint } from "../../layout";
-import { spacing, typography } from "../../theme";
-import { ThemeToggle } from "../../components/ThemeToggle";
-import { useTheme } from "../../theme/ThemeProvider";
+import type { AuthSession } from "../api/auth";
+import { useBreakpoint } from "../layout";
+import { spacing, typography } from "../theme";
+import { ThemeToggle } from "../components/ThemeToggle";
+import { useTheme } from "../theme/ThemeProvider";
 
-import { AuthErrorSheet } from "./components/AuthErrorSheet";
-import { AuthMethodList } from "./components/AuthMethodList";
-import { MagicLinkPanel } from "./components/MagicLinkPanel";
-import { useSignIn } from "./hooks/useSignIn";
+import { AuthErrorSheet } from "../components/auth/AuthErrorSheet";
+import { AuthMethodList } from "../components/auth/AuthMethodList";
+import { MagicLinkPanel } from "../components/auth/MagicLinkPanel";
+import { useSignIn } from "../hooks/auth/useSignIn";
 
 interface SignInScreenProps {
   onSignedIn: (session: AuthSession) => void;

@@ -1,6 +1,6 @@
 import { View } from "react-native";
 
-import { spacing } from "../../../theme";
+import { spacing } from "../../theme";
 
 import { AuthMethodButton } from "./AuthMethodButton";
 

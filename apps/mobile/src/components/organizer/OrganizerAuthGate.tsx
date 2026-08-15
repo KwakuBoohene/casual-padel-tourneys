@@ -1,15 +1,15 @@
 import { useCallback, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 
-import { consumeMagicLink, type AuthSession, type AuthUser } from "../../../api/auth";
-import { useAuthDeepLink } from "../../../hooks/useAuthDeepLink";
-import { useTheme } from "../../../theme/ThemeProvider";
-import { AttachAccountScreen } from "../../AttachAccountScreen/AttachAccountScreen";
-import { MagicLinkConsumeScreen } from "../../MagicLinkScreen/MagicLinkConsumeScreen";
-import { PasswordScreen } from "../../PasswordScreen/PasswordScreen";
-import { ResetPasswordScreen } from "../../ResetPasswordScreen/ResetPasswordScreen";
-import { SignInScreen } from "../../SignInScreen/SignInScreen";
-import { VerifyGateScreen } from "../../VerifyGateScreen/VerifyGateScreen";
+import { consumeMagicLink, type AuthSession, type AuthUser } from "../../api/auth";
+import { useAuthDeepLink } from "../../hooks/useAuthDeepLink";
+import { useTheme } from "../../theme/ThemeProvider";
+import { AttachAccountScreen } from "../../screens/AttachAccountScreen";
+import { MagicLinkConsumeScreen } from "../../screens/MagicLinkConsumeScreen";
+import { PasswordScreen } from "../../screens/PasswordScreen";
+import { ResetPasswordScreen } from "../../screens/ResetPasswordScreen";
+import { SignInScreen } from "../../screens/SignInScreen";
+import { VerifyGateScreen } from "../../screens/VerifyGateScreen";
 
 type UnauthView = "signin" | "password" | "reset";
 

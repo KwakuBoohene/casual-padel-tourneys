@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import type { PlayerGender, TournamentVariant } from "@padel/shared";
 
-import { BottomSheet, SheetButton } from "../../../components/sheets";
+import { BottomSheet, SheetButton } from "../../sheets";
 import { radius, spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 

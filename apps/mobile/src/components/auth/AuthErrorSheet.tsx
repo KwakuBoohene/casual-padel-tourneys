@@ -1,4 +1,4 @@
-import { AlertSheet } from "../../../components/sheets";
+import { AlertSheet } from "../sheets";
 
 interface AuthErrorSheetProps {
   visible: boolean;

@@ -1,9 +1,9 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { PlayerGender, SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
-import { apiPost } from "../../../api/client";
-import { isEmailVerifyRequired } from "../../../api/errors";
-import type { CreateTournamentResponse, LiveTournamentState, SetupStep } from "../types";
+import { apiPost } from "../../api/client";
+import { isEmailVerifyRequired } from "../../api/errors";
+import type { CreateTournamentResponse, LiveTournamentState, SetupStep } from "../../types/organizer/tournament";
 
 import { prepareCreateTournamentRequest } from "./createTournamentRequest";
 

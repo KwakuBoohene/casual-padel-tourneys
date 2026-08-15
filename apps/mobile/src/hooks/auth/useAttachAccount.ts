@@ -8,9 +8,9 @@ import {
   attachGoogle,
   type AuthSession as AuthSessionResult,
   type AuthUser
-} from "../../../api/auth";
-import { attachPasswordToGuest } from "../../../api/passwordAttachReset";
-import { logger } from "../../../logger";
+} from "../../api/auth";
+import { attachPasswordToGuest } from "../../api/passwordAttachReset";
+import { logger } from "../../logger";
 
 WebBrowser.maybeCompleteAuthSession();
 

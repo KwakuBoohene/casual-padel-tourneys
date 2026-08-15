@@ -1,7 +1,7 @@
-import { AlertSheet, ScoreEntrySheet } from "../../../components/sheets";
-import { formatTournamentMode } from "../formatLabels";
+import { AlertSheet, ScoreEntrySheet } from "../../sheets";
+import { formatTournamentMode } from "../../../utilities/organizer/formatLabels";
 
-import type { LiveTournamentViewProps } from "./liveTournamentView.types";
+import type { LiveTournamentViewProps } from "../../../types/organizer/liveTournamentView";
 
 interface LiveScoreEntrySheetsProps {
   props: LiveTournamentViewProps;

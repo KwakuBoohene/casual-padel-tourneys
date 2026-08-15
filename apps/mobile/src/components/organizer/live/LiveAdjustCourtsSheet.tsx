@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 
-import { BottomSheet, SheetButton } from "../../../components/sheets";
+import { BottomSheet, SheetButton } from "../../sheets";
 import { spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 

@@ -1,12 +1,12 @@
 import { useRef, useState } from "react";
 
-import { useAuthSession } from "../../../hooks/useAuthSession";
-import type { SetupStep } from "../types";
+import { useAuthSession } from "../useAuthSession";
+import type { SetupStep } from "../../types/organizer/tournament";
 
 import { useCreateTournament } from "./useCreateTournament";
 import { useGameEstimator } from "./useGameEstimator";
-import { useLiveTournament } from "./useLiveTournament";
-import { useScoreDrafts } from "./useScoreDrafts";
+import { useLiveTournament } from "./live/useLiveTournament";
+import { useScoreDrafts } from "./score/useScoreDrafts";
 import { useTournamentList } from "./useTournamentList";
 
 export function useOrganizerScreen() {

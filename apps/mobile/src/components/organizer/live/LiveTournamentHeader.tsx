@@ -2,9 +2,9 @@ import { Pressable, Text, TextInput, View } from "react-native";
 
 import { radius, spacing, touch, typography } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
-import { formatTournamentMode } from "../formatLabels";
+import { formatTournamentMode } from "../../../utilities/organizer/formatLabels";
 
-import type { LiveTournamentState } from "../types";
+import type { LiveTournamentState } from "../../../types/organizer/tournament";
 
 import { LiveTournamentPendingBanner } from "./LiveTournamentPendingBanner";
 

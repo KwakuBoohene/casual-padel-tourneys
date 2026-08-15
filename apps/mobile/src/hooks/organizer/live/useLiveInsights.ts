@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 
-import type { LiveTournamentState } from "../types";
-import { buildLeaderboardRows, buildPlayerGameRows, computeLiveTimeStatus } from "../utils";
+import type { LiveTournamentState } from "../../../types/organizer/tournament";
+import { buildLeaderboardRows, buildPlayerGameRows, computeLiveTimeStatus } from "../../../utilities/organizer/utils";
 
 export function useLiveInsights(liveTournament: LiveTournamentState | null, isTournamentCompleted: boolean) {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);

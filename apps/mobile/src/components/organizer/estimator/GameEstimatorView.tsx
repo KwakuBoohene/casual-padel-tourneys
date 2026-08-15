@@ -2,9 +2,9 @@ import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
-import { AlertSheet } from "../../../components/sheets";
+import { AlertSheet } from "../../sheets";
 import { useBreakpoint } from "../../../layout";
-import type { Estimate } from "../types";
+import type { Estimate } from "../../../types/organizer/tournament";
 import { spacing, typography } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 

@@ -4,7 +4,7 @@ import { useBreakpoint } from "../../../layout";
 import { spacing } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
-import type { LiveTournamentState } from "../types";
+import type { LiveTournamentState } from "../../../types/organizer/tournament";
 
 import { TournamentListCard } from "./TournamentListCard";
 import { TournamentListCreateActions } from "./TournamentListCreateActions";

@@ -1,7 +1,7 @@
 import { View } from "react-native";
 
 import { LiveTournamentView } from "./LiveTournamentView";
-import type { LiveTournamentViewProps } from "./liveTournamentView.types";
+import type { LiveTournamentViewProps } from "../../../types/organizer/liveTournamentView";
 
 export function OrganizerLiveScreen(props: LiveTournamentViewProps) {
   return (

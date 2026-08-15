@@ -1,7 +1,7 @@
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
-import type { Estimate } from "../types";
+import type { Estimate } from "../../../types/organizer/tournament";
 import { useBreakpoint } from "../../../layout";
 import { radius, spacing, typography } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";

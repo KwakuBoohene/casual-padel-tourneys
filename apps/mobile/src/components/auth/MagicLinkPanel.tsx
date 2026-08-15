@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
-import { radius, spacing, typography } from "../../../theme";
-import { useTheme } from "../../../theme/ThemeProvider";
+import { radius, spacing, typography } from "../../theme";
+import { useTheme } from "../../theme/ThemeProvider";
 
 import { AuthMethodButton } from "./AuthMethodButton";
 

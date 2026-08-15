@@ -3,7 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import { radius, spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
-import type { LiveTournamentState } from "../types";
+import type { LiveTournamentState } from "../../../types/organizer/tournament";
 
 export type LiveMatch = LiveTournamentState["rounds"][number]["matches"][number];
 

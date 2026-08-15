@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { apiGet } from "../../../api/client";
 import { isEmailVerifyRequired } from "../../../api/errors";
-import type { LiveTournamentState, SetupStep, TournamentResponse } from "../types";
+import type { LiveTournamentState, SetupStep, TournamentResponse } from "../../../types/organizer/tournament";
 
 export interface UseLiveTournamentCoreParams {
   setStep: (step: SetupStep) => void;

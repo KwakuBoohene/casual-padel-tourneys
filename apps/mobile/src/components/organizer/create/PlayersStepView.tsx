@@ -2,11 +2,11 @@ import { useState } from "react";
 import { Text, View } from "react-native";
 import type { PlayerGender, TournamentVariant } from "@padel/shared";
 
-import { AlertSheet } from "../../../components/sheets";
+import { AlertSheet } from "../../sheets";
 import { spacing } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
-import { PLAYERS_PER_PAGE, usePlayerPages } from "../hooks/usePlayerPages";
+import { PLAYERS_PER_PAGE, usePlayerPages } from "../../../hooks/organizer/usePlayerPages";
 
 import { AddPlayerSheet } from "./AddPlayerSheet";
 import { PlayerPageRow } from "./PlayerPageRow";

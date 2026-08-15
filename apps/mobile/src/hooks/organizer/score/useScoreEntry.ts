@@ -1,17 +1,17 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 
-import type { LiveTournamentState } from "../types";
+import type { LiveTournamentState } from "../../../types/organizer/tournament";
 
-import { findMatchInTournament } from "./scoreDraftActions";
+import { findMatchInTournament } from "../../../utilities/organizer/scoreDraftActions";
 import {
   initialScorePair,
   persistScoreEntry,
   validateAmericanoScores,
   type ScoreEntryState
-} from "./scoreEntryHelpers";
+} from "../../../utilities/organizer/scoreEntryHelpers";
 import type { ScoreDraftMap } from "./useScoreDraftPersistence";
 
-export type { ScoreEntryState } from "./scoreEntryHelpers";
+export type { ScoreEntryState } from "../../../utilities/organizer/scoreEntryHelpers";
 
 export function useScoreEntry(params: {
   liveTournament: LiveTournamentState | null;

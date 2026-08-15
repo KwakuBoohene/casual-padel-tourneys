@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
 
-import type { Estimate } from "../types";
+import type { Estimate } from "../../../types/organizer/tournament";
 import { spacing } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 

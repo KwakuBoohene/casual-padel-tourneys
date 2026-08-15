@@ -4,7 +4,7 @@ import { useBreakpoint } from "../../../layout";
 import { spacing, typography } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
-import type { PlayerGameRow } from "../types";
+import type { PlayerGameRow } from "../../../types/organizer/tournament";
 
 interface PlayerGamesViewProps {
   playerName: string;

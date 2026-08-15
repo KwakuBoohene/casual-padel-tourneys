@@ -4,7 +4,7 @@ import { useBreakpoint } from "../../../layout";
 import { radius, spacing, typography } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
-import type { LeaderboardRow, LiveTournamentState } from "../types";
+import type { LeaderboardRow, LiveTournamentState } from "../../../types/organizer/tournament";
 
 interface LeaderboardViewProps {
   tournament: LiveTournamentState;

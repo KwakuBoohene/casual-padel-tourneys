@@ -1,6 +1,6 @@
 import type { PlayerGender } from "@padel/shared";
 
-import type { LiveTournamentState } from "../types";
+import type { LiveTournamentState } from "./tournament";
 
 export interface LiveTournamentViewProps {
   tournament: LiveTournamentState;

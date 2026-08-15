@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import type { LiveTournamentState } from "../types";
+import type { LiveTournamentState } from "../../../types/organizer/tournament";
 
 export function useLiveRounds(liveTournament: LiveTournamentState | null) {
   const [selectedRoundIndex, setSelectedRoundIndex] = useState(0);

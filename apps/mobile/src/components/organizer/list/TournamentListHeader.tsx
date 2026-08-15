@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 
-import { ThemeToggle } from "../../../components/ThemeToggle";
+import { ThemeToggle } from "../../ThemeToggle";
 import { radius, spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 

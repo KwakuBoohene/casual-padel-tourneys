@@ -5,7 +5,7 @@ import { spacing } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
 import { EstimatorTypeCard } from "./EstimatorTypeCard";
-import { SettingsStepper } from "./SettingsStepper";
+import { SettingsStepper } from "../create/SettingsStepper";
 
 interface EstimatorFormFieldsProps {
   mode: TournamentMode;

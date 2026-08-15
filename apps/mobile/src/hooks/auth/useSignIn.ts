@@ -8,9 +8,9 @@ import {
   signInAsGuest,
   signInWithGoogle,
   type AuthSession as AuthSessionResult
-} from "../../../api/auth";
-import { generateGuestId, getStoredGuestId, storeGuestId } from "../../../api/guestId";
-import { logger } from "../../../logger";
+} from "../../api/auth";
+import { generateGuestId, getStoredGuestId, storeGuestId } from "../../api/guestId";
+import { logger } from "../../logger";
 
 WebBrowser.maybeCompleteAuthSession();
 

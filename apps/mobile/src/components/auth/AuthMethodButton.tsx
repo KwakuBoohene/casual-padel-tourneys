@@ -1,7 +1,7 @@
 import { ActivityIndicator, Pressable, Text } from "react-native";
 
-import { radius, spacing } from "../../../theme";
-import { useTheme } from "../../../theme/ThemeProvider";
+import { radius, spacing } from "../../theme";
+import { useTheme } from "../../theme/ThemeProvider";
 
 interface AuthMethodButtonProps {
   label: string;

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
-import { resendVerificationEmail } from "../../api/auth";
-import { useBreakpoint } from "../../layout";
-import { radius, spacing, typography } from "../../theme";
-import { useTheme } from "../../theme/ThemeProvider";
-import { AuthErrorSheet } from "../SignInScreen/components/AuthErrorSheet";
-import { AuthMethodButton } from "../SignInScreen/components/AuthMethodButton";
+import { resendVerificationEmail } from "../api/auth";
+import { useBreakpoint } from "../layout";
+import { radius, spacing, typography } from "../theme";
+import { useTheme } from "../theme/ThemeProvider";
+import { AuthErrorSheet } from "../components/auth/AuthErrorSheet";
+import { AuthMethodButton } from "../components/auth/AuthMethodButton";
 
 interface VerifyGateScreenProps {
   email?: string;

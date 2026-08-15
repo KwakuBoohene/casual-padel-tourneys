@@ -1,8 +1,8 @@
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
-import { useBreakpoint } from "../../layout";
-import { radius, spacing, typography } from "../../theme";
-import { useTheme } from "../../theme/ThemeProvider";
+import { useBreakpoint } from "../layout";
+import { radius, spacing, typography } from "../theme";
+import { useTheme } from "../theme/ThemeProvider";
 
 interface MagicLinkConsumeScreenProps {
   status: "working" | "error";

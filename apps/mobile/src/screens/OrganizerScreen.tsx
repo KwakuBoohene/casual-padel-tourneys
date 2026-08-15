@@ -1,6 +1,6 @@
-import { OrganizerAuthGate } from "./components/OrganizerAuthGate";
-import { OrganizerSignedInBody } from "./components/OrganizerSignedInBody";
-import { useOrganizerScreen } from "./hooks/useOrganizerScreen";
+import { OrganizerAuthGate } from "../components/organizer/OrganizerAuthGate";
+import { OrganizerSignedInBody } from "../components/organizer/OrganizerSignedInBody";
+import { useOrganizerScreen } from "../hooks/organizer/useOrganizerScreen";
 
 export function OrganizerScreen() {
   const org = useOrganizerScreen();

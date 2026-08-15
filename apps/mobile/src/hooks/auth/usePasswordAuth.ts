@@ -1,8 +1,8 @@
 import { useState } from "react";
 
-import type { AuthSession } from "../../../api/auth";
-import { loginWithPassword, registerPasswordAccount } from "../../../api/passwordFlow";
-import { logger } from "../../../logger";
+import type { AuthSession } from "../../api/auth";
+import { loginWithPassword, registerPasswordAccount } from "../../api/passwordFlow";
+import { logger } from "../../logger";
 
 export type PasswordMode = "login" | "register";
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { apiPost } from "../../../api/client";
-import type { LiveTournamentState, TournamentResponse } from "../types";
+import type { LiveTournamentState, TournamentResponse } from "../../../types/organizer/tournament";
 
 export function useRenamePlayers(params: {
   liveTournament: LiveTournamentState | null;

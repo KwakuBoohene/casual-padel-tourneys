@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 
-import type { SetupStep, TournamentListResponse } from "../types";
+import type { SetupStep, TournamentListResponse } from "../../../types/organizer/tournament";
 
 import { useLiveInsights } from "./useLiveInsights";
 import { useLiveRounds } from "./useLiveRounds";

@@ -1,8 +1,8 @@
 import { useState } from "react";
 
-import type { LiveTournamentState } from "../types";
+import type { LiveTournamentState } from "../../../types/organizer/tournament";
 
-import { submitRoundScoreDrafts, type LiveRound } from "./scoreDraftActions";
+import { submitRoundScoreDrafts, type LiveRound } from "../../../utilities/organizer/scoreDraftActions";
 import { useScoreDraftPersistence } from "./useScoreDraftPersistence";
 import { useScoreEntry } from "./useScoreEntry";
 

@@ -1,9 +1,9 @@
 import type { Dispatch, SetStateAction } from "react";
 
-import { apiPost } from "../../../api/client";
-import type { LiveTournamentState, TournamentResponse } from "../types";
+import { apiPost } from "../../api/client";
+import type { LiveTournamentState, TournamentResponse } from "../../types/organizer/tournament";
 
-import type { ScoreDraftMap } from "./useScoreDraftPersistence";
+import type { ScoreDraftMap } from "../../hooks/organizer/score/useScoreDraftPersistence";
 
 export type LiveRound = LiveTournamentState["rounds"][number];
 export type LiveMatch = LiveRound["matches"][number];

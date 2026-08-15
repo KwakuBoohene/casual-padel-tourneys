@@ -1,11 +1,11 @@
 import type { PlayerGender } from "@padel/shared";
 import { Text, TextInput, View } from "react-native";
 
-import { AlertSheet, BottomSheet, SheetButton } from "../../../components/sheets";
+import { AlertSheet, BottomSheet, SheetButton } from "../../sheets";
 import { radius, spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
-import type { LiveTournamentState } from "../types";
+import type { LiveTournamentState } from "../../../types/organizer/tournament";
 
 interface LiveTournamentPendingSheetProps {
   tournament: LiveTournamentState;

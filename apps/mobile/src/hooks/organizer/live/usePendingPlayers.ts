@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { PlayerGender } from "@padel/shared";
 
 import { apiPost } from "../../../api/client";
-import type { LiveTournamentState, TournamentResponse } from "../types";
+import type { LiveTournamentState, TournamentResponse } from "../../../types/organizer/tournament";
 
 export interface UsePendingPlayersParams {
   liveTournament: LiveTournamentState | null;

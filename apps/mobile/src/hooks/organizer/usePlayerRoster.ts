@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { PlayerGender, TournamentVariant } from "@padel/shared";
 
-import type { TournamentListResponse } from "../types";
+import type { TournamentListResponse } from "../../types/organizer/tournament";
 
 export interface UsePlayerRosterParams {
   variant: TournamentVariant;

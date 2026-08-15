@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { AlertSheet } from "../../../components/sheets";
+import { AlertSheet } from "../../sheets";
 
 import { LiveAdjustCourtsSheet } from "./LiveAdjustCourtsSheet";
 import { LiveRenamePlayersSheet } from "./LiveRenamePlayersSheet";
@@ -10,7 +10,7 @@ import {
   LiveTournamentConfirmSheets,
   LiveTournamentPendingSheet
 } from "./LiveTournamentPendingSheet";
-import type { LiveTournamentViewProps } from "./liveTournamentView.types";
+import type { LiveTournamentViewProps } from "../../../types/organizer/liveTournamentView";
 
 interface LiveTournamentSheetsProps {
   props: LiveTournamentViewProps;

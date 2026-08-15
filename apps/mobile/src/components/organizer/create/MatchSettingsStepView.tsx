@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import type { SchedulingMode } from "@padel/shared";
 
-import { AlertSheet } from "../../../components/sheets";
-import type { Estimate } from "../types";
+import { AlertSheet } from "../../sheets";
+import type { Estimate } from "../../../types/organizer/tournament";
 import { spacing } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 

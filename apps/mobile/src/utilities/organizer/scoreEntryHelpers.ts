@@ -1,7 +1,7 @@
-import type { LiveTournamentState } from "../types";
+import type { LiveTournamentState } from "../../types/organizer/tournament";
 
 import { findMatchInTournament, submitMatchScore } from "./scoreDraftActions";
-import type { ScoreDraftMap } from "./useScoreDraftPersistence";
+import type { ScoreDraftMap } from "../../hooks/organizer/score/useScoreDraftPersistence";
 
 export type ScorePair = { scoreA: number | null; scoreB: number | null };
 

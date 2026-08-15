@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
-import { computeEstimate } from "../utils";
+import { computeEstimate } from "../../utilities/organizer/utils";
 
-import { sanitizeWholeNumberInput } from "./sanitizeInput";
+import { sanitizeWholeNumberInput } from "../../utilities/organizer/sanitizeInput";
 
 export function useGameEstimator() {
   const [estimatorMode, setEstimatorMode] = useState<TournamentMode>("AMERICANO");

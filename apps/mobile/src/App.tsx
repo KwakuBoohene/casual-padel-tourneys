@@ -1,7 +1,7 @@
 import { Platform, SafeAreaView, StatusBar } from "react-native";
 
 import { PageShell } from "./layout";
-import { OrganizerScreen } from "./screens/OrganizerScreen/OrganizerScreen";
+import { OrganizerScreen } from "./screens/OrganizerScreen";
 import { ThemeProvider, useTheme } from "./theme/ThemeProvider";
 
 function AppContent() {

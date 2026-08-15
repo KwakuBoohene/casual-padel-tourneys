@@ -1,13 +1,12 @@
 import { Pressable, Text, TextInput, View } from "react-native";
 
-import type { AuthSession, AuthUser } from "../../api/auth";
-import { useBreakpoint } from "../../layout";
-import { radius, spacing, typography } from "../../theme";
-import { useTheme } from "../../theme/ThemeProvider";
-import { AuthErrorSheet } from "../SignInScreen/components/AuthErrorSheet";
-import { AuthMethodButton } from "../SignInScreen/components/AuthMethodButton";
-
-import { useAttachAccount } from "./hooks/useAttachAccount";
+import type { AuthSession, AuthUser } from "../api/auth";
+import { useBreakpoint } from "../layout";
+import { radius, spacing, typography } from "../theme";
+import { useTheme } from "../theme/ThemeProvider";
+import { AuthErrorSheet } from "../components/auth/AuthErrorSheet";
+import { AuthMethodButton } from "../components/auth/AuthMethodButton";
+import { useAttachAccount } from "../hooks/auth/useAttachAccount";
 
 interface AttachAccountScreenProps {
   onBack: () => void;

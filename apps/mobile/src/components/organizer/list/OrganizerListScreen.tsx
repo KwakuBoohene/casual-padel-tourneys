@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { View } from "react-native";
 
-import { AlertSheet, BottomSheet, SheetButton } from "../../../components/sheets";
+import { AlertSheet, BottomSheet, SheetButton } from "../../sheets";
 import { spacing } from "../../../theme";
 
-import type { LiveTournamentState } from "../types";
+import type { LiveTournamentState } from "../../../types/organizer/tournament";
 
 import { TournamentListView } from "./TournamentListView";
 

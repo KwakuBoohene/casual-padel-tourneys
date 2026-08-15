@@ -1,9 +1,9 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 
-import { useBreakpoint } from "../../layout";
-import { radius, spacing, typography } from "../../theme";
-import { ThemeToggle } from "../../components/ThemeToggle";
-import { useTheme } from "../../theme/ThemeProvider";
+import { useBreakpoint } from "../layout";
+import { radius, spacing, typography } from "../theme";
+import { ThemeToggle } from "../components/ThemeToggle";
+import { useTheme } from "../theme/ThemeProvider";
 
 interface ProfileScreenProps {
   user: {

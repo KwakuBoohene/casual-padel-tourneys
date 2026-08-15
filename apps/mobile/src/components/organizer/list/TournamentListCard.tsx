@@ -3,8 +3,8 @@ import { Pressable, Text, View } from "react-native";
 import { radius, spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
-import type { LiveTournamentState } from "../types";
-import { formatTournamentMode } from "../formatLabels";
+import type { LiveTournamentState } from "../../../types/organizer/tournament";
+import { formatTournamentMode } from "../../../utilities/organizer/formatLabels";
 
 interface TournamentListCardProps {
   tournament: LiveTournamentState;

@@ -5,13 +5,13 @@ import {
   consumePasswordReset,
   requestPasswordReset,
   type AuthSession
-} from "../../api/auth";
-import { finishPasswordReset } from "../../api/passwordAttachReset";
-import { useBreakpoint } from "../../layout";
-import { radius, spacing, typography } from "../../theme";
-import { useTheme } from "../../theme/ThemeProvider";
-import { AuthErrorSheet } from "../SignInScreen/components/AuthErrorSheet";
-import { AuthMethodButton } from "../SignInScreen/components/AuthMethodButton";
+} from "../api/auth";
+import { finishPasswordReset } from "../api/passwordAttachReset";
+import { useBreakpoint } from "../layout";
+import { radius, spacing, typography } from "../theme";
+import { useTheme } from "../theme/ThemeProvider";
+import { AuthErrorSheet } from "../components/auth/AuthErrorSheet";
+import { AuthMethodButton } from "../components/auth/AuthMethodButton";
 
 interface ResetPasswordScreenProps {
   /** Raw deep-link token; when set, consume → new password form. */

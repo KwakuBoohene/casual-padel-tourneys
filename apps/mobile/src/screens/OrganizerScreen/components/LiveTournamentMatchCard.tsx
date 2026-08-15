@@ -12,7 +12,7 @@ interface LiveTournamentMatchCardProps {
   canEditScores: boolean;
   scoreInputs: Record<string, { scoreA: string; scoreB: string }>;
   playerNameById: Map<string, string>;
-  onOpenScorePicker: (matchId: string, side: "scoreA" | "scoreB") => void;
+  onOpenScoreEntry: (matchId: string) => void;
 }
 
 function namePair(ids: [string, string], names: Map<string, string>): string {
@@ -21,7 +21,7 @@ function namePair(ids: [string, string], names: Map<string, string>): string {
 
 export function LiveTournamentMatchCard(props: LiveTournamentMatchCardProps) {
   const { colors } = useTheme();
-  const { match, canEditScores, scoreInputs, playerNameById, onOpenScorePicker } = props;
+  const { match, canEditScores, scoreInputs, playerNameById, onOpenScoreEntry } = props;
   const draft = scoreInputs[match.id];
   const scoreA = draft?.scoreA !== undefined && draft.scoreA !== "" ? draft.scoreA : match.scoreA?.toString();
   const scoreB = draft?.scoreB !== undefined && draft.scoreB !== "" ? draft.scoreB : match.scoreB?.toString();
@@ -39,7 +39,7 @@ export function LiveTournamentMatchCard(props: LiveTournamentMatchCardProps) {
   return (
     <Pressable
       disabled={!canEditScores}
-      onPress={() => onOpenScorePicker(match.id, "scoreA")}
+      onPress={() => onOpenScoreEntry(match.id)}
       style={{
         borderRadius: 14,
         borderWidth: 1,

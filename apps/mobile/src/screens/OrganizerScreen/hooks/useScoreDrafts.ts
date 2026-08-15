@@ -2,14 +2,9 @@ import { useState } from "react";
 
 import type { LiveTournamentState } from "../types";
 
-import {
-  applyPickedScore,
-  findMatchInTournament,
-  submitRoundScoreDrafts,
-  type LiveRound,
-  type ScoreSide
-} from "./scoreDraftActions";
+import { submitRoundScoreDrafts, type LiveRound } from "./scoreDraftActions";
 import { useScoreDraftPersistence } from "./useScoreDraftPersistence";
+import { useScoreEntry } from "./useScoreEntry";
 
 export interface UseScoreDraftsParams {
   liveTournament: LiveTournamentState | null;
@@ -25,14 +20,16 @@ export function useScoreDrafts({
   setErrorText
 }: UseScoreDraftsParams) {
   const { scoreInputs, setScoreInputs } = useScoreDraftPersistence(liveTournament?.id);
-  const [scorePicker, setScorePicker] = useState<{ matchId: string; side: ScoreSide } | null>(null);
-  const [suppressNextScorePickerOpen, setSuppressNextScorePickerOpen] = useState<{
-    matchId: string;
-    side: ScoreSide;
-  } | null>(null);
   const [focusSubmitMatchId, setFocusSubmitMatchId] = useState<string | null>(null);
+  const entry = useScoreEntry({
+    liveTournament,
+    scoreInputs,
+    setScoreInputs,
+    onTournamentUpdated,
+    setErrorText
+  });
 
-  const updateScoreInput = (matchId: string, side: ScoreSide, value: string) => {
+  const updateScoreInput = (matchId: string, side: "scoreA" | "scoreB", value: string) => {
     setScoreInputs((previous) => ({
       ...previous,
       [matchId]: {
@@ -51,33 +48,8 @@ export function useScoreDrafts({
     });
   };
 
-  const pickScoreFromSheet = (value: number) => {
-    if (!liveTournament || !scorePicker) {
-      return;
-    }
-    const { matchId, side } = scorePicker;
-    const match = findMatchInTournament(liveTournament, matchId);
-    const existing = scoreInputs[matchId];
-    setScoreInputs((previous) =>
-      applyPickedScore({
-        previous,
-        existing,
-        match,
-        matchId,
-        side,
-        value,
-        pointsPerMatch: liveTournament.config.pointsPerMatch
-      })
-    );
-    setSuppressNextScorePickerOpen(scorePicker);
-    setFocusSubmitMatchId(matchId);
-    setScorePicker(null);
-  };
-
   const submitRoundScores = async () => {
-    if (!liveTournament || !displayedRound) {
-      return;
-    }
+    if (!liveTournament || !displayedRound) return;
     await submitRoundScoreDrafts({
       tournament: liveTournament,
       round: displayedRound,
@@ -93,12 +65,8 @@ export function useScoreDrafts({
     updateScoreInput,
     clearScoreForMatch,
     submitRoundScores,
-    pickScoreFromSheet,
-    scorePicker,
-    setScorePicker,
-    suppressNextScorePickerOpen,
-    setSuppressNextScorePickerOpen,
     focusSubmitMatchId,
-    setFocusSubmitMatchId
+    setFocusSubmitMatchId,
+    ...entry
   };
 }

@@ -76,7 +76,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
       canEditScores={canEditScores}
       scoreInputs={props.scoreInputs}
       playerNameById={props.playerNameById}
-      onOpenScorePicker={props.onOpenScorePicker}
+      onOpenScoreEntry={props.onOpenScoreEntry}
     />
   ));
 

@@ -6,3 +6,4 @@ export {
   type SheetAction
 } from "./AlertSheet";
 export { SheetButton } from "./SheetButton";
+export { ScoreEntrySheet, type ScoreEntrySheetProps } from "./ScoreEntrySheet";

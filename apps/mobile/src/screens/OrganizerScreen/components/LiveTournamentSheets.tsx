@@ -1,11 +1,11 @@
 import { AlertSheet } from "../../../components/sheets";
 
+import { LiveScoreEntrySheets } from "./LiveScoreEntrySheets";
 import { LiveTournamentOptionsSheet } from "./LiveTournamentOptionsSheet";
 import {
   LiveTournamentConfirmSheets,
   LiveTournamentPendingSheet
 } from "./LiveTournamentPendingSheet";
-import { LiveTournamentScorePickerSheet } from "./LiveTournamentScorePickerSheet";
 import type { LiveTournamentViewProps } from "./liveTournamentView.types";
 
 interface LiveTournamentSheetsProps {
@@ -21,14 +21,6 @@ export function LiveTournamentSheets({
   onDismissError,
   onCopyShareLink
 }: LiveTournamentSheetsProps) {
-  const matchId = props.scorePicker?.matchId;
-  const match = matchId
-    ? props.tournament.rounds.flatMap((round) => round.matches).find((item) => item.id === matchId)
-    : undefined;
-  const nameOf = (id: string) => props.playerNameById.get(id) ?? id;
-  const teamALabel = match ? `${nameOf(match.teamA[0])} / ${nameOf(match.teamA[1])}` : "Team A";
-  const teamBLabel = match ? `${nameOf(match.teamB[0])} / ${nameOf(match.teamB[1])}` : "Team B";
-
   return (
     <>
       <LiveTournamentConfirmSheets
@@ -60,17 +52,7 @@ export function LiveTournamentSheets({
         onFinishTournament={props.onFinishTournament}
         onBackToList={props.onBackToList}
       />
-      <LiveTournamentScorePickerSheet
-        visible={Boolean(props.scorePicker)}
-        pointsPerMatch={props.tournament.config.pointsPerMatch}
-        scorePicker={props.scorePicker}
-        teamALabel={teamALabel}
-        teamBLabel={teamBLabel}
-        onClose={props.onCloseScorePicker}
-        onSelect={props.onSelectScoreFromPicker}
-        onChangeSide={props.onChangeScorePickerSide}
-        onReset={props.onResetScoreForMatch}
-      />
+      <LiveScoreEntrySheets props={props} />
       <LiveTournamentPendingSheet
         tournament={props.tournament}
         errorText={props.errorText}

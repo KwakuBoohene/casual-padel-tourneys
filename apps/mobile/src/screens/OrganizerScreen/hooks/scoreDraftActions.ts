@@ -9,11 +9,6 @@ export type LiveRound = LiveTournamentState["rounds"][number];
 export type LiveMatch = LiveRound["matches"][number];
 export type ScoreSide = "scoreA" | "scoreB";
 
-function matchScoreText(match: LiveMatch | undefined, side: ScoreSide): string {
-  const score = match?.[side];
-  return score !== undefined ? String(score) : "";
-}
-
 export function findMatchInTournament(
   tournament: LiveTournamentState,
   matchId: string
@@ -27,25 +22,22 @@ export function findMatchInTournament(
   return undefined;
 }
 
-export function applyPickedScore(input: {
-  previous: ScoreDraftMap;
-  existing: { scoreA: string; scoreB: string } | undefined;
-  match: LiveMatch | undefined;
+export async function submitMatchScore(params: {
+  tournament: LiveTournamentState;
   matchId: string;
-  side: ScoreSide;
-  value: number;
-  pointsPerMatch: number;
-}): ScoreDraftMap {
-  const { previous, match, matchId, side, value, pointsPerMatch } = input;
-  const oppositeSide: ScoreSide = side === "scoreA" ? "scoreB" : "scoreA";
-  // Americano points-to-N: editing either side always complements the other.
-  const next = {
-    scoreA: previous[matchId]?.scoreA ?? matchScoreText(match, "scoreA"),
-    scoreB: previous[matchId]?.scoreB ?? matchScoreText(match, "scoreB")
-  };
-  next[side] = String(value);
-  next[oppositeSide] = String(Math.max(0, pointsPerMatch - value));
-  return { ...previous, [matchId]: next };
+  scoreA: number;
+  scoreB: number;
+  onTournamentUpdated: (data: LiveTournamentState) => void;
+}): Promise<LiveTournamentState> {
+  const response = await apiPost<TournamentResponse>("/tournaments/score", {
+    tournamentId: params.tournament.id,
+    matchId: params.matchId,
+    scoreA: params.scoreA,
+    scoreB: params.scoreB,
+    expectedVersion: params.tournament.version
+  });
+  params.onTournamentUpdated(response.data);
+  return response.data;
 }
 
 export async function submitRoundScoreDrafts(params: {

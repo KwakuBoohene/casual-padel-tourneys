@@ -113,13 +113,20 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     refreshTournament,
     scoreInputs,
     updateScoreInput,
-    clearScoreForMatch,
     submitRoundScores,
-    pickScoreFromSheet,
-    scorePicker,
-    setScorePicker,
-    suppressNextScorePickerOpen,
-    setSuppressNextScorePickerOpen,
+    scoreEntry,
+    requestOpenScoreEntry,
+    closeScoreEntry,
+    changeScoreA,
+    changeScoreB,
+    undoScoreEntry,
+    saveScoreEntry,
+    savingScore,
+    pendingCompletedEditMatchId,
+    confirmEditCompletedScore,
+    cancelEditCompletedScore,
+    scoreSheetError,
+    clearScoreSheetError,
     focusSubmitMatchId,
     setFocusSubmitMatchId,
     playerNameById,
@@ -280,7 +287,10 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         proposedCourts={proposedCourts}
         maxCourts={maxCourts}
         canAdjustCourts={canAdjustCourts}
-        scorePicker={scorePicker}
+        scoreEntry={scoreEntry}
+        savingScore={savingScore}
+        pendingCompletedEditMatchId={pendingCompletedEditMatchId}
+        scoreSheetError={scoreSheetError}
         focusSubmitMatchId={focusSubmitMatchId}
         scoreInputs={scoreInputs}
         playerNameById={playerNameById}
@@ -307,19 +317,15 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         onCloseAdjustCourtsConfirm={() => setShowAdjustCourtsConfirmModal(false)}
         onConfirmAdjustCourts={() => void adjustTournamentCourts()}
         onSaveGameEdits={() => setIsEditingCompletedTournament(false)}
-        onOpenScorePicker={(matchId, side) => {
-          if (suppressNextScorePickerOpen?.matchId === matchId && suppressNextScorePickerOpen.side === side) {
-            setSuppressNextScorePickerOpen(null);
-            return;
-          }
-          setScorePicker({ matchId, side });
-        }}
-        onChangeScorePickerSide={(side) => {
-          setScorePicker((previous) => (previous ? { ...previous, side } : previous));
-        }}
-        onCloseScorePicker={() => setScorePicker(null)}
-        onSelectScoreFromPicker={pickScoreFromSheet}
-        onResetScoreForMatch={clearScoreForMatch}
+        onOpenScoreEntry={requestOpenScoreEntry}
+        onCloseScoreEntry={closeScoreEntry}
+        onChangeScoreA={changeScoreA}
+        onChangeScoreB={changeScoreB}
+        onUndoScoreEntry={undoScoreEntry}
+        onSaveScoreEntry={() => void saveScoreEntry()}
+        onConfirmEditCompletedScore={confirmEditCompletedScore}
+        onCancelEditCompletedScore={cancelEditCompletedScore}
+        onClearScoreSheetError={clearScoreSheetError}
         onSubmitFocusHandled={() => setFocusSubmitMatchId(null)}
         onUpdateScoreInput={updateScoreInput}
         onPrevRound={goToPrevRound}

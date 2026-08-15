@@ -25,7 +25,15 @@ export interface LiveTournamentViewProps {
   proposedCourts: number;
   maxCourts: number;
   canAdjustCourts: boolean;
-  scorePicker: { matchId: string; side: "scoreA" | "scoreB" } | null;
+  scoreEntry: {
+    matchId: string;
+    scoreA: number;
+    scoreB: number;
+    undoStack: Array<{ scoreA: number; scoreB: number }>;
+  } | null;
+  savingScore: boolean;
+  pendingCompletedEditMatchId: string | null;
+  scoreSheetError: string | null;
   focusSubmitMatchId: string | null;
   showAddPendingPlayerModal: boolean;
   pendingPlayerNameDraft: string;
@@ -55,11 +63,15 @@ export interface LiveTournamentViewProps {
   onCloseAdjustCourtsConfirm: () => void;
   onConfirmAdjustCourts: () => void;
   onSaveGameEdits: () => void;
-  onOpenScorePicker: (matchId: string, side: "scoreA" | "scoreB") => void;
-  onChangeScorePickerSide: (side: "scoreA" | "scoreB") => void;
-  onCloseScorePicker: () => void;
-  onSelectScoreFromPicker: (value: number) => void;
-  onResetScoreForMatch: (matchId: string) => void;
+  onOpenScoreEntry: (matchId: string) => void;
+  onCloseScoreEntry: () => void;
+  onChangeScoreA: (value: number) => void;
+  onChangeScoreB: (value: number) => void;
+  onUndoScoreEntry: () => void;
+  onSaveScoreEntry: () => void;
+  onConfirmEditCompletedScore: () => void;
+  onCancelEditCompletedScore: () => void;
+  onClearScoreSheetError: () => void;
   onSubmitFocusHandled: () => void;
   onUpdateScoreInput: (matchId: string, side: "scoreA" | "scoreB", value: string) => void;
   onPrevRound: () => void;

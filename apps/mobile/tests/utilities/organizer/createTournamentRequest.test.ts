@@ -52,3 +52,24 @@ test("prepareCreateTournamentRequest keeps Americano points and omits regularSco
   assert.equal(prepared.payload.pointsPerMatch, 24);
   assert.equal(prepared.payload.regularScoring, undefined);
 });
+
+test("prepareCreateTournamentRequest rejects Mexicano with fewer than 8 players", () => {
+  const prepared = prepareCreateTournamentRequest({
+    ...baseDraft,
+    mode: "MEXICANO",
+    schedulingMode: "TOTAL_TIME",
+    players: ["A", "B", "C", "D"],
+    sanitizedPlayersCount: 4,
+    courtsText: "1",
+    scoringMode: "AMERICANO_POINTS",
+    regularScoring: {
+      setFormat: "FULL_SET",
+      gameWinBy: 2,
+      setsToWin: 1,
+      setTiebreakTo: 7
+    }
+  });
+  assert.equal(prepared.ok, false);
+  if (prepared.ok) return;
+  assert.match(prepared.error, /at least 8/i);
+});

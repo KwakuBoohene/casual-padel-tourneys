@@ -6,6 +6,7 @@ import { useTheme } from "../../../theme/ThemeProvider";
 
 interface EstimatorResultCardProps {
   estimate: Estimate | null;
+  approximate?: boolean;
   style?: object;
 }
 
@@ -32,7 +33,9 @@ export function EstimatorResultCard(props: EstimatorResultCardProps) {
         props.style
       ]}
     >
-      <Text style={{ color: colors.primary, fontWeight: "700", fontSize: 14 }}>Result</Text>
+      <Text style={{ color: colors.primary, fontWeight: "700", fontSize: 14 }}>
+        {props.approximate ? "Approximate result" : "Result"}
+      </Text>
       {props.estimate ? (
         <View style={{ gap: 2 }}>
           <Text style={{ color: colors.muted, fontSize: 15 }}>{props.estimate.rounds} rounds</Text>

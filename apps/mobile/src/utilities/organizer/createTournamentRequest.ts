@@ -6,6 +6,7 @@ import type {
   TournamentMode,
   TournamentVariant
 } from "@padel/shared";
+import { MEXICANO_MIN_PLAYERS } from "@padel/shared";
 
 export interface CreateTournamentDraft {
   name: string;
@@ -69,6 +70,12 @@ export function prepareCreateTournamentRequest(
     return {
       ok: false,
       error: `${courts} court${courts === 1 ? "" : "s"} require at least ${courts * 4} players.`
+    };
+  }
+  if (draft.mode === "MEXICANO" && draft.sanitizedPlayersCount < MEXICANO_MIN_PLAYERS) {
+    return {
+      ok: false,
+      error: `Mexicano needs at least ${MEXICANO_MIN_PLAYERS} players. Next rounds are built from the leaderboard.`
     };
   }
   if (draft.hasDuplicatePlayerNames) {

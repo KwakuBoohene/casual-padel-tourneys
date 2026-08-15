@@ -4,18 +4,22 @@ import type {
   RegularSetFormat,
   SchedulingMode,
   ScoringMode,
-  TiebreakPoints
+  TiebreakPoints,
+  TournamentMode
 } from "@padel/shared";
+import { MEXICANO_MIN_PLAYERS } from "@padel/shared";
 
 import { AlertSheet } from "../../sheets";
 import type { Estimate } from "../../../types/organizer/tournament";
 import type { SettingsPhase } from "../../../hooks/organizer/useScoringModeSettings";
+import { formatSettingsEstimateLine } from "../../../utilities/organizer/settingsEstimateLine";
 
 import { MatchDetailsFields } from "./MatchDetailsFields";
 import { ScoringModePhase } from "./ScoringModePhase";
 import { WizardChrome } from "./WizardChrome";
 
 interface MatchSettingsStepViewProps {
+  mode: TournamentMode;
   modeLabel: string;
   schedulingMode: SchedulingMode;
   settingsPhase: SettingsPhase;
@@ -56,33 +60,32 @@ function toInt(text: string, fallback: number): number {
 
 export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
   const [showError, setShowError] = useState(false);
+  const isMexicano = props.mode === "MEXICANO";
   const courts = toInt(props.courtsText, 1);
-  const points = toInt(props.pointsText, 24);
-  const targetGames = toInt(props.targetGamesText, 8);
-  const tournamentTime = toInt(props.tournamentTimeText, 120);
   const minPlayersForCourts = courts > 0 ? courts * 4 : 0;
   const hasEnoughPlayersForCourts = courts > 0 && props.playersCount >= minPlayersForCourts;
-  const isMode = props.settingsPhase === "MODE";
-  const isRegular = props.scoringMode === "REGULAR";
+  const hasMinPlayers = !isMexicano || props.playersCount >= MEXICANO_MIN_PLAYERS;
+  const canCreate = hasEnoughPlayersForCourts && hasMinPlayers;
+  const isMode = !isMexicano && props.settingsPhase === "MODE";
+  const isRegular = !isMexicano && props.scoringMode === "REGULAR";
 
   useEffect(() => {
     if (props.errorText) setShowError(true);
   }, [props.errorText]);
 
-  const estimateLine = props.estimate
-    ? `~${props.estimate.rounds} rounds · ~${props.estimate.gamesPerPlayer} matches/player · ~${Math.max(
-        1,
-        Math.round(props.estimate.durationMinutes / 60)
-      )}h`
-    : "Enter valid settings to see an estimate.";
-
   const tryCreate = () => {
-    if (!hasEnoughPlayersForCourts) {
+    if (!canCreate) {
       setShowError(true);
       return;
     }
     props.onCreate();
   };
+
+  const errorMessage =
+    props.errorText ||
+    (!hasMinPlayers
+      ? `Mexicano needs at least ${MEXICANO_MIN_PLAYERS} players. Next rounds come from the leaderboard.`
+      : `You need at least ${minPlayersForCourts || 4} players for ${courts} court${courts === 1 ? "" : "s"}.`);
 
   return (
     <>
@@ -91,16 +94,19 @@ export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
         stepIndex={4}
         stepCount={4}
         progressText={isMode ? undefined : isRegular ? "Regular scoring" : undefined}
-        title={isMode ? "How do we count?" : isRegular ? "Set rules" : "Americano scoring"}
+        title={
+          isMode ? "How do we count?" : isMexicano ? "Mexicano settings" : isRegular ? "Set rules" : "Americano scoring"
+        }
         primaryLabel={isMode ? "Next" : "Create tournament"}
-        primaryDisabled={isMode ? false : !hasEnoughPlayersForCourts}
+        primaryDisabled={isMode ? false : !canCreate}
         onPrimary={isMode ? props.onNextFromMode : tryCreate}
-        onBack={isMode ? props.onBackToPlayers : props.onBackToMode}
+        onBack={isMode ? props.onBackToPlayers : isMexicano ? props.onBackToPlayers : props.onBackToMode}
       >
         {isMode ? (
           <ScoringModePhase scoringMode={props.scoringMode} onChangeScoringMode={props.onChangeScoringMode} />
         ) : (
           <MatchDetailsFields
+            mode={props.mode}
             scoringMode={props.scoringMode}
             schedulingMode={props.schedulingMode}
             setFormat={props.setFormat}
@@ -109,13 +115,13 @@ export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
             setTiebreakTo={props.setTiebreakTo}
             matchTiebreak={props.matchTiebreak}
             courts={courts}
-            points={points}
-            targetGames={targetGames}
-            tournamentTime={tournamentTime}
+            points={toInt(props.pointsText, 24)}
+            targetGames={toInt(props.targetGamesText, 8)}
+            tournamentTime={toInt(props.tournamentTimeText, 120)}
             playersCount={props.playersCount}
             minPlayersForCourts={minPlayersForCourts}
             hasEnoughPlayersForCourts={hasEnoughPlayersForCourts}
-            estimateLine={estimateLine}
+            estimateLine={formatSettingsEstimateLine(props.estimate, isMexicano)}
             responseText={props.responseText}
             onChangeSetFormat={props.onChangeSetFormat}
             onChangeGameWinBy={props.onChangeGameWinBy}
@@ -134,10 +140,7 @@ export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
         visible={showError}
         variant="error"
         title="Cannot create tournament"
-        message={
-          props.errorText ||
-          `You need at least ${minPlayersForCourts || 4} players for ${courts} court${courts === 1 ? "" : "s"}.`
-        }
+        message={errorMessage}
         primaryAction={{ label: "OK", onPress: () => setShowError(false) }}
         onDismiss={() => setShowError(false)}
       />

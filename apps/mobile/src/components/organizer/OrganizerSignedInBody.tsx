@@ -36,6 +36,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     players,
     playerGenders,
     sanitizedPlayers,
+    minPlayers,
     canContinueFromPlayers,
     allKnownPlayerNames,
     addPlayer,
@@ -48,6 +49,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     targetGamesText,
     tournamentTimeText,
     estimate,
+    prepareSettingsForMode,
     onChangeCourtsValue,
     onChangePointsValue,
     onChangeTargetGamesValue,
@@ -331,7 +333,11 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         modeLabel={modeLabel}
         variant={variant}
         schedulingMode={effectiveSchedulingMode}
-        onChangeMode={setMode}
+        onChangeMode={(value) => {
+          setMode(value);
+          if (value === "MEXICANO") setSchedulingMode("TOTAL_TIME");
+          prepareSettingsForMode(value);
+        }}
         onChangeVariant={setVariant}
         onChangeSchedulingMode={setSchedulingMode}
         onBack={() => setStep("NAME")}
@@ -347,6 +353,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         players={players}
         genders={playerGenders}
         variant={variant}
+        minPlayers={minPlayers}
         canContinue={canContinueFromPlayers}
         hasDuplicateNames={hasDuplicatePlayerNames}
         allSuggestions={allKnownPlayerNames}
@@ -358,6 +365,9 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         onNext={() => {
           const suggestedCourts = Math.max(1, Math.floor(sanitizedPlayers.length / 4) || 1);
           onChangeCourtsValue(String(suggestedCourts));
+          if (mode === "MEXICANO") {
+            prepareSettingsForMode("MEXICANO");
+          }
           setStep("SETTINGS");
         }}
       />
@@ -499,6 +509,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
 
   return (
     <MatchSettingsStepView
+      mode={mode}
       modeLabel={modeLabel}
       schedulingMode={effectiveSchedulingMode}
       settingsPhase={settingsPhase}

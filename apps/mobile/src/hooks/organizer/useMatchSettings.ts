@@ -66,6 +66,14 @@ export function useMatchSettings({ mode, effectiveSchedulingMode, playersCount }
     }
   };
 
+  const prepareSettingsForMode = (nextMode: TournamentMode) => {
+    if (nextMode === "MEXICANO") {
+      scoring.adoptAmericanoFromEstimator();
+      return;
+    }
+    scoring.resetScoringForNewCreate();
+  };
+
   return {
     courtsText,
     pointsText,
@@ -73,6 +81,7 @@ export function useMatchSettings({ mode, effectiveSchedulingMode, playersCount }
     tournamentTimeText,
     estimate,
     applySettings,
+    prepareSettingsForMode,
     onChangeCourtsValue: (value: string) => setCourtsText(sanitizeWholeNumberInput(value)),
     onChangePointsValue: (value: string) => setPointsText(sanitizeWholeNumberInput(value)),
     onChangeTargetGamesValue: (value: string) => setTargetGamesText(sanitizeWholeNumberInput(value)),

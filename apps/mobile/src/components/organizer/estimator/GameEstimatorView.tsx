@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
+import { MEXICANO_MIN_PLAYERS } from "@padel/shared";
 import type { SchedulingMode, ScoringMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 import { AlertSheet } from "../../sheets";
@@ -51,7 +52,7 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
   const courts = toInt(props.courtsText, 2);
   const points = toInt(props.pointsText, 24);
   const isRegular = props.scoringMode === "REGULAR";
-  const minPlayers = courts * 4;
+  const minPlayers = Math.max(courts * 4, props.mode === "MEXICANO" ? MEXICANO_MIN_PLAYERS : 0);
   const impossible =
     !props.estimate ||
     players < minPlayers ||
@@ -99,7 +100,7 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
           onChangeTargetGames={props.onChangeTargetGames}
           onChangeTournamentTime={props.onChangeTournamentTime}
         />
-        <EstimatorResultCard estimate={props.estimate} />
+        <EstimatorResultCard estimate={props.estimate} approximate={props.mode === "MEXICANO"} />
       </ScrollView>
 
       <EstimatorFooter
@@ -118,7 +119,9 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
         title="Cannot estimate tournament"
         message={
           players < minPlayers
-            ? `You need at least ${minPlayers} players for ${courts} court${courts === 1 ? "" : "s"}.`
+            ? props.mode === "MEXICANO" && players < MEXICANO_MIN_PLAYERS
+              ? `Mexicano needs at least ${MEXICANO_MIN_PLAYERS} players.`
+              : `You need at least ${minPlayers} players for ${courts} court${courts === 1 ? "" : "s"}.`
             : isRegular
               ? "Enter a valid player, court, and sets-to-win configuration to continue."
               : "Enter a valid player, court, and points configuration to continue."

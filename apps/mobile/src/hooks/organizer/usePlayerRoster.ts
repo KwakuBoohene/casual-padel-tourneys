@@ -1,17 +1,25 @@
 import { useMemo, useState } from "react";
-import type { PlayerGender, TournamentVariant } from "@padel/shared";
+import type { PlayerGender, TournamentMode, TournamentVariant } from "@padel/shared";
+import { MEXICANO_MIN_PLAYERS } from "@padel/shared";
 
 import type { TournamentListResponse } from "../../types/organizer/tournament";
 
 export interface UsePlayerRosterParams {
+  mode: TournamentMode;
   variant: TournamentVariant;
   tournaments: TournamentListResponse["data"];
   suggestedPlayerNames: string[];
 }
 
-export function usePlayerRoster({ variant, tournaments, suggestedPlayerNames }: UsePlayerRosterParams) {
+export function usePlayerRoster({
+  mode,
+  variant,
+  tournaments,
+  suggestedPlayerNames
+}: UsePlayerRosterParams) {
   const [players, setPlayers] = useState<string[]>([]);
   const [playerGenders, setPlayerGenders] = useState<Array<PlayerGender | undefined>>([]);
+  const minPlayers = mode === "MEXICANO" ? MEXICANO_MIN_PLAYERS : 4;
 
   const sanitizedPlayers = useMemo(() => players.map((value) => value.trim()).filter(Boolean), [players]);
 
@@ -21,11 +29,11 @@ export function usePlayerRoster({ variant, tournaments, suggestedPlayerNames }: 
   }, [players]);
 
   const canContinueFromPlayers = useMemo(() => {
-    if (sanitizedPlayers.length < 4) return false;
+    if (sanitizedPlayers.length < minPlayers) return false;
     if (hasDuplicatePlayerNames) return false;
     if (variant !== "MIXED") return true;
     return players.every((value, index) => value.trim().length === 0 || Boolean(playerGenders[index]));
-  }, [hasDuplicatePlayerNames, playerGenders, players, sanitizedPlayers.length, variant]);
+  }, [hasDuplicatePlayerNames, minPlayers, playerGenders, players, sanitizedPlayers.length, variant]);
 
   const allKnownPlayerNames = useMemo(() => {
     const names = new Set<string>();
@@ -73,6 +81,7 @@ export function usePlayerRoster({ variant, tournaments, suggestedPlayerNames }: 
     players,
     playerGenders,
     sanitizedPlayers,
+    minPlayers,
     hasDuplicatePlayerNames,
     canContinueFromPlayers,
     allKnownPlayerNames,

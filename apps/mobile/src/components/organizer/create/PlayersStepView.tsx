@@ -19,6 +19,7 @@ interface PlayersStepViewProps {
   players: string[];
   genders: Array<PlayerGender | undefined>;
   variant: TournamentVariant;
+  minPlayers: number;
   canContinue: boolean;
   hasDuplicateNames: boolean;
   allSuggestions: string[];
@@ -66,7 +67,9 @@ export function PlayersStepView(props: PlayersStepViewProps) {
       >
         <View style={{ gap: spacing.sm }}>
           {pagePlayers.length === 0 ? (
-            <Text style={{ color: colors.muted }}>No players yet. Tap + Add player to start (min 4).</Text>
+            <Text style={{ color: colors.muted }}>
+              No players yet. Tap + Add player to start (min {props.minPlayers}).
+            </Text>
           ) : (
             pagePlayers.map((name, offset) => {
               const index = pages.pageStart + offset;

@@ -3,7 +3,6 @@ import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/s
 
 import { radius, spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
-
 import { formatTournamentMode } from "../../../utilities/organizer/formatLabels";
 
 import { WizardChrome } from "./WizardChrome";
@@ -23,6 +22,7 @@ interface TournamentOptionsStepViewProps {
 
 export function TournamentOptionsStepView(props: TournamentOptionsStepViewProps) {
   const { colors } = useTheme();
+  const isMexicano = props.mode === "MEXICANO";
 
   const renderOption = (label: string, detail: string | undefined, active: boolean, onPress: () => void) => (
     <Pressable
@@ -64,20 +64,32 @@ export function TournamentOptionsStepView(props: TournamentOptionsStepViewProps)
           <View style={{ gap: spacing.sm, marginBottom: spacing.sm }}>
             <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Mode</Text>
             {renderOption("Americano", undefined, props.mode === "AMERICANO", () => props.onChangeMode("AMERICANO"))}
-            {renderOption("Mexicano", undefined, props.mode === "MEXICANO", () => props.onChangeMode("MEXICANO"))}
+            {renderOption("Mexicano", undefined, isMexicano, () => props.onChangeMode("MEXICANO"))}
           </View>
         ) : null}
+        {isMexicano ? (
+          <Text style={{ color: colors.muted, fontSize: 13, marginBottom: spacing.sm }}>
+            Round 1 is a lottery. After that, each next round is built from the leaderboard (1+3 vs 2+4).
+          </Text>
+        ) : null}
         <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Variant</Text>
-        {renderOption("Classic", "Rotate partners each round", props.variant === "CLASSIC", () =>
-          props.onChangeVariant("CLASSIC")
+        {renderOption(
+          "Classic",
+          isMexicano ? "Individuals ranked by points" : "Rotate partners each round",
+          props.variant === "CLASSIC",
+          () => props.onChangeVariant("CLASSIC")
         )}
-        {renderOption("Mixed", "Each side is one man + one woman", props.variant === "MIXED", () =>
-          props.onChangeVariant("MIXED")
+        {renderOption(
+          "Mixed",
+          isMexicano
+            ? "Same ladder · each side is one man + one woman"
+            : "Each side is one man + one woman",
+          props.variant === "MIXED",
+          () => props.onChangeVariant("MIXED")
         )}
-        {/* TEAM hidden until engine supports fixed pairs (epic-06 / TEAM work). */}
       </View>
 
-      {props.mode !== "MEXICANO" ? (
+      {!isMexicano ? (
         <View style={{ gap: spacing.sm, marginTop: spacing.md }}>
           <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Scheduling</Text>
           {renderOption(

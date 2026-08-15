@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { MEXICANO_MIN_PLAYERS } from "../mexicano/ladder.js";
+
 export const tournamentModeSchema = z.enum(["AMERICANO", "MEXICANO", "KING_OF_THE_HILL"]);
 /** @deprecated Prefer tournamentModeSchema — kept for existing imports. */
 export const modeSchema = tournamentModeSchema;
@@ -51,6 +53,13 @@ export const createTournamentSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Mexicano currently supports TOTAL_TIME scheduling mode."
+      });
+    }
+    if (value.mode === "MEXICANO" && value.players.length < MEXICANO_MIN_PLAYERS) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["players"],
+        message: `Mexicano requires at least ${MEXICANO_MIN_PLAYERS} players.`
       });
     }
     if (value.variant === "MIXED") {

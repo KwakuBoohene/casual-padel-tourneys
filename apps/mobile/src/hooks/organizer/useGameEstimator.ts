@@ -32,7 +32,7 @@ export function useGameEstimator() {
             targetGamesText: estimatorTargetGamesText,
             tournamentTimeText: estimatorTournamentTimeText,
             playersCount: Number.isFinite(estimatorUsers) ? estimatorUsers : 0,
-            scoringMode: estimatorScoringMode,
+            scoringMode: estimatorMode === "MEXICANO" ? "AMERICANO_POINTS" : estimatorScoringMode,
             regularSetsToWin: estimatorSetsToWin
           }),
     [
@@ -50,7 +50,13 @@ export function useGameEstimator() {
 
   return {
     estimatorMode,
-    setEstimatorMode,
+    setEstimatorMode: (value: TournamentMode) => {
+      setEstimatorMode(value);
+      if (value === "MEXICANO") {
+        setEstimatorScoringMode("AMERICANO_POINTS");
+        setEstimatorUsersText((previous) => (Number(previous) < 8 ? "8" : previous));
+      }
+    },
     estimatorVariant,
     setEstimatorVariant,
     estimatorSchedulingMode,

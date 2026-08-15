@@ -4,6 +4,7 @@ import type {
   RegularSetFormat,
   SchedulingMode,
   ScoringMode,
+  TournamentMode,
   TiebreakPoints
 } from "@padel/shared";
 
@@ -15,6 +16,7 @@ import { SettingsEstimateCard } from "./SettingsEstimateCard";
 import { SettingsStepper } from "./SettingsStepper";
 
 interface MatchDetailsFieldsProps {
+  mode: TournamentMode;
   scoringMode: ScoringMode;
   schedulingMode: SchedulingMode;
   setFormat: RegularSetFormat;
@@ -44,10 +46,16 @@ interface MatchDetailsFieldsProps {
 
 export function MatchDetailsFields(props: MatchDetailsFieldsProps) {
   const { colors } = useTheme();
-  const isRegular = props.scoringMode === "REGULAR";
+  const isMexicano = props.mode === "MEXICANO";
+  const isRegular = !isMexicano && props.scoringMode === "REGULAR";
 
   return (
     <View style={{ gap: spacing.md }}>
+      {isMexicano ? (
+        <Text style={{ color: colors.muted, fontSize: 13 }}>
+          Next round is built from the leaderboard after every match.
+        </Text>
+      ) : null}
       {isRegular ? (
         <RegularSettingsFields
           setFormat={props.setFormat}
@@ -79,7 +87,13 @@ export function MatchDetailsFields(props: MatchDetailsFieldsProps) {
         max={16}
         onChange={(value) => props.onChangeCourts(String(value))}
       />
-      {props.schedulingMode === "TARGET_GAMES" ? (
+      {isMexicano ? (
+        <Text style={{ color: colors.muted, fontSize: 12 }}>
+          Guide ≈ {props.playersCount || 0} players ÷ 4 → {Math.max(1, Math.floor(props.playersCount / 4) || 1)}{" "}
+          court{(Math.max(1, Math.floor(props.playersCount / 4) || 1) === 1 ? "" : "s")}.
+        </Text>
+      ) : null}
+      {!isMexicano && props.schedulingMode === "TARGET_GAMES" ? (
         <SettingsStepper
           label="Games per player"
           value={props.targetGames}
@@ -88,7 +102,7 @@ export function MatchDetailsFields(props: MatchDetailsFieldsProps) {
           onChange={(value) => props.onChangeTargetGames(String(value))}
         />
       ) : null}
-      {props.schedulingMode === "TOTAL_TIME" ? (
+      {isMexicano || props.schedulingMode === "TOTAL_TIME" ? (
         <SettingsStepper
           label="Tournament time (minutes)"
           value={props.tournamentTime}
@@ -98,7 +112,7 @@ export function MatchDetailsFields(props: MatchDetailsFieldsProps) {
           onChange={(value) => props.onChangeTournamentTime(String(value))}
         />
       ) : null}
-      {props.schedulingMode === "ROUND_ROBIN" ? (
+      {!isMexicano && props.schedulingMode === "ROUND_ROBIN" ? (
         <Text style={{ color: colors.muted, fontSize: 13 }}>
           Regular scheduling plays every pairing automatically — no games-per-player target.
         </Text>

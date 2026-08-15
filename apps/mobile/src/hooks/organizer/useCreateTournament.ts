@@ -41,7 +41,7 @@ export function useCreateTournament({
   const [responseText, setResponseText] = useState("No tournament created yet.");
   const effectiveSchedulingMode: SchedulingMode = mode === "MEXICANO" ? "TOTAL_TIME" : schedulingMode;
 
-  const roster = usePlayerRoster({ variant, tournaments, suggestedPlayerNames });
+  const roster = usePlayerRoster({ mode, variant, tournaments, suggestedPlayerNames });
   const settings = useMatchSettings({
     mode,
     effectiveSchedulingMode,
@@ -55,7 +55,7 @@ export function useCreateTournament({
     setModeLockedFromList(true);
     setVariant("CLASSIC");
     setSchedulingMode(preset === "MEXICANO" ? "TOTAL_TIME" : "TARGET_GAMES");
-    settings.resetScoringForNewCreate();
+    settings.prepareSettingsForMode(preset);
     setStep("NAME");
   };
 
@@ -67,6 +67,7 @@ export function useCreateTournament({
     setVariant(draft.variant);
     setSchedulingMode(draft.mode === "MEXICANO" ? "TOTAL_TIME" : draft.schedulingMode);
     settings.applySettings(draft);
+    if (draft.mode === "MEXICANO") settings.prepareSettingsForMode("MEXICANO");
     setStep("NAME");
   };
 
@@ -106,8 +107,7 @@ export function useCreateTournament({
     startCreateWithMode,
     startCreateFromEstimator,
     cancelCreateToList: () => {
-      setModeLockedFromList(false);
-      setStep("LIST");
+      setModeLockedFromList(false); setStep("LIST");
     },
     variant,
     setVariant,

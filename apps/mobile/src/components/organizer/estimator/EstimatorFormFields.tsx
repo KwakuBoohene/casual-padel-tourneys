@@ -1,4 +1,5 @@
 import type { SchedulingMode, ScoringMode, TournamentMode, TournamentVariant } from "@padel/shared";
+import { MEXICANO_MIN_PLAYERS } from "@padel/shared";
 import { Text, View } from "react-native";
 
 import { spacing } from "../../../theme";
@@ -33,8 +34,9 @@ interface EstimatorFormFieldsProps {
 
 export function EstimatorFormFields(props: EstimatorFormFieldsProps) {
   const { colors } = useTheme();
+  const isMexicano = props.mode === "MEXICANO";
   const showAmericanoScheduling = props.mode === "AMERICANO";
-  const isRegular = props.scoringMode === "REGULAR";
+  const isRegular = !isMexicano && props.scoringMode === "REGULAR";
 
   return (
     <View style={{ gap: spacing.md }}>
@@ -46,11 +48,17 @@ export function EstimatorFormFields(props: EstimatorFormFieldsProps) {
         onChangeVariant={props.onChangeVariant}
         onChangeSchedulingMode={props.onChangeSchedulingMode}
       />
-      <ScoringModePhase scoringMode={props.scoringMode} onChangeScoringMode={props.onChangeScoringMode} />
+      {!isMexicano ? (
+        <ScoringModePhase scoringMode={props.scoringMode} onChangeScoringMode={props.onChangeScoringMode} />
+      ) : (
+        <Text style={{ color: colors.muted, fontSize: 13 }}>
+          Approximate only — Mexicano rounds after round 1 follow the live leaderboard.
+        </Text>
+      )}
       <SettingsStepper
         label="Players"
         value={props.players}
-        min={4}
+        min={isMexicano ? MEXICANO_MIN_PLAYERS : 4}
         max={64}
         onChange={(value) => props.onChangeUsers(String(value))}
       />
@@ -88,7 +96,7 @@ export function EstimatorFormFields(props: EstimatorFormFieldsProps) {
           onChange={(value) => props.onChangeTargetGames(String(value))}
         />
       ) : null}
-      {props.schedulingMode === "TOTAL_TIME" || props.mode === "MEXICANO" ? (
+      {props.schedulingMode === "TOTAL_TIME" || isMexicano ? (
         <SettingsStepper
           label="Tournament time (minutes)"
           value={props.tournamentTime}

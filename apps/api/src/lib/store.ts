@@ -9,7 +9,7 @@ import type {
   PendingPlayer
 } from "@padel/shared";
 
-import { generateMexicano } from "../engine/mexicanoScheduler.js";
+import { generateMexicano, buildNextMexicanoRound } from "../engine/mexicanoScheduler.js";
 import { generateTournament, recalculateRemainingTournament } from "../engine/americanoScheduler.js";
 import {
   awardDeltasForWinner,
@@ -145,6 +145,19 @@ export function submitScore(
   }
   const lookup = findMatch(tournament.rounds, matchId);
   const wasCompleted = lookup.match.completed;
+  if (wasCompleted) {
+    const laterRoundStarted = tournament.rounds.some(
+      (round) =>
+        round.roundNumber > lookup.round.roundNumber &&
+        (round.isLocked || round.matches.some((match) => match.completed))
+    );
+    const mexicanoNextExists =
+      tournament.config.mode === "MEXICANO" &&
+      tournament.rounds.some((round) => round.roundNumber > lookup.round.roundNumber);
+    if (laterRoundStarted || mexicanoNextExists) {
+      throw new Error("Cannot edit a score after a later round has started.");
+    }
+  }
   if (
     wasCompleted &&
     lookup.match.scoreA !== undefined &&
@@ -156,6 +169,9 @@ export function submitScore(
   lookup.match.scoreA = scoreA;
   lookup.match.scoreB = scoreB;
   lookup.match.completed = true;
+  if (!wasCompleted) {
+    bumpGamesPlayed(tournament.players, lookup.match, 1);
+  }
   lookup.round.isLocked = lookup.round.matches.every((match) => match.completed);
   awardPoints(tournament.players, lookup.match, scoreA, scoreB);
   tournament.leaderboard = buildLeaderboard(tournament.players, tournament.config.scoringMode);
@@ -290,6 +306,9 @@ export function deleteTournament(tournamentId: string): void {
 
 export function adjustCourts(tournamentId: string, courts: number): TournamentState {
   const tournament = requireTournament(tournamentId);
+  if (tournament.config.mode === "MEXICANO") {
+    throw new Error("Adjusting courts mid-tournament is not supported for Mexicano.");
+  }
   tournament.config.courts = courts;
   tournament.rounds = recalculateRemainingTournament(
     tournament.config,
@@ -298,6 +317,72 @@ export function adjustCourts(tournamentId: string, courts: number): TournamentSt
   );
   touch(tournament);
   logger.info("store/adjustCourts", { tournamentId, courts, version: tournament.version });
+  return tournament;
+}
+
+/**
+ * After the current Mexicano round is fully scored, append the next ladder round.
+ * Legacy multi-round Mexicano (old Americano wrapper): keeps locked rounds, drops
+ * unlocked pre-scheduled future rounds, then appends one ladder round.
+ */
+export function advanceMexicanoRound(tournamentId: string): TournamentState {
+  const tournament = requireTournament(tournamentId);
+  if (tournament.config.mode !== "MEXICANO") {
+    throw new Error("advanceMexicanoRound requires a Mexicano tournament.");
+  }
+
+  const ordered = [...tournament.rounds].sort((a, b) => a.roundNumber - b.roundNumber);
+  const locked = ordered.filter((round) => round.matches.every((match) => match.completed));
+  if (locked.length === 0) {
+    throw new Error("Finish the current round before generating the next.");
+  }
+
+  const lastLocked = locked[locked.length - 1];
+  if (!ordered.slice(0, locked.length).every((round, index) => round.id === locked[index].id)) {
+    throw new Error("Finish the current round before generating the next.");
+  }
+
+  const afterLocked = ordered.filter((round) => round.roundNumber > lastLocked.roundNumber);
+  if (afterLocked.length > 0) {
+    const midRound = afterLocked.find(
+      (round) =>
+        round.matches.some((match) => match.completed) &&
+        round.matches.some((match) => !match.completed)
+    );
+    if (midRound) {
+      throw new Error("Finish the current round before generating the next.");
+    }
+    const allVirgin = afterLocked.every((round) =>
+      round.matches.every((match) => !match.completed)
+    );
+    if (allVirgin && afterLocked.length === 1) {
+      // True-ladder: next round already appended and not started.
+      throw new Error("Next round already generated.");
+    }
+    // Legacy Americano-wrapper schedules: multiple virgin future rounds — drop them.
+  }
+
+  tournament.rounds = ordered.filter((round) => round.roundNumber <= lastLocked.roundNumber);
+
+  const next = buildNextMexicanoRound({
+    players: tournament.players,
+    courts: tournament.config.courts,
+    variant: tournament.config.variant,
+    roundNumber: lastLocked.roundNumber + 1
+  });
+  if (next.matches.length === 0) {
+    throw new Error("Not enough players to build another Mexicano round.");
+  }
+  tournament.rounds.push(next);
+  tournament.leaderboard = buildLeaderboard(tournament.players, tournament.config.scoringMode);
+  touch(tournament);
+  logger.info("store/advanceMexicanoRound", {
+    tournamentId,
+    fromRound: lastLocked.roundNumber,
+    toRound: next.roundNumber,
+    matches: next.matches.length,
+    version: tournament.version
+  });
   return tournament;
 }
 
@@ -325,6 +410,15 @@ function awardPoints(players: Player[], match: Match, scoreA: number, scoreB: nu
   }
   for (const playerId of match.teamB) {
     apply(playerId, scoreB);
+  }
+}
+
+function bumpGamesPlayed(players: Player[], match: Match, delta: number): void {
+  for (const playerId of [...match.teamA, ...match.teamB]) {
+    const player = players.find((item) => item.id === playerId);
+    if (player) {
+      player.gamesPlayed = Math.max(0, player.gamesPlayed + delta);
+    }
   }
 }
 
@@ -490,6 +584,9 @@ export function addPendingPlayer(
 
 export function integratePendingPlayers(tournamentId: string): TournamentState {
   const tournament = requireTournament(tournamentId);
+  if (tournament.config.mode === "MEXICANO") {
+    throw new Error("Pending player integration is not supported for Mexicano yet.");
+  }
 
   // Validate integration eligibility
   const validation = canIntegratePlayers(tournament);

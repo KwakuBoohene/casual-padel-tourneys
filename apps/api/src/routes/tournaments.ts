@@ -19,6 +19,7 @@ import type {
 import {
   addPendingPlayerSchema,
   adjustCourtsSchema,
+  advanceMexicanoRoundSchema,
   createTournamentSchema,
   integratePendingPlayersSchema,
   isRegularScoreBody,
@@ -31,6 +32,7 @@ import {
 import {
   addPendingPlayer,
   adjustCourts,
+  advanceMexicanoRound,
   assertVersion,
   createTournament,
   deleteTournament,
@@ -218,7 +220,13 @@ function mapTournamentMutationErrorStatus(message: string): number {
     message.includes("regularScoring") ||
     message.includes("Invalid full-set") ||
     message.includes("points body") ||
-    message.includes("sets body")
+    message.includes("sets body") ||
+    message.includes("later round has started") ||
+    message.includes("Finish the current round") ||
+    message.includes("advanceMexicanoRound") ||
+    message.includes("not supported for Mexicano") ||
+    message.includes("Not enough players") ||
+    message.includes("Next round already generated")
   ) {
     return 400;
   }
@@ -538,6 +546,35 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
           status: isRegularScoreBody(body) ? body.status : "COMPLETE"
         },
         "POST /tournaments/score"
+      );
+      return { data: tournament };
+    } catch (error) {
+      const message = (error as Error).message;
+      reply.status(mapTournamentMutationErrorStatus(message));
+      return { message };
+    }
+  });
+
+  server.post("/tournaments/next-round", { preHandler: requireOrganizerAccess }, async (request, reply) => {
+    const parsed = advanceMexicanoRoundSchema.safeParse(request.body);
+    if (!parsed.success) {
+      reply.status(400);
+      return { errors: parsed.error.flatten() };
+    }
+    try {
+      await ensureOrganizerTournament(parsed.data.tournamentId, request.user!.id);
+      assertVersion(parsed.data.tournamentId, parsed.data.expectedVersion);
+      const tournament = advanceMexicanoRound(parsed.data.tournamentId);
+      await persistTournament(tournament);
+      const event = { type: "ROUND_ADVANCED" as const, tournamentId: tournament.id, payload: tournament };
+      await publishEvent(server.redis, event);
+      broadcastToTournament(server.subscriptions, tournament.id, event);
+      request.log.info(
+        {
+          tournamentId: tournament.id,
+          rounds: tournament.rounds.length
+        },
+        "POST /tournaments/next-round"
       );
       return { data: tournament };
     } catch (error) {

@@ -165,3 +165,9 @@ export const integratePendingPlayersSchema = z.object({
   tournamentId: z.string().min(1),
   expectedVersion: z.number().int().min(0)
 });
+
+/** Organizer advances Mexicano after the current round is fully scored. */
+export const advanceMexicanoRoundSchema = z.object({
+  tournamentId: z.string().min(1),
+  expectedVersion: z.number().int().min(0)
+});

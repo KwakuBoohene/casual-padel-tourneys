@@ -15,6 +15,7 @@ export interface TournamentEvent<T = unknown> {
     | "PLAYER_SUBSTITUTED"
     | "PENDING_PLAYER_ADDED"
     | "PENDING_PLAYERS_INTEGRATED"
+    | "ROUND_ADVANCED"
     | "KOH_ASSIGNMENT_UPDATED"
     | "KOH_QUEUE_RANDOMIZED"
     | "KOH_QUEUE_REORDERED"

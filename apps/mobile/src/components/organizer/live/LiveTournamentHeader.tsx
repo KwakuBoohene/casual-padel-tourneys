@@ -2,7 +2,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 
 import { radius, spacing, touch, typography } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
-import { formatTournamentMode } from "../../../utilities/organizer/formatLabels";
+import { formatScoringLabel } from "../../../utilities/organizer/formatLabels";
 
 import type { LiveTournamentState } from "../../../types/organizer/tournament";
 
@@ -27,7 +27,10 @@ interface LiveTournamentHeaderProps {
 
 export function LiveTournamentHeader(props: LiveTournamentHeaderProps) {
   const { colors } = useTheme();
-  const modeLabel = `${formatTournamentMode(props.tournament.config.mode)} scoring`;
+  const modeLabel = formatScoringLabel(
+    props.tournament.config.mode,
+    props.tournament.config.scoringMode
+  );
   const roundLabel =
     props.displayedRoundNumber != null && props.roundsCount > 0
       ? `Round ${props.displayedRoundNumber} of ${props.roundsCount}`

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
-import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
+import type { SchedulingMode, ScoringMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 import { AlertSheet } from "../../sheets";
 import { useBreakpoint } from "../../../layout";
@@ -16,6 +16,8 @@ interface GameEstimatorViewProps {
   mode: TournamentMode;
   variant: TournamentVariant;
   schedulingMode: SchedulingMode;
+  scoringMode: ScoringMode;
+  setsToWin: number;
   usersText: string;
   courtsText: string;
   pointsText: string;
@@ -25,6 +27,8 @@ interface GameEstimatorViewProps {
   onChangeMode: (value: TournamentMode) => void;
   onChangeVariant: (value: TournamentVariant) => void;
   onChangeSchedulingMode: (value: SchedulingMode) => void;
+  onChangeScoringMode: (value: ScoringMode) => void;
+  onChangeSetsToWin: (value: number) => void;
   onChangeUsers: (value: string) => void;
   onChangeCourts: (value: string) => void;
   onChangePoints: (value: string) => void;
@@ -46,8 +50,14 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
   const players = toInt(props.usersText, 8);
   const courts = toInt(props.courtsText, 2);
   const points = toInt(props.pointsText, 24);
+  const isRegular = props.scoringMode === "REGULAR";
   const minPlayers = courts * 4;
-  const impossible = !props.estimate || players < minPlayers || courts < 1 || points < 1;
+  const impossible =
+    !props.estimate ||
+    players < minPlayers ||
+    courts < 1 ||
+    (!isRegular && points < 1) ||
+    (isRegular && props.setsToWin < 1);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -71,6 +81,8 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
           mode={props.mode}
           variant={props.variant}
           schedulingMode={props.schedulingMode}
+          scoringMode={props.scoringMode}
+          setsToWin={props.setsToWin}
           players={players}
           courts={courts}
           points={points}
@@ -79,6 +91,8 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
           onChangeMode={props.onChangeMode}
           onChangeVariant={props.onChangeVariant}
           onChangeSchedulingMode={props.onChangeSchedulingMode}
+          onChangeScoringMode={props.onChangeScoringMode}
+          onChangeSetsToWin={props.onChangeSetsToWin}
           onChangeUsers={props.onChangeUsers}
           onChangeCourts={props.onChangeCourts}
           onChangePoints={props.onChangePoints}
@@ -105,7 +119,9 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
         message={
           players < minPlayers
             ? `You need at least ${minPlayers} players for ${courts} court${courts === 1 ? "" : "s"}.`
-            : "Enter a valid player, court, and points configuration to continue."
+            : isRegular
+              ? "Enter a valid player, court, and sets-to-win configuration to continue."
+              : "Enter a valid player, court, and points configuration to continue."
         }
         primaryAction={{ label: "OK", onPress: () => setShowError(false) }}
         onDismiss={() => setShowError(false)}

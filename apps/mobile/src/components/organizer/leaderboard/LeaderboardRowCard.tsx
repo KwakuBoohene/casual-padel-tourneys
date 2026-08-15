@@ -1,6 +1,6 @@
 import { Pressable, Text } from "react-native";
 
-import { radius, spacing, touch } from "../../../theme";
+import { spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
 import type { LeaderboardRow } from "../../../types/organizer/tournament";
@@ -9,6 +9,15 @@ interface LeaderboardRowCardProps {
   rank: number;
   row: LeaderboardRow;
   onPress: () => void;
+}
+
+function formatStandings(row: LeaderboardRow): string {
+  if (row.isRegular) {
+    const sets = row.setsWon ?? 0;
+    const games = row.gamesWon ?? 0;
+    return `${row.wins}–${row.losses} · ${sets} sets · ${games} games`;
+  }
+  return `${row.totalPoints} pts`;
 }
 
 export function LeaderboardRowCard(props: LeaderboardRowCardProps) {
@@ -36,7 +45,7 @@ export function LeaderboardRowCard(props: LeaderboardRowCardProps) {
         {props.rank}  {props.row.name}
       </Text>
       <Text style={{ fontSize: 14, fontWeight: "500", color: colors.muted }}>
-        {props.row.totalPoints} pts  ›
+        {formatStandings(props.row)}  ›
       </Text>
     </Pressable>
   );

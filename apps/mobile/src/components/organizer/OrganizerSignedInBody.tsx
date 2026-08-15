@@ -70,6 +70,10 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     estimatorVariant,
     setEstimatorVariant,
     setEstimatorSchedulingMode,
+    estimatorScoringMode,
+    setEstimatorScoringMode,
+    estimatorSetsToWin,
+    setEstimatorSetsToWin,
     effectiveEstimatorSchedulingMode,
     estimatorUsersText,
     estimatorCourtsText,
@@ -220,6 +224,8 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         mode={estimatorMode}
         variant={estimatorVariant}
         schedulingMode={effectiveEstimatorSchedulingMode}
+        scoringMode={estimatorScoringMode}
+        setsToWin={estimatorSetsToWin}
         usersText={estimatorUsersText}
         courtsText={estimatorCourtsText}
         pointsText={estimatorPointsText}
@@ -229,6 +235,8 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         onChangeMode={setEstimatorMode}
         onChangeVariant={setEstimatorVariant}
         onChangeSchedulingMode={setEstimatorSchedulingMode}
+        onChangeScoringMode={setEstimatorScoringMode}
+        onChangeSetsToWin={setEstimatorSetsToWin}
         onChangeUsers={onChangeEstimatorUsersValue}
         onChangeCourts={onChangeEstimatorCourtsValue}
         onChangePoints={onChangeEstimatorPointsValue}
@@ -243,7 +251,9 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
             courtsText: estimatorCourtsText,
             pointsText: estimatorPointsText,
             targetGamesText: estimatorTargetGamesText,
-            tournamentTimeText: estimatorTournamentTimeText
+            tournamentTimeText: estimatorTournamentTimeText,
+            scoringMode: estimatorScoringMode,
+            setsToWin: estimatorSetsToWin
           })
         }
       />
@@ -413,12 +423,11 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
 
   if (step === "PLAYER_GAMES" && selectedPlayerId) {
     const playerName = playerNameById.get(selectedPlayerId) ?? selectedPlayerId;
-    const totalPoints =
-      leaderboardRows.find((row) => row.playerId === selectedPlayerId)?.totalPoints ?? 0;
+    const row = leaderboardRows.find((entry) => entry.playerId === selectedPlayerId);
     return (
       <PlayerGamesView
         playerName={playerName}
-        totalPoints={totalPoints}
+        row={row}
         games={selectedPlayerGames}
         onBack={() => setStep("LEADERBOARD")}
       />

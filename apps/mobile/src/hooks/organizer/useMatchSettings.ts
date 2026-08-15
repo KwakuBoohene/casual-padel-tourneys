@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { SchedulingMode, TournamentMode } from "@padel/shared";
+import type { SchedulingMode, ScoringMode, TournamentMode } from "@padel/shared";
 
 import { computeEstimate } from "../../utilities/organizer/utils";
 import { sanitizeWholeNumberInput } from "../../utilities/organizer/sanitizeInput";
@@ -28,9 +28,21 @@ export function useMatchSettings({ mode, effectiveSchedulingMode, playersCount }
         schedulingMode: effectiveSchedulingMode,
         targetGamesText,
         tournamentTimeText,
-        playersCount
+        playersCount,
+        scoringMode: scoring.scoringMode,
+        regularSetsToWin: scoring.setsToWin
       }),
-    [courtsText, effectiveSchedulingMode, mode, pointsText, playersCount, targetGamesText, tournamentTimeText]
+    [
+      courtsText,
+      effectiveSchedulingMode,
+      mode,
+      pointsText,
+      playersCount,
+      scoring.scoringMode,
+      scoring.setsToWin,
+      targetGamesText,
+      tournamentTimeText
+    ]
   );
 
   const applySettings = (next: {
@@ -38,12 +50,18 @@ export function useMatchSettings({ mode, effectiveSchedulingMode, playersCount }
     pointsText: string;
     targetGamesText: string;
     tournamentTimeText: string;
+    scoringMode?: ScoringMode;
+    setsToWin?: number;
   }) => {
     setCourtsText(sanitizeWholeNumberInput(next.courtsText));
     setPointsText(sanitizeWholeNumberInput(next.pointsText));
     setTargetGamesText(sanitizeWholeNumberInput(next.targetGamesText));
     setTournamentTimeText(sanitizeWholeNumberInput(next.tournamentTimeText));
-    scoring.adoptAmericanoFromEstimator();
+    if (next.scoringMode === "REGULAR") {
+      scoring.adoptRegularFromEstimator(next.setsToWin ?? 1);
+    } else {
+      scoring.adoptAmericanoFromEstimator();
+    }
   };
 
   return {

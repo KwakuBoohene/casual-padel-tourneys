@@ -44,6 +44,12 @@ export function useScoringModeSettings() {
     setSettingsPhase("DETAILS");
   };
 
+  const adoptRegularFromEstimator = (nextSetsToWin: number) => {
+    setScoringMode("REGULAR");
+    setSetsToWin(Math.max(1, Math.trunc(nextSetsToWin) || 1));
+    setSettingsPhase("DETAILS");
+  };
+
   return {
     settingsPhase,
     setSettingsPhase,
@@ -61,6 +67,7 @@ export function useScoringModeSettings() {
     setMatchTiebreak,
     regularScoring,
     resetScoringForNewCreate,
-    adoptAmericanoFromEstimator
+    adoptAmericanoFromEstimator,
+    adoptRegularFromEstimator
   };
 }

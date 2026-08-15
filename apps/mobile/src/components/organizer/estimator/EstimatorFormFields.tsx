@@ -1,16 +1,19 @@
-import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
+import type { SchedulingMode, ScoringMode, TournamentMode, TournamentVariant } from "@padel/shared";
 import { Text, View } from "react-native";
 
 import { spacing } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
-import { EstimatorTypeCard } from "./EstimatorTypeCard";
+import { ScoringModePhase } from "../create/ScoringModePhase";
 import { SettingsStepper } from "../create/SettingsStepper";
+import { EstimatorTypeCard } from "./EstimatorTypeCard";
 
 interface EstimatorFormFieldsProps {
   mode: TournamentMode;
   variant: TournamentVariant;
   schedulingMode: SchedulingMode;
+  scoringMode: ScoringMode;
+  setsToWin: number;
   players: number;
   courts: number;
   points: number;
@@ -19,6 +22,8 @@ interface EstimatorFormFieldsProps {
   onChangeMode: (value: TournamentMode) => void;
   onChangeVariant: (value: TournamentVariant) => void;
   onChangeSchedulingMode: (value: SchedulingMode) => void;
+  onChangeScoringMode: (value: ScoringMode) => void;
+  onChangeSetsToWin: (value: number) => void;
   onChangeUsers: (value: string) => void;
   onChangeCourts: (value: string) => void;
   onChangePoints: (value: string) => void;
@@ -29,6 +34,7 @@ interface EstimatorFormFieldsProps {
 export function EstimatorFormFields(props: EstimatorFormFieldsProps) {
   const { colors } = useTheme();
   const showAmericanoScheduling = props.mode === "AMERICANO";
+  const isRegular = props.scoringMode === "REGULAR";
 
   return (
     <View style={{ gap: spacing.md }}>
@@ -40,6 +46,7 @@ export function EstimatorFormFields(props: EstimatorFormFieldsProps) {
         onChangeVariant={props.onChangeVariant}
         onChangeSchedulingMode={props.onChangeSchedulingMode}
       />
+      <ScoringModePhase scoringMode={props.scoringMode} onChangeScoringMode={props.onChangeScoringMode} />
       <SettingsStepper
         label="Players"
         value={props.players}
@@ -54,14 +61,24 @@ export function EstimatorFormFields(props: EstimatorFormFieldsProps) {
         max={16}
         onChange={(value) => props.onChangeCourts(String(value))}
       />
-      <SettingsStepper
-        label="Americano points"
-        value={props.points}
-        min={8}
-        max={64}
-        step={2}
-        onChange={(value) => props.onChangePoints(String(value))}
-      />
+      {isRegular ? (
+        <SettingsStepper
+          label="Sets to win"
+          value={props.setsToWin}
+          min={1}
+          max={3}
+          onChange={props.onChangeSetsToWin}
+        />
+      ) : (
+        <SettingsStepper
+          label="Americano points"
+          value={props.points}
+          min={8}
+          max={64}
+          step={2}
+          onChange={(value) => props.onChangePoints(String(value))}
+        />
+      )}
       {props.schedulingMode === "TARGET_GAMES" && showAmericanoScheduling ? (
         <SettingsStepper
           label="Target games"

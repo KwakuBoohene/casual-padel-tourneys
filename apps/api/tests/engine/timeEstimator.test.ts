@@ -372,6 +372,29 @@ test("estimateTournament duration is always rounded up", () => {
   assert.equal(result.durationMinutes, Math.floor(result.durationMinutes));
 });
 
+test("estimateTournament REGULAR uses setsToWin × 12 minutes", () => {
+  const config: TournamentConfig = {
+    name: "Test",
+    mode: "AMERICANO",
+    variant: "CLASSIC",
+    schedulingMode: "TARGET_GAMES",
+    players: Array.from({ length: 8 }, (_, i) => ({ name: String.fromCharCode(65 + i) })),
+    courts: 2,
+    pointsPerMatch: 24,
+    scoringMode: "REGULAR",
+    regularScoring: {
+      setFormat: "FULL_SET",
+      gameWinBy: 2,
+      setsToWin: 2
+    },
+    targetGamesPerPlayer: 3
+  };
+
+  const result = estimateTournament(config);
+  assert.equal(result.rounds, 3);
+  assert.equal(result.durationMinutes, 3 * 24);
+});
+
 test("estimateTournament with MIXED variant (no impact on calculation)", () => {
   const config: TournamentConfig = {
     name: "Test",

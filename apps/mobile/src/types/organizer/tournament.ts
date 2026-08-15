@@ -27,7 +27,15 @@ export interface LiveTournamentState {
     targetGamesPerPlayer?: number;
     tournamentTimeMinutes?: number;
   };
-  players: Array<{ id: string; name: string }>;
+  players: Array<{
+    id: string;
+    name: string;
+    totalPoints?: number;
+    matchesWon?: number;
+    matchesLost?: number;
+    setsWon?: number;
+    gamesWon?: number;
+  }>;
   pendingPlayers: PendingPlayer[];
   leaderboard: Array<{
     playerId: string;
@@ -81,6 +89,10 @@ export interface LeaderboardRow {
   draws: number;
   gamesPlayed: number;
   totalPoints: number;
+  /** Regular standings extras. */
+  setsWon?: number;
+  gamesWon?: number;
+  isRegular?: boolean;
 }
 
 export interface PlayerGameRow {

@@ -1,4 +1,4 @@
-import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
+import type { SchedulingMode, ScoringMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 export type SetupStep =
   | "LIST"
@@ -27,4 +27,6 @@ export type EstimatorCreateDraft = {
   pointsText: string;
   targetGamesText: string;
   tournamentTimeText: string;
+  scoringMode?: ScoringMode;
+  setsToWin?: number;
 };

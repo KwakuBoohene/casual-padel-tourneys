@@ -1,14 +1,15 @@
 import { useMemo, useState } from "react";
-import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
+import type { SchedulingMode, ScoringMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 import { computeEstimate } from "../../utilities/organizer/utils";
-
 import { sanitizeWholeNumberInput } from "../../utilities/organizer/sanitizeInput";
 
 export function useGameEstimator() {
   const [estimatorMode, setEstimatorMode] = useState<TournamentMode>("AMERICANO");
   const [estimatorVariant, setEstimatorVariant] = useState<TournamentVariant>("CLASSIC");
   const [estimatorSchedulingMode, setEstimatorSchedulingMode] = useState<SchedulingMode>("TARGET_GAMES");
+  const [estimatorScoringMode, setEstimatorScoringMode] = useState<ScoringMode>("REGULAR");
+  const [estimatorSetsToWin, setEstimatorSetsToWin] = useState(1);
   const [estimatorUsersText, setEstimatorUsersText] = useState("8");
   const [estimatorCourtsText, setEstimatorCourtsText] = useState("2");
   const [estimatorPointsText, setEstimatorPointsText] = useState("24");
@@ -28,13 +29,17 @@ export function useGameEstimator() {
         schedulingMode: effectiveEstimatorSchedulingMode,
         targetGamesText: estimatorTargetGamesText,
         tournamentTimeText: estimatorTournamentTimeText,
-        playersCount: Number.isFinite(estimatorUsers) ? estimatorUsers : 0
+        playersCount: Number.isFinite(estimatorUsers) ? estimatorUsers : 0,
+        scoringMode: estimatorScoringMode,
+        regularSetsToWin: estimatorSetsToWin
       }),
     [
       effectiveEstimatorSchedulingMode,
       estimatorCourtsText,
       estimatorMode,
       estimatorPointsText,
+      estimatorScoringMode,
+      estimatorSetsToWin,
       estimatorTargetGamesText,
       estimatorTournamentTimeText,
       estimatorUsers
@@ -48,6 +53,10 @@ export function useGameEstimator() {
     setEstimatorVariant,
     estimatorSchedulingMode,
     setEstimatorSchedulingMode,
+    estimatorScoringMode,
+    setEstimatorScoringMode,
+    estimatorSetsToWin,
+    setEstimatorSetsToWin,
     effectiveEstimatorSchedulingMode,
     estimatorUsersText,
     estimatorCourtsText,

@@ -6,7 +6,7 @@ import { radius, spacing, touch, typography } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
 import type { LeaderboardRow, LiveTournamentState } from "../../../types/organizer/tournament";
-import { formatTournamentMode } from "../../../utilities/organizer/formatLabels";
+import { formatScoringLabel } from "../../../utilities/organizer/formatLabels";
 
 import { LeaderboardRowCard } from "./LeaderboardRowCard";
 
@@ -40,7 +40,10 @@ export function LeaderboardView(props: LeaderboardViewProps) {
     }
   }, [pageCount, pageIndex]);
 
-  const scoringLabel = `${formatTournamentMode(props.tournament.config.mode)} scoring`;
+  const scoringLabel = formatScoringLabel(
+    props.tournament.config.mode,
+    props.tournament.config.scoringMode
+  );
   const showPaging = props.rows.length > ROWS_PER_PAGE;
 
   return (

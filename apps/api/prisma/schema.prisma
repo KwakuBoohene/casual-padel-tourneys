@@ -65,6 +65,7 @@ model User {
   tournaments            Tournament[]
   magicLinkTokens        MagicLinkToken[]
   opaqueRecord           OpaqueRecord?
+  organizerPlayers       OrganizerPlayer[]
 }
 
 enum MagicLinkPurpose {
@@ -150,11 +151,53 @@ model Player {
   handicap        Float?
   integrationWave Int?
   integratedAt    DateTime?
+  organizerPlayerId String?
   tournament      Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  organizerPlayer OrganizerPlayer? @relation(fields: [organizerPlayerId], references: [id], onDelete: SetNull)
   kohUnitsAsA     KohUnit[]  @relation("KohUnitPlayerA")
   kohUnitsAsB     KohUnit[]  @relation("KohUnitPlayerB")
 
   @@index([tournamentId])
+  @@index([organizerPlayerId])
+}
+
+/**
+ * Stable person under an organizer account — career board key across KOH events.
+ * v1 identity = organizerId + normalized display name.
+ */
+model OrganizerPlayer {
+  id             String   @id @default(cuid())
+  organizerId    String
+  name           String
+  nameNormalized String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  organizer      User     @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  players        Player[]
+  deltas         OrganizerPlayerStatDelta[]
+
+  @@unique([organizerId, nameNormalized])
+  @@index([organizerId])
+}
+
+/** Per-match career credit so month/year ranges can be summed. */
+model OrganizerPlayerStatDelta {
+  id                String   @id @default(cuid())
+  organizerId       String
+  organizerPlayerId String
+  tournamentId      String
+  tournamentName    String
+  matchId           String
+  gamesWon          Int      @default(0)
+  gamesLost         Int      @default(0)
+  matchesWon        Int      @default(0)
+  matchesLost       Int      @default(0)
+  occurredAt        DateTime @default(now())
+  organizerPlayer   OrganizerPlayer @relation(fields: [organizerPlayerId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, organizerPlayerId])
+  @@index([organizerId, occurredAt])
+  @@index([organizerPlayerId, occurredAt])
 }
 
 model PendingPlayer {

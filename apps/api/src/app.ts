@@ -45,6 +45,8 @@ export async function createApp() {
   await registerPasswordResetRoutes(server);
   await registerTournamentRoutes(server);
   await registerKohRoutes(server);
+  const { registerMePlayerRoutes } = await import("./routes/mePlayers.js");
+  await registerMePlayerRoutes(server);
   logger.info("createApp: server ready");
   return server;
 }

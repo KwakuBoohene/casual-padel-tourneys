@@ -22,6 +22,7 @@ interface OrganizerListScreenProps {
   onOpenTournament: (id: string) => void;
   onOpenOptions: (id: string) => void;
   onOpenProfile: () => void;
+  onOpenAccountPlayers: () => void;
   onCloseOptionsModal: () => void;
   onRequestEdit: () => void;
   onRequestDelete: () => void;
@@ -46,6 +47,7 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
         onOpenTournament={props.onOpenTournament}
         onOpenOptions={props.onOpenOptions}
         onOpenProfile={props.onOpenProfile}
+        onOpenAccountPlayers={props.onOpenAccountPlayers}
       />
 
       <BottomSheet

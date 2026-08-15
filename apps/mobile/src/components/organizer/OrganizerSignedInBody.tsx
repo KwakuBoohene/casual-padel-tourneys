@@ -3,6 +3,7 @@ import { KohScreen } from "../../screens/KohScreen";
 import { useOrganizerScreen } from "../../hooks/organizer/useOrganizerScreen";
 import { formatTournamentMode } from "../../utilities/organizer/formatLabels";
 
+import { AccountPlayersFlow } from "../accountPlayers/AccountPlayersFlow";
 import { KohLiveHub } from "../koh/live/KohLiveHub";
 import { GameEstimatorView } from "./estimator/GameEstimatorView";
 import { LeaderboardView } from "./leaderboard/LeaderboardView";
@@ -208,11 +209,28 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         onOpenTournament={(id) => void openTournament(id)}
         onOpenOptions={openTournamentOptions}
         onOpenProfile={() => setStep("PROFILE")}
+        onOpenAccountPlayers={() => {
+          setErrorText("");
+          setStep("ACCOUNT_PLAYERS");
+        }}
         onCloseOptionsModal={() => setShowTournamentOptionsModal(false)}
         onRequestEdit={() => requestTournamentAction("EDIT")}
         onRequestDelete={() => requestTournamentAction("DELETE")}
         onCancelActionConfirm={() => setShowTournamentActionConfirmModal(false)}
         onConfirmAction={() => void confirmTournamentAction()}
+      />
+    );
+  }
+
+  if (step === "ACCOUNT_PLAYERS") {
+    return (
+      <AccountPlayersFlow
+        isGuest={currentUser?.isGuest === true}
+        errorText={errorText}
+        setErrorText={setErrorText}
+        markEmailVerifyRequired={markEmailVerifyRequired}
+        onBack={() => setStep("LIST")}
+        onAttach={() => setStep("ATTACH")}
       />
     );
   }

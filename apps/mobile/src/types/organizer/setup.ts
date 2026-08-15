@@ -10,6 +10,7 @@ export type SetupStep =
   | "LIVE"
   | "KOH"
   | "KOH_LIVE"
+  | "ACCOUNT_PLAYERS"
   | "LEADERBOARD"
   | "PLAYER_GAMES"
   | "PROFILE"

@@ -30,6 +30,10 @@ import {
   type KohPromotionNotify
 } from "../engine/koh/index.js";
 import { logger } from "./logger.js";
+import {
+  creditKohMatchToOrganizerPlayers,
+  ensureOrganizerPlayer
+} from "./organizerPlayers.js";
 import { prisma } from "./prisma.js";
 
 const kohInclude = {
@@ -478,13 +482,15 @@ export async function assignKohCourts(
     for (const name of names) {
       const id = createId("player");
       playerIdByName.set(name.toLowerCase(), id);
+      const organizerPlayerId = await ensureOrganizerPlayer(tx, organizerId, name);
       await tx.player.create({
         data: {
           id,
           tournamentId,
           name,
           gamesPlayed: 0,
-          totalPoints: 0
+          totalPoints: 0,
+          organizerPlayerId
         }
       });
     }
@@ -1036,6 +1042,31 @@ export async function submitKohCourtScore(
       }
     });
 
+    if (row.organizerId) {
+      const unitA = await tx.kohUnit.findUnique({
+        where: { id: unitAId },
+        select: { playerAId: true, playerBId: true }
+      });
+      const unitB = await tx.kohUnit.findUnique({
+        where: { id: unitBId },
+        select: { playerAId: true, playerBId: true }
+      });
+      if (unitA && unitB) {
+        await creditKohMatchToOrganizerPlayers({
+          tx,
+          organizerId: row.organizerId,
+          tournamentId,
+          tournamentName: row.name,
+          matchId: matchId!,
+          unitAPlayerIds: [unitA.playerAId, unitA.playerBId],
+          unitBPlayerIds: [unitB.playerAId, unitB.playerBId],
+          winnerSide: evaluation.winner!,
+          gamesA: setStats.gamesA,
+          gamesB: setStats.gamesB
+        });
+      }
+    }
+
     await tx.kohCourt.update({
       where: { id: courtId },
       data: {
@@ -1361,6 +1392,22 @@ export async function renameKohPlayer(
       where: { id: playerId },
       data: { name: newName }
     });
+    if (player.organizerPlayerId) {
+      const normalized = newName.trim().toLowerCase().replace(/\s+/g, " ");
+      const conflict = await tx.organizerPlayer.findFirst({
+        where: {
+          organizerId,
+          nameNormalized: normalized,
+          NOT: { id: player.organizerPlayerId }
+        }
+      });
+      if (!conflict) {
+        await tx.organizerPlayer.update({
+          where: { id: player.organizerPlayerId },
+          data: { name: newName, nameNormalized: normalized, updatedAt: new Date() }
+        });
+      }
+    }
     await tx.tournament.update({
       where: { id: tournamentId },
       data: { version: { increment: 1 }, updatedAt: new Date() }
@@ -1428,6 +1475,7 @@ export async function replaceKohPartner(
 
   const newPlayerId = createId("player");
   await prisma.$transaction(async (tx) => {
+    const organizerPlayerId = await ensureOrganizerPlayer(tx, organizerId, replacementName);
     await tx.player.create({
       data: {
         id: newPlayerId,
@@ -1435,7 +1483,8 @@ export async function replaceKohPartner(
         name: replacementName,
         gender: input.replacement.gender ?? null,
         gamesPlayed: 0,
-        totalPoints: 0
+        totalPoints: 0,
+        organizerPlayerId
       }
     });
     await tx.kohUnit.update({

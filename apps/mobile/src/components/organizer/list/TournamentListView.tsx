@@ -22,6 +22,7 @@ interface TournamentListViewProps {
   onOpenTournament: (id: string) => void;
   onOpenOptions: (id: string) => void;
   onOpenProfile?: () => void;
+  onOpenAccountPlayers?: () => void;
 }
 
 export function TournamentListView(props: TournamentListViewProps) {
@@ -63,6 +64,7 @@ export function TournamentListView(props: TournamentListViewProps) {
         onCreateMexicano={props.onCreateMexicano}
         onCreateKingOfTheHill={props.onCreateKingOfTheHill}
         onOpenEstimator={props.onOpenEstimator}
+        onOpenAccountPlayers={props.onOpenAccountPlayers}
       />
 
       {!hasAny ? (

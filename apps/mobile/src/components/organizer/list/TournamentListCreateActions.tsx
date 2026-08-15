@@ -8,6 +8,7 @@ interface TournamentListCreateActionsProps {
   onCreateMexicano: () => void;
   onCreateKingOfTheHill: () => void;
   onOpenEstimator: () => void;
+  onOpenAccountPlayers?: () => void;
 }
 
 export function TournamentListCreateActions(props: TournamentListCreateActionsProps) {
@@ -34,6 +35,22 @@ export function TournamentListCreateActions(props: TournamentListCreateActionsPr
 
   return (
     <View style={{ gap: spacing.md, width: "100%" }}>
+      {props.onOpenAccountPlayers ? (
+        <Pressable
+          onPress={props.onOpenAccountPlayers}
+          style={{
+            ...secondary,
+            borderColor: colors.primary,
+            alignItems: "flex-start",
+            paddingVertical: spacing.md
+          }}
+        >
+          <Text style={{ color: colors.text, fontWeight: "700", fontSize: 17 }}>Players</Text>
+          <Text style={{ color: colors.muted, fontSize: 13, marginTop: 2 }}>
+            Month / year leaderboard · who is best
+          </Text>
+        </Pressable>
+      ) : null}
       <Pressable onPress={props.onCreateAmericano} style={primary}>
         <Text style={{ color: colors.onPrimary, fontWeight: "700", fontSize: 17 }}>New Americano</Text>
       </Pressable>

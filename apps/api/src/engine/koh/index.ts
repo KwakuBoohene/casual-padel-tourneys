@@ -15,4 +15,4 @@ export {
   waitingOf
 } from "./winnerStays.js";
 
-export { findWeakestCandidates, maybePromote } from "./promotion.js";
+export { applyOrganizerPromotionPick, findWeakestCandidates, maybePromote } from "./promotion.js";

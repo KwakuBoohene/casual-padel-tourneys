@@ -2,17 +2,27 @@ import type {
   AssignKohCourtsInput,
   CreateKohTournamentInput,
   KohCourt,
+  KohCourtChange,
+  KohPendingPromote,
   KohPromotionRule,
+  KohTempSwap,
   KohUnit,
   MatchSet,
-  SubmitKohScoreInput
+  PromoteKohPickInput,
+  SubmitKohScoreInput,
+  SwapKohUnitInput
 } from "@padel/shared";
 import { createId, evaluateMatch, KOH_MAX_UNITS_PER_COURT } from "@padel/shared";
+import { Prisma } from "@prisma/client";
 
 import {
   applyKohMatchResult,
+  applyOrganizerPromotionPick,
+  maybePromote,
   shuffleQueueOnce,
-  type KohEngineUnit
+  type KohEngineCourt,
+  type KohEngineUnit,
+  type KohPromotionNotify
 } from "../engine/koh/index.js";
 import { logger } from "./logger.js";
 import { prisma } from "./prisma.js";
@@ -91,6 +101,10 @@ export type KohTournamentHub = {
     winnerUnitId: string;
     loserUnitId: string;
   };
+  /** Set when auto-promo fires or needs an organizer pick. */
+  lastCourtChange?: KohCourtChange | null;
+  /** Pending weakest-candidate pick (multi-court). */
+  pendingPromote?: KohPendingPromote | null;
 };
 
 export class KohVersionConflictError extends Error {
@@ -119,9 +133,57 @@ function mapUnit(row: {
   };
 }
 
+function parsePendingPromote(value: unknown): KohPendingPromote | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  const row = value as Record<string, unknown>;
+  if (
+    typeof row.fromCourtNumber !== "number" ||
+    typeof row.toCourtNumber !== "number" ||
+    typeof row.promotedUnitId !== "string" ||
+    !Array.isArray(row.candidateUnitIds) ||
+    !row.candidateUnitIds.every((id) => typeof id === "string")
+  ) {
+    return null;
+  }
+  return {
+    fromCourtNumber: row.fromCourtNumber,
+    toCourtNumber: row.toCourtNumber,
+    promotedUnitId: row.promotedUnitId,
+    candidateUnitIds: row.candidateUnitIds as string[]
+  };
+}
+
+function mapTempSwap(row: {
+  tempSwapSlot: string | null;
+  tempSwapInUnitId: string | null;
+  tempSwapOutUnitId: string | null;
+  tempSwapReason: string | null;
+}): KohTempSwap | null {
+  if (
+    (row.tempSwapSlot !== "KING" && row.tempSwapSlot !== "CHALLENGER") ||
+    !row.tempSwapInUnitId ||
+    !row.tempSwapOutUnitId ||
+    !row.tempSwapReason
+  ) {
+    return null;
+  }
+  return {
+    slot: row.tempSwapSlot,
+    inUnitId: row.tempSwapInUnitId,
+    outUnitId: row.tempSwapOutUnitId,
+    reason: row.tempSwapReason
+  };
+}
+
 function mapCourt(row: {
   id: string;
   courtNumber: number;
+  tempSwapSlot?: string | null;
+  tempSwapInUnitId?: string | null;
+  tempSwapOutUnitId?: string | null;
+  tempSwapReason?: string | null;
   units: Array<{
     id: string;
     queuePosition: number;
@@ -155,6 +217,12 @@ function mapCourt(row: {
     king: mapped[0] ?? null,
     challenger: mapped[1] ?? null,
     waiting: mapped.slice(2),
+    tempSwap: mapTempSwap({
+      tempSwapSlot: row.tempSwapSlot ?? null,
+      tempSwapInUnitId: row.tempSwapInUnitId ?? null,
+      tempSwapOutUnitId: row.tempSwapOutUnitId ?? null,
+      tempSwapReason: row.tempSwapReason ?? null
+    }),
     unitCount: mapped.length,
     activeMatch: draft
       ? {
@@ -230,7 +298,8 @@ function toHub(row: NonNullable<KohDbTournament>): KohTournamentHub {
     })),
     courts,
     ready,
-    balanceHint: computeBalanceHint(unitCounts)
+    balanceHint: computeBalanceHint(unitCounts),
+    pendingPromote: parsePendingPromote(row.kohPendingPromote)
   };
 }
 
@@ -377,6 +446,15 @@ export async function assignKohCourts(
       if (!court) {
         throw new Error(`Court ${assignment.courtNumber} not found.`);
       }
+      await tx.kohCourt.update({
+        where: { id: court.id },
+        data: {
+          tempSwapSlot: null,
+          tempSwapInUnitId: null,
+          tempSwapOutUnitId: null,
+          tempSwapReason: null
+        }
+      });
       let position = 0;
       for (const unit of assignment.units) {
         const playerAId = playerIdByName.get(unit.playerA.name.trim().toLowerCase());
@@ -399,7 +477,11 @@ export async function assignKohCourts(
 
     await tx.tournament.update({
       where: { id: tournamentId },
-      data: { version: { increment: 1 }, updatedAt: new Date() }
+      data: {
+        version: { increment: 1 },
+        updatedAt: new Date(),
+        kohPendingPromote: Prisma.JsonNull
+      }
     });
   });
 
@@ -522,7 +604,7 @@ function toEngineCourt(court: {
     matchesLost: number;
     kingWinStreak: number;
   }>;
-}) {
+}): KohEngineCourt {
   const ordered = [...court.units].sort((a, b) => a.queuePosition - b.queuePosition);
   return {
     id: court.id,
@@ -537,6 +619,76 @@ function toEngineCourt(court: {
         kingWinStreak: unit.kingWinStreak
       })
     )
+  };
+}
+
+function restoreTempSwapQueue(
+  queue: KohEngineUnit[],
+  temp: KohTempSwap
+): KohEngineUnit[] {
+  const next = queue.map((unit) => ({ ...unit }));
+  const slotIndex = temp.slot === "KING" ? 0 : 1;
+  if (next[slotIndex]?.id !== temp.inUnitId) {
+    return next;
+  }
+  const outIndex = next.findIndex((unit) => unit.id === temp.outUnitId);
+  if (outIndex < 0) {
+    return next;
+  }
+  const swappedIn = next[slotIndex];
+  next[slotIndex] = next[outIndex];
+  next[outIndex] = swappedIn;
+  return next;
+}
+
+async function persistEngineCourts(
+  tx: Prisma.TransactionClient,
+  courts: KohEngineCourt[]
+): Promise<void> {
+  for (const court of courts) {
+    for (let index = 0; index < court.queue.length; index += 1) {
+      await tx.kohUnit.update({
+        where: { id: court.queue[index].id },
+        data: {
+          courtId: court.id,
+          queuePosition: 10_000 + court.courtNumber * 100 + index
+        }
+      });
+    }
+  }
+  for (const court of courts) {
+    for (let index = 0; index < court.queue.length; index += 1) {
+      const unit = court.queue[index];
+      await tx.kohUnit.update({
+        where: { id: unit.id },
+        data: {
+          courtId: court.id,
+          queuePosition: index,
+          matchesWon: unit.matchesWon,
+          matchesLost: unit.matchesLost,
+          kingWinStreak: unit.kingWinStreak
+        }
+      });
+    }
+  }
+}
+
+function notifyToCourtChange(notify: KohPromotionNotify): KohCourtChange {
+  if (notify.type === "PROMOTED") {
+    return {
+      type: "PROMOTED",
+      fromCourtNumber: notify.fromCourtNumber,
+      toCourtNumber: notify.toCourtNumber,
+      promotedUnitId: notify.promotedUnitId,
+      demotedUnitId: notify.demotedUnitId
+    };
+  }
+  return {
+    type: "NEEDS_ORGANIZER_PICK",
+    fromCourtNumber: notify.fromCourtNumber,
+    toCourtNumber: notify.toCourtNumber,
+    promotedUnitId: notify.promotedUnitId,
+    candidateUnitIds: notify.candidateUnitIds
   };
 }
 
@@ -687,7 +839,15 @@ export async function submitKohCourtScore(
     engineCourt = { ...engineBefore, queue: [a, b, ...rest] };
   }
 
-  const { court: engineAfter, event } = applyKohMatchResult(engineCourt, winnerUnitId);
+  const { court: engineAfterMatch, event } = applyKohMatchResult(engineCourt, winnerUnitId);
+
+  const tempSwap = mapTempSwap(court);
+  let engineAfter: KohEngineCourt = {
+    ...engineAfterMatch,
+    queue: tempSwap
+      ? restoreTempSwapQueue(engineAfterMatch.queue, tempSwap)
+      : engineAfterMatch.queue
+  };
 
   if (!matchId) {
     matchId = createId("kohmatch");
@@ -700,6 +860,40 @@ export async function submitKohCourtScore(
         completed: false
       }
     });
+  }
+
+  let courtChange: KohCourtChange | null = null;
+  let engineCourtsForPersist: KohEngineCourt[] | null = null;
+  let pendingPromote: Prisma.InputJsonValue | typeof Prisma.JsonNull | null = null;
+
+  const allEngineCourts = row.kohCourts.map((entry) => {
+    if (entry.id === courtId) {
+      return engineAfter;
+    }
+    return toEngineCourt(entry);
+  });
+  const promo = maybePromote({
+    courts: allEngineCourts,
+    rules: row.kohPromotionRules.map((rule) => ({
+      courtNumber: rule.courtNumber,
+      winsRequired: rule.winsRequired,
+      promoteToCourtNumber: rule.promoteToCourtNumber ?? undefined
+    })),
+    fromCourtNumber: court.courtNumber
+  });
+
+  if (promo.notify?.type === "PROMOTED") {
+    engineCourtsForPersist = promo.courts;
+    courtChange = notifyToCourtChange(promo.notify);
+    pendingPromote = Prisma.JsonNull;
+  } else if (promo.notify?.type === "NEEDS_ORGANIZER_PICK") {
+    courtChange = notifyToCourtChange(promo.notify);
+    pendingPromote = {
+      fromCourtNumber: promo.notify.fromCourtNumber,
+      toCourtNumber: promo.notify.toCourtNumber,
+      promotedUnitId: promo.notify.promotedUnitId,
+      candidateUnitIds: promo.notify.candidateUnitIds
+    };
   }
 
   await prisma.$transaction(async (tx) => {
@@ -726,28 +920,46 @@ export async function submitKohCourtScore(
       }
     });
 
-    for (let index = 0; index < engineAfter.queue.length; index += 1) {
-      await tx.kohUnit.update({
-        where: { id: engineAfter.queue[index].id },
-        data: { queuePosition: 1000 + index }
-      });
+    if (engineCourtsForPersist) {
+      await persistEngineCourts(tx, engineCourtsForPersist);
+    } else {
+      for (let index = 0; index < engineAfter.queue.length; index += 1) {
+        await tx.kohUnit.update({
+          where: { id: engineAfter.queue[index].id },
+          data: { queuePosition: 1000 + index }
+        });
+      }
+      for (let index = 0; index < engineAfter.queue.length; index += 1) {
+        const unit = engineAfter.queue[index];
+        await tx.kohUnit.update({
+          where: { id: unit.id },
+          data: {
+            queuePosition: index,
+            matchesWon: unit.matchesWon,
+            matchesLost: unit.matchesLost,
+            kingWinStreak: unit.kingWinStreak
+          }
+        });
+      }
     }
-    for (let index = 0; index < engineAfter.queue.length; index += 1) {
-      const unit = engineAfter.queue[index];
-      await tx.kohUnit.update({
-        where: { id: unit.id },
-        data: {
-          queuePosition: index,
-          matchesWon: unit.matchesWon,
-          matchesLost: unit.matchesLost,
-          kingWinStreak: unit.kingWinStreak
-        }
-      });
-    }
+
+    await tx.kohCourt.update({
+      where: { id: courtId },
+      data: {
+        tempSwapSlot: null,
+        tempSwapInUnitId: null,
+        tempSwapOutUnitId: null,
+        tempSwapReason: null
+      }
+    });
 
     await tx.tournament.update({
       where: { id: tournamentId },
-      data: { version: { increment: 1 }, updatedAt: new Date() }
+      data: {
+        version: { increment: 1 },
+        updatedAt: new Date(),
+        ...(pendingPromote !== null ? { kohPendingPromote: pendingPromote } : {})
+      }
     });
   });
 
@@ -756,12 +968,163 @@ export async function submitKohCourtScore(
     courtId,
     matchId,
     winnerUnitId,
-    event: event.type
+    event: event.type,
+    courtChange: courtChange?.type ?? null
   });
 
   const hub = await getKohHub(tournamentId, organizerId);
   return {
     ...hub,
-    lastMatchEvent: event
+    lastMatchEvent: event,
+    lastCourtChange: courtChange
+  };
+}
+
+/**
+ * Swap king or challenger with another unit on the same court.
+ * Blocks while a draft match is in progress.
+ */
+export async function swapKohCourtSlot(
+  tournamentId: string,
+  organizerId: string,
+  courtId: string,
+  input: SwapKohUnitInput
+): Promise<KohTournamentHub> {
+  const row = await requireKohTournament(tournamentId, organizerId);
+  if (row.version !== input.expectedVersion) {
+    throw new KohVersionConflictError(input.expectedVersion, row.version);
+  }
+
+  const court = row.kohCourts.find((entry) => entry.id === courtId);
+  if (!court) {
+    throw new Error("Court not found.");
+  }
+  if (court.matches.length > 0) {
+    throw new Error("Cannot swap while a match is in progress.");
+  }
+  if (court.units.length < 2) {
+    throw new Error("Court needs king and challenger before swapping.");
+  }
+
+  const ordered = [...court.units].sort((a, b) => a.queuePosition - b.queuePosition);
+  const slotIndex = input.slot === "KING" ? 0 : 1;
+  const slotUnit = ordered[slotIndex];
+  if (!slotUnit) {
+    throw new Error(`Court has no ${input.slot.toLowerCase()} to swap.`);
+  }
+  if (slotUnit.id === input.withUnitId) {
+    throw new Error("Cannot swap a unit with itself.");
+  }
+  const withIndex = ordered.findIndex((unit) => unit.id === input.withUnitId);
+  if (withIndex < 0) {
+    throw new Error("Swap target unit is not on this court.");
+  }
+
+  const permanent = input.permanent ?? input.slot === "CHALLENGER";
+  const next = ordered.map((unit) => unit.id);
+  next[slotIndex] = input.withUnitId;
+  next[withIndex] = slotUnit.id;
+
+  await prisma.$transaction(async (tx) => {
+    for (let index = 0; index < next.length; index += 1) {
+      await tx.kohUnit.update({
+        where: { id: next[index] },
+        data: { queuePosition: 1000 + index }
+      });
+    }
+    for (let index = 0; index < next.length; index += 1) {
+      await tx.kohUnit.update({
+        where: { id: next[index] },
+        data: { queuePosition: index }
+      });
+    }
+    await tx.kohCourt.update({
+      where: { id: courtId },
+      data: permanent
+        ? {
+            tempSwapSlot: null,
+            tempSwapInUnitId: null,
+            tempSwapOutUnitId: null,
+            tempSwapReason: null
+          }
+        : {
+            tempSwapSlot: input.slot,
+            tempSwapInUnitId: input.withUnitId,
+            tempSwapOutUnitId: slotUnit.id,
+            tempSwapReason: input.reason
+          }
+    });
+    await tx.tournament.update({
+      where: { id: tournamentId },
+      data: { version: { increment: 1 }, updatedAt: new Date() }
+    });
+  });
+
+  logger.info("kohStore/swapKohCourtSlot", {
+    tournamentId,
+    courtId,
+    slot: input.slot,
+    permanent,
+    withUnitId: input.withUnitId
+  });
+
+  return getKohHub(tournamentId, organizerId);
+}
+
+/**
+ * Resolve a pending promotion when multiple weakest candidates tied.
+ */
+export async function pickKohPromotion(
+  tournamentId: string,
+  organizerId: string,
+  input: PromoteKohPickInput
+): Promise<KohTournamentHub> {
+  const row = await requireKohTournament(tournamentId, organizerId);
+  if (row.version !== input.expectedVersion) {
+    throw new KohVersionConflictError(input.expectedVersion, row.version);
+  }
+
+  const pending = parsePendingPromote(row.kohPendingPromote);
+  if (!pending) {
+    throw new Error("No pending promotion pick.");
+  }
+  if (!pending.candidateUnitIds.includes(input.demotedUnitId)) {
+    throw new Error("demotedUnitId is not a candidate for this promotion.");
+  }
+  if (row.kohCourts.length <= 1) {
+    throw new Error("Promotion requires multiple courts.");
+  }
+
+  const engineCourts = row.kohCourts.map(toEngineCourt);
+  const { courts: nextCourts, notify } = applyOrganizerPromotionPick({
+    courts: engineCourts,
+    fromCourtNumber: pending.fromCourtNumber,
+    toCourtNumber: pending.toCourtNumber,
+    promotedUnitId: pending.promotedUnitId,
+    demotedUnitId: input.demotedUnitId
+  });
+
+  await prisma.$transaction(async (tx) => {
+    await persistEngineCourts(tx, nextCourts);
+    await tx.tournament.update({
+      where: { id: tournamentId },
+      data: {
+        version: { increment: 1 },
+        updatedAt: new Date(),
+        kohPendingPromote: Prisma.JsonNull
+      }
+    });
+  });
+
+  logger.info("kohStore/pickKohPromotion", {
+    tournamentId,
+    promotedUnitId: notify.promotedUnitId,
+    demotedUnitId: notify.demotedUnitId
+  });
+
+  const hub = await getKohHub(tournamentId, organizerId);
+  return {
+    ...hub,
+    lastCourtChange: notifyToCourtChange(notify)
   };
 }

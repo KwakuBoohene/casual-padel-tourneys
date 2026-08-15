@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  applyOrganizerPromotionPick,
   findWeakestCandidates,
   maybePromote,
   type KohEngineCourt,
@@ -116,6 +117,35 @@ test("promo tie for weakest returns needsOrganizerPick", () => {
   }
   // Courts unchanged until organizer picks.
   assert.equal(result.courts.find((c) => c.courtNumber === 2)?.queue[0]?.id, "climber");
+});
+
+test("applyOrganizerPromotionPick moves units", () => {
+  const courts: KohEngineCourt[] = [
+    {
+      id: "c1",
+      courtNumber: 1,
+      queue: [unit("a"), unit("b")]
+    },
+    {
+      id: "c2",
+      courtNumber: 2,
+      queue: [unit("climber", { kingWinStreak: 2 }), unit("other")]
+    }
+  ];
+  const result = applyOrganizerPromotionPick({
+    courts,
+    fromCourtNumber: 2,
+    toCourtNumber: 1,
+    promotedUnitId: "climber",
+    demotedUnitId: "b"
+  });
+  assert.equal(result.notify.type, "PROMOTED");
+  assert.equal(result.notify.promotedUnitId, "climber");
+  assert.equal(result.notify.demotedUnitId, "b");
+  const upper = result.courts.find((c) => c.courtNumber === 1);
+  const lower = result.courts.find((c) => c.courtNumber === 2);
+  assert.ok(upper?.queue.some((u) => u.id === "climber"));
+  assert.ok(lower?.queue.some((u) => u.id === "b"));
 });
 
 test("findWeakestCandidates prefers worse W–L then more special losses", () => {

@@ -118,6 +118,11 @@ model Tournament {
   integrationWaveCount  Int               @default(0)
   enableAutoIntegration Boolean           @default(false)
   integrationThreshold  Int               @default(2)
+  /**
+   * KOH only — pending organizer pick when promotion weakest is tied.
+   * Shape: { fromCourtNumber, toCourtNumber, promotedUnitId, candidateUnitIds }.
+   */
+  kohPendingPromote     Json?
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
   organizerId           String?
@@ -210,6 +215,11 @@ model KohCourt {
   id           String     @id @default(cuid())
   tournamentId String
   courtNumber  Int
+  /** Temp swap: KING | CHALLENGER — cleared after next completed match. */
+  tempSwapSlot       String?
+  tempSwapInUnitId   String?
+  tempSwapOutUnitId  String?
+  tempSwapReason     String?
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   units        KohUnit[]
   matches      KohMatch[]

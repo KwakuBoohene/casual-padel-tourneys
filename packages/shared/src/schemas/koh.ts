@@ -170,3 +170,28 @@ export const submitKohScoreSchema = z.object({
 });
 
 export type SubmitKohScoreInput = z.infer<typeof submitKohScoreSchema>;
+
+export const kohSwapSlotSchema = z.enum(["KING", "CHALLENGER"]);
+
+/**
+ * Swap king or challenger with another unit on the same court.
+ * King defaults to temporary (restore after next COMPLETE if still in slot);
+ * pass permanent: true to keep. Challenger defaults to permanent.
+ */
+export const swapKohUnitSchema = z.object({
+  slot: kohSwapSlotSchema,
+  withUnitId: z.string().min(1),
+  reason: z.string().min(1).max(500),
+  permanent: z.boolean().optional(),
+  expectedVersion: z.number().int().min(0)
+});
+
+export type SwapKohUnitInput = z.infer<typeof swapKohUnitSchema>;
+
+/** Resolve NEEDS_ORGANIZER_PICK — demote the chosen candidate on the stronger court. */
+export const promoteKohPickSchema = z.object({
+  demotedUnitId: z.string().min(1),
+  expectedVersion: z.number().int().min(0)
+});
+
+export type PromoteKohPickInput = z.infer<typeof promoteKohPickSchema>;

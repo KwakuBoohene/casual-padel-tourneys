@@ -2,8 +2,10 @@ import type { FastifyInstance } from "fastify";
 import {
   assignKohCourtsSchema,
   createKohTournamentSchema,
+  promoteKohPickSchema,
   reorderKohQueueSchema,
-  submitKohScoreSchema
+  submitKohScoreSchema,
+  swapKohUnitSchema
 } from "@padel/shared";
 
 import { requireOrganizerAccess } from "../lib/auth.js";
@@ -12,15 +14,29 @@ import {
   createKohTournament,
   getKohHub,
   KohVersionConflictError,
+  pickKohPromotion,
   randomizeKohCourtQueue,
   reorderKohCourtQueue,
-  submitKohCourtScore
+  submitKohCourtScore,
+  swapKohCourtSlot
 } from "../lib/kohStore.js";
 import { publishEvent } from "../realtime/events.js";
 import { broadcastToTournament } from "../realtime/socketHub.js";
 
 function isNotFoundMessage(message: string): boolean {
   return message === "KOH tournament not found." || message === "Tournament not found.";
+}
+
+function versionConflictReply(
+  reply: { status: (code: number) => unknown },
+  error: KohVersionConflictError
+) {
+  reply.status(409);
+  return {
+    message: error.message,
+    expectedVersion: error.expectedVersion,
+    actualVersion: error.actualVersion
+  };
 }
 
 export async function registerKohRoutes(server: FastifyInstance): Promise<void> {
@@ -151,13 +167,22 @@ export async function registerKohRoutes(server: FastifyInstance): Promise<void> 
       }
       try {
         const data = await submitKohCourtScore(params.id, request.user.id, params.courtId, parsed.data);
-        const event = {
+        const scoreEvent = {
           type: "KOH_SCORE_SUBMITTED" as const,
           tournamentId: data.id,
           payload: data
         };
-        await publishEvent(server.redis, event);
-        broadcastToTournament(server.subscriptions, data.id, event);
+        await publishEvent(server.redis, scoreEvent);
+        broadcastToTournament(server.subscriptions, data.id, scoreEvent);
+        if (data.lastCourtChange) {
+          const changeEvent = {
+            type: "KOH_COURT_CHANGE" as const,
+            tournamentId: data.id,
+            payload: data
+          };
+          await publishEvent(server.redis, changeEvent);
+          broadcastToTournament(server.subscriptions, data.id, changeEvent);
+        }
         request.log.info(
           { id: params.id, courtId: params.courtId, status: parsed.data.status },
           "POST .../score"
@@ -165,14 +190,80 @@ export async function registerKohRoutes(server: FastifyInstance): Promise<void> 
         return { data };
       } catch (error) {
         if (error instanceof KohVersionConflictError) {
-          reply.status(409);
-          return {
-            message: error.message,
-            expectedVersion: error.expectedVersion,
-            actualVersion: error.actualVersion
-          };
+          return versionConflictReply(reply, error);
         }
         const message = (error as Error).message || "Score submit failed.";
+        reply.status(isNotFoundMessage(message) ? 404 : 400);
+        return { message };
+      }
+    }
+  );
+
+  server.post(
+    "/koh/tournaments/:id/courts/:courtId/swap",
+    { preHandler: requireOrganizerAccess },
+    async (request, reply) => {
+      const params = request.params as { id: string; courtId: string };
+      const parsed = swapKohUnitSchema.safeParse(request.body);
+      if (!parsed.success) {
+        reply.status(400);
+        return { errors: parsed.error.flatten() };
+      }
+      if (!request.user) {
+        reply.status(401);
+        return { message: "Unauthorized" };
+      }
+      try {
+        const data = await swapKohCourtSlot(params.id, request.user.id, params.courtId, parsed.data);
+        const event = { type: "KOH_SWAP_APPLIED" as const, tournamentId: data.id, payload: data };
+        await publishEvent(server.redis, event);
+        broadcastToTournament(server.subscriptions, data.id, event);
+        request.log.info(
+          { id: params.id, courtId: params.courtId, slot: parsed.data.slot },
+          "POST .../swap"
+        );
+        return { data };
+      } catch (error) {
+        if (error instanceof KohVersionConflictError) {
+          return versionConflictReply(reply, error);
+        }
+        const message = (error as Error).message || "Swap failed.";
+        reply.status(isNotFoundMessage(message) ? 404 : 400);
+        return { message };
+      }
+    }
+  );
+
+  server.post(
+    "/koh/tournaments/:id/promote/pick",
+    { preHandler: requireOrganizerAccess },
+    async (request, reply) => {
+      const params = request.params as { id: string };
+      const parsed = promoteKohPickSchema.safeParse(request.body);
+      if (!parsed.success) {
+        reply.status(400);
+        return { errors: parsed.error.flatten() };
+      }
+      if (!request.user) {
+        reply.status(401);
+        return { message: "Unauthorized" };
+      }
+      try {
+        const data = await pickKohPromotion(params.id, request.user.id, parsed.data);
+        const event = {
+          type: "KOH_COURT_CHANGE" as const,
+          tournamentId: data.id,
+          payload: data
+        };
+        await publishEvent(server.redis, event);
+        broadcastToTournament(server.subscriptions, data.id, event);
+        request.log.info({ id: params.id }, "POST .../promote/pick");
+        return { data };
+      } catch (error) {
+        if (error instanceof KohVersionConflictError) {
+          return versionConflictReply(reply, error);
+        }
+        const message = (error as Error).message || "Promote pick failed.";
         reply.status(isNotFoundMessage(message) ? 404 : 400);
         return { message };
       }

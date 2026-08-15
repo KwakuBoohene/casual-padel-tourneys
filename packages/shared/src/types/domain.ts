@@ -154,6 +154,14 @@ export interface KohPromotionRule {
   promoteToCourtNumber?: number;
 }
 
+/** Active temporary king/challenger swap (restored after next COMPLETE when still in slot). */
+export interface KohTempSwap {
+  slot: "KING" | "CHALLENGER";
+  inUnitId: string;
+  outUnitId: string;
+  reason: string;
+}
+
 /** Live court hub shape: king vs challenger, then FIFO waiting list. */
 export interface KohCourt {
   id: string;
@@ -163,7 +171,33 @@ export interface KohCourt {
   challenger: KohUnit | null;
   /** FIFO queue after the on-court challenger. */
   waiting: KohUnit[];
+  tempSwap?: KohTempSwap | null;
 }
+
+/** Pending promotion when multiple weakest candidates share the same rank. */
+export interface KohPendingPromote {
+  fromCourtNumber: number;
+  toCourtNumber: number;
+  promotedUnitId: string;
+  candidateUnitIds: string[];
+}
+
+/** Court ladder change after auto-promo or organizer pick. */
+export type KohCourtChange =
+  | {
+      type: "PROMOTED";
+      fromCourtNumber: number;
+      toCourtNumber: number;
+      promotedUnitId: string;
+      demotedUnitId: string;
+    }
+  | {
+      type: "NEEDS_ORGANIZER_PICK";
+      fromCourtNumber: number;
+      toCourtNumber: number;
+      promotedUnitId: string;
+      candidateUnitIds: string[];
+    };
 
 export interface KohTournamentConfig {
   name: string;

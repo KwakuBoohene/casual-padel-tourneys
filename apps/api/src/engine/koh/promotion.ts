@@ -157,3 +157,50 @@ export function maybePromote(input: {
     }
   };
 }
+
+/**
+ * Apply organizer choice after `maybePromote` returned `NEEDS_ORGANIZER_PICK`.
+ * Promoted king leaves `fromCourt`; demoted candidate leaves `toCourt`.
+ */
+export function applyOrganizerPromotionPick(input: {
+  courts: KohEngineCourt[];
+  fromCourtNumber: number;
+  toCourtNumber: number;
+  promotedUnitId: string;
+  demotedUnitId: string;
+}): {
+  courts: KohEngineCourt[];
+  notify: Extract<KohPromotionNotify, { type: "PROMOTED" }>;
+} {
+  const courts = cloneCourts(input.courts);
+  const fromCourt = courts.find((court) => court.courtNumber === input.fromCourtNumber);
+  const toCourt = courts.find((court) => court.courtNumber === input.toCourtNumber);
+  if (!fromCourt || !toCourt) {
+    throw new Error("Promotion courts not found.");
+  }
+  if (!fromCourt.queue.some((unit) => unit.id === input.promotedUnitId)) {
+    throw new Error("Promoted unit is no longer on the source court.");
+  }
+  if (!toCourt.queue.some((unit) => unit.id === input.demotedUnitId)) {
+    throw new Error("Demoted unit is no longer on the destination court.");
+  }
+
+  const promoted = removeUnit(fromCourt, input.promotedUnitId);
+  promoted.kingWinStreak = 0;
+  const demotedUnit = removeUnit(toCourt, input.demotedUnitId);
+  demotedUnit.kingWinStreak = 0;
+
+  appendUnit(toCourt, promoted);
+  appendUnit(fromCourt, demotedUnit);
+
+  return {
+    courts,
+    notify: {
+      type: "PROMOTED",
+      fromCourtNumber: fromCourt.courtNumber,
+      toCourtNumber: toCourt.courtNumber,
+      promotedUnitId: promoted.id,
+      demotedUnitId: demotedUnit.id
+    }
+  };
+}

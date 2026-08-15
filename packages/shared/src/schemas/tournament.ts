@@ -93,13 +93,40 @@ export const createTournamentSchema = z
     }
   });
 
-export const submitScoreSchema = z.object({
+export const matchSetSchema = z.object({
+  setNumber: z.number().int().min(1),
+  gamesA: z.number().int().min(0),
+  gamesB: z.number().int().min(0),
+  tbA: z.number().int().min(0).optional(),
+  tbB: z.number().int().min(0).optional()
+});
+
+export const submitAmericanoScoreSchema = z.object({
   tournamentId: z.string().min(1),
   matchId: z.string().min(1),
   scoreA: z.number().int().min(0),
   scoreB: z.number().int().min(0),
   expectedVersion: z.number().int().min(0)
 });
+
+export const submitRegularScoreSchema = z.object({
+  tournamentId: z.string().min(1),
+  matchId: z.string().min(1),
+  sets: z.array(matchSetSchema).min(1),
+  status: z.enum(["DRAFT", "COMPLETE"]),
+  matchTbA: z.number().int().min(0).optional(),
+  matchTbB: z.number().int().min(0).optional(),
+  expectedVersion: z.number().int().min(0)
+});
+
+/** Points body (Americano) or sets + DRAFT/COMPLETE (Regular). */
+export const submitScoreSchema = z.union([submitAmericanoScoreSchema, submitRegularScoreSchema]);
+
+export function isRegularScoreBody(
+  body: z.infer<typeof submitScoreSchema>
+): body is z.infer<typeof submitRegularScoreSchema> {
+  return "sets" in body && "status" in body;
+}
 
 export const renamePlayerSchema = z.object({
   tournamentId: z.string().min(1),

@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createTournamentSchema } from "../../src/schemas/tournament.ts";
+import {
+  createTournamentSchema,
+  isRegularScoreBody,
+  submitScoreSchema
+} from "../../src/schemas/tournament.ts";
 
 const basePlayers = [
   { name: "A" },
@@ -103,4 +107,43 @@ test("createTournamentSchema rejects full-set win-by-2 without setTiebreakTo", (
     const messages = result.error.issues.map((issue) => issue.message).join(" ");
     assert.match(messages, /setTiebreakTo/i);
   }
+});
+
+test("submitScoreSchema accepts Americano points body", () => {
+  const parsed = submitScoreSchema.parse({
+    tournamentId: "t1",
+    matchId: "m1",
+    scoreA: 24,
+    scoreB: 16,
+    expectedVersion: 0
+  });
+  assert.equal(isRegularScoreBody(parsed), false);
+  if (!isRegularScoreBody(parsed)) {
+    assert.equal(parsed.scoreA, 24);
+  }
+});
+
+test("submitScoreSchema accepts Regular DRAFT body", () => {
+  const parsed = submitScoreSchema.parse({
+    tournamentId: "t1",
+    matchId: "m1",
+    sets: [{ setNumber: 1, gamesA: 4, gamesB: 4 }],
+    status: "DRAFT",
+    expectedVersion: 2
+  });
+  assert.equal(isRegularScoreBody(parsed), true);
+  if (isRegularScoreBody(parsed)) {
+    assert.equal(parsed.status, "DRAFT");
+    assert.equal(parsed.sets[0].gamesA, 4);
+  }
+});
+
+test("submitScoreSchema rejects incomplete Regular body", () => {
+  const result = submitScoreSchema.safeParse({
+    tournamentId: "t1",
+    matchId: "m1",
+    sets: [{ setNumber: 1, gamesA: 1, gamesB: 0 }],
+    expectedVersion: 0
+  });
+  assert.equal(result.success, false);
 });

@@ -21,6 +21,7 @@ import {
   adjustCourtsSchema,
   createTournamentSchema,
   integratePendingPlayersSchema,
+  isRegularScoreBody,
   renamePlayerSchema,
   renameTournamentSchema,
   submitScoreSchema,
@@ -39,6 +40,7 @@ import {
   putTournament,
   renamePlayer,
   renameTournament,
+  submitRegularScore,
   submitScore,
   substitutePlayer
 } from "../lib/store.js";
@@ -206,7 +208,16 @@ function mapTournamentMutationErrorStatus(message: string): number {
   if (
     message.includes("Need at least 2 pending players") ||
     message.includes("Maximum integration waves") ||
-    message.includes("Cannot integrate during incomplete round")
+    message.includes("Cannot integrate during incomplete round") ||
+    message.includes("not complete") ||
+    message.includes("tiebreak") ||
+    message.includes("submitRegularScore") ||
+    message.includes("Use submitRegularScore") ||
+    message.includes("REGULAR scoring") ||
+    message.includes("regularScoring") ||
+    message.includes("Invalid full-set") ||
+    message.includes("points body") ||
+    message.includes("sets body")
   ) {
     return 400;
   }
@@ -419,14 +430,31 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       return { errors: parsed.error.flatten() };
     }
     try {
-      await ensureOrganizerTournament(parsed.data.tournamentId, request.user!.id);
-      assertVersion(parsed.data.tournamentId, parsed.data.expectedVersion);
-      const tournament = submitScore(
-        parsed.data.tournamentId,
-        parsed.data.matchId,
-        parsed.data.scoreA,
-        parsed.data.scoreB
-      );
+      const body = parsed.data;
+      await ensureOrganizerTournament(body.tournamentId, request.user!.id);
+      assertVersion(body.tournamentId, body.expectedVersion);
+      const current = getTournament(body.tournamentId);
+      const scoringMode = current?.config.scoringMode ?? "AMERICANO_POINTS";
+
+      let tournament;
+      if (isRegularScoreBody(body)) {
+        if (scoringMode !== "REGULAR") {
+          reply.status(400);
+          return { message: "Sets body requires a Regular scoring tournament." };
+        }
+        tournament = submitRegularScore(body.tournamentId, body.matchId, body.sets, {
+          complete: body.status === "COMPLETE",
+          matchTbA: body.matchTbA,
+          matchTbB: body.matchTbB
+        });
+      } else {
+        if (scoringMode === "REGULAR") {
+          reply.status(400);
+          return { message: "Points body is not allowed on a Regular scoring tournament." };
+        }
+        tournament = submitScore(body.tournamentId, body.matchId, body.scoreA, body.scoreB);
+      }
+
       await persistTournament(tournament);
       const event = { type: "SCORE_SUBMITTED" as const, tournamentId: tournament.id, payload: tournament };
       await publishEvent(server.redis, event);
@@ -434,7 +462,9 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       request.log.info(
         {
           tournamentId: tournament.id,
-          matchId: parsed.data.matchId
+          matchId: body.matchId,
+          scoringMode: tournament.config.scoringMode ?? "AMERICANO_POINTS",
+          status: isRegularScoreBody(body) ? body.status : "COMPLETE"
         },
         "POST /tournaments/score"
       );

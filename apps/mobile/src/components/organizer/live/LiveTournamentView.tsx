@@ -60,6 +60,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
       displayedRoundNumber={props.displayedRound?.roundNumber ?? null}
       canGoPrev={props.selectedRoundIndex > 0}
       canGoNext={props.selectedRoundIndex < roundsCount - 1 && roundsCount > 0}
+      onBackToList={props.onBackToList}
       onChangeTournamentName={props.onChangeTournamentName}
       onSaveTournamentName={props.onSaveTournamentName}
       onOpenAddPendingPlayer={props.onOpenAddPendingPlayer}

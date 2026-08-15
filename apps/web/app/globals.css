@@ -35,6 +35,7 @@
   --color-padel-text: #e5e7eb;
   --color-padel-muted: #9ca3af;
   --color-padel-primary: #adff2f;
+  --color-padel-on-primary: #0f172a;
   --color-padel-danger: #f97373;
   --color-padel-border: rgba(148, 163, 184, 0.4);
   --color-padel-status-live: #adff2f;
@@ -56,10 +57,11 @@
 [data-theme="light"] {
   --color-padel-background: #ffffff;
   --color-padel-surface: #ffffff;
-  --color-padel-surface-alt: #ffffff;
+  --color-padel-surface-alt: #f8fafc;
   --color-padel-text: #0f172a;
   --color-padel-muted: #516178;
   --color-padel-primary: #0f766e;
+  --color-padel-on-primary: #ffffff;
   --color-padel-danger: #dc2626;
   --color-padel-border: rgba(15, 23, 42, 0.16);
   --color-padel-status-live: #16a34a;
@@ -185,30 +187,6 @@ body {
 
 [data-theme="light"] .join-cta:hover {
   background-color: #166e68;
-}
-
-[data-theme="light"] .live-match-card {
-  background-color: #0b0f16 !important;
-  border-color: rgba(15, 23, 42, 0.88) !important;
-}
-
-[data-theme="light"] .live-match-card .live-card-name,
-[data-theme="light"] .live-match-card .live-card-score {
-  color: #f8fafc;
-}
-
-[data-theme="light"] .live-match-card .live-card-meta,
-[data-theme="light"] .live-match-card .live-card-team-label {
-  color: #94a3b8;
-}
-
-[data-theme="light"] .live-match-card .live-card-accent {
-  color: #d7ff8a;
-}
-
-[data-theme="light"] .live-match-card .live-card-score.bg-padel-primary\/18 {
-  background-color: rgba(248, 250, 252, 0.14);
-  color: #f8fafc;
 }
 
 [data-theme="light"] .home-hero-surface {

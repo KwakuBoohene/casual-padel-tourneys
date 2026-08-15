@@ -1,6 +1,6 @@
 import { LeaderboardHeaderActions } from "../../../../components/LeaderboardHeaderActions";
 import Link from "next/link";
-import PodiumShowcase, { PodiumAwardIcon, podiumStyles } from "./PodiumShowcase";
+import PodiumShowcase from "./PodiumShowcase";
 
 const defaultApi = "http://localhost:3004";
 const internalApiBaseUrl = process.env.INTERNAL_API_BASE_URL ?? process.env.PUBLIC_API_BASE_URL ?? defaultApi;
@@ -109,10 +109,12 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
   const tournament = await getTournament(route.id);
   if (!tournament) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-padel-background text-padel-text">
-        <div className="space-y-2 text-center">
-          <p className="text-xs uppercase tracking-[0.25em] text-padel-muted">Casual Padel Tourneys</p>
-          <p className="text-sm text-padel-muted">Tournament not found for token: {route.id}</p>
+      <main className="min-h-screen flex items-center justify-center bg-padel-background text-padel-text px-5">
+        <div className="max-w-md w-full rounded-2xl border border-padel-danger/40 bg-padel-danger/10 p-6 space-y-2 text-center">
+          <p className="text-sm font-semibold text-padel-danger">Tournament not found</p>
+          <p className="text-sm text-padel-muted">
+            This share link is invalid or the tournament was removed.
+          </p>
         </div>
       </main>
     );
@@ -120,68 +122,56 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
 
   const rows = computeLeaderboardRows(tournament);
   const outstandingPlayers = rows.slice(0, 3);
+  const scoringLabel =
+    tournament.config.mode === "MEXICANO"
+      ? "Mexicano scoring"
+      : tournament.config.mode === "AMERICANO"
+        ? "Americano scoring"
+        : `${tournament.config.mode} scoring`;
 
   return (
-    <main className="min-h-screen bg-padel-background text-padel-text px-4 pt-20 pb-6 md:px-10 md:pt-28 md:pb-10">
-      <header className="mb-8 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] text-padel-muted mb-1">
-            Casual Padel Tourneys
-          </p>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Leaderboard</h1>
-          <p className="mt-1 text-xs uppercase tracking-[0.25em] text-padel-muted">
-            {tournament.config.name} · {tournament.config.mode} / {tournament.config.variant}
+    <main className="min-h-screen bg-padel-background text-padel-text px-5 py-8 md:px-10 md:py-10">
+      <header className="mb-8 flex flex-col gap-3 md:flex-row md:items-center md:justify-between max-w-3xl mx-auto w-full">
+        <div className="space-y-2">
+          <Link
+            href={`/tournament/${route.id}`}
+            className="inline-flex min-h-12 items-center text-sm font-medium text-padel-primary"
+          >
+            ← Live
+          </Link>
+          <h1 className="text-2xl md:text-[32px] font-bold tracking-tight">Leaderboard</h1>
+          <p className="text-sm text-padel-muted">
+            {tournament.config.name} · {scoringLabel}
           </p>
         </div>
         <LeaderboardHeaderActions tournamentId={route.id} />
       </header>
 
-      <PodiumShowcase players={outstandingPlayers} tournamentName={tournament.config.name} />
+      <div className="max-w-3xl mx-auto w-full space-y-6">
+        <PodiumShowcase players={outstandingPlayers} tournamentName={tournament.config.name} />
 
-      <section className="rounded-2xl bg-padel-surface border border-padel-border p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-padel-muted">Players</h2>
-          <span className="text-xs text-padel-muted">
-            Last update: {new Date(tournament.updatedAt).toLocaleString()}
-          </span>
-        </div>
-
-        <ol className="divide-y divide-padel-border/60">
+        <section className="space-y-2">
           {rows.map((entry) => {
-            const podium = podiumStyles[entry.rank];
+            const isLeader = entry.rank === 1;
             return (
-              <li
+              <div
                 key={entry.playerId}
-                className={`relative flex items-center justify-between py-3 ${podium ? `pl-3 before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded-full ${podium.listAccentClass} bg-padel-surfaceAlt/40` : ""}`}
+                className={[
+                  "min-h-12 flex items-center justify-between gap-3 rounded-2xl border bg-padel-surface px-4 py-3.5",
+                  isLeader ? "border-2 border-padel-primary" : "border-padel-border"
+                ].join(" ")}
               >
-                <div className="flex items-center gap-4">
-                  <span
-                    className={`w-16 text-center text-sm font-bold ${podium ? podium.rankTextClass : "text-padel-primary"}`}
-                  >
-                    {podium ? (
-                      <span className="inline-flex items-center gap-1">
-                        <span className="inline-flex h-5 w-5 items-center justify-center">
-                          <PodiumAwardIcon rank={entry.rank} color={podium.accentColor} className="h-5 w-5" />
-                        </span>
-                        <span>#{entry.rank}</span>
-                      </span>
-                    ) : (
-                      <span>#{entry.rank}</span>
-                    )}
-                  </span>
-                  <span className="text-sm font-medium">{entry.name}</span>
-                </div>
-                <div className="flex items-center gap-6 text-xs md:text-sm">
-                  <span className="font-semibold text-padel-text">{entry.totalPoints} pts</span>
-                  <span className="text-padel-muted">
-                    W {entry.wins} · D {entry.draws} · L {entry.losses}
-                  </span>
-                </div>
-              </li>
+                <p className="text-base font-semibold text-padel-text truncate">
+                  {entry.rank}  {entry.name}
+                </p>
+                <p className="text-sm font-medium text-padel-muted shrink-0">
+                  {entry.totalPoints} pts
+                </p>
+              </div>
             );
           })}
-        </ol>
-      </section>
+        </section>
+      </div>
     </main>
   );
 }

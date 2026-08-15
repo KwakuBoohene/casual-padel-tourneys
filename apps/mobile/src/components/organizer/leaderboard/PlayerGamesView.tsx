@@ -1,93 +1,76 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { useBreakpoint } from "../../../layout";
-import { spacing, typography } from "../../../theme";
+import { spacing, touch, typography } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
 import type { PlayerGameRow } from "../../../types/organizer/tournament";
 
 interface PlayerGamesViewProps {
   playerName: string;
+  totalPoints: number;
   games: PlayerGameRow[];
   onBack: () => void;
 }
 
-export function PlayerGamesView(props: PlayerGamesViewProps) {
-  const { colors, cardStyles } = useTheme();
+function formatGameLine(game: PlayerGameRow): string {
+  const vs = `${game.opponents[0]}/${game.opponents[1]}`;
+  if (game.pointsEarned === null) {
+    return `R${game.roundNumber}  —  vs ${vs}`;
+  }
+  return `R${game.roundNumber}  +${game.pointsEarned}  vs ${vs}`;
+}
 
+export function PlayerGamesView(props: PlayerGamesViewProps) {
+  const { colors } = useTheme();
   const { formMaxWidth } = useBreakpoint();
+  const matchCount = props.games.length;
+
   return (
     <ScrollView
       contentContainerStyle={{
-        padding: spacing.lg,
+        paddingHorizontal: spacing.xl,
+        paddingTop: spacing.xxl,
+        paddingBottom: spacing.xl,
         gap: spacing.md,
         backgroundColor: colors.background,
         maxWidth: formMaxWidth,
         width: "100%",
-        alignSelf: "center"
+        alignSelf: "center",
+        flexGrow: 1
       }}
     >
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <Text style={[typography.title, { color: colors.text }]}>{props.playerName}</Text>
-        <Pressable
-          onPress={props.onBack}
-          style={{
-            paddingVertical: spacing.xs,
-            paddingHorizontal: spacing.md,
-            borderRadius: 999,
-            backgroundColor: colors.surface,
-            borderWidth: 1,
-            borderColor: colors.border
-          }}
-        >
-          <Text style={{ color: colors.text, fontWeight: "600" }}>Back</Text>
-        </Pressable>
+      <Pressable onPress={props.onBack} hitSlop={8}>
+        <Text style={{ color: colors.primary, fontWeight: "500", fontSize: 14 }}>← Leaderboard</Text>
+      </Pressable>
+      <Text style={[typography.title, { color: colors.text }]}>{props.playerName}</Text>
+      <Text style={{ fontSize: 14, color: colors.muted }}>
+        {props.totalPoints} pts · {matchCount} match{matchCount === 1 ? "" : "es"}
+      </Text>
+
+      {props.games.length === 0 ? (
+        <Text style={{ color: colors.muted }}>No games yet for this player.</Text>
+      ) : null}
+
+      <View style={{ gap: spacing.sm }}>
+        {props.games.map((game) => (
+          <View
+            key={game.matchId}
+            style={{
+              minHeight: touch.minSecondary,
+              borderRadius: 14,
+              borderWidth: 1,
+              borderColor: colors.border,
+              backgroundColor: colors.surface,
+              paddingHorizontal: spacing.md + 2,
+              paddingVertical: spacing.md + 2,
+              justifyContent: "center"
+            }}
+          >
+            <Text style={{ fontSize: 15, fontWeight: "600", color: colors.text }}>{formatGameLine(game)}</Text>
+          </View>
+        ))}
       </View>
-      <Text style={{ fontSize: 12, color: colors.muted }}>Match history</Text>
-
-      {props.games.length === 0 ? <Text style={{ color: colors.muted }}>No games yet for this player.</Text> : null}
-
-      {props.games.map((game) => (
-        <View
-          key={game.matchId}
-          style={[
-            cardStyles.container,
-            {
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center"
-            }
-          ]}
-        >
-          <View>
-            <Text style={{ fontSize: 12, color: colors.muted }}>Round {game.roundNumber}</Text>
-            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.text }}>
-              Court {game.court} · Partner {game.partner}
-            </Text>
-            <Text style={{ fontSize: 12, color: colors.muted }}>
-              vs {game.opponents[0]} & {game.opponents[1]}
-            </Text>
-          </View>
-          <View style={{ alignItems: "flex-end" }}>
-            <Text style={{ fontSize: 14, fontWeight: "700", color: colors.text }}>{game.scoreText}</Text>
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: "700",
-                color:
-                  game.result === "WIN"
-                    ? colors.primary
-                    : game.result === "LOSS"
-                      ? colors.danger
-                      : colors.muted
-              }}
-            >
-              {game.result === "PENDING" ? "Pending" : game.result}
-            </Text>
-          </View>
-        </View>
-      ))}
     </ScrollView>
   );
 }
-

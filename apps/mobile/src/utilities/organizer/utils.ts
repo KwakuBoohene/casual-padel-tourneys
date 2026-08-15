@@ -127,6 +127,7 @@ export function buildPlayerGameRows(input: {
         partner: input.playerNameById.get(partnerId) ?? partnerId,
         opponents: [input.playerNameById.get(otherTeam[0]) ?? otherTeam[0], input.playerNameById.get(otherTeam[1]) ?? otherTeam[1]],
         scoreText: myScore !== undefined && theirScore !== undefined ? `${myScore}-${theirScore}` : "Pending",
+        pointsEarned: match.completed && myScore !== undefined ? myScore : null,
         result
       });
     }

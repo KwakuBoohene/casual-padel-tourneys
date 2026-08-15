@@ -63,6 +63,7 @@ export function LiveTournamentSheets({
         onOpenAdjustCourts={() => setShowAdjustCourtsSheet(true)}
         onOpenAddPendingPlayer={props.onOpenAddPendingPlayer}
         onOpenFinishConfirm={() => setShowFinishConfirm(true)}
+        onBackToList={props.onBackToList}
       />
       <LiveAdjustCourtsSheet
         visible={showAdjustCourtsSheet}

@@ -15,6 +15,7 @@ interface LiveTournamentOptionsSheetProps {
   onOpenAdjustCourts: () => void;
   onOpenAddPendingPlayer: () => void;
   onOpenFinishConfirm: () => void;
+  onBackToList: () => void;
 }
 
 function OptionRow(props: {
@@ -89,6 +90,14 @@ export function LiveTournamentOptionsSheet(props: LiveTournamentOptionsSheetProp
           onPress={() => {
             props.onClose();
             props.onOpenFinishConfirm();
+          }}
+        />
+        <OptionRow
+          label="Home"
+          detail="Back to tournaments"
+          onPress={() => {
+            props.onClose();
+            props.onBackToList();
           }}
         />
       </View>

@@ -71,5 +71,6 @@ export interface PlayerGameRow {
   partner: string;
   opponents: [string, string];
   scoreText: string;
+  pointsEarned: number | null;
   result: "WIN" | "LOSS" | "DRAW" | "PENDING";
 }

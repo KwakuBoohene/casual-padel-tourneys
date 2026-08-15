@@ -38,10 +38,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   const tournament = await getTournament(route.id);
   if (!tournament) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-padel-background text-padel-text">
-        <div className="space-y-2 text-center">
-          <p className="text-xs uppercase tracking-[0.25em] text-padel-muted">Casual Padel Tourneys</p>
-          <p className="text-sm text-padel-muted">Tournament not found for token: {route.id}</p>
+      <main className="min-h-screen flex items-center justify-center bg-padel-background text-padel-text px-5">
+        <div className="max-w-md w-full rounded-2xl border border-padel-danger/40 bg-padel-danger/10 p-6 space-y-2 text-center">
+          <p className="text-sm font-semibold text-padel-danger">Tournament not found</p>
+          <p className="text-sm text-padel-muted">
+            This share link is invalid or the tournament was removed.
+          </p>
         </div>
       </main>
     );

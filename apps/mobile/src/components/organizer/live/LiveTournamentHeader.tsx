@@ -16,6 +16,7 @@ interface LiveTournamentHeaderProps {
   displayedRoundNumber: number | null;
   canGoPrev: boolean;
   canGoNext: boolean;
+  onBackToList: () => void;
   onChangeTournamentName: (value: string) => void;
   onSaveTournamentName: () => void;
   onOpenAddPendingPlayer: () => void;
@@ -34,6 +35,9 @@ export function LiveTournamentHeader(props: LiveTournamentHeaderProps) {
 
   return (
     <View style={{ gap: spacing.md }}>
+      <Pressable onPress={props.onBackToList} hitSlop={8}>
+        <Text style={{ color: colors.primary, fontWeight: "500", fontSize: 14 }}>← Home</Text>
+      </Pressable>
       {props.isEditingCompletedTournament ? (
         <View style={{ gap: spacing.sm }}>
           <TextInput

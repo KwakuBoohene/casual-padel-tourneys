@@ -367,6 +367,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         tournament={liveTournament}
         rows={leaderboardRows}
         onBack={() => setStep("LIVE")}
+        onBackToList={() => setStep("LIST")}
         onOpenPlayer={(playerId) => {
           setSelectedPlayerId(playerId);
           setStep("PLAYER_GAMES");
@@ -388,8 +389,15 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
 
   if (step === "PLAYER_GAMES" && selectedPlayerId) {
     const playerName = playerNameById.get(selectedPlayerId) ?? selectedPlayerId;
+    const totalPoints =
+      leaderboardRows.find((row) => row.playerId === selectedPlayerId)?.totalPoints ?? 0;
     return (
-      <PlayerGamesView playerName={playerName} games={selectedPlayerGames} onBack={() => setStep("LEADERBOARD")} />
+      <PlayerGamesView
+        playerName={playerName}
+        totalPoints={totalPoints}
+        games={selectedPlayerGames}
+        onBack={() => setStep("LEADERBOARD")}
+      />
     );
   }
 

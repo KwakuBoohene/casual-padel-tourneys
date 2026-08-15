@@ -78,7 +78,7 @@ test("createTournament creates MEXICANO tournament", () => {
   const tournament = createTournament(config, "org_456");
 
   assert.equal(tournament.config.mode, "MEXICANO");
-  assert.ok(tournament.rounds.length > 0);
+  assert.equal(tournament.rounds.length, 1);
   assert.equal(tournament.players.length, 8);
 });
 

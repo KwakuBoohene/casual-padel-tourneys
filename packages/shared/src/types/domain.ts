@@ -1,3 +1,10 @@
+/**
+ * Tournament format.
+ * - AMERICANO: fairness / partner-rotation pre-schedule (`TARGET_GAMES`, etc.).
+ * - MEXICANO: result-driven ladder (round 1 lottery, then 1+3 vs 2+4 from the table).
+ *   Does **not** use Americano target-games rotation semantics.
+ * - KING_OF_THE_HILL: winner-stays courts (separate engine).
+ */
 export type TournamentMode = "AMERICANO" | "MEXICANO" | "KING_OF_THE_HILL";
 export type TournamentVariant = "CLASSIC" | "MIXED" | "TEAM";
 export type SchedulingMode = "TARGET_GAMES" | "TOTAL_TIME" | "ROUND_ROBIN";

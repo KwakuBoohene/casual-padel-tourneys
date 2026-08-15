@@ -4,6 +4,18 @@ export const modeSchema = z.enum(["AMERICANO", "MEXICANO"]);
 export const variantSchema = z.enum(["CLASSIC", "MIXED", "TEAM"]);
 export const schedulingModeSchema = z.enum(["TARGET_GAMES", "TOTAL_TIME", "ROUND_ROBIN"]);
 export const playerGenderSchema = z.enum(["MALE", "FEMALE"]);
+export const scoringModeSchema = z.enum(["AMERICANO_POINTS", "REGULAR"]);
+export const regularSetFormatSchema = z.enum(["BO3_GAMES", "BO5_GAMES", "FULL_SET"]);
+export const gameWinBySchema = z.union([z.literal(1), z.literal(2)]);
+export const tiebreakPointsSchema = z.union([z.literal(7), z.literal(10)]);
+
+export const regularScoringSchema = z.object({
+  setFormat: regularSetFormatSchema,
+  gameWinBy: gameWinBySchema,
+  setsToWin: z.number().int().min(1),
+  setTiebreakTo: tiebreakPointsSchema.optional(),
+  matchTiebreak: z.boolean().optional()
+});
 
 export const createTournamentSchema = z
   .object({
@@ -13,7 +25,9 @@ export const createTournamentSchema = z
     schedulingMode: schedulingModeSchema,
     players: z.array(z.object({ name: z.string().min(1), gender: playerGenderSchema.optional() })).min(4),
     courts: z.number().int().min(1),
-    pointsPerMatch: z.number().int().min(1),
+    pointsPerMatch: z.number().int().min(1).optional(),
+    scoringMode: scoringModeSchema.default("AMERICANO_POINTS"),
+    regularScoring: regularScoringSchema.optional(),
     targetGamesPerPlayer: z.number().int().min(1).optional(),
     tournamentTimeMinutes: z.number().int().min(10).optional()
   })
@@ -44,6 +58,36 @@ export const createTournamentSchema = z
             message: "Gender is required for every player in MIXED variant."
           });
           break;
+        }
+      }
+    }
+
+    const scoringMode = value.scoringMode ?? "AMERICANO_POINTS";
+    if (scoringMode === "AMERICANO_POINTS") {
+      if (value.pointsPerMatch === undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["pointsPerMatch"],
+          message: "Provide pointsPerMatch for Americano scoring (single points)."
+        });
+      }
+    }
+
+    if (scoringMode === "REGULAR") {
+      if (!value.regularScoring) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["regularScoring"],
+          message: "Provide regularScoring (set format) for Regular scoring."
+        });
+      } else {
+        const regular = value.regularScoring;
+        if (regular.setFormat === "FULL_SET" && regular.gameWinBy === 2 && regular.setTiebreakTo === undefined) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["regularScoring", "setTiebreakTo"],
+            message: "Provide setTiebreakTo (7 or 10) for full set win-by-2."
+          });
         }
       }
     }

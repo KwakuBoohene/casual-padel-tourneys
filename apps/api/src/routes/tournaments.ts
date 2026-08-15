@@ -234,7 +234,17 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       reply.status(401);
       return { message: "Unauthorized" };
     }
-    const tournament = createTournament(parsed.data, request.user.id);
+    const data = parsed.data;
+    const tournament = createTournament(
+      {
+        ...data,
+        scoringMode: data.scoringMode,
+        regularScoring: data.regularScoring,
+        // Regular scoring ignores points-to-N; keep a stand-in for legacy time estimates until epic-03 ticket 06.
+        pointsPerMatch: data.pointsPerMatch ?? 24
+      },
+      request.user.id
+    );
     // Persist to database for history/suggestions
     try {
       await prisma.tournament.create({

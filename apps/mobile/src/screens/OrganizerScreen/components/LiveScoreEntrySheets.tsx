@@ -26,8 +26,8 @@ export function LiveScoreEntrySheets({ props }: LiveScoreEntrySheetsProps) {
         contextLine={`${modeLabel} scoring · to ${points} points`}
         teamALabel={teamALabel}
         teamBLabel={teamBLabel}
-        scoreA={props.scoreEntry?.scoreA ?? 0}
-        scoreB={props.scoreEntry?.scoreB ?? 0}
+        scoreA={props.scoreEntry?.scoreA ?? null}
+        scoreB={props.scoreEntry?.scoreB ?? null}
         canUndo={Boolean(props.scoreEntry && props.scoreEntry.undoStack.length > 0)}
         saveDisabled={props.savingScore}
         max={points}

@@ -3,12 +3,12 @@ import type { LiveTournamentState } from "../types";
 import { findMatchInTournament, submitMatchScore } from "./scoreDraftActions";
 import type { ScoreDraftMap } from "./useScoreDraftPersistence";
 
-export type ScorePair = { scoreA: number; scoreB: number };
+export type ScorePair = { scoreA: number | null; scoreB: number | null };
 
 export type ScoreEntryState = {
   matchId: string;
-  scoreA: number;
-  scoreB: number;
+  scoreA: number | null;
+  scoreB: number | null;
   undoStack: ScorePair[];
 };
 
@@ -21,8 +21,8 @@ export function initialScorePair(
   const draft = drafts[matchId];
   const points = tournament.config.pointsPerMatch;
   const parse = (raw: string | undefined, fallback: number | undefined) => {
-    if (raw !== undefined && raw !== "" && Number.isFinite(Number(raw))) return Number(raw);
-    if (fallback !== undefined) return fallback;
+    if (raw !== undefined && raw.trim() !== "" && Number.isFinite(Number(raw))) return Number(raw);
+    if (fallback !== undefined && Number.isFinite(fallback)) return fallback;
     return null;
   };
   const a = parse(draft?.scoreA, match?.scoreA);
@@ -30,10 +30,23 @@ export function initialScorePair(
   if (a !== null && b !== null) return { scoreA: a, scoreB: b };
   if (a !== null) return { scoreA: a, scoreB: Math.max(0, points - a) };
   if (b !== null) return { scoreA: Math.max(0, points - b), scoreB: b };
-  return { scoreA: 0, scoreB: points };
+  return { scoreA: null, scoreB: null };
 }
 
-export function validateAmericanoScores(scoreA: number, scoreB: number, points: number): string | null {
+export function validateAmericanoScores(
+  scoreA: number | null,
+  scoreB: number | null,
+  points: number
+): string | null {
+  if (scoreA === null && scoreB === null) {
+    return "Enter scores for both teams before saving.";
+  }
+  if (scoreA === null) {
+    return "Enter a score for the first team.";
+  }
+  if (scoreB === null) {
+    return "Enter a score for the second team.";
+  }
   if (scoreA > points || scoreB > points) {
     return `Scores cannot exceed ${points} points.`;
   }
@@ -64,4 +77,3 @@ export async function persistScoreEntry(input: {
     return next;
   });
 }
-

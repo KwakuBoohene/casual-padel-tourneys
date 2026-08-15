@@ -58,7 +58,7 @@ export function useScoreDraftPersistence(tournamentId: string | undefined) {
     const persistDraftScores = async () => {
       try {
         const hasDraftValues = Object.values(scoreInputs).some(
-          (entry) => entry.scoreA.trim().length > 0 || entry.scoreB.trim().length > 0
+          (entry) => (entry?.scoreA ?? "").trim().length > 0 || (entry?.scoreB ?? "").trim().length > 0
         );
         const key = scoreDraftStorageKey(tournamentId);
         if (!hasDraftValues) {

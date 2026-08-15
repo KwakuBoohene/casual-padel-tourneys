@@ -27,9 +27,9 @@ export interface LiveTournamentViewProps {
   canAdjustCourts: boolean;
   scoreEntry: {
     matchId: string;
-    scoreA: number;
-    scoreB: number;
-    undoStack: Array<{ scoreA: number; scoreB: number }>;
+    scoreA: number | null;
+    scoreB: number | null;
+    undoStack: Array<{ scoreA: number | null; scoreB: number | null }>;
   } | null;
   savingScore: boolean;
   pendingCompletedEditMatchId: string | null;

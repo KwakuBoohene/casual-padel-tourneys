@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 
-import { radius, spacing, touch } from "../../theme";
+import { spacing, touch } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
 
 import { BottomSheet } from "./BottomSheet";
@@ -12,8 +12,8 @@ export interface ScoreEntrySheetProps {
   contextLine: string;
   teamALabel: string;
   teamBLabel: string;
-  scoreA: number;
-  scoreB: number;
+  scoreA: number | null;
+  scoreB: number | null;
   canUndo: boolean;
   saveDisabled?: boolean;
   onChangeScoreA: (next: number) => void;
@@ -27,12 +27,13 @@ export interface ScoreEntrySheetProps {
 
 function ScoreSideRow(props: {
   label: string;
-  value: number;
+  value: number | null;
   min: number;
   max: number;
   onChange: (next: number) => void;
 }) {
   const { colors } = useTheme();
+  const current = props.value ?? 0;
   const chip = (symbol: string, next: number, disabled: boolean) => (
     <Pressable
       onPress={() => props.onChange(next)}
@@ -62,11 +63,11 @@ function ScoreSideRow(props: {
     >
       <Text style={{ color: colors.text, fontSize: 15, fontWeight: "600" }}>{props.label}</Text>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        {chip("−", props.value - 1, props.value <= props.min)}
+        {chip("−", props.value === null ? 0 : current - 1, props.value !== null && current <= props.min)}
         <Text style={{ color: colors.text, fontSize: 36, fontWeight: "700", minWidth: 48, textAlign: "center" }}>
-          {props.value}
+          {props.value === null ? "–" : props.value}
         </Text>
-        {chip("+", props.value + 1, props.value >= props.max)}
+        {chip("+", props.value === null ? 0 : current + 1, props.value !== null && current >= props.max)}
       </View>
     </View>
   );

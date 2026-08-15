@@ -51,10 +51,12 @@ export async function submitRoundScoreDrafts(params: {
   const { tournament, round, scoreInputs, setScoreInputs, onTournamentUpdated, setErrorText } = params;
   const matchesWithScores = round.matches.filter((match) => {
     const raw = scoreInputs[match.id];
-    return Number.isFinite(Number(raw?.scoreA ?? "")) && Number.isFinite(Number(raw?.scoreB ?? ""));
+    const scoreA = raw?.scoreA?.trim() ?? "";
+    const scoreB = raw?.scoreB?.trim() ?? "";
+    return scoreA.length > 0 && scoreB.length > 0 && Number.isFinite(Number(scoreA)) && Number.isFinite(Number(scoreB));
   });
   if (matchesWithScores.length === 0) {
-    setErrorText("Enter valid numeric scores for at least one match in this round.");
+    setErrorText("Enter scores for at least one match before submitting the round.");
     return;
   }
 

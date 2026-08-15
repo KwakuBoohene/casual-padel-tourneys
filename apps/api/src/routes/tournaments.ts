@@ -263,6 +263,16 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     }
 
     try {
+      const row = await prisma.tournament.findUnique({
+        where: { id: params.id },
+        select: { mode: true }
+      });
+      if (row?.mode === "KING_OF_THE_HILL") {
+        const { getKohHub } = await import("../lib/kohStore.js");
+        const data = await getKohHub(params.id, request.user.id);
+        request.log.info({ id: params.id }, "GET /tournaments/:id KOH hub");
+        return { data };
+      }
       const data = await loadTournamentState(params.id);
       assertOrganizer(request.user.id, data);
       request.log.info({ id: params.id }, "GET /tournaments/:id");
@@ -298,14 +308,26 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
   });
 
   server.post("/tournaments", { preHandler: requireOrganizerAccess }, async (request, reply) => {
+    if (!request.user) {
+      reply.status(401);
+      return { message: "Unauthorized" };
+    }
+
+    const body = request.body as { mode?: string } | undefined;
+    if (body?.mode === "KING_OF_THE_HILL") {
+      const { handleCreateKohTournament } = await import("./koh.js");
+      const result = await handleCreateKohTournament(server, request.body, request.user.id);
+      reply.status(result.status);
+      if (result.status === 200) {
+        request.log.info({ id: (result.payload.data as { id?: string })?.id }, "POST /tournaments created KOH");
+      }
+      return result.payload;
+    }
+
     const parsed = createTournamentSchema.safeParse(request.body);
     if (!parsed.success) {
       reply.status(400);
       return { errors: parsed.error.flatten() };
-    }
-    if (!request.user) {
-      reply.status(401);
-      return { message: "Unauthorized" };
     }
     const data = parsed.data;
     const tournament = createTournament(

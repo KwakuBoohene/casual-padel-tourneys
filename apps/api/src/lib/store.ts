@@ -99,6 +99,9 @@ export function putTournament(state: TournamentState): void {
 }
 
 export function createTournament(config: TournamentConfig, organizerId: string): TournamentState {
+  if (config.mode === "KING_OF_THE_HILL") {
+    throw new Error("Use createKohTournament for King of the Hill.");
+  }
   const id = createId("tournament");
   const createdAt = new Date().toISOString();
   const generated = config.mode === "MEXICANO" ? generateMexicano(config) : generateTournament(config);

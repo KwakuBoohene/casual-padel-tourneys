@@ -5,6 +5,7 @@ import rateLimit from "@fastify/rate-limit";
 import { Redis } from "ioredis";
 
 import { registerTournamentRoutes } from "./routes/tournaments.js";
+import { registerKohRoutes } from "./routes/koh.js";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { registerAttachAuthRoutes } from "./routes/authAttach.js";
 import { registerMagicLinkRoutes } from "./routes/authMagicLink.js";
@@ -43,6 +44,7 @@ export async function createApp() {
   await registerPasswordAuthRoutes(server);
   await registerPasswordResetRoutes(server);
   await registerTournamentRoutes(server);
+  await registerKohRoutes(server);
   logger.info("createApp: server ready");
   return server;
 }

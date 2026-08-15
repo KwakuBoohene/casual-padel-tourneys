@@ -106,3 +106,46 @@ export const createKohTournamentSchema = z
 
 export type CreateKohTournamentInput = z.infer<typeof createKohTournamentSchema>;
 export type KohUnitInput = z.infer<typeof kohUnitInputSchema>;
+
+/** Soft/hard cap — also enforced in API assign. */
+export const KOH_MAX_UNITS_PER_COURT = 12;
+
+export const assignKohCourtSchema = z.object({
+  courtNumber: z.number().int().min(1),
+  units: z.array(kohUnitInputSchema).max(KOH_MAX_UNITS_PER_COURT)
+});
+
+/** Replace all court unit assignments for a KOH tournament. */
+export const assignKohCourtsSchema = z
+  .object({
+    courts: z.array(assignKohCourtSchema).min(1)
+  })
+  .superRefine((value, ctx) => {
+    const seen = new Set<number>();
+    for (let index = 0; index < value.courts.length; index += 1) {
+      const court = value.courts[index];
+      if (seen.has(court.courtNumber)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["courts", index, "courtNumber"],
+          message: "Duplicate courtNumber in assignment."
+        });
+      }
+      seen.add(court.courtNumber);
+      if (court.units.length > KOH_MAX_UNITS_PER_COURT) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["courts", index, "units"],
+          message: `Max ${KOH_MAX_UNITS_PER_COURT} units per court.`
+        });
+      }
+    }
+  });
+
+/** Full queue order for one court — index 0 = king, 1 = challenger, rest waiting. */
+export const reorderKohQueueSchema = z.object({
+  unitIds: z.array(z.string().min(1)).min(2)
+});
+
+export type AssignKohCourtsInput = z.infer<typeof assignKohCourtsSchema>;
+export type ReorderKohQueueInput = z.infer<typeof reorderKohQueueSchema>;

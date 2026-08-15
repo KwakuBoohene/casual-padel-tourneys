@@ -46,7 +46,11 @@ export function useLiveTournamentCore({
       setErrorText("");
       const response = await apiGet<TournamentResponse>(`/tournaments/${tournamentId}`);
       adoptTournament(response.data, editMode);
-      setStep("LIVE");
+      if (response.data.config.mode === "MEXICANO" && response.data.endedAt) {
+        setStep("LEADERBOARD");
+      } else {
+        setStep("LIVE");
+      }
     } catch (error) {
       if (isEmailVerifyRequired(error)) {
         markEmailVerifyRequired(error.verifyBy);

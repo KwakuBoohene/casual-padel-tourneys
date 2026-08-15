@@ -90,6 +90,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
       generatingNextRound={Boolean(props.generatingNextRound)}
       isTournamentCompleted={props.isTournamentCompleted}
       isEditingCompletedTournament={props.isEditingCompletedTournament}
+      allowEditAfterComplete={props.tournament.config.mode !== "MEXICANO"}
       linkCopied={linkCopied}
       onSubmitRoundScores={() => void props.onSubmitRoundScores()}
       onGenerateNextRound={() => void props.onGenerateNextRound?.()}

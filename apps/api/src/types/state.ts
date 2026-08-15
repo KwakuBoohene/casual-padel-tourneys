@@ -10,6 +10,7 @@ export interface TournamentState {
   publicToken: string;
   createdAt: string;
   updatedAt: string;
+  endedAt?: string | null;
   organizerId?: string;
   pendingPlayers: PendingPlayer[];
   integrationWaveCount: number;

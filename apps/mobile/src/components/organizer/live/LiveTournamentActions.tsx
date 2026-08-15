@@ -9,6 +9,8 @@ interface LiveTournamentActionsProps {
   generatingNextRound: boolean;
   isTournamentCompleted: boolean;
   isEditingCompletedTournament: boolean;
+  /** Americano can re-open edits after all rounds scored; Mexicano end-night is final. */
+  allowEditAfterComplete?: boolean;
   linkCopied: boolean;
   onSubmitRoundScores: () => void;
   onGenerateNextRound: () => void;
@@ -21,6 +23,7 @@ interface LiveTournamentActionsProps {
 
 export function LiveTournamentActions(props: LiveTournamentActionsProps) {
   const { colors } = useTheme();
+  const allowEditAfterComplete = props.allowEditAfterComplete !== false;
 
   let primaryLabel = "Submit round";
   let onPrimary = props.onSubmitRoundScores;
@@ -30,13 +33,17 @@ export function LiveTournamentActions(props: LiveTournamentActionsProps) {
     primaryLabel = props.generatingNextRound ? "Generating…" : "Generate next round";
     onPrimary = props.onGenerateNextRound;
     primaryDisabled = props.generatingNextRound;
-  } else if (props.isTournamentCompleted && props.isEditingCompletedTournament) {
+  } else if (props.isTournamentCompleted && props.isEditingCompletedTournament && allowEditAfterComplete) {
     primaryLabel = "Save game edits";
     onPrimary = props.onSaveGameEdits;
     primaryDisabled = false;
-  } else if (props.isTournamentCompleted) {
+  } else if (props.isTournamentCompleted && allowEditAfterComplete) {
     primaryLabel = "Edit game";
     onPrimary = props.onOpenEditConfirm;
+    primaryDisabled = false;
+  } else if (props.isTournamentCompleted) {
+    primaryLabel = "View board";
+    onPrimary = props.onViewLeaderboard;
     primaryDisabled = false;
   }
 

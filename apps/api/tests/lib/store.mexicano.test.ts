@@ -6,6 +6,8 @@ import type { TournamentConfig } from "@padel/shared";
 import {
   advanceMexicanoRound,
   createTournament,
+  endMexicanoNight,
+  getTournament,
   submitScore
 } from "../../src/lib/store.js";
 
@@ -86,4 +88,38 @@ test("advanceMexicanoRound refuses double advance", () => {
   }
   advanceMexicanoRound(tournament.id);
   assert.throws(() => advanceMexicanoRound(tournament.id), /already generated/);
+});
+
+test("endMexicanoNight discards incomplete latest round and reverses points", () => {
+  const tournament = createTournament(mexicanoConfig(), "org_mx_end");
+  for (const match of tournament.rounds[0].matches) {
+    submitScore(tournament.id, match.id, 16, 8);
+  }
+  advanceMexicanoRound(tournament.id);
+
+  const afterAdvance = getTournament(tournament.id);
+  assert.ok(afterAdvance);
+  const scoredOne = submitScore(tournament.id, afterAdvance.rounds[1].matches[0].id, 14, 10);
+  const playerId = scoredOne.rounds[1].matches[0].teamA[0];
+  const pointsBeforeDiscard = scoredOne.players.find((player) => player.id === playerId)!.totalPoints;
+
+  const ended = endMexicanoNight(tournament.id);
+  assert.ok(ended.endedAt);
+  assert.equal(ended.rounds.length, 1);
+  assert.equal(ended.rounds[0].roundNumber, 1);
+  const pointsAfter = ended.players.find((player) => player.id === playerId)!.totalPoints;
+  assert.equal(pointsAfter, pointsBeforeDiscard - 14);
+  assert.throws(() => submitScore(tournament.id, ended.rounds[0].matches[0].id, 12, 12), /already ended/);
+  assert.throws(() => endMexicanoNight(tournament.id), /already ended/);
+});
+
+test("endMexicanoNight keeps a fully scored latest round", () => {
+  const tournament = createTournament(mexicanoConfig(), "org_mx_end2");
+  for (const match of tournament.rounds[0].matches) {
+    submitScore(tournament.id, match.id, 12, 12);
+  }
+  const ended = endMexicanoNight(tournament.id);
+  assert.ok(ended.endedAt);
+  assert.equal(ended.rounds.length, 1);
+  assert.ok(ended.rounds[0].matches.every((match) => match.completed));
 });

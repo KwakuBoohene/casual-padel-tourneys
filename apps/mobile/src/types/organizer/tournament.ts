@@ -29,7 +29,7 @@ export interface LiveTournamentState {
   };
   players: Array<{ id: string; name: string; totalPoints?: number; matchesWon?: number; matchesLost?: number; setsWon?: number; gamesWon?: number }>;
   pendingPlayers: PendingPlayer[];
-  /** Present when organizer ended the event (KOH). */
+  /** Present when organizer ended the event (KOH / Mexicano). */
   endedAt?: string | null;
   leaderboard: Array<{
     playerId: string;

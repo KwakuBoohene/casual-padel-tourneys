@@ -42,7 +42,7 @@ export function useLiveRounds(liveTournament: LiveTournamentState | null) {
     }
     // Mexicano is open-ended until the organizer ends the night.
     if (isMexicano) {
-      return false;
+      return Boolean(liveTournament.endedAt);
     }
     return liveTournament.rounds.every((round) => round.matches.every((match) => match.completed));
   }, [isMexicano, liveTournament]);
@@ -66,7 +66,7 @@ export function useLiveRounds(liveTournament: LiveTournamentState | null) {
     isTournamentCompleted,
     isMexicano,
     isLatestRoundComplete,
-    canGenerateNextRound: Boolean(isMexicano && isLatestRoundComplete),
-    canFinishNight: isMexicano ? isLatestRoundComplete : isTournamentCompleted
+    canGenerateNextRound: Boolean(isMexicano && isLatestRoundComplete && !liveTournament?.endedAt),
+    canFinishNight: isMexicano ? !liveTournament?.endedAt : isTournamentCompleted
   };
 }

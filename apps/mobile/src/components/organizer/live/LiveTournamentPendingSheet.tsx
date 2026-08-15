@@ -124,12 +124,13 @@ export function LiveTournamentConfirmSheets(props: LiveTournamentConfirmSheetsPr
         title={props.isMexicano ? "End this Mexicano night?" : "Finish tournament?"}
         message={
           props.isMexicano
-            ? "You’ll go to the leaderboard. You can still open this tournament from the list."
+            ? "If the current round isn’t finished, it will be discarded. Completed rounds stay on the board."
             : "Results will be locked."
         }
         primaryAction={{
           label: props.isMexicano ? "End night" : "Finish",
-          onPress: props.onConfirmFinishTournament
+          onPress: props.onConfirmFinishTournament,
+          destructive: props.isMexicano
         }}
         secondaryAction={{ label: "Cancel", onPress: props.onCloseFinishConfirm }}
         onDismiss={props.onCloseFinishConfirm}

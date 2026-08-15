@@ -175,3 +175,9 @@ export const advanceMexicanoRoundSchema = z.object({
   tournamentId: z.string().min(1),
   expectedVersion: z.number().int().min(0)
 });
+
+/** End Mexicano night; incomplete live round is discarded. */
+export const endMexicanoNightSchema = z.object({
+  tournamentId: z.string().min(1),
+  expectedVersion: z.number().int().min(0)
+});

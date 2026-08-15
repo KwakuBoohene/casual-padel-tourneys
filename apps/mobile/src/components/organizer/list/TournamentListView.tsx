@@ -37,10 +37,12 @@ export function TournamentListView(props: TournamentListViewProps) {
 
   const activeTournaments = props.tournaments.filter((tournament) => {
     if (tournament.config.mode === "KING_OF_THE_HILL") return !tournament.endedAt;
+    if (tournament.config.mode === "MEXICANO") return !tournament.endedAt;
     return !tournament.rounds.every((round) => round.matches.every((match) => match.completed));
   });
   const completedTournaments = props.tournaments.filter((tournament) => {
     if (tournament.config.mode === "KING_OF_THE_HILL") return Boolean(tournament.endedAt);
+    if (tournament.config.mode === "MEXICANO") return Boolean(tournament.endedAt);
     return tournament.rounds.every((round) => round.matches.every((match) => match.completed));
   });
   const hasAny = props.tournaments.length > 0;

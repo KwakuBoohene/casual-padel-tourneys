@@ -91,3 +91,69 @@ test("POST /tournaments/next-round advances Mexicano ladder after round 1", asyn
     assert.equal(m0.teamB.length, 2);
   });
 });
+
+test("POST /tournaments/end-night discards incomplete live round", async () => {
+  await withApp(async (app) => {
+    const token = signUser("owner-mx-end");
+    const createResponse = await app.inject({
+      method: "POST",
+      url: "/tournaments",
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        name: "Mexicano End",
+        mode: "MEXICANO",
+        variant: "CLASSIC",
+        schedulingMode: "TOTAL_TIME",
+        players: Array.from({ length: 8 }, (_, i) => ({ name: `P${i + 1}` })),
+        courts: 2,
+        pointsPerMatch: 24
+      }
+    });
+    assert.equal(createResponse.statusCode, 200);
+    let tournament = createResponse.json().data;
+
+    for (const match of tournament.rounds[0].matches) {
+      const scoreResponse = await app.inject({
+        method: "POST",
+        url: "/tournaments/score",
+        headers: { authorization: `Bearer ${token}` },
+        payload: {
+          tournamentId: tournament.id,
+          matchId: match.id,
+          scoreA: 12,
+          scoreB: 12,
+          expectedVersion: tournament.version
+        }
+      });
+      assert.equal(scoreResponse.statusCode, 200);
+      tournament = scoreResponse.json().data;
+    }
+
+    const nextResponse = await app.inject({
+      method: "POST",
+      url: "/tournaments/next-round",
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        tournamentId: tournament.id,
+        expectedVersion: tournament.version
+      }
+    });
+    assert.equal(nextResponse.statusCode, 200);
+    tournament = nextResponse.json().data;
+    assert.equal(tournament.rounds.length, 2);
+
+    const endResponse = await app.inject({
+      method: "POST",
+      url: "/tournaments/end-night",
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        tournamentId: tournament.id,
+        expectedVersion: tournament.version
+      }
+    });
+    assert.equal(endResponse.statusCode, 200);
+    const ended = endResponse.json().data;
+    assert.ok(ended.endedAt);
+    assert.equal(ended.rounds.length, 1);
+  });
+});

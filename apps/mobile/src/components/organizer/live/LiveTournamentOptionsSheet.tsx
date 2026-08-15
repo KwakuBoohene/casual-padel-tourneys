@@ -89,12 +89,12 @@ export function LiveTournamentOptionsSheet(props: LiveTournamentOptionsSheetProp
         <OptionRow
           label={props.isMexicano ? "End night" : "Finish tournament"}
           detail={
-            props.canFinish
-              ? props.isMexicano
-                ? "Go to leaderboard"
-                : "Lock results"
-              : props.isMexicano
-                ? "Score the current round first"
+            props.isMexicano
+              ? props.canFinish
+                ? "Discard live round if unfinished"
+                : "Already ended"
+              : props.canFinish
+                ? "Lock results"
                 : "Score all matches first"
           }
           emphasized

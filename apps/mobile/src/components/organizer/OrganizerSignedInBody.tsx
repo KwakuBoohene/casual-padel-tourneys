@@ -415,7 +415,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         onBackToList={() => setStep("LIST")}
         onViewLeaderboard={() => setStep("LEADERBOARD")}
         onRefresh={() => void refreshTournament()}
-        onFinishTournament={finishTournament}
+        onFinishTournament={() => void finishTournament()}
         canGenerateNextRound={canGenerateNextRound}
         generatingNextRound={generatingNextRound}
         canFinishNight={canFinishNight}

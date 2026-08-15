@@ -35,6 +35,9 @@ function recordAccess(id: string): void {
 }
 
 function isCompleted(tournament: TournamentState): boolean {
+  if (tournament.endedAt) {
+    return true;
+  }
   return tournament.rounds.every((round) => round.matches.every((match) => match.completed));
 }
 
@@ -117,7 +120,8 @@ export function createTournament(config: TournamentConfig, organizerId: string):
     createdAt,
     updatedAt: createdAt,
     pendingPlayers: [],
-    integrationWaveCount: 0
+    integrationWaveCount: 0,
+    endedAt: null
   };
   tournaments.set(id, state);
   recordAccess(id);
@@ -140,6 +144,7 @@ export function submitScore(
   scoreB: number
 ): TournamentState {
   const tournament = requireTournament(tournamentId);
+  assertMexicanoNotEnded(tournament);
   if ((tournament.config.scoringMode ?? "AMERICANO_POINTS") === "REGULAR") {
     throw new Error("Use submitRegularScore for Regular scoring tournaments.");
   }
@@ -330,6 +335,7 @@ export function advanceMexicanoRound(tournamentId: string): TournamentState {
   if (tournament.config.mode !== "MEXICANO") {
     throw new Error("advanceMexicanoRound requires a Mexicano tournament.");
   }
+  assertMexicanoNotEnded(tournament);
 
   const ordered = [...tournament.rounds].sort((a, b) => a.roundNumber - b.roundNumber);
   const locked = ordered.filter((round) => round.matches.every((match) => match.completed));
@@ -384,6 +390,57 @@ export function advanceMexicanoRound(tournamentId: string): TournamentState {
     version: tournament.version
   });
   return tournament;
+}
+
+/**
+ * End a Mexicano night. If the latest round is incomplete, discard it
+ * (reversing any scored matches in that round). Completed rounds are kept.
+ */
+export function endMexicanoNight(tournamentId: string): TournamentState {
+  const tournament = requireTournament(tournamentId);
+  if (tournament.config.mode !== "MEXICANO") {
+    throw new Error("endMexicanoNight requires a Mexicano tournament.");
+  }
+  if (tournament.endedAt) {
+    throw new Error("This Mexicano night has already ended.");
+  }
+
+  const ordered = [...tournament.rounds].sort((a, b) => a.roundNumber - b.roundNumber);
+  const latest = ordered[ordered.length - 1];
+  let discardedRoundNumber: number | null = null;
+
+  if (latest && latest.matches.some((match) => !match.completed)) {
+    discardedRoundNumber = latest.roundNumber;
+    for (const match of latest.matches) {
+      if (!match.completed) continue;
+      if (
+        (tournament.config.scoringMode ?? "AMERICANO_POINTS") === "AMERICANO_POINTS" &&
+        match.scoreA !== undefined &&
+        match.scoreB !== undefined
+      ) {
+        awardPoints(tournament.players, match, -match.scoreA, -match.scoreB);
+        bumpGamesPlayed(tournament.players, match, -1);
+      }
+    }
+    tournament.rounds = ordered.filter((round) => round.id !== latest.id);
+  }
+
+  tournament.endedAt = new Date().toISOString();
+  tournament.leaderboard = buildLeaderboard(tournament.players, tournament.config.scoringMode);
+  touch(tournament);
+  logger.info("store/endMexicanoNight", {
+    tournamentId,
+    discardedRoundNumber,
+    roundsKept: tournament.rounds.length,
+    version: tournament.version
+  });
+  return tournament;
+}
+
+function assertMexicanoNotEnded(tournament: TournamentState): void {
+  if (tournament.config.mode === "MEXICANO" && tournament.endedAt) {
+    throw new Error("This Mexicano night has already ended.");
+  }
 }
 
 export function assertVersion(tournamentId: string, expectedVersion: number): void {

@@ -20,6 +20,7 @@ import {
   addPendingPlayerSchema,
   adjustCourtsSchema,
   advanceMexicanoRoundSchema,
+  endMexicanoNightSchema,
   createTournamentSchema,
   integratePendingPlayersSchema,
   isRegularScoreBody,
@@ -36,6 +37,7 @@ import {
   assertVersion,
   createTournament,
   deleteTournament,
+  endMexicanoNight,
   getTournament,
   getTournamentByPublicToken,
   integratePendingPlayers,
@@ -226,7 +228,9 @@ function mapTournamentMutationErrorStatus(message: string): number {
     message.includes("advanceMexicanoRound") ||
     message.includes("not supported for Mexicano") ||
     message.includes("Not enough players") ||
-    message.includes("Next round already generated")
+    message.includes("Next round already generated") ||
+    message.includes("already ended") ||
+    message.includes("endMexicanoNight")
   ) {
     return 400;
   }
@@ -584,6 +588,36 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     }
   });
 
+  server.post("/tournaments/end-night", { preHandler: requireOrganizerAccess }, async (request, reply) => {
+    const parsed = endMexicanoNightSchema.safeParse(request.body);
+    if (!parsed.success) {
+      reply.status(400);
+      return { errors: parsed.error.flatten() };
+    }
+    try {
+      await ensureOrganizerTournament(parsed.data.tournamentId, request.user!.id);
+      assertVersion(parsed.data.tournamentId, parsed.data.expectedVersion);
+      const tournament = endMexicanoNight(parsed.data.tournamentId);
+      await persistTournament(tournament);
+      const event = { type: "TOURNAMENT_ENDED" as const, tournamentId: tournament.id, payload: tournament };
+      await publishEvent(server.redis, event);
+      broadcastToTournament(server.subscriptions, tournament.id, event);
+      request.log.info(
+        {
+          tournamentId: tournament.id,
+          rounds: tournament.rounds.length,
+          endedAt: tournament.endedAt
+        },
+        "POST /tournaments/end-night"
+      );
+      return { data: tournament };
+    } catch (error) {
+      const message = (error as Error).message;
+      reply.status(mapTournamentMutationErrorStatus(message));
+      return { message };
+    }
+  });
+
   server.post("/tournaments/rename-player", { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const parsed = renamePlayerSchema.safeParse(request.body);
     if (!parsed.success) {
@@ -837,6 +871,7 @@ async function persistTournament(tournament: {
   version: number;
   createdAt: string;
   updatedAt: string;
+  endedAt?: string | null;
   pendingPlayers: DomainPendingPlayer[];
   integrationWaveCount: number;
 }): Promise<void> {
@@ -867,6 +902,7 @@ async function persistTournament(tournament: {
         integrationThreshold: tournament.config.integrationThreshold ?? 2,
         version: tournament.version,
         updatedAt: new Date(tournament.updatedAt),
+        endedAt: tournament.endedAt ? new Date(tournament.endedAt) : null,
         players: {
           create: tournament.players.map((player) => ({
             id: player.id,

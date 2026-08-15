@@ -29,18 +29,37 @@ export function useLiveTournamentActions(params: UseLiveTournamentActionsParams)
   const [showAdjustCourtsConfirmModal, setShowAdjustCourtsConfirmModal] = useState(false);
   const [generatingNextRound, setGeneratingNextRound] = useState(false);
 
-  const finishTournament = () => {
+  const finishTournament = async () => {
     if (!params.canFinishNight) {
       setErrorText(
         liveTournament?.config.mode === "MEXICANO"
-          ? "Score the current round before ending the night."
+          ? "This Mexicano night has already ended."
           : "Finish is only available after all round matches have scores."
       );
       return;
     }
-    if (liveTournament) {
-      setTournaments((prev) => prev.map((item) => (item.id === liveTournament.id ? liveTournament : item)));
+    if (!liveTournament) return;
+
+    if (liveTournament.config.mode === "MEXICANO") {
+      try {
+        setErrorText("");
+        const response = await apiPost<TournamentResponse>("/tournaments/end-night", {
+          tournamentId: liveTournament.id,
+          expectedVersion: liveTournament.version
+        });
+        params.applyTournamentUpdate(response.data);
+        setTournaments((prev) =>
+          prev.map((item) => (item.id === response.data.id ? response.data : item))
+        );
+        params.setIsEditingCompletedTournament(false);
+        params.setStep("LEADERBOARD");
+      } catch (error) {
+        setErrorText((error as Error).message);
+      }
+      return;
     }
+
+    setTournaments((prev) => prev.map((item) => (item.id === liveTournament.id ? liveTournament : item)));
     params.setIsEditingCompletedTournament(false);
     params.setStep("LEADERBOARD");
   };

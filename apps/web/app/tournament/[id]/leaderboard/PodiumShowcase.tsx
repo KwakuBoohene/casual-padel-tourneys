@@ -6,6 +6,8 @@ type PodiumPlayer = {
   wins: number;
   losses: number;
   draws: number;
+  setsWon?: number;
+  gamesWon?: number;
 };
 
 type PodiumStyle = {
@@ -147,10 +149,12 @@ function HeroAwardIcon({ color }: { color: string }) {
 
 export default function PodiumShowcase({
   players,
-  tournamentName
+  tournamentName,
+  isRegular = false
 }: {
   players: PodiumPlayer[];
   tournamentName: string;
+  isRegular?: boolean;
 }) {
   const champion = players.find((player) => player.rank === 1);
   const runnerUp = players.find((player) => player.rank === 2);
@@ -176,20 +180,23 @@ export default function PodiumShowcase({
         <p className="mt-1 text-sm text-padel-muted">You have been awarded the winner trophy</p>
       </div>
 
-      <div className="mb-8 flex items-center justify-center gap-3">
+      <div className="mb-8 flex items-center justify-center gap-3 flex-wrap">
         <div
           className={`whitespace-nowrap rounded-full px-4 py-2 text-center text-xl font-bold ${podiumStyles[2].badgeClass}`}
         >
           Wins {champion?.wins ?? 0}
         </div>
         <div className="whitespace-nowrap rounded-full px-4 py-2 text-center text-xl font-bold bg-[#dce6fd] text-[#3d67db]">
-          Points {champion?.totalPoints ?? 0}
+          {isRegular
+            ? `Sets ${champion?.setsWon ?? 0}`
+            : `Points ${champion?.totalPoints ?? 0}`}
         </div>
         <div
           className={`whitespace-nowrap rounded-full px-4 py-2 text-center text-xl font-bold ${podiumStyles[1].badgeClass}`}
         >
-          Diff {(champion?.wins ?? 0) - (champion?.losses ?? 0) >= 0 ? "+" : ""}
-          {(champion?.wins ?? 0) - (champion?.losses ?? 0)}
+          {isRegular
+            ? `Games ${champion?.gamesWon ?? 0}`
+            : `Diff ${(champion?.wins ?? 0) - (champion?.losses ?? 0) >= 0 ? "+" : ""}${(champion?.wins ?? 0) - (champion?.losses ?? 0)}`}
         </div>
       </div>
 

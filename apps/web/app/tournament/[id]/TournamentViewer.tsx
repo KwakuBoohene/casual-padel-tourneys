@@ -5,38 +5,7 @@ import { useCallback, useState } from "react";
 
 import { LiveTournament } from "./LiveTournament";
 import { ConnectionStatus } from "./components/ConnectionStatus";
-
-interface TournamentViewModel {
-  id: string;
-  config: { name: string; mode: string; variant: string };
-  updatedAt: string;
-  players: Array<{ id: string; name: string }>;
-  leaderboard: Array<{
-    playerId: string;
-    name: string;
-    totalPoints: number;
-    gamesPlayed: number;
-    rank: number;
-  }>;
-  rounds: Array<{
-    id: string;
-    roundNumber: number;
-    matches: Array<{
-      id: string;
-      court: number;
-      teamA: [string, string];
-      teamB: [string, string];
-      scoreA?: number;
-      scoreB?: number;
-    }>;
-  }>;
-}
-
-function formatMode(mode: string): string {
-  if (mode === "MEXICANO") return "Mexicano";
-  if (mode === "AMERICANO") return "Americano";
-  return mode;
-}
+import { formatScoringLabel, type TournamentViewModel } from "./types";
 
 export function TournamentViewer({
   initial,
@@ -54,7 +23,7 @@ export function TournamentViewer({
   const [roundNumber, setRoundNumber] = useState(1);
   const onRoundChange = useCallback((n: number) => setRoundNumber(n), []);
 
-  const scoringLabel = `${formatMode(initial.config.mode)} scoring`;
+  const scoringLabel = formatScoringLabel(String(initial.config.mode), initial.config.scoringMode);
 
   return (
     <main className="min-h-screen bg-padel-background text-padel-text px-5 py-8 md:px-10 md:py-8">
@@ -65,7 +34,7 @@ export function TournamentViewer({
               {initial.config.name}
             </h1>
             <p className="text-sm text-padel-muted">
-              Spectator · {scoringLabel} · Round {roundNumber}
+              Spectator · {scoringLabel} · Round {roundNumber} · read-only
             </p>
           </div>
           <Link

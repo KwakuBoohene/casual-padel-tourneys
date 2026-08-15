@@ -2,35 +2,11 @@ import { LeaderboardHeaderActions } from "../../../../components/LeaderboardHead
 import Link from "next/link";
 import PodiumShowcase from "./PodiumShowcase";
 
+import { buildOutstandingPlayerRows } from "../components/outstandingPlayers";
+import { formatScoringLabel, type TournamentViewModel } from "../types";
+
 const defaultApi = "http://localhost:3004";
 const internalApiBaseUrl = process.env.INTERNAL_API_BASE_URL ?? process.env.PUBLIC_API_BASE_URL ?? defaultApi;
-
-interface TournamentViewModel {
-  id: string;
-  config: { name: string; mode: string; variant: string };
-  updatedAt: string;
-  players: Array<{ id: string; name: string }>;
-  leaderboard: Array<{
-    playerId: string;
-    name: string;
-    totalPoints: number;
-    gamesPlayed: number;
-    rank: number;
-  }>;
-  rounds: Array<{
-    id: string;
-    roundNumber: number;
-    matches: Array<{
-      id: string;
-      court: number;
-      teamA: [string, string];
-      teamB: [string, string];
-      scoreA?: number;
-      scoreB?: number;
-      completed?: boolean;
-    }>;
-  }>;
-}
 
 async function getTournament(token: string) {
   const response = await fetch(`${internalApiBaseUrl}/public/${token}`, { cache: "no-store" });
@@ -41,67 +17,18 @@ async function getTournament(token: string) {
   return payload.data;
 }
 
-type PlayerRow = {
-  playerId: string;
-  name: string;
-  totalPoints: number;
-  gamesPlayed: number;
-  rank: number;
+function formatStandings(row: {
+  isRegular?: boolean;
   wins: number;
   losses: number;
-  draws: number;
-};
-
-function computeLeaderboardRows(tournament: TournamentViewModel): PlayerRow[] {
-  const stats = new Map<string, PlayerRow>();
-
-  for (const entry of tournament.leaderboard) {
-    stats.set(entry.playerId, {
-      playerId: entry.playerId,
-      name: entry.name,
-      totalPoints: entry.totalPoints,
-      gamesPlayed: entry.gamesPlayed,
-      rank: entry.rank,
-      wins: 0,
-      losses: 0,
-      draws: 0
-    });
+  setsWon?: number;
+  gamesWon?: number;
+  totalPoints: number;
+}): string {
+  if (row.isRegular) {
+    return `${row.wins}–${row.losses} · ${row.setsWon ?? 0} sets · ${row.gamesWon ?? 0} games`;
   }
-
-  const bump = (playerId: string, result: "WIN" | "LOSS" | "DRAW") => {
-    const row = stats.get(playerId);
-    if (!row) return;
-    if (result === "WIN") row.wins += 1;
-    else if (result === "LOSS") row.losses += 1;
-    else row.draws += 1;
-  };
-
-  for (const round of tournament.rounds) {
-    for (const match of round.matches) {
-      const scoreA = match.scoreA;
-      const scoreB = match.scoreB;
-      if (scoreA === undefined || scoreB === undefined) continue;
-
-      let resultA: "WIN" | "LOSS" | "DRAW" = "DRAW";
-      let resultB: "WIN" | "LOSS" | "DRAW" = "DRAW";
-      if (scoreA > scoreB) {
-        resultA = "WIN";
-        resultB = "LOSS";
-      } else if (scoreB > scoreA) {
-        resultA = "LOSS";
-        resultB = "WIN";
-      }
-
-      for (const playerId of match.teamA) {
-        bump(playerId, resultA);
-      }
-      for (const playerId of match.teamB) {
-        bump(playerId, resultB);
-      }
-    }
-  }
-
-  return [...stats.values()].sort((a, b) => a.rank - b.rank);
+  return `${row.totalPoints} pts`;
 }
 
 export default async function LeaderboardPage({ params }: { params: Promise<{ id: string }> }) {
@@ -120,14 +47,13 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
     );
   }
 
-  const rows = computeLeaderboardRows(tournament);
+  const rows = buildOutstandingPlayerRows(tournament).map((row, index) => ({
+    ...row,
+    rank: index + 1
+  }));
   const outstandingPlayers = rows.slice(0, 3);
-  const scoringLabel =
-    tournament.config.mode === "MEXICANO"
-      ? "Mexicano scoring"
-      : tournament.config.mode === "AMERICANO"
-        ? "Americano scoring"
-        : `${tournament.config.mode} scoring`;
+  const scoringLabel = formatScoringLabel(String(tournament.config.mode), tournament.config.scoringMode);
+  const isRegular = tournament.config.scoringMode === "REGULAR";
 
   return (
     <main className="min-h-screen bg-padel-background text-padel-text px-5 py-8 md:px-10 md:py-10">
@@ -148,7 +74,11 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
       </header>
 
       <div className="max-w-3xl mx-auto w-full space-y-6">
-        <PodiumShowcase players={outstandingPlayers} tournamentName={tournament.config.name} />
+        <PodiumShowcase
+          players={outstandingPlayers}
+          tournamentName={tournament.config.name}
+          isRegular={isRegular}
+        />
 
         <section className="space-y-2">
           {rows.map((entry) => {
@@ -164,8 +94,8 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
                 <p className="text-base font-semibold text-padel-text truncate">
                   {entry.rank}  {entry.name}
                 </p>
-                <p className="text-sm font-medium text-padel-muted shrink-0">
-                  {entry.totalPoints} pts
+                <p className="text-sm font-medium text-padel-muted shrink-0 text-right">
+                  {formatStandings(entry)}
                 </p>
               </div>
             );

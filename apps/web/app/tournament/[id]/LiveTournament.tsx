@@ -7,32 +7,11 @@ import { MatchCard } from "./components/MatchCard";
 import { isTournamentComplete } from "./components/outstandingPlayers";
 import { PlayerSearch } from "./components/PlayerSearch";
 import { RoundSection } from "./components/RoundSection";
-
-interface TournamentPayload {
-  id: string;
-  updatedAt: string;
-  config?: { name: string; mode: string; variant: string };
-  players: Array<{ id: string; name: string }>;
-  leaderboard: Array<{
-    playerId: string;
-    name: string;
-    totalPoints: number;
-    gamesPlayed: number;
-    rank: number;
-  }>;
-  rounds: Array<{
-    id: string;
-    roundNumber: number;
-    matches: Array<{
-      id: string;
-      court: number;
-      teamA: [string, string];
-      teamB: [string, string];
-      scoreA?: number;
-      scoreB?: number;
-    }>;
-  }>;
-}
+import {
+  isMatchComplete,
+  matchHasProgress,
+  type TournamentViewModel
+} from "./types";
 
 type MatchStatus = "live" | "next" | "completed" | "pending";
 
@@ -43,7 +22,7 @@ export function LiveTournament({
   onConnectionChange,
   onRoundChange
 }: {
-  initial: TournamentPayload;
+  initial: TournamentViewModel;
   token: string;
   apiBaseUrl: string;
   onConnectionChange?: (state: { connected: boolean; lastUpdate: string }) => void;
@@ -52,6 +31,7 @@ export function LiveTournament({
   const [tournament, setTournament] = useState(initial);
   const [searchQuery, setSearchQuery] = useState("");
   const [isConnected, setIsConnected] = useState(true);
+  const scoringMode = tournament.config.scoringMode;
 
   useEffect(() => {
     const wsBase = apiBaseUrl.replace(/^http/, "ws");
@@ -76,7 +56,7 @@ export function LiveTournament({
 
     socket.onmessage = (event) => {
       const parsed = JSON.parse(event.data);
-      let newTournament: TournamentPayload | null = null;
+      let newTournament: TournamentViewModel | null = null;
 
       if (parsed?.payload?.payload) {
         newTournament = parsed.payload.payload;
@@ -102,11 +82,11 @@ export function LiveTournament({
   }, [tournament.players]);
 
   const currentRoundNumber = useMemo(() => {
-    const roundsWithScores = tournament.rounds.filter((round) =>
-      round.matches.some((match) => match.scoreA !== undefined || match.scoreB !== undefined)
+    const roundsWithProgress = tournament.rounds.filter((round) =>
+      round.matches.some((match) => matchHasProgress(match))
     );
-    if (roundsWithScores.length === 0) return tournament.rounds[0]?.roundNumber ?? 1;
-    return Math.max(...roundsWithScores.map((r) => r.roundNumber));
+    if (roundsWithProgress.length === 0) return tournament.rounds[0]?.roundNumber ?? 1;
+    return Math.max(...roundsWithProgress.map((r) => r.roundNumber));
   }, [tournament.rounds]);
 
   useEffect(() => {
@@ -114,17 +94,16 @@ export function LiveTournament({
   }, [currentRoundNumber, onRoundChange]);
 
   const getMatchStatus = (
-    match: TournamentPayload["rounds"][number]["matches"][number],
+    match: TournamentViewModel["rounds"][number]["matches"][number],
     roundNumber: number
   ): MatchStatus => {
-    const hasScore = match.scoreA !== undefined && match.scoreB !== undefined;
-    if (hasScore) return "completed";
+    if (isMatchComplete(match)) return "completed";
     if (roundNumber === currentRoundNumber) return "live";
     if (roundNumber === currentRoundNumber + 1) return "next";
     return "pending";
   };
 
-  const matchesPlayerQuery = (match: TournamentPayload["rounds"][number]["matches"][number]) => {
+  const matchesPlayerQuery = (match: TournamentViewModel["rounds"][number]["matches"][number]) => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     const names = [...match.teamA, ...match.teamB].map(
@@ -167,11 +146,11 @@ export function LiveTournament({
   const getPlayerObjects = (playerIds: [string, string]) =>
     playerIds.map((id) => playerById.get(id) || { id, name: id });
 
-  const getCompletedMatchCount = (round: TournamentPayload["rounds"][number]) =>
-    round.matches.filter((m) => m.scoreA !== undefined && m.scoreB !== undefined).length;
+  const getCompletedMatchCount = (round: TournamentViewModel["rounds"][number]) =>
+    round.matches.filter((match) => isMatchComplete(match)).length;
 
   const renderMatchGrid = (
-    matches: TournamentPayload["rounds"][number]["matches"],
+    matches: TournamentViewModel["rounds"][number]["matches"],
     roundNumber: number
   ) => (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -183,6 +162,9 @@ export function LiveTournament({
           teamB={getPlayerObjects(match.teamB)}
           scoreA={match.scoreA}
           scoreB={match.scoreB}
+          sets={match.sets}
+          completed={isMatchComplete(match)}
+          scoringMode={scoringMode}
           status={getMatchStatus(match, roundNumber)}
           highlightPlayers={highlightedPlayerIds}
         />

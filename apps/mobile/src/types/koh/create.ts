@@ -90,6 +90,7 @@ export interface KohTournamentHub {
   >;
   ready: boolean;
   balanceHint: string | null;
+  endedAt?: string | null;
   pendingPromote?: KohPendingPromote | null;
   lastMatchEvent?: {
     type: "KING_WIN" | "KING_LOSS";

@@ -102,3 +102,14 @@ export async function replaceKohPartner(
   );
   return response.data;
 }
+
+export async function endKohTournament(
+  tournamentId: string,
+  expectedVersion: number
+): Promise<KohTournamentHub> {
+  const response = await apiPost<{ data: KohTournamentHub }>(
+    `/koh/tournaments/${tournamentId}/end`,
+    { expectedVersion }
+  );
+  return response.data;
+}

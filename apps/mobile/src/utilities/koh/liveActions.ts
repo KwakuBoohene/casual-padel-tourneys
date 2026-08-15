@@ -3,7 +3,8 @@ import type { KohCourtChange, KohGameWinMethod } from "@padel/shared";
 import {
   pickKohPromotion,
   submitKohCourtScore,
-  swapKohCourt
+  swapKohCourt,
+  endKohTournament
 } from "../../api/koh";
 import { isEmailVerifyRequired } from "../../api/errors";
 import type { KohTournamentHub } from "../../types/koh/create";
@@ -82,6 +83,23 @@ export async function runKohPromotePick(input: {
       demotedUnitId: input.demotedUnitId,
       expectedVersion: input.hub.version
     });
+  } catch (error) {
+    if (isEmailVerifyRequired(error)) {
+      input.markEmailVerifyRequired(error.verifyBy);
+      return null;
+    }
+    input.setErrorText((error as Error).message);
+    return null;
+  }
+}
+
+export async function runKohEnd(input: {
+  hub: KohTournamentHub;
+  setErrorText: (value: string) => void;
+  markEmailVerifyRequired: (dueAt?: number) => void;
+}): Promise<KohTournamentHub | null> {
+  try {
+    return await endKohTournament(input.hub.id, input.hub.version);
   } catch (error) {
     if (isEmailVerifyRequired(error)) {
       input.markEmailVerifyRequired(error.verifyBy);

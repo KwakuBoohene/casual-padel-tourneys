@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import {
   assignKohCourtsSchema,
   createKohTournamentSchema,
+  endKohTournamentSchema,
   promoteKohPickSchema,
   renameKohPlayerSchema,
   reorderKohQueueSchema,
@@ -16,6 +17,7 @@ import {
   createKohTournament,
   getKohHub,
   getKohRankings,
+  endKohTournament,
   KohVersionConflictError,
   pickKohPromotion,
   randomizeKohCourtQueue,
@@ -364,9 +366,36 @@ export async function registerKohRoutes(server: FastifyInstance): Promise<void> 
       }
     }
   );
+
+  server.post("/koh/tournaments/:id/end", { preHandler: requireOrganizerAccess }, async (request, reply) => {
+    const params = request.params as { id: string };
+    const parsed = endKohTournamentSchema.safeParse(request.body);
+    if (!parsed.success) {
+      reply.status(400);
+      return { errors: parsed.error.flatten() };
+    }
+    if (!request.user) {
+      reply.status(401);
+      return { message: "Unauthorized" };
+    }
+    try {
+      const data = await endKohTournament(params.id, request.user.id, parsed.data.expectedVersion);
+      const event = { type: "KOH_HUB_UPDATED" as const, tournamentId: data.id, payload: data };
+      await publishEvent(server.redis, event);
+      broadcastToTournament(server.subscriptions, data.id, event);
+      request.log.info({ id: params.id }, "POST .../end");
+      return { data };
+    } catch (error) {
+      if (error instanceof KohVersionConflictError) {
+        return versionConflictReply(reply, error);
+      }
+      const message = (error as Error).message || "End tournament failed.";
+      reply.status(isNotFoundMessage(message) ? 404 : 400);
+      return { message };
+    }
+  });
 }
 
-/** Used by POST /tournaments when body.mode is KING_OF_THE_HILL. */
 export async function handleCreateKohTournament(
   server: FastifyInstance,
   body: unknown,

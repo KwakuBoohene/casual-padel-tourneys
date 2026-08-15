@@ -26,6 +26,7 @@ interface KohLiveOverlaySheetsProps {
   methodsOpen: boolean;
   swapOpen: boolean;
   shareOpen: boolean;
+  endConfirmOpen: boolean;
   spectatorUrl: string;
   saving: boolean;
   canComplete: boolean;
@@ -33,8 +34,6 @@ interface KohLiveOverlaySheetsProps {
   pendingCourtChange: KohCourtChange | null;
   pendingPromote: KohPendingPromote | null;
   unitsById: Map<string, KohUnit>;
-  infoTitle: string | null;
-  infoMessage: string;
   changeGames: (side: "A" | "B", next: number) => void;
   undoGames: () => void;
   requestComplete: () => void;
@@ -50,9 +49,10 @@ interface KohLiveOverlaySheetsProps {
   }) => void;
   setSwapOpen: (open: boolean) => void;
   setShareOpen: (open: boolean) => void;
+  setEndConfirmOpen: (open: boolean) => void;
+  onConfirmEnd: () => void;
   dismissCourtChange: () => void;
   applyPromotePick: (id: string) => void;
-  dismissInfo: () => void;
 }
 
 export function KohLiveOverlaySheets(props: KohLiveOverlaySheetsProps) {
@@ -117,12 +117,17 @@ export function KohLiveOverlaySheets(props: KohLiveOverlaySheetsProps) {
         onDismiss={() => props.setShareOpen(false)}
       />
       <AlertSheet
-        visible={Boolean(props.infoTitle)}
-        variant="info"
-        title={props.infoTitle ?? ""}
-        message={props.infoMessage}
-        primaryAction={{ label: "Got it", onPress: props.dismissInfo }}
-        onDismiss={props.dismissInfo}
+        visible={props.endConfirmOpen}
+        variant="warning"
+        title="End this KOH night?"
+        message="Scoring and swaps stop. You can still open rankings and the spectator link."
+        primaryAction={{
+          label: "End night",
+          onPress: props.onConfirmEnd,
+          destructive: true
+        }}
+        secondaryAction={{ label: "Cancel", onPress: () => props.setEndConfirmOpen(false) }}
+        onDismiss={() => props.setEndConfirmOpen(false)}
       />
     </>
   );

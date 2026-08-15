@@ -27,12 +27,14 @@ export function KohPairingStep(props: KohPairingStepProps) {
         selected
         onPress={() => undefined}
       />
+      {/* Round-robin pairs — hide until RR epic is ready.
       <ScoringModeOptionCard
         title="Round-robin pairs"
         lines={["Coming next — mix partners each round"]}
         selected={false}
         onPress={props.onRoundRobinInfo}
       />
+      */}
     </WizardChrome>
   );
 }

@@ -4,6 +4,7 @@ import type { KohCourtChange } from "@padel/shared";
 import type { KohTournamentHub } from "../../types/koh/create";
 import {
   queueCourtChange,
+  runKohEnd,
   runKohPromotePick,
   runKohSwap
 } from "../../utilities/koh/liveActions";
@@ -18,15 +19,24 @@ export interface UseKohLiveParams {
   markEmailVerifyRequired: (dueAt?: number) => void;
 }
 
+type SwapInput = {
+  slot: "KING" | "CHALLENGER";
+  withUnitId: string;
+  reason: string;
+  permanent?: boolean;
+};
+
 export function useKohLive(params: UseKohLiveParams) {
   const [courtIndex, setCourtIndex] = useState(0);
   const [swapOpen, setSwapOpen] = useState(false);
-  const [infoTitle, setInfoTitle] = useState<string | null>(null);
-  const [infoMessage, setInfoMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [pendingCourtChange, setPendingCourtChange] = useState<KohCourtChange | null>(null);
   const [queuedCourtChange, setQueuedCourtChange] = useState<KohCourtChange | null>(null);
   const court = params.hub.courts[courtIndex] ?? params.hub.courts[0];
+  const err = {
+    setErrorText: params.setErrorText,
+    markEmailVerifyRequired: params.markEmailVerifyRequired
+  };
 
   const applyHub = (hub: KohTournamentHub, scoreUiOpen: boolean) => {
     params.setHub(hub);
@@ -40,8 +50,7 @@ export function useKohLive(params: UseKohLiveParams) {
     hub: params.hub,
     courtId: court?.id,
     matchId: court?.activeMatch?.id,
-    setErrorText: params.setErrorText,
-    markEmailVerifyRequired: params.markEmailVerifyRequired,
+    ...err,
     onSaved: (hub) => applyHub(hub, false)
   });
 
@@ -59,6 +68,20 @@ export function useKohLive(params: UseKohLiveParams) {
     }
   }, [score.scoreUiOpen, queuedCourtChange]);
 
+  const runMut = async (
+    fn: () => Promise<KohTournamentHub | null>,
+    after?: (hub: KohTournamentHub) => void
+  ) => {
+    setSaving(true);
+    const hub = await fn();
+    setSaving(false);
+    if (hub) {
+      after?.(hub);
+      applyHub(hub, score.scoreUiOpen);
+    }
+    return Boolean(hub);
+  };
+
   return {
     ...score,
     courtIndex,
@@ -70,45 +93,16 @@ export function useKohLive(params: UseKohLiveParams) {
     saving: saving || score.saving,
     pendingCourtChange,
     pendingPromote: params.hub.pendingPromote ?? null,
-    infoTitle,
-    infoMessage,
-    applySwap: async (input: {
-      slot: "KING" | "CHALLENGER";
-      withUnitId: string;
-      reason: string;
-      permanent?: boolean;
-    }) => {
-      if (!court) return;
-      setSaving(true);
-      const hub = await runKohSwap({
-        hub: params.hub,
-        courtId: court.id,
-        ...input,
-        setErrorText: params.setErrorText,
-        markEmailVerifyRequired: params.markEmailVerifyRequired
-      });
-      setSaving(false);
-      if (hub) {
-        setSwapOpen(false);
-        applyHub(hub, score.scoreUiOpen);
-      }
-    },
-    applyPromotePick: async (demotedUnitId: string) => {
-      setSaving(true);
-      const hub = await runKohPromotePick({
-        hub: params.hub,
-        demotedUnitId,
-        setErrorText: params.setErrorText,
-        markEmailVerifyRequired: params.markEmailVerifyRequired
-      });
-      setSaving(false);
-      if (hub) applyHub(hub, score.scoreUiOpen);
-    },
-    dismissCourtChange: () => setPendingCourtChange(null),
-    showInfo: (title: string, message: string) => {
-      setInfoTitle(title);
-      setInfoMessage(message);
-    },
-    dismissInfo: () => setInfoTitle(null)
+    applySwap: (input: SwapInput) =>
+      court
+        ? runMut(
+            () => runKohSwap({ hub: params.hub, courtId: court.id, ...input, ...err }),
+            () => setSwapOpen(false)
+          )
+        : Promise.resolve(false),
+    applyPromotePick: (demotedUnitId: string) =>
+      runMut(() => runKohPromotePick({ hub: params.hub, demotedUnitId, ...err })),
+    endNight: () => runMut(() => runKohEnd({ hub: params.hub, ...err })),
+    dismissCourtChange: () => setPendingCourtChange(null)
   };
 }

@@ -192,6 +192,7 @@ function mapDbTournamentToState(
     publicToken: tournament.publicToken,
     createdAt: tournament.createdAt.toISOString(),
     updatedAt: tournament.updatedAt.toISOString(),
+    endedAt: tournament.endedAt ? tournament.endedAt.toISOString() : null,
     organizerId: tournament.organizerId ?? undefined,
     pendingPlayers,
     integrationWaveCount: tournament.integrationWaveCount

@@ -214,3 +214,9 @@ export const replaceKohPartnerSchema = z.object({
 });
 
 export type ReplaceKohPartnerInput = z.infer<typeof replaceKohPartnerSchema>;
+
+export const endKohTournamentSchema = z.object({
+  expectedVersion: z.number().int().min(0)
+});
+
+export type EndKohTournamentInput = z.infer<typeof endKohTournamentSchema>;

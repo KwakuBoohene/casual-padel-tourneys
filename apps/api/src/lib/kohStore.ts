@@ -102,6 +102,8 @@ export type KohTournamentHub = {
   ready: boolean;
   /** Present when court unit counts differ by more than 1. */
   balanceHint: string | null;
+  /** ISO timestamp when organizer ended the night; null while live. */
+  endedAt: string | null;
   /** Last match result event after a COMPLETE score (optional). */
   lastMatchEvent?: {
     type: "KING_WIN" | "KING_LOSS";
@@ -351,6 +353,7 @@ function toHub(row: NonNullable<KohDbTournament>): KohTournamentHub {
     courts,
     ready,
     balanceHint: computeBalanceHint(unitCounts),
+    endedAt: row.endedAt ? row.endedAt.toISOString() : null,
     pendingPromote: parsePendingPromote(row.kohPendingPromote)
   };
 }
@@ -374,6 +377,12 @@ export async function requireKohTournament(
     throw new Error("Tournament not found.");
   }
   return row;
+}
+
+function assertKohLive(row: NonNullable<KohDbTournament>): void {
+  if (row.endedAt) {
+    throw new Error("This KOH night has ended.");
+  }
 }
 
 export async function getKohHub(tournamentId: string, organizerId?: string): Promise<KohTournamentHub> {
@@ -454,6 +463,7 @@ export async function assignKohCourts(
   input: AssignKohCourtsInput
 ): Promise<KohTournamentHub> {
   const row = await requireKohTournament(tournamentId, organizerId);
+  assertKohLive(row);
 
   for (const court of input.courts) {
     if (court.courtNumber < 1 || court.courtNumber > row.courts) {
@@ -553,6 +563,7 @@ export async function randomizeKohCourtQueue(
   courtNumber: number
 ): Promise<KohTournamentHub> {
   const row = await requireKohTournament(tournamentId, organizerId);
+  assertKohLive(row);
   const court = row.kohCourts.find((entry) => entry.courtNumber === courtNumber);
   if (!court) {
     throw new Error(`Court ${courtNumber} not found.`);
@@ -598,6 +609,7 @@ export async function reorderKohCourtQueue(
   unitIds: string[]
 ): Promise<KohTournamentHub> {
   const row = await requireKohTournament(tournamentId, organizerId);
+  assertKohLive(row);
   const court = row.kohCourts.find((entry) => entry.courtNumber === courtNumber);
   if (!court) {
     throw new Error(`Court ${courtNumber} not found.`);
@@ -800,6 +812,7 @@ export async function submitKohCourtScore(
   input: SubmitKohScoreInput
 ): Promise<KohTournamentHub> {
   const row = await requireKohTournament(tournamentId, organizerId);
+  assertKohLive(row);
   if (row.version !== input.expectedVersion) {
     throw new KohVersionConflictError(input.expectedVersion, row.version);
   }
@@ -1115,6 +1128,7 @@ export async function swapKohCourtSlot(
   input: SwapKohUnitInput
 ): Promise<KohTournamentHub> {
   const row = await requireKohTournament(tournamentId, organizerId);
+  assertKohLive(row);
   if (row.version !== input.expectedVersion) {
     throw new KohVersionConflictError(input.expectedVersion, row.version);
   }
@@ -1204,6 +1218,7 @@ export async function pickKohPromotion(
   input: PromoteKohPickInput
 ): Promise<KohTournamentHub> {
   const row = await requireKohTournament(tournamentId, organizerId);
+  assertKohLive(row);
   if (row.version !== input.expectedVersion) {
     throw new KohVersionConflictError(input.expectedVersion, row.version);
   }
@@ -1366,6 +1381,7 @@ export async function renameKohPlayer(
   input: RenameKohPlayerInput
 ): Promise<KohTournamentHub> {
   const row = await requireKohTournament(tournamentId, organizerId);
+  assertKohLive(row);
   if (row.version !== input.expectedVersion) {
     throw new KohVersionConflictError(input.expectedVersion, row.version);
   }
@@ -1425,6 +1441,7 @@ export async function replaceKohPartner(
   input: ReplaceKohPartnerInput
 ): Promise<KohTournamentHub> {
   const row = await requireKohTournament(tournamentId, organizerId);
+  assertKohLive(row);
   if (row.version !== input.expectedVersion) {
     throw new KohVersionConflictError(input.expectedVersion, row.version);
   }
@@ -1503,5 +1520,33 @@ export async function replaceKohPartner(
     leavePlayerId: input.leavePlayerId,
     newPlayerId
   });
+  return getKohHub(tournamentId, organizerId);
+}
+
+/** Mark the KOH night finished — blocks further live mutations. */
+export async function endKohTournament(
+  tournamentId: string,
+  organizerId: string,
+  expectedVersion: number
+): Promise<KohTournamentHub> {
+  const row = await requireKohTournament(tournamentId, organizerId);
+  if (row.version !== expectedVersion) {
+    throw new KohVersionConflictError(expectedVersion, row.version);
+  }
+  if (row.endedAt) {
+    return getKohHub(tournamentId, organizerId);
+  }
+
+  await prisma.tournament.update({
+    where: { id: tournamentId },
+    data: {
+      endedAt: new Date(),
+      version: { increment: 1 },
+      updatedAt: new Date(),
+      kohPendingPromote: Prisma.JsonNull
+    }
+  });
+
+  logger.info("kohStore/endKohTournament", { tournamentId });
   return getKohHub(tournamentId, organizerId);
 }

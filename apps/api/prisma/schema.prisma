@@ -124,6 +124,8 @@ model Tournament {
    * Shape: { fromCourtNumber, toCourtNumber, promotedUnitId, candidateUnitIds }.
    */
   kohPendingPromote     Json?
+  /** Set when organizer ends a live event (KOH and future modes). */
+  endedAt               DateTime?
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
   organizerId           String?

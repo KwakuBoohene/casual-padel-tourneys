@@ -27,16 +27,10 @@ export interface LiveTournamentState {
     targetGamesPerPlayer?: number;
     tournamentTimeMinutes?: number;
   };
-  players: Array<{
-    id: string;
-    name: string;
-    totalPoints?: number;
-    matchesWon?: number;
-    matchesLost?: number;
-    setsWon?: number;
-    gamesWon?: number;
-  }>;
+  players: Array<{ id: string; name: string; totalPoints?: number; matchesWon?: number; matchesLost?: number; setsWon?: number; gamesWon?: number }>;
   pendingPlayers: PendingPlayer[];
+  /** Present when organizer ended the event (KOH). */
+  endedAt?: string | null;
   leaderboard: Array<{
     playerId: string;
     name: string;

@@ -1,7 +1,9 @@
 import type { ScoringMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 export function formatTournamentMode(mode: TournamentMode): string {
-  return mode === "MEXICANO" ? "Mexicano" : "Americano";
+  if (mode === "MEXICANO") return "Mexicano";
+  if (mode === "KING_OF_THE_HILL") return "King of the Hill";
+  return "Americano";
 }
 
 /** Live / board header: Regular vs Americano/Mexicano points label. */

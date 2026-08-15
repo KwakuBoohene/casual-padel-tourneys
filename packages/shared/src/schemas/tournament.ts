@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-export const modeSchema = z.enum(["AMERICANO", "MEXICANO"]);
+export const tournamentModeSchema = z.enum(["AMERICANO", "MEXICANO", "KING_OF_THE_HILL"]);
+/** @deprecated Prefer tournamentModeSchema — kept for existing imports. */
+export const modeSchema = tournamentModeSchema;
+export const americanoMexicanoModeSchema = z.enum(["AMERICANO", "MEXICANO"]);
 export const variantSchema = z.enum(["CLASSIC", "MIXED", "TEAM"]);
 export const schedulingModeSchema = z.enum(["TARGET_GAMES", "TOTAL_TIME", "ROUND_ROBIN"]);
 export const playerGenderSchema = z.enum(["MALE", "FEMALE"]);
@@ -20,7 +23,7 @@ export const regularScoringSchema = z.object({
 export const createTournamentSchema = z
   .object({
     name: z.string().min(2),
-    mode: modeSchema,
+    mode: americanoMexicanoModeSchema,
     variant: variantSchema,
     schedulingMode: schedulingModeSchema,
     players: z.array(z.object({ name: z.string().min(1), gender: playerGenderSchema.optional() })).min(4),

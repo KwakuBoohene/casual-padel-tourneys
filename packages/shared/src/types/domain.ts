@@ -1,4 +1,4 @@
-export type TournamentMode = "AMERICANO" | "MEXICANO";
+export type TournamentMode = "AMERICANO" | "MEXICANO" | "KING_OF_THE_HILL";
 export type TournamentVariant = "CLASSIC" | "MIXED" | "TEAM";
 export type SchedulingMode = "TARGET_GAMES" | "TOTAL_TIME" | "ROUND_ROBIN";
 export type PlayerGender = "MALE" | "FEMALE";
@@ -7,6 +7,16 @@ export type ScoringMode = "AMERICANO_POINTS" | "REGULAR";
 export type RegularSetFormat = "BO3_GAMES" | "BO5_GAMES" | "FULL_SET";
 export type GameWinBy = 1 | 2;
 export type TiebreakPoints = 7 | 10;
+
+/** KOH pairing strategy. ROUND_ROBIN_PAIRS reserved for the next epic. */
+export type KohPairingMode = "WINNER_STAYS" | "ROUND_ROBIN_PAIRS";
+
+/**
+ * How a single KOH game was won (per game, not per match).
+ * Used by live score API later — defined here for shared contracts.
+ */
+export type KohGameWinMethod = "REGULAR" | "GOLDEN" | "STAR";
+
 
 export interface TournamentPlayerInput {
   name: string;
@@ -121,3 +131,47 @@ export interface LeaderboardEntry {
   gamesWon?: number;
   gamesLost?: number;
 }
+
+/** Doubles-only KOH pair (no singles unit type). */
+export interface KohUnit {
+  id: string;
+  playerAId: string;
+  playerBId: string;
+  playerAName: string;
+  playerBName: string;
+}
+
+/**
+ * Per-court promotion into a stronger (lower-number) court.
+ * Required when the tournament has 2+ courts; omitted for single-court KOH.
+ */
+export interface KohPromotionRule {
+  /** Court that can promote (Court 1 is top — never promotes upward). */
+  courtNumber: number;
+  /** Match wins as king required before promoting. */
+  winsRequired: number;
+  /** Destination court; defaults to courtNumber - 1 when omitted. */
+  promoteToCourtNumber?: number;
+}
+
+/** Live court hub shape: king vs challenger, then FIFO waiting list. */
+export interface KohCourt {
+  id: string;
+  /** 1 = strongest / top of the ladder. */
+  courtNumber: number;
+  king: KohUnit | null;
+  challenger: KohUnit | null;
+  /** FIFO queue after the on-court challenger. */
+  waiting: KohUnit[];
+}
+
+export interface KohTournamentConfig {
+  name: string;
+  mode: "KING_OF_THE_HILL";
+  pairingMode: KohPairingMode;
+  courts: number;
+  regularScoring: RegularScoringConfig;
+  /** Present when courts ≥ 2; one rule per promote-capable court (typically 2..N). */
+  promotionRules?: KohPromotionRule[];
+}
+

@@ -11,6 +11,7 @@ datasource db {
 enum TournamentMode {
   AMERICANO
   MEXICANO
+  KING_OF_THE_HILL
 }
 
 enum TournamentVariant {
@@ -34,6 +35,19 @@ enum RegularSetFormat {
   BO3_GAMES
   BO5_GAMES
   FULL_SET
+}
+
+/** KOH pairing strategy. ROUND_ROBIN_PAIRS reserved for a later epic. */
+enum KohPairingMode {
+  WINNER_STAYS
+  ROUND_ROBIN_PAIRS
+}
+
+/** Per-game win method on KOH matches (not Americano rally points). */
+enum KohGameWinMethod {
+  REGULAR
+  GOLDEN
+  STAR
 }
 
 model User {
@@ -95,6 +109,8 @@ model Tournament {
   regularSetsToWin      Int?
   regularSetTiebreakTo  Int?
   regularMatchTiebreak  Boolean?
+  /** KOH only — null on Americano/Mexicano rows. */
+  pairingMode           KohPairingMode?
   targetGamesPerPlayer  Int?
   tournamentTimeMinutes Int?
   publicToken           String            @unique
@@ -109,6 +125,8 @@ model Tournament {
   players               Player[]
   rounds                Round[]
   pendingPlayers        PendingPlayer[]
+  kohCourts             KohCourt[]
+  kohPromotionRules     KohPromotionRule[]
 }
 
 model Player {
@@ -128,6 +146,8 @@ model Player {
   integrationWave Int?
   integratedAt    DateTime?
   tournament      Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  kohUnitsAsA     KohUnit[]  @relation("KohUnitPlayerA")
+  kohUnitsAsB     KohUnit[]  @relation("KohUnitPlayerB")
 
   @@index([tournamentId])
 }
@@ -180,3 +200,98 @@ model MatchSet {
   @@unique([matchId, setNumber])
   @@index([matchId])
 }
+
+// ---------------------------------------------------------------------------
+// King of the Hill (winner-stays) — dedicated models; do not overload Round/Match
+// ---------------------------------------------------------------------------
+
+/** One physical court on the KOH ladder (courtNumber 1 = top). */
+model KohCourt {
+  id           String     @id @default(cuid())
+  tournamentId String
+  courtNumber  Int
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  units        KohUnit[]
+  matches      KohMatch[]
+
+  @@unique([tournamentId, courtNumber])
+  @@index([tournamentId])
+}
+
+/**
+ * Doubles pair on a KOH court.
+ * queuePosition: 0 = king, 1 = challenger, ≥2 = FIFO waiting.
+ * Soft cap: max 12 units per court (enforced in API).
+ */
+model KohUnit {
+  id              String   @id @default(cuid())
+  courtId         String
+  playerAId       String
+  playerBId       String
+  queuePosition   Int
+  matchesWon      Int      @default(0)
+  matchesLost     Int      @default(0)
+  /** Consecutive wins as king — used for promotion streaks. */
+  kingWinStreak   Int      @default(0)
+  court           KohCourt @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  playerA         Player   @relation("KohUnitPlayerA", fields: [playerAId], references: [id], onDelete: Cascade)
+  playerB         Player   @relation("KohUnitPlayerB", fields: [playerBId], references: [id], onDelete: Cascade)
+  matchesAsA      KohMatch[] @relation("KohMatchUnitA")
+  matchesAsB      KohMatch[] @relation("KohMatchUnitB")
+  matchesWonRef   KohMatch[] @relation("KohMatchWinner")
+
+  @@unique([courtId, queuePosition])
+  @@index([courtId])
+  @@index([playerAId])
+  @@index([playerBId])
+}
+
+model KohPromotionRule {
+  id                   String     @id @default(cuid())
+  tournamentId         String
+  courtNumber          Int
+  winsRequired         Int
+  promoteToCourtNumber Int?
+  tournament           Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, courtNumber])
+  @@index([tournamentId])
+}
+
+model KohMatch {
+  id           String    @id @default(cuid())
+  courtId      String
+  unitAId      String
+  unitBId      String
+  winnerUnitId String?
+  completed    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  court        KohCourt  @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  unitA        KohUnit   @relation("KohMatchUnitA", fields: [unitAId], references: [id], onDelete: Cascade)
+  unitB        KohUnit   @relation("KohMatchUnitB", fields: [unitBId], references: [id], onDelete: Cascade)
+  winnerUnit   KohUnit?  @relation("KohMatchWinner", fields: [winnerUnitId], references: [id], onDelete: SetNull)
+  sets         KohMatchSet[]
+
+  @@index([courtId])
+  @@index([unitAId])
+  @@index([unitBId])
+}
+
+model KohMatchSet {
+  id           String            @id @default(cuid())
+  matchId      String
+  setNumber    Int
+  gamesA       Int
+  gamesB       Int
+  tbA          Int?
+  tbB          Int?
+  /** Win method for each game won by side A (parallel to games counted). Optional until score API. */
+  winMethodsA  KohGameWinMethod[]
+  winMethodsB  KohGameWinMethod[]
+  match        KohMatch          @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, setNumber])
+  @@index([matchId])
+}
+

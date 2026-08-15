@@ -2,7 +2,8 @@ import type { FastifyInstance } from "fastify";
 import {
   assignKohCourtsSchema,
   createKohTournamentSchema,
-  reorderKohQueueSchema
+  reorderKohQueueSchema,
+  submitKohScoreSchema
 } from "@padel/shared";
 
 import { requireOrganizerAccess } from "../lib/auth.js";
@@ -10,8 +11,10 @@ import {
   assignKohCourts,
   createKohTournament,
   getKohHub,
+  KohVersionConflictError,
   randomizeKohCourtQueue,
-  reorderKohCourtQueue
+  reorderKohCourtQueue,
+  submitKohCourtScore
 } from "../lib/kohStore.js";
 import { publishEvent } from "../realtime/events.js";
 import { broadcastToTournament } from "../realtime/socketHub.js";
@@ -126,6 +129,50 @@ export async function registerKohRoutes(server: FastifyInstance): Promise<void> 
         return { data };
       } catch (error) {
         const message = (error as Error).message || "Reorder failed.";
+        reply.status(isNotFoundMessage(message) ? 404 : 400);
+        return { message };
+      }
+    }
+  );
+
+  server.post(
+    "/koh/tournaments/:id/courts/:courtId/score",
+    { preHandler: requireOrganizerAccess },
+    async (request, reply) => {
+      const params = request.params as { id: string; courtId: string };
+      const parsed = submitKohScoreSchema.safeParse(request.body);
+      if (!parsed.success) {
+        reply.status(400);
+        return { errors: parsed.error.flatten() };
+      }
+      if (!request.user) {
+        reply.status(401);
+        return { message: "Unauthorized" };
+      }
+      try {
+        const data = await submitKohCourtScore(params.id, request.user.id, params.courtId, parsed.data);
+        const event = {
+          type: "KOH_SCORE_SUBMITTED" as const,
+          tournamentId: data.id,
+          payload: data
+        };
+        await publishEvent(server.redis, event);
+        broadcastToTournament(server.subscriptions, data.id, event);
+        request.log.info(
+          { id: params.id, courtId: params.courtId, status: parsed.data.status },
+          "POST .../score"
+        );
+        return { data };
+      } catch (error) {
+        if (error instanceof KohVersionConflictError) {
+          reply.status(409);
+          return {
+            message: error.message,
+            expectedVersion: error.expectedVersion,
+            actualVersion: error.actualVersion
+          };
+        }
+        const message = (error as Error).message || "Score submit failed.";
         reply.status(isNotFoundMessage(message) ? 404 : 400);
         return { message };
       }

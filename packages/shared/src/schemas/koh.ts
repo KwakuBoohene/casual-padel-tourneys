@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { regularScoringSchema } from "./tournament.js";
+import { matchSetSchema, regularScoringSchema } from "./tournament.js";
 
 export const kohPairingModeSchema = z.enum(["WINNER_STAYS", "ROUND_ROBIN_PAIRS"]);
 export const kohGameWinMethodSchema = z.enum(["REGULAR", "GOLDEN", "STAR"]);
@@ -149,3 +149,24 @@ export const reorderKohQueueSchema = z.object({
 
 export type AssignKohCourtsInput = z.infer<typeof assignKohCourtsSchema>;
 export type ReorderKohQueueInput = z.infer<typeof reorderKohQueueSchema>;
+
+export const kohMatchSetSchema = matchSetSchema.extend({
+  winMethodsA: z.array(kohGameWinMethodSchema).optional(),
+  winMethodsB: z.array(kohGameWinMethodSchema).optional()
+});
+
+/**
+ * Score a KOH court match (king = side A, challenger = side B at submit time).
+ * DRAFT persists sets only; COMPLETE runs winner-stays.
+ */
+export const submitKohScoreSchema = z.object({
+  sets: z.array(kohMatchSetSchema).min(1),
+  status: z.enum(["DRAFT", "COMPLETE"]),
+  matchTbA: z.number().int().min(0).optional(),
+  matchTbB: z.number().int().min(0).optional(),
+  expectedVersion: z.number().int().min(0),
+  /** Continue an existing draft match; omit to start/replace open draft for king vs challenger. */
+  matchId: z.string().min(1).optional()
+});
+
+export type SubmitKohScoreInput = z.infer<typeof submitKohScoreSchema>;

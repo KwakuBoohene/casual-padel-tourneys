@@ -17,7 +17,8 @@ export interface TournamentEvent<T = unknown> {
     | "PENDING_PLAYERS_INTEGRATED"
     | "KOH_ASSIGNMENT_UPDATED"
     | "KOH_QUEUE_RANDOMIZED"
-    | "KOH_QUEUE_REORDERED";
+    | "KOH_QUEUE_REORDERED"
+    | "KOH_SCORE_SUBMITTED";
   tournamentId: string;
   payload: T;
 }

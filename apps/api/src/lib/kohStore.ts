@@ -3,11 +3,17 @@ import type {
   CreateKohTournamentInput,
   KohCourt,
   KohPromotionRule,
-  KohUnit
+  KohUnit,
+  MatchSet,
+  SubmitKohScoreInput
 } from "@padel/shared";
-import { createId, KOH_MAX_UNITS_PER_COURT } from "@padel/shared";
+import { createId, evaluateMatch, KOH_MAX_UNITS_PER_COURT } from "@padel/shared";
 
-import { shuffleQueueOnce, type KohEngineUnit } from "../engine/koh/index.js";
+import {
+  applyKohMatchResult,
+  shuffleQueueOnce,
+  type KohEngineUnit
+} from "../engine/koh/index.js";
 import { logger } from "./logger.js";
 import { prisma } from "./prisma.js";
 
@@ -22,6 +28,14 @@ const kohInclude = {
           playerB: true
         },
         orderBy: { queuePosition: "asc" as const }
+      },
+      matches: {
+        where: { completed: false },
+        include: {
+          sets: { orderBy: { setNumber: "asc" as const } }
+        },
+        orderBy: { updatedAt: "desc" as const },
+        take: 1
       }
     },
     orderBy: { courtNumber: "asc" as const }
@@ -30,8 +44,22 @@ const kohInclude = {
 
 type KohDbTournament = Awaited<ReturnType<typeof loadKohRow>>;
 
+export type KohHubActiveMatch = {
+  id: string;
+  unitAId: string;
+  unitBId: string;
+  completed: boolean;
+  sets: Array<
+    MatchSet & {
+      winMethodsA?: Array<"REGULAR" | "GOLDEN" | "STAR">;
+      winMethodsB?: Array<"REGULAR" | "GOLDEN" | "STAR">;
+    }
+  >;
+};
+
 export type KohHubCourt = KohCourt & {
   unitCount: number;
+  activeMatch: KohHubActiveMatch | null;
 };
 
 export type KohTournamentHub = {
@@ -56,7 +84,24 @@ export type KohTournamentHub = {
   ready: boolean;
   /** Present when court unit counts differ by more than 1. */
   balanceHint: string | null;
+  /** Last match result event after a COMPLETE score (optional). */
+  lastMatchEvent?: {
+    type: "KING_WIN" | "KING_LOSS";
+    courtId: string;
+    winnerUnitId: string;
+    loserUnitId: string;
+  };
 };
+
+export class KohVersionConflictError extends Error {
+  constructor(
+    public readonly expectedVersion: number,
+    public readonly actualVersion: number
+  ) {
+    super(`Version conflict: expected ${expectedVersion}, got ${actualVersion}.`);
+    this.name = "KohVersionConflictError";
+  }
+}
 
 function mapUnit(row: {
   id: string;
@@ -85,16 +130,49 @@ function mapCourt(row: {
     playerA: { name: string };
     playerB: { name: string };
   }>;
+  matches?: Array<{
+    id: string;
+    unitAId: string;
+    unitBId: string;
+    completed: boolean;
+    sets: Array<{
+      setNumber: number;
+      gamesA: number;
+      gamesB: number;
+      tbA: number | null;
+      tbB: number | null;
+      winMethodsA: Array<"REGULAR" | "GOLDEN" | "STAR">;
+      winMethodsB: Array<"REGULAR" | "GOLDEN" | "STAR">;
+    }>;
+  }>;
 }): KohHubCourt {
   const ordered = [...row.units].sort((a, b) => a.queuePosition - b.queuePosition);
   const mapped = ordered.map(mapUnit);
+  const draft = row.matches?.[0];
   return {
     id: row.id,
     courtNumber: row.courtNumber,
     king: mapped[0] ?? null,
     challenger: mapped[1] ?? null,
     waiting: mapped.slice(2),
-    unitCount: mapped.length
+    unitCount: mapped.length,
+    activeMatch: draft
+      ? {
+          id: draft.id,
+          unitAId: draft.unitAId,
+          unitBId: draft.unitBId,
+          completed: draft.completed,
+          sets: draft.sets.map((set) => ({
+            setNumber: set.setNumber,
+            gamesA: set.gamesA,
+            gamesB: set.gamesB,
+            tbA: set.tbA ?? undefined,
+            tbB: set.tbB ?? undefined,
+            winMethodsA: set.winMethodsA.length > 0 ? set.winMethodsA : undefined,
+            winMethodsB: set.winMethodsB.length > 0 ? set.winMethodsB : undefined
+          }))
+        }
+      : null
   };
 }
 
@@ -417,4 +495,273 @@ export async function reorderKohCourtQueue(
   });
 
   return getKohHub(tournamentId, organizerId);
+}
+
+function regularConfigFromRow(row: NonNullable<KohDbTournament>) {
+  return {
+    setFormat: row.regularSetFormat ?? ("FULL_SET" as const),
+    gameWinBy: (row.regularGameWinBy === 1 ? 1 : 2) as 1 | 2,
+    setsToWin: row.regularSetsToWin ?? 1,
+    setTiebreakTo:
+      row.regularSetTiebreakTo === 7 || row.regularSetTiebreakTo === 10
+        ? (row.regularSetTiebreakTo as 7 | 10)
+        : undefined,
+    matchTiebreak: row.regularMatchTiebreak ?? undefined
+  };
+}
+
+function toEngineCourt(court: {
+  id: string;
+  courtNumber: number;
+  units: Array<{
+    id: string;
+    queuePosition: number;
+    playerAId: string;
+    playerBId: string;
+    matchesWon: number;
+    matchesLost: number;
+    kingWinStreak: number;
+  }>;
+}) {
+  const ordered = [...court.units].sort((a, b) => a.queuePosition - b.queuePosition);
+  return {
+    id: court.id,
+    courtNumber: court.courtNumber,
+    queue: ordered.map(
+      (unit): KohEngineUnit => ({
+        id: unit.id,
+        playerAId: unit.playerAId,
+        playerBId: unit.playerBId,
+        matchesWon: unit.matchesWon,
+        matchesLost: unit.matchesLost,
+        kingWinStreak: unit.kingWinStreak
+      })
+    )
+  };
+}
+
+async function replaceMatchSets(matchId: string, sets: SubmitKohScoreInput["sets"]): Promise<void> {
+  await prisma.kohMatchSet.deleteMany({ where: { matchId } });
+  await prisma.kohMatchSet.createMany({
+    data: sets.map((set) => ({
+      id: createId("kohset"),
+      matchId,
+      setNumber: set.setNumber,
+      gamesA: set.gamesA,
+      gamesB: set.gamesB,
+      tbA: set.tbA ?? null,
+      tbB: set.tbB ?? null,
+      winMethodsA: set.winMethodsA ?? [],
+      winMethodsB: set.winMethodsB ?? []
+    }))
+  });
+}
+
+/**
+ * Submit DRAFT or COMPLETE Regular score for the on-court king vs challenger.
+ * Side A = king, side B = challenger at the time of submit (or of existing draft).
+ */
+export async function submitKohCourtScore(
+  tournamentId: string,
+  organizerId: string,
+  courtId: string,
+  input: SubmitKohScoreInput
+): Promise<KohTournamentHub> {
+  const row = await requireKohTournament(tournamentId, organizerId);
+  if (row.version !== input.expectedVersion) {
+    throw new KohVersionConflictError(input.expectedVersion, row.version);
+  }
+
+  const court = row.kohCourts.find((entry) => entry.id === courtId);
+  if (!court) {
+    throw new Error("Court not found.");
+  }
+  if (court.units.length < 2) {
+    throw new Error("Court needs at least king and challenger to score.");
+  }
+
+  const ordered = [...court.units].sort((a, b) => a.queuePosition - b.queuePosition);
+  const king = ordered[0];
+  const challenger = ordered[1];
+  const regular = regularConfigFromRow(row);
+  const setsForEval: MatchSet[] = input.sets.map((set) => ({
+    setNumber: set.setNumber,
+    gamesA: set.gamesA,
+    gamesB: set.gamesB,
+    tbA: set.tbA,
+    tbB: set.tbB
+  }));
+
+  if (input.status === "DRAFT") {
+    let matchId = input.matchId;
+    if (matchId) {
+      const existing = await prisma.kohMatch.findFirst({
+        where: { id: matchId, courtId, completed: false }
+      });
+      if (!existing) {
+        throw new Error("Draft match not found.");
+      }
+      await replaceMatchSets(matchId, input.sets);
+      await prisma.kohMatch.update({
+        where: { id: matchId },
+        data: { updatedAt: new Date() }
+      });
+    } else {
+      const open = await prisma.kohMatch.findFirst({
+        where: { courtId, completed: false },
+        orderBy: { updatedAt: "desc" }
+      });
+      if (open) {
+        matchId = open.id;
+        await replaceMatchSets(matchId, input.sets);
+        await prisma.kohMatch.update({
+          where: { id: matchId },
+          data: { updatedAt: new Date() }
+        });
+      } else {
+        matchId = createId("kohmatch");
+        await prisma.kohMatch.create({
+          data: {
+            id: matchId,
+            courtId,
+            unitAId: king.id,
+            unitBId: challenger.id,
+            completed: false
+          }
+        });
+        await replaceMatchSets(matchId, input.sets);
+      }
+    }
+
+    await prisma.tournament.update({
+      where: { id: tournamentId },
+      data: { version: { increment: 1 }, updatedAt: new Date() }
+    });
+    logger.info("kohStore/submitKohCourtScore draft", { tournamentId, courtId, matchId });
+    return getKohHub(tournamentId, organizerId);
+  }
+
+  const evaluation = evaluateMatch(setsForEval, regular, {
+    a: input.matchTbA,
+    b: input.matchTbB
+  });
+  if (!evaluation.complete || !evaluation.winner) {
+    throw new Error(evaluation.error ?? "Regular match is not complete.");
+  }
+
+  let matchId = input.matchId;
+  let unitAId = king.id;
+  let unitBId = challenger.id;
+  if (matchId) {
+    const existing = await prisma.kohMatch.findFirst({
+      where: { id: matchId, courtId, completed: false }
+    });
+    if (!existing) {
+      throw new Error("Draft match not found.");
+    }
+    unitAId = existing.unitAId;
+    unitBId = existing.unitBId;
+  } else {
+    const open = await prisma.kohMatch.findFirst({
+      where: { courtId, completed: false },
+      orderBy: { updatedAt: "desc" }
+    });
+    if (open) {
+      matchId = open.id;
+      unitAId = open.unitAId;
+      unitBId = open.unitBId;
+    }
+  }
+
+  const winnerUnitId = evaluation.winner === "A" ? unitAId : unitBId;
+  const engineBefore = toEngineCourt(court);
+  let engineCourt = engineBefore;
+  if (engineBefore.queue[0]?.id !== unitAId || engineBefore.queue[1]?.id !== unitBId) {
+    const byId = new Map(engineBefore.queue.map((unit) => [unit.id, unit]));
+    const a = byId.get(unitAId);
+    const b = byId.get(unitBId);
+    if (!a || !b) {
+      throw new Error("Match units are no longer on this court.");
+    }
+    const rest = engineBefore.queue.filter((unit) => unit.id !== unitAId && unit.id !== unitBId);
+    engineCourt = { ...engineBefore, queue: [a, b, ...rest] };
+  }
+
+  const { court: engineAfter, event } = applyKohMatchResult(engineCourt, winnerUnitId);
+
+  if (!matchId) {
+    matchId = createId("kohmatch");
+    await prisma.kohMatch.create({
+      data: {
+        id: matchId,
+        courtId,
+        unitAId,
+        unitBId,
+        completed: false
+      }
+    });
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.kohMatchSet.deleteMany({ where: { matchId } });
+    await tx.kohMatchSet.createMany({
+      data: input.sets.map((set) => ({
+        id: createId("kohset"),
+        matchId: matchId!,
+        setNumber: set.setNumber,
+        gamesA: set.gamesA,
+        gamesB: set.gamesB,
+        tbA: set.tbA ?? null,
+        tbB: set.tbB ?? null,
+        winMethodsA: set.winMethodsA ?? [],
+        winMethodsB: set.winMethodsB ?? []
+      }))
+    });
+    await tx.kohMatch.update({
+      where: { id: matchId! },
+      data: {
+        completed: true,
+        winnerUnitId,
+        updatedAt: new Date()
+      }
+    });
+
+    for (let index = 0; index < engineAfter.queue.length; index += 1) {
+      await tx.kohUnit.update({
+        where: { id: engineAfter.queue[index].id },
+        data: { queuePosition: 1000 + index }
+      });
+    }
+    for (let index = 0; index < engineAfter.queue.length; index += 1) {
+      const unit = engineAfter.queue[index];
+      await tx.kohUnit.update({
+        where: { id: unit.id },
+        data: {
+          queuePosition: index,
+          matchesWon: unit.matchesWon,
+          matchesLost: unit.matchesLost,
+          kingWinStreak: unit.kingWinStreak
+        }
+      });
+    }
+
+    await tx.tournament.update({
+      where: { id: tournamentId },
+      data: { version: { increment: 1 }, updatedAt: new Date() }
+    });
+  });
+
+  logger.info("kohStore/submitKohCourtScore complete", {
+    tournamentId,
+    courtId,
+    matchId,
+    winnerUnitId,
+    event: event.type
+  });
+
+  const hub = await getKohHub(tournamentId, organizerId);
+  return {
+    ...hub,
+    lastMatchEvent: event
+  };
 }

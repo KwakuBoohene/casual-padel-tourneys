@@ -22,17 +22,19 @@ export function useGameEstimator() {
   const estimatorUsers = Number(estimatorUsersText);
   const estimator = useMemo(
     () =>
-      computeEstimate({
-        courtsText: estimatorCourtsText,
-        pointsText: estimatorPointsText,
-        mode: estimatorMode,
-        schedulingMode: effectiveEstimatorSchedulingMode,
-        targetGamesText: estimatorTargetGamesText,
-        tournamentTimeText: estimatorTournamentTimeText,
-        playersCount: Number.isFinite(estimatorUsers) ? estimatorUsers : 0,
-        scoringMode: estimatorScoringMode,
-        regularSetsToWin: estimatorSetsToWin
-      }),
+      estimatorMode === "KING_OF_THE_HILL"
+        ? null
+        : computeEstimate({
+            courtsText: estimatorCourtsText,
+            pointsText: estimatorPointsText,
+            mode: estimatorMode,
+            schedulingMode: effectiveEstimatorSchedulingMode,
+            targetGamesText: estimatorTargetGamesText,
+            tournamentTimeText: estimatorTournamentTimeText,
+            playersCount: Number.isFinite(estimatorUsers) ? estimatorUsers : 0,
+            scoringMode: estimatorScoringMode,
+            regularSetsToWin: estimatorSetsToWin
+          }),
     [
       effectiveEstimatorSchedulingMode,
       estimatorCourtsText,

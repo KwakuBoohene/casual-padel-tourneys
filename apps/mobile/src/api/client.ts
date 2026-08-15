@@ -66,6 +66,24 @@ export async function apiPost<T>(path: string, payload: unknown): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+export async function apiPut<T>(path: string, payload: unknown): Promise<T> {
+  logger.debug("apiPut", { path, hasPayload: payload != null });
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {})
+    },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    const error = await parseApiError(response);
+    logger.error("apiPut failed", { path, status: error.status, message: error.message, code: error.code });
+    throw error;
+  }
+  return response.json() as Promise<T>;
+}
+
 export async function apiDelete<T>(path: string): Promise<T> {
   logger.debug("apiDelete", { path });
   const response = await fetch(`${apiBaseUrl}${path}`, {

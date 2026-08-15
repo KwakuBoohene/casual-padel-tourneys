@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { View } from "react-native";
 
 import { AlertSheet, BottomSheet, SheetButton } from "../../sheets";
@@ -18,6 +17,7 @@ interface OrganizerListScreenProps {
   onRefresh: () => void;
   onCreateAmericano: () => void;
   onCreateMexicano: () => void;
+  onCreateKingOfTheHill: () => void;
   onOpenEstimator: () => void;
   onOpenTournament: (id: string) => void;
   onOpenOptions: (id: string) => void;
@@ -31,7 +31,6 @@ interface OrganizerListScreenProps {
 
 export function OrganizerListScreen(props: OrganizerListScreenProps) {
   const isDelete = props.pendingTournamentAction === "DELETE";
-  const [showKohComingSoon, setShowKohComingSoon] = useState(false);
 
   return (
     <>
@@ -42,7 +41,7 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
         onRefresh={props.onRefresh}
         onCreateAmericano={props.onCreateAmericano}
         onCreateMexicano={props.onCreateMexicano}
-        onCreateKingOfTheHill={() => setShowKohComingSoon(true)}
+        onCreateKingOfTheHill={props.onCreateKingOfTheHill}
         onOpenEstimator={props.onOpenEstimator}
         onOpenTournament={props.onOpenTournament}
         onOpenOptions={props.onOpenOptions}
@@ -77,15 +76,6 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
         }}
         secondaryAction={{ label: "Cancel", onPress: props.onCancelActionConfirm }}
         onDismiss={props.onCancelActionConfirm}
-      />
-
-      <AlertSheet
-        visible={showKohComingSoon}
-        variant="info"
-        title="King of the Hill is next"
-        message="King of the Hill create flow ships in a later epic. Americano and Mexicano are ready now."
-        primaryAction={{ label: "Got it", onPress: () => setShowKohComingSoon(false) }}
-        onDismiss={() => setShowKohComingSoon(false)}
       />
     </>
   );

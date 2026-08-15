@@ -2,7 +2,8 @@ import { useRef, useState } from "react";
 
 import { useAuthSession } from "../useAuthSession";
 import type { SetupStep } from "../../types/organizer/tournament";
-
+import { openOrganizerTournament } from "../../utilities/organizer/openOrganizerTournament";
+import { useKohLiveSession } from "../koh/useKohLiveSession";
 import { useCreateTournament } from "./useCreateTournament";
 import { useGameEstimator } from "./useGameEstimator";
 import { useLiveTournament } from "./live/useLiveTournament";
@@ -10,68 +11,45 @@ import { useScoreDrafts } from "./score/useScoreDrafts";
 import { useTournamentList } from "./useTournamentList";
 
 export function useOrganizerScreen() {
-  const {
-    ready: authReady,
-    authToken,
-    currentUser,
-    emailVerifyRequired,
-    verifyBy,
-    handleSignedIn,
-    handleSignOut,
-    updateUser,
-    markEmailVerifyRequired,
-    clearEmailVerifyRequired
-  } = useAuthSession();
+  const auth = useAuthSession();
   const [step, setStep] = useState<SetupStep>("LIST");
   const [errorText, setErrorText] = useState("");
   const viewerBaseUrl = process.env.EXPO_PUBLIC_VIEWER_BASE_URL ?? "http://localhost:3000";
-
-  // The list needs to open/clear the live tournament, while the live tournament needs to write
-  // back into the list, so the live callbacks are forwarded through a ref to break the cycle.
   const liveCallbacks = useRef({
     openTournament: (async () => {}) as (tournamentId: string, editMode?: boolean) => Promise<void>,
-    onTournamentDeleted: (_tournamentId: string) => {}
+    onTournamentDeleted: (_id: string) => {}
   });
 
   const list = useTournamentList({
-    authReady,
-    authToken,
+    authReady: auth.ready,
+    authToken: auth.authToken,
     setErrorText,
-    markEmailVerifyRequired,
-    clearEmailVerifyRequired,
-    openTournament: (tournamentId, editMode) => liveCallbacks.current.openTournament(tournamentId, editMode),
-    onTournamentDeleted: (tournamentId) => liveCallbacks.current.onTournamentDeleted(tournamentId)
+    markEmailVerifyRequired: auth.markEmailVerifyRequired,
+    clearEmailVerifyRequired: auth.clearEmailVerifyRequired,
+    openTournament: (id, editMode) => liveCallbacks.current.openTournament(id, editMode),
+    onTournamentDeleted: (id) => liveCallbacks.current.onTournamentDeleted(id)
   });
 
   const live = useLiveTournament({
     setStep,
     setTournaments: list.setTournaments,
     setErrorText,
-    markEmailVerifyRequired
+    markEmailVerifyRequired: auth.markEmailVerifyRequired
   });
-
-  liveCallbacks.current = {
-    openTournament: live.openTournament,
-    onTournamentDeleted: (tournamentId) => {
-      if (live.liveTournament?.id === tournamentId) {
-        live.setLiveTournament(null);
-        setStep("LIST");
-      }
-    }
-  };
-
   const create = useCreateTournament({
     tournaments: list.tournaments,
     suggestedPlayerNames: list.suggestedPlayerNames,
     setTournaments: list.setTournaments,
     setStep,
     setErrorText,
-    markEmailVerifyRequired,
+    markEmailVerifyRequired: auth.markEmailVerifyRequired,
     adoptTournament: live.adoptTournament
   });
-
+  const koh = useKohLiveSession({
+    setErrorText,
+    markEmailVerifyRequired: auth.markEmailVerifyRequired
+  });
   const estimator = useGameEstimator();
-
   const drafts = useScoreDrafts({
     liveTournament: live.liveTournament,
     displayedRound: live.displayedRound,
@@ -79,11 +57,28 @@ export function useOrganizerScreen() {
     setErrorText
   });
 
-  const signOutAndReset = async () => {
-    await handleSignOut();
-    list.setTournaments([]);
-    live.setLiveTournament(null);
-    setStep("LIST");
+  const openTournamentSmart = (tournamentId: string, editMode?: boolean) =>
+    openOrganizerTournament({
+      tournamentId,
+      editMode,
+      listed: list.tournaments.find((item) => item.id === tournamentId),
+      openKoh: koh.openKohTournament,
+      openAmericano: live.openTournament,
+      setStep
+    });
+
+  liveCallbacks.current = {
+    openTournament: openTournamentSmart,
+    onTournamentDeleted: (id) => {
+      if (live.liveTournament?.id === id) {
+        live.setLiveTournament(null);
+        setStep("LIST");
+      }
+      if (koh.kohHub?.id === id) {
+        koh.clearKohHub();
+        setStep("LIST");
+      }
+    }
   };
 
   return {
@@ -92,18 +87,28 @@ export function useOrganizerScreen() {
     ...list,
     ...live,
     ...drafts,
-    authReady,
-    authToken,
-    currentUser,
-    emailVerifyRequired,
-    verifyBy,
-    handleSignedIn,
-    handleSignOut: signOutAndReset,
-    updateUser,
-    clearEmailVerifyRequired,
+    ...koh,
+    openTournament: openTournamentSmart,
+    authReady: auth.ready,
+    authToken: auth.authToken,
+    currentUser: auth.currentUser,
+    emailVerifyRequired: auth.emailVerifyRequired,
+    verifyBy: auth.verifyBy,
+    handleSignedIn: auth.handleSignedIn,
+    handleSignOut: async () => {
+      await auth.handleSignOut();
+      list.setTournaments([]);
+      live.setLiveTournament(null);
+      koh.clearKohHub();
+      setStep("LIST");
+    },
+    updateUser: auth.updateUser,
+    clearEmailVerifyRequired: auth.clearEmailVerifyRequired,
+    markEmailVerifyRequired: auth.markEmailVerifyRequired,
     step,
     setStep,
     errorText,
+    setErrorText,
     viewerBaseUrl
   };
 }

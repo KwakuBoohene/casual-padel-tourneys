@@ -21,17 +21,19 @@ export function useMatchSettings({ mode, effectiveSchedulingMode, playersCount }
 
   const estimate = useMemo(
     () =>
-      computeEstimate({
-        courtsText,
-        pointsText,
-        mode,
-        schedulingMode: effectiveSchedulingMode,
-        targetGamesText,
-        tournamentTimeText,
-        playersCount,
-        scoringMode: scoring.scoringMode,
-        regularSetsToWin: scoring.setsToWin
-      }),
+      mode === "KING_OF_THE_HILL"
+        ? null
+        : computeEstimate({
+            courtsText,
+            pointsText,
+            mode,
+            schedulingMode: effectiveSchedulingMode,
+            targetGamesText,
+            tournamentTimeText,
+            playersCount,
+            scoringMode: scoring.scoringMode,
+            regularSetsToWin: scoring.setsToWin
+          }),
     [
       courtsText,
       effectiveSchedulingMode,

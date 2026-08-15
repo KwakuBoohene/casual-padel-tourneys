@@ -8,6 +8,8 @@ export type SetupStep =
   | "PLAYERS"
   | "SETTINGS"
   | "LIVE"
+  | "KOH"
+  | "KOH_LIVE"
   | "LEADERBOARD"
   | "PLAYER_GAMES"
   | "PROFILE"

@@ -1,7 +1,9 @@
 import { ProfileScreen } from "../../screens/ProfileScreen";
+import { KohScreen } from "../../screens/KohScreen";
 import { useOrganizerScreen } from "../../hooks/organizer/useOrganizerScreen";
 import { formatTournamentMode } from "../../utilities/organizer/formatLabels";
 
+import { KohLiveStub } from "../koh/KohLiveStub";
 import { GameEstimatorView } from "./estimator/GameEstimatorView";
 import { LeaderboardView } from "./leaderboard/LeaderboardView";
 import { MatchSettingsStepView } from "./create/MatchSettingsStepView";
@@ -175,7 +177,12 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     changeRenameDraft,
     saveRenames,
     viewerBaseUrl,
-    handleSignOut
+    handleSignOut,
+    kohHub,
+    adoptKohHub,
+    clearKohHub,
+    setErrorText,
+    markEmailVerifyRequired
   } = org;
 
   const modeLabel = formatTournamentMode(mode);
@@ -192,6 +199,10 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         onRefresh={() => void loadTournaments()}
         onCreateAmericano={() => startCreateWithMode("AMERICANO")}
         onCreateMexicano={() => startCreateWithMode("MEXICANO")}
+        onCreateKingOfTheHill={() => {
+          setErrorText("");
+          setStep("KOH");
+        }}
         onOpenEstimator={() => setStep("ESTIMATOR")}
         onOpenTournament={(id) => void openTournament(id)}
         onOpenOptions={openTournamentOptions}
@@ -201,6 +212,34 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         onRequestDelete={() => requestTournamentAction("DELETE")}
         onCancelActionConfirm={() => setShowTournamentActionConfirmModal(false)}
         onConfirmAction={() => void confirmTournamentAction()}
+      />
+    );
+  }
+
+  if (step === "KOH") {
+    return (
+      <KohScreen
+        errorText={errorText}
+        setErrorText={setErrorText}
+        markEmailVerifyRequired={markEmailVerifyRequired}
+        onCancel={() => setStep("LIST")}
+        onStarted={(hub) => {
+          adoptKohHub(hub);
+          void loadTournaments();
+          setStep("KOH_LIVE");
+        }}
+      />
+    );
+  }
+
+  if (step === "KOH_LIVE" && kohHub) {
+    return (
+      <KohLiveStub
+        hub={kohHub}
+        onBackToList={() => {
+          clearKohHub();
+          setStep("LIST");
+        }}
       />
     );
   }

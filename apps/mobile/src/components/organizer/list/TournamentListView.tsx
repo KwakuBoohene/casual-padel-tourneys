@@ -34,12 +34,14 @@ export function TournamentListView(props: TournamentListViewProps) {
     ? ({ flexGrow: 1, flexBasis: "47%", minWidth: 260, maxWidth: 520 } as const)
     : undefined;
 
-  const activeTournaments = props.tournaments.filter(
-    (tournament) => !tournament.rounds.every((round) => round.matches.every((match) => match.completed))
-  );
-  const completedTournaments = props.tournaments.filter(
-    (tournament) => tournament.rounds.every((round) => round.matches.every((match) => match.completed))
-  );
+  const activeTournaments = props.tournaments.filter((tournament) => {
+    if (tournament.config.mode === "KING_OF_THE_HILL") return true;
+    return !tournament.rounds.every((round) => round.matches.every((match) => match.completed));
+  });
+  const completedTournaments = props.tournaments.filter((tournament) => {
+    if (tournament.config.mode === "KING_OF_THE_HILL") return false;
+    return tournament.rounds.every((round) => round.matches.every((match) => match.completed));
+  });
   const hasAny = props.tournaments.length > 0;
 
   return (

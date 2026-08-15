@@ -1,0 +1,54 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { prepareCreateTournamentRequest } from "../../../src/utilities/organizer/createTournamentRequest.ts";
+
+const baseDraft = {
+  name: "Friday Social",
+  mode: "AMERICANO" as const,
+  variant: "CLASSIC" as const,
+  schedulingMode: "TARGET_GAMES" as const,
+  players: ["A", "B", "C", "D", "E", "F", "G", "H"],
+  playerGenders: Array(8).fill(undefined) as undefined[],
+  sanitizedPlayersCount: 8,
+  hasDuplicatePlayerNames: false,
+  courtsText: "2",
+  pointsText: "24",
+  targetGamesText: "4",
+  tournamentTimeText: "90"
+};
+
+test("prepareCreateTournamentRequest includes Regular scoring fields without points", () => {
+  const prepared = prepareCreateTournamentRequest({
+    ...baseDraft,
+    scoringMode: "REGULAR",
+    regularScoring: {
+      setFormat: "FULL_SET",
+      gameWinBy: 2,
+      setsToWin: 1,
+      setTiebreakTo: 7
+    }
+  });
+  assert.equal(prepared.ok, true);
+  if (!prepared.ok) return;
+  assert.equal(prepared.payload.scoringMode, "REGULAR");
+  assert.equal(prepared.payload.regularScoring?.setFormat, "FULL_SET");
+  assert.equal(prepared.payload.pointsPerMatch, undefined);
+});
+
+test("prepareCreateTournamentRequest keeps Americano points and omits regularScoring", () => {
+  const prepared = prepareCreateTournamentRequest({
+    ...baseDraft,
+    scoringMode: "AMERICANO_POINTS",
+    regularScoring: {
+      setFormat: "BO3_GAMES",
+      gameWinBy: 1,
+      setsToWin: 1
+    }
+  });
+  assert.equal(prepared.ok, true);
+  if (!prepared.ok) return;
+  assert.equal(prepared.payload.scoringMode, "AMERICANO_POINTS");
+  assert.equal(prepared.payload.pointsPerMatch, 24);
+  assert.equal(prepared.payload.regularScoring, undefined);
+});

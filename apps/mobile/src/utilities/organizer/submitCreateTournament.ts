@@ -1,5 +1,12 @@
 import type { Dispatch, SetStateAction } from "react";
-import type { PlayerGender, SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
+import type {
+  PlayerGender,
+  RegularScoringConfig,
+  SchedulingMode,
+  ScoringMode,
+  TournamentMode,
+  TournamentVariant
+} from "@padel/shared";
 
 import { apiPost } from "../../api/client";
 import { isEmailVerifyRequired } from "../../api/errors";
@@ -20,6 +27,8 @@ export async function submitCreateTournament(input: {
   pointsText: string;
   targetGamesText: string;
   tournamentTimeText: string;
+  scoringMode: ScoringMode;
+  regularScoring: RegularScoringConfig;
   setErrorText: (value: string) => void;
   setResponseText: (value: string) => void;
   setTournaments: Dispatch<SetStateAction<LiveTournamentState[]>>;
@@ -40,7 +49,9 @@ export async function submitCreateTournament(input: {
     courtsText: input.courtsText,
     pointsText: input.pointsText,
     targetGamesText: input.targetGamesText,
-    tournamentTimeText: input.tournamentTimeText
+    tournamentTimeText: input.tournamentTimeText,
+    scoringMode: input.scoringMode,
+    regularScoring: input.regularScoring
   });
   if (!prepared.ok) {
     input.setErrorText(prepared.error);

@@ -9,6 +9,8 @@ export interface WizardChromeProps {
   modeLabel: string;
   stepIndex: number;
   stepCount: number;
+  /** Overrides default `${modeLabel} · Step n of m` progress line. */
+  progressText?: string;
   title: string;
   subtitle?: string;
   children: ReactNode;
@@ -24,7 +26,7 @@ export interface WizardChromeProps {
 export function WizardChrome(props: WizardChromeProps) {
   const { colors } = useTheme();
   const { formMaxWidth } = useBreakpoint();
-  const progress = `${props.modeLabel} · Step ${props.stepIndex} of ${props.stepCount}`;
+  const progress = props.progressText ?? `${props.modeLabel} · Step ${props.stepIndex} of ${props.stepCount}`;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

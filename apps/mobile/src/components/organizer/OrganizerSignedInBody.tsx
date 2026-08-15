@@ -49,6 +49,20 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     onChangePointsValue,
     onChangeTargetGamesValue,
     onChangeTournamentTimeValue,
+    settingsPhase,
+    setSettingsPhase,
+    scoringMode,
+    setScoringMode,
+    setFormat,
+    setSetFormat,
+    gameWinBy,
+    setGameWinBy,
+    setsToWin,
+    setSetsToWin,
+    setTiebreakTo,
+    setSetTiebreakTo,
+    matchTiebreak,
+    setMatchTiebreak,
     responseText,
     createTournament,
     estimatorMode,
@@ -405,6 +419,13 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     <MatchSettingsStepView
       modeLabel={modeLabel}
       schedulingMode={effectiveSchedulingMode}
+      settingsPhase={settingsPhase}
+      scoringMode={scoringMode}
+      setFormat={setFormat}
+      gameWinBy={gameWinBy}
+      setsToWin={setsToWin}
+      setTiebreakTo={setTiebreakTo}
+      matchTiebreak={matchTiebreak}
       courtsText={courtsText}
       pointsText={pointsText}
       targetGamesText={targetGamesText}
@@ -413,11 +434,19 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
       responseText={responseText}
       errorText={errorText}
       playersCount={sanitizedPlayers.length}
+      onChangeScoringMode={setScoringMode}
+      onChangeSetFormat={setSetFormat}
+      onChangeGameWinBy={setGameWinBy}
+      onChangeSetsToWin={setSetsToWin}
+      onChangeSetTiebreakTo={setSetTiebreakTo}
+      onChangeMatchTiebreak={setMatchTiebreak}
       onChangeCourts={onChangeCourtsValue}
       onChangePoints={onChangePointsValue}
       onChangeTargetGames={onChangeTargetGamesValue}
       onChangeTournamentTime={onChangeTournamentTimeValue}
-      onBack={() => setStep("PLAYERS")}
+      onBackToPlayers={() => setStep("PLAYERS")}
+      onBackToMode={() => setSettingsPhase("MODE")}
+      onNextFromMode={() => setSettingsPhase("DETAILS")}
       onCreate={() => void createTournament()}
     />
   );

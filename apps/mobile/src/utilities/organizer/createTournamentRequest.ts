@@ -1,4 +1,11 @@
-import type { PlayerGender, SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
+import type {
+  PlayerGender,
+  RegularScoringConfig,
+  SchedulingMode,
+  ScoringMode,
+  TournamentMode,
+  TournamentVariant
+} from "@padel/shared";
 
 export interface CreateTournamentDraft {
   name: string;
@@ -13,6 +20,8 @@ export interface CreateTournamentDraft {
   pointsText: string;
   targetGamesText: string;
   tournamentTimeText: string;
+  scoringMode: ScoringMode;
+  regularScoring: RegularScoringConfig;
 }
 
 export interface CreateTournamentPayload {
@@ -22,7 +31,9 @@ export interface CreateTournamentPayload {
   schedulingMode: SchedulingMode;
   players: Array<{ name: string; gender: PlayerGender | undefined }>;
   courts: number;
-  pointsPerMatch: number;
+  pointsPerMatch?: number;
+  scoringMode: ScoringMode;
+  regularScoring?: RegularScoringConfig;
   targetGamesPerPlayer: number | undefined;
   tournamentTimeMinutes: number | undefined;
 }
@@ -38,12 +49,15 @@ export function prepareCreateTournamentRequest(
   const pointsPerMatch = Number(draft.pointsText);
   const targetGames = Number(draft.targetGamesText);
   const tournamentTime = Number(draft.tournamentTimeText);
+  const scoringMode = draft.scoringMode;
 
   if (!Number.isInteger(courts) || courts < 1) {
     return { ok: false, error: "Courts must be a whole number greater than 0." };
   }
-  if (!Number.isInteger(pointsPerMatch) || pointsPerMatch < 1) {
-    return { ok: false, error: "Points per match must be a whole number greater than 0." };
+  if (scoringMode === "AMERICANO_POINTS") {
+    if (!Number.isInteger(pointsPerMatch) || pointsPerMatch < 1) {
+      return { ok: false, error: "Points per match must be a whole number greater than 0." };
+    }
   }
   if (draft.schedulingMode === "TARGET_GAMES" && (!Number.isInteger(targetGames) || targetGames < 1)) {
     return { ok: false, error: "Target games must be a whole number greater than 0." };
@@ -60,6 +74,38 @@ export function prepareCreateTournamentRequest(
   if (draft.hasDuplicatePlayerNames) {
     return { ok: false, error: "No two players can have the same name." };
   }
+  if (scoringMode === "REGULAR") {
+    if (draft.regularScoring.setFormat === "FULL_SET" && draft.regularScoring.gameWinBy === 2) {
+      if (draft.regularScoring.setTiebreakTo !== 7 && draft.regularScoring.setTiebreakTo !== 10) {
+        return { ok: false, error: "Choose set tiebreak to 7 or 10 for full set win-by-2." };
+      }
+    }
+  }
+
+  const players = draft.players
+    .map((playerName, index) => ({
+      name: playerName.trim(),
+      gender: draft.variant === "MIXED" ? draft.playerGenders[index] : undefined
+    }))
+    .filter((item) => item.name.length > 0);
+
+  if (scoringMode === "REGULAR") {
+    return {
+      ok: true,
+      payload: {
+        name: draft.name.trim(),
+        mode: draft.mode,
+        variant: draft.variant,
+        schedulingMode: draft.schedulingMode,
+        players,
+        courts,
+        scoringMode: "REGULAR",
+        regularScoring: draft.regularScoring,
+        targetGamesPerPlayer: draft.schedulingMode === "TARGET_GAMES" ? targetGames : undefined,
+        tournamentTimeMinutes: draft.schedulingMode === "TOTAL_TIME" ? tournamentTime : undefined
+      }
+    };
+  }
 
   return {
     ok: true,
@@ -68,14 +114,10 @@ export function prepareCreateTournamentRequest(
       mode: draft.mode,
       variant: draft.variant,
       schedulingMode: draft.schedulingMode,
-      players: draft.players
-        .map((playerName, index) => ({
-          name: playerName.trim(),
-          gender: draft.variant === "MIXED" ? draft.playerGenders[index] : undefined
-        }))
-        .filter((item) => item.name.length > 0),
+      players,
       courts,
       pointsPerMatch,
+      scoringMode: "AMERICANO_POINTS",
       targetGamesPerPlayer: draft.schedulingMode === "TARGET_GAMES" ? targetGames : undefined,
       tournamentTimeMinutes: draft.schedulingMode === "TOTAL_TIME" ? tournamentTime : undefined
     }

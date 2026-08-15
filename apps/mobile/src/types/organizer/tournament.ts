@@ -1,6 +1,6 @@
 import type { PendingPlayer, SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
-export type { Estimate, SetupStep } from "./setup";
+export type { Estimate, EstimatorCreateDraft, SetupStep } from "./setup";
 
 export interface LiveTournamentState {
   id: string;

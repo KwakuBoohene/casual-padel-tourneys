@@ -1,19 +1,30 @@
 import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
-import type { SchedulingMode } from "@padel/shared";
+import type {
+  GameWinBy,
+  RegularSetFormat,
+  SchedulingMode,
+  ScoringMode,
+  TiebreakPoints
+} from "@padel/shared";
 
 import { AlertSheet } from "../../sheets";
 import type { Estimate } from "../../../types/organizer/tournament";
-import { spacing } from "../../../theme";
-import { useTheme } from "../../../theme/ThemeProvider";
+import type { SettingsPhase } from "../../../hooks/organizer/useScoringModeSettings";
 
-import { SettingsEstimateCard } from "./SettingsEstimateCard";
-import { SettingsStepper } from "./SettingsStepper";
+import { MatchDetailsFields } from "./MatchDetailsFields";
+import { ScoringModePhase } from "./ScoringModePhase";
 import { WizardChrome } from "./WizardChrome";
 
 interface MatchSettingsStepViewProps {
   modeLabel: string;
   schedulingMode: SchedulingMode;
+  settingsPhase: SettingsPhase;
+  scoringMode: ScoringMode;
+  setFormat: RegularSetFormat;
+  gameWinBy: GameWinBy;
+  setsToWin: number;
+  setTiebreakTo: TiebreakPoints;
+  matchTiebreak: boolean;
   courtsText: string;
   pointsText: string;
   targetGamesText: string;
@@ -22,11 +33,19 @@ interface MatchSettingsStepViewProps {
   responseText: string;
   errorText: string;
   playersCount: number;
+  onChangeScoringMode: (value: ScoringMode) => void;
+  onChangeSetFormat: (value: RegularSetFormat) => void;
+  onChangeGameWinBy: (value: GameWinBy) => void;
+  onChangeSetsToWin: (value: number) => void;
+  onChangeSetTiebreakTo: (value: TiebreakPoints) => void;
+  onChangeMatchTiebreak: (value: boolean) => void;
   onChangeCourts: (value: string) => void;
   onChangePoints: (value: string) => void;
   onChangeTargetGames: (value: string) => void;
   onChangeTournamentTime: (value: string) => void;
-  onBack: () => void;
+  onBackToPlayers: () => void;
+  onBackToMode: () => void;
+  onNextFromMode: () => void;
   onCreate: () => void;
 }
 
@@ -36,7 +55,6 @@ function toInt(text: string, fallback: number): number {
 }
 
 export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
-  const { colors } = useTheme();
   const [showError, setShowError] = useState(false);
   const courts = toInt(props.courtsText, 1);
   const points = toInt(props.pointsText, 24);
@@ -44,6 +62,8 @@ export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
   const tournamentTime = toInt(props.tournamentTimeText, 120);
   const minPlayersForCourts = courts > 0 ? courts * 4 : 0;
   const hasEnoughPlayersForCourts = courts > 0 && props.playersCount >= minPlayersForCourts;
+  const isMode = props.settingsPhase === "MODE";
+  const isRegular = props.scoringMode === "REGULAR";
 
   useEffect(() => {
     if (props.errorText) setShowError(true);
@@ -70,64 +90,44 @@ export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
         modeLabel={props.modeLabel}
         stepIndex={4}
         stepCount={4}
-        title="Americano scoring"
-        primaryLabel="Create tournament"
-        primaryDisabled={!hasEnoughPlayersForCourts}
-        onPrimary={tryCreate}
-        onBack={props.onBack}
+        progressText={isMode ? undefined : isRegular ? "Regular scoring" : undefined}
+        title={isMode ? "How do we count?" : isRegular ? "Set rules" : "Americano scoring"}
+        primaryLabel={isMode ? "Next" : "Create tournament"}
+        primaryDisabled={isMode ? false : !hasEnoughPlayersForCourts}
+        onPrimary={isMode ? props.onNextFromMode : tryCreate}
+        onBack={isMode ? props.onBackToPlayers : props.onBackToMode}
       >
-        <View style={{ gap: spacing.md }}>
-          <SettingsStepper
-            label="Courts"
-            value={courts}
-            min={1}
-            max={16}
-            onChange={(value) => props.onChangeCourts(String(value))}
+        {isMode ? (
+          <ScoringModePhase scoringMode={props.scoringMode} onChangeScoringMode={props.onChangeScoringMode} />
+        ) : (
+          <MatchDetailsFields
+            scoringMode={props.scoringMode}
+            schedulingMode={props.schedulingMode}
+            setFormat={props.setFormat}
+            gameWinBy={props.gameWinBy}
+            setsToWin={props.setsToWin}
+            setTiebreakTo={props.setTiebreakTo}
+            matchTiebreak={props.matchTiebreak}
+            courts={courts}
+            points={points}
+            targetGames={targetGames}
+            tournamentTime={tournamentTime}
+            playersCount={props.playersCount}
+            minPlayersForCourts={minPlayersForCourts}
+            hasEnoughPlayersForCourts={hasEnoughPlayersForCourts}
+            estimateLine={estimateLine}
+            responseText={props.responseText}
+            onChangeSetFormat={props.onChangeSetFormat}
+            onChangeGameWinBy={props.onChangeGameWinBy}
+            onChangeSetsToWin={props.onChangeSetsToWin}
+            onChangeSetTiebreakTo={props.onChangeSetTiebreakTo}
+            onChangeMatchTiebreak={props.onChangeMatchTiebreak}
+            onChangeCourts={props.onChangeCourts}
+            onChangePoints={props.onChangePoints}
+            onChangeTargetGames={props.onChangeTargetGames}
+            onChangeTournamentTime={props.onChangeTournamentTime}
           />
-          <SettingsStepper
-            label="Americano points (to)"
-            value={points}
-            min={8}
-            max={64}
-            step={2}
-            onChange={(value) => props.onChangePoints(String(value))}
-          />
-          {props.schedulingMode === "TARGET_GAMES" ? (
-            <SettingsStepper
-              label="Games per player"
-              value={targetGames}
-              min={1}
-              max={40}
-              onChange={(value) => props.onChangeTargetGames(String(value))}
-            />
-          ) : null}
-          {props.schedulingMode === "TOTAL_TIME" ? (
-            <SettingsStepper
-              label="Tournament time (minutes)"
-              value={tournamentTime}
-              min={10}
-              max={480}
-              step={5}
-              onChange={(value) => props.onChangeTournamentTime(String(value))}
-            />
-          ) : null}
-          {props.schedulingMode === "ROUND_ROBIN" ? (
-            <Text style={{ color: colors.muted, fontSize: 13 }}>
-              Regular scheduling plays every pairing automatically — no games-per-player target.
-            </Text>
-          ) : null}
-
-          {!hasEnoughPlayersForCourts ? (
-            <Text style={{ color: colors.danger, fontSize: 12 }}>
-              You need at least {minPlayersForCourts || 4} players for {courts} court
-              {courts === 1 ? "" : "s"}.
-            </Text>
-          ) : null}
-
-          <SettingsEstimateCard line={estimateLine} />
-
-          {props.responseText ? <Text style={{ color: colors.muted }}>{props.responseText}</Text> : null}
-        </View>
+        )}
       </WizardChrome>
 
       <AlertSheet

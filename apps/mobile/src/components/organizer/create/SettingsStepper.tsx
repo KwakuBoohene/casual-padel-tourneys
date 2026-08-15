@@ -10,6 +10,8 @@ interface SettingsStepperProps {
   min?: number;
   max?: number;
   step?: number;
+  /** Override the numeric label (e.g. "2 games"). */
+  displayValue?: string;
 }
 
 export function SettingsStepper(props: SettingsStepperProps) {
@@ -56,7 +58,7 @@ export function SettingsStepper(props: SettingsStepperProps) {
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         {chip("−", dec, props.value <= min)}
         <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700", minWidth: 28, textAlign: "center" }}>
-          {props.value}
+          {props.displayValue ?? props.value}
         </Text>
         {chip("+", inc, props.value >= max)}
       </View>

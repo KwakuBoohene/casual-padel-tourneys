@@ -1,11 +1,18 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
-import type { LiveTournamentState, SetupStep, TournamentListResponse } from "../../types/organizer/tournament";
-
+import type {
+  EstimatorCreateDraft,
+  LiveTournamentState,
+  SetupStep,
+  TournamentListResponse
+} from "../../types/organizer/tournament";
 import { submitCreateTournament } from "../../utilities/organizer/submitCreateTournament";
+
 import { useMatchSettings } from "./useMatchSettings";
 import { usePlayerRoster } from "./usePlayerRoster";
+
+export type { EstimatorCreateDraft };
 
 export interface UseCreateTournamentParams {
   tournaments: TournamentListResponse["data"];
@@ -16,16 +23,6 @@ export interface UseCreateTournamentParams {
   markEmailVerifyRequired: (dueAt?: number) => void;
   adoptTournament: (data: LiveTournamentState, editMode: boolean) => void;
 }
-
-export type EstimatorCreateDraft = {
-  mode: TournamentMode;
-  variant: TournamentVariant;
-  schedulingMode: SchedulingMode;
-  courtsText: string;
-  pointsText: string;
-  targetGamesText: string;
-  tournamentTimeText: string;
-};
 
 export function useCreateTournament({
   tournaments,
@@ -58,6 +55,7 @@ export function useCreateTournament({
     setModeLockedFromList(true);
     setVariant("CLASSIC");
     setSchedulingMode(preset === "MEXICANO" ? "TOTAL_TIME" : "TARGET_GAMES");
+    settings.resetScoringForNewCreate();
     setStep("NAME");
   };
 
@@ -86,6 +84,8 @@ export function useCreateTournament({
       pointsText: settings.pointsText,
       targetGamesText: settings.targetGamesText,
       tournamentTimeText: settings.tournamentTimeText,
+      scoringMode: settings.scoringMode,
+      regularScoring: settings.regularScoring,
       setErrorText,
       setResponseText,
       setTournaments,

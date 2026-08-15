@@ -1,3 +1,5 @@
+import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
+
 export type SetupStep =
   | "LIST"
   | "ESTIMATOR"
@@ -16,3 +18,13 @@ export interface Estimate {
   gamesPerPlayer: number;
   durationMinutes: number;
 }
+
+export type EstimatorCreateDraft = {
+  mode: TournamentMode;
+  variant: TournamentVariant;
+  schedulingMode: SchedulingMode;
+  courtsText: string;
+  pointsText: string;
+  targetGamesText: string;
+  tournamentTimeText: string;
+};

@@ -4,6 +4,7 @@ import type { LiveTournamentState } from "../../../types/organizer/tournament";
 
 export function useLiveRounds(liveTournament: LiveTournamentState | null) {
   const [selectedRoundIndex, setSelectedRoundIndex] = useState(0);
+  const isMexicano = liveTournament?.config.mode === "MEXICANO";
 
   const sortedRounds = useMemo(() => {
     if (!liveTournament) return [];
@@ -30,12 +31,21 @@ export function useLiveRounds(liveTournament: LiveTournamentState | null) {
     if (idx >= 0) setSelectedRoundIndex(idx);
   }, [liveTournament?.id, activeRound?.id, sortedRounds]);
 
+  const latestRound = sortedRounds[sortedRounds.length - 1] ?? null;
+  const isLatestRoundComplete = Boolean(
+    latestRound && latestRound.matches.length > 0 && latestRound.matches.every((match) => match.completed)
+  );
+
   const isTournamentCompleted = useMemo(() => {
     if (!liveTournament) {
       return false;
     }
+    // Mexicano is open-ended until the organizer ends the night.
+    if (isMexicano) {
+      return false;
+    }
     return liveTournament.rounds.every((round) => round.matches.every((match) => match.completed));
-  }, [liveTournament]);
+  }, [isMexicano, liveTournament]);
 
   const isLastRound = useMemo(() => {
     if (!activeRound || !liveTournament) {
@@ -53,6 +63,10 @@ export function useLiveRounds(liveTournament: LiveTournamentState | null) {
     goToPrevRound: () => setSelectedRoundIndex((i) => Math.max(0, i - 1)),
     goToNextRound: () => setSelectedRoundIndex((i) => Math.min(sortedRounds.length - 1, i + 1)),
     isLastRound,
-    isTournamentCompleted
+    isTournamentCompleted,
+    isMexicano,
+    isLatestRoundComplete,
+    canGenerateNextRound: Boolean(isMexicano && isLatestRoundComplete),
+    canFinishNight: isMexicano ? isLatestRoundComplete : isTournamentCompleted
   };
 }

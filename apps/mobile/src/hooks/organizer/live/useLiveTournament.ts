@@ -30,7 +30,7 @@ export function useLiveTournament({
     liveTournament: core.liveTournament,
     liveTournamentNameDraft: core.liveTournamentNameDraft,
     proposedCourts: core.proposedCourts,
-    isTournamentCompleted: rounds.isTournamentCompleted,
+    canFinishNight: rounds.canFinishNight,
     applyTournamentUpdate: core.applyTournamentUpdate,
     setLiveTournament: core.setLiveTournament,
     clampProposedCourts: core.clampProposedCourts,

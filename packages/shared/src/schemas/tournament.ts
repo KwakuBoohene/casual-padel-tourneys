@@ -37,25 +37,20 @@ export const createTournamentSchema = z
     tournamentTimeMinutes: z.number().int().min(10).optional()
   })
   .superRefine((value, ctx) => {
-    if (value.schedulingMode === "TARGET_GAMES" && !value.targetGamesPerPlayer) {
+    const isMexicano = value.mode === "MEXICANO";
+    if (!isMexicano && value.schedulingMode === "TARGET_GAMES" && !value.targetGamesPerPlayer) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Provide targetGamesPerPlayer for TARGET_GAMES mode."
       });
     }
-    if (value.schedulingMode === "TOTAL_TIME" && !value.tournamentTimeMinutes) {
+    if (!isMexicano && value.schedulingMode === "TOTAL_TIME" && !value.tournamentTimeMinutes) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Provide tournamentTimeMinutes for TOTAL_TIME mode."
       });
     }
-    if (value.mode === "MEXICANO" && value.schedulingMode !== "TOTAL_TIME") {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Mexicano currently supports TOTAL_TIME scheduling mode."
-      });
-    }
-    if (value.mode === "MEXICANO" && value.players.length < MEXICANO_MIN_PLAYERS) {
+    if (isMexicano && value.players.length < MEXICANO_MIN_PLAYERS) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["players"],

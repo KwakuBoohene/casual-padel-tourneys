@@ -8,6 +8,7 @@ interface LiveTournamentOptionsSheetProps {
   visible: boolean;
   canAdjustCourts: boolean;
   canFinish: boolean;
+  isMexicano: boolean;
   linkCopied: boolean;
   onClose: () => void;
   onCopyShareLink: () => void;
@@ -65,26 +66,37 @@ export function LiveTournamentOptionsSheet(props: LiveTournamentOptionsSheetProp
             props.onOpenRenamePlayers();
           }}
         />
+        {props.canAdjustCourts ? (
+          <OptionRow
+            label="Adjust courts"
+            detail="Recalculate remaining"
+            onPress={() => {
+              props.onClose();
+              props.onOpenAdjustCourts();
+            }}
+          />
+        ) : null}
+        {!props.isMexicano ? (
+          <OptionRow
+            label="Add pending player"
+            detail="Late arrival"
+            onPress={() => {
+              props.onClose();
+              props.onOpenAddPendingPlayer();
+            }}
+          />
+        ) : null}
         <OptionRow
-          label="Adjust courts"
-          detail="Recalculate remaining"
-          disabled={!props.canAdjustCourts}
-          onPress={() => {
-            props.onClose();
-            props.onOpenAdjustCourts();
-          }}
-        />
-        <OptionRow
-          label="Add pending player"
-          detail="Late arrival"
-          onPress={() => {
-            props.onClose();
-            props.onOpenAddPendingPlayer();
-          }}
-        />
-        <OptionRow
-          label="Finish tournament"
-          detail={props.canFinish ? "Lock results" : "Score all matches first"}
+          label={props.isMexicano ? "End night" : "Finish tournament"}
+          detail={
+            props.canFinish
+              ? props.isMexicano
+                ? "Go to leaderboard"
+                : "Lock results"
+              : props.isMexicano
+                ? "Score the current round first"
+                : "Score all matches first"
+          }
           emphasized
           disabled={!props.canFinish}
           onPress={() => {

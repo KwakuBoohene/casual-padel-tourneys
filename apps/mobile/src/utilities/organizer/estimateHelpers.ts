@@ -38,6 +38,10 @@ export function computeEstimate(input: {
     return null;
   }
 
+  if (input.mode === "MEXICANO") {
+    return null;
+  }
+
   let rounds = 0;
   if (input.schedulingMode === "ROUND_ROBIN") {
     rounds = Math.max(1, input.playersCount - 1);

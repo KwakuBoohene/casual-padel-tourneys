@@ -102,7 +102,7 @@ export function MatchDetailsFields(props: MatchDetailsFieldsProps) {
           onChange={(value) => props.onChangeTargetGames(String(value))}
         />
       ) : null}
-      {isMexicano || props.schedulingMode === "TOTAL_TIME" ? (
+      {!isMexicano && props.schedulingMode === "TOTAL_TIME" ? (
         <SettingsStepper
           label="Tournament time (minutes)"
           value={props.tournamentTime}

@@ -45,8 +45,7 @@ test("POST /tournaments/next-round advances Mexicano ladder after round 1", asyn
         schedulingMode: "TOTAL_TIME",
         players: Array.from({ length: 8 }, (_, i) => ({ name: `P${i + 1}` })),
         courts: 2,
-        pointsPerMatch: 24,
-        tournamentTimeMinutes: 90
+        pointsPerMatch: 24
       }
     });
     assert.equal(createResponse.statusCode, 200);

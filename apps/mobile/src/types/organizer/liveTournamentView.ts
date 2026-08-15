@@ -89,4 +89,8 @@ export interface LiveTournamentViewProps {
   onPrevRound: () => void;
   onNextRound: () => void;
   onSubmitRoundScores: () => void;
+  canGenerateNextRound?: boolean;
+  generatingNextRound?: boolean;
+  canFinishNight?: boolean;
+  onGenerateNextRound?: () => void;
 }

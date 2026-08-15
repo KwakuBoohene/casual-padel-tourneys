@@ -5,10 +5,13 @@ import { useTheme } from "../../../theme/ThemeProvider";
 
 interface LiveTournamentActionsProps {
   canSubmitScores: boolean;
+  canGenerateNextRound: boolean;
+  generatingNextRound: boolean;
   isTournamentCompleted: boolean;
   isEditingCompletedTournament: boolean;
   linkCopied: boolean;
   onSubmitRoundScores: () => void;
+  onGenerateNextRound: () => void;
   onOpenEditConfirm: () => void;
   onSaveGameEdits: () => void;
   onShare: () => void;
@@ -23,7 +26,11 @@ export function LiveTournamentActions(props: LiveTournamentActionsProps) {
   let onPrimary = props.onSubmitRoundScores;
   let primaryDisabled = !props.canSubmitScores;
 
-  if (props.isTournamentCompleted && props.isEditingCompletedTournament) {
+  if (props.canGenerateNextRound) {
+    primaryLabel = props.generatingNextRound ? "Generating…" : "Generate next round";
+    onPrimary = props.onGenerateNextRound;
+    primaryDisabled = props.generatingNextRound;
+  } else if (props.isTournamentCompleted && props.isEditingCompletedTournament) {
     primaryLabel = "Save game edits";
     onPrimary = props.onSaveGameEdits;
     primaryDisabled = false;
@@ -76,6 +83,11 @@ export function LiveTournamentActions(props: LiveTournamentActionsProps) {
           {primaryLabel}
         </Text>
       </Pressable>
+      {props.canGenerateNextRound ? (
+        <Text style={{ color: colors.muted, fontSize: 12, textAlign: "center" }}>
+          Next pairings come from the leaderboard (1+3 vs 2+4).
+        </Text>
+      ) : null}
       <View style={{ flexDirection: "row", gap: spacing.sm }}>
         {secondary(props.linkCopied ? "Copied" : "Share", props.onShare)}
         {secondary("Board", props.onViewLeaderboard)}

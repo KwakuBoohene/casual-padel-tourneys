@@ -46,6 +46,10 @@ export function EstimatorResultCard(props: EstimatorResultCardProps) {
             {formatDuration(props.estimate.durationMinutes)}
           </Text>
         </View>
+      ) : props.approximate ? (
+        <Text style={{ color: colors.muted, fontSize: 15 }}>
+          Rounds continue until you end the night — no time limit.
+        </Text>
       ) : (
         <Text style={{ color: colors.muted, fontSize: 15 }}>
           Enter a valid configuration to see an estimate.

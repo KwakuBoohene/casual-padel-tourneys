@@ -96,7 +96,7 @@ export function EstimatorFormFields(props: EstimatorFormFieldsProps) {
           onChange={(value) => props.onChangeTargetGames(String(value))}
         />
       ) : null}
-      {props.schedulingMode === "TOTAL_TIME" || isMexicano ? (
+      {props.schedulingMode === "TOTAL_TIME" && !isMexicano ? (
         <SettingsStepper
           label="Tournament time (minutes)"
           value={props.tournamentTime}

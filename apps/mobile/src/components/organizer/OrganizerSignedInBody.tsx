@@ -133,6 +133,10 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     setSelectedPlayerId,
     selectedPlayerGames,
     finishTournament,
+    generateNextMexicanoRound,
+    generatingNextRound,
+    canGenerateNextRound,
+    canFinishNight,
     refreshTournament,
     scoreInputs,
     updateScoreInput,
@@ -412,6 +416,10 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         onViewLeaderboard={() => setStep("LEADERBOARD")}
         onRefresh={() => void refreshTournament()}
         onFinishTournament={finishTournament}
+        canGenerateNextRound={canGenerateNextRound}
+        generatingNextRound={generatingNextRound}
+        canFinishNight={canFinishNight}
+        onGenerateNextRound={() => void generateNextMexicanoRound()}
         onChangeTournamentName={setLiveTournamentNameDraft}
         onChangeProposedCourts={setProposedCourts}
         onSaveTournamentName={() => void saveTournamentName()}

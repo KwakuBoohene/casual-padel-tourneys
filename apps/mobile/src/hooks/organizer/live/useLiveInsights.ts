@@ -31,6 +31,9 @@ export function useLiveInsights(liveTournament: LiveTournamentState | null, isTo
     if (!liveTournament || isTournamentCompleted) {
       return false;
     }
+    if (liveTournament.config.mode === "MEXICANO") {
+      return false;
+    }
     return liveTournament.config.courts > 1 || maxCourts > liveTournament.config.courts;
   }, [isTournamentCompleted, liveTournament, maxCourts]);
 

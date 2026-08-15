@@ -63,7 +63,11 @@ export function prepareCreateTournamentRequest(
   if (draft.schedulingMode === "TARGET_GAMES" && (!Number.isInteger(targetGames) || targetGames < 1)) {
     return { ok: false, error: "Target games must be a whole number greater than 0." };
   }
-  if (draft.schedulingMode === "TOTAL_TIME" && (!Number.isInteger(tournamentTime) || tournamentTime < 10)) {
+  if (
+    draft.mode !== "MEXICANO" &&
+    draft.schedulingMode === "TOTAL_TIME" &&
+    (!Number.isInteger(tournamentTime) || tournamentTime < 10)
+  ) {
     return { ok: false, error: "Tournament time must be a whole number of at least 10 minutes." };
   }
   if (draft.sanitizedPlayersCount < courts * 4) {
@@ -109,7 +113,8 @@ export function prepareCreateTournamentRequest(
         scoringMode: "REGULAR",
         regularScoring: draft.regularScoring,
         targetGamesPerPlayer: draft.schedulingMode === "TARGET_GAMES" ? targetGames : undefined,
-        tournamentTimeMinutes: draft.schedulingMode === "TOTAL_TIME" ? tournamentTime : undefined
+        tournamentTimeMinutes:
+          draft.mode !== "MEXICANO" && draft.schedulingMode === "TOTAL_TIME" ? tournamentTime : undefined
       }
     };
   }
@@ -125,8 +130,10 @@ export function prepareCreateTournamentRequest(
       courts,
       pointsPerMatch,
       scoringMode: "AMERICANO_POINTS",
-      targetGamesPerPlayer: draft.schedulingMode === "TARGET_GAMES" ? targetGames : undefined,
-      tournamentTimeMinutes: draft.schedulingMode === "TOTAL_TIME" ? tournamentTime : undefined
+      targetGamesPerPlayer:
+        draft.mode !== "MEXICANO" && draft.schedulingMode === "TARGET_GAMES" ? targetGames : undefined,
+      tournamentTimeMinutes:
+        draft.mode !== "MEXICANO" && draft.schedulingMode === "TOTAL_TIME" ? tournamentTime : undefined
     }
   };
 }

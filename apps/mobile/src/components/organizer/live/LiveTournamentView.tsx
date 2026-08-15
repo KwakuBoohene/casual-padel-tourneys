@@ -57,6 +57,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
       tournamentNameDraft={props.tournamentNameDraft}
       isEditingCompletedTournament={props.isEditingCompletedTournament}
       roundsCount={roundsCount}
+      openEndedRounds={props.tournament.config.mode === "MEXICANO"}
       displayedRoundNumber={props.displayedRound?.roundNumber ?? null}
       canGoPrev={props.selectedRoundIndex > 0}
       canGoNext={props.selectedRoundIndex < roundsCount - 1 && roundsCount > 0}
@@ -85,10 +86,13 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
   const actions = (
     <LiveTournamentActions
       canSubmitScores={canSubmitScores}
+      canGenerateNextRound={Boolean(props.canGenerateNextRound)}
+      generatingNextRound={Boolean(props.generatingNextRound)}
       isTournamentCompleted={props.isTournamentCompleted}
       isEditingCompletedTournament={props.isEditingCompletedTournament}
       linkCopied={linkCopied}
       onSubmitRoundScores={() => void props.onSubmitRoundScores()}
+      onGenerateNextRound={() => void props.onGenerateNextRound?.()}
       onOpenEditConfirm={props.onOpenEditConfirm}
       onSaveGameEdits={props.onSaveGameEdits}
       onShare={() => void onCopyShareLink()}

@@ -37,6 +37,7 @@ export function LiveTournamentSheets({
         showAdjustCourtsConfirmModal={props.showAdjustCourtsConfirmModal}
         showIntegrateConfirmModal={props.showIntegrateConfirmModal}
         showFinishConfirmModal={showFinishConfirm}
+        isMexicano={props.tournament.config.mode === "MEXICANO"}
         currentCourts={props.currentCourts}
         proposedCourts={props.proposedCourts}
         pendingCount={props.tournament.pendingPlayers.length}
@@ -55,7 +56,8 @@ export function LiveTournamentSheets({
       <LiveTournamentOptionsSheet
         visible={props.showLiveOptionsModal}
         canAdjustCourts={props.canAdjustCourts}
-        canFinish={props.isTournamentCompleted}
+        canFinish={props.canFinishNight ?? props.isTournamentCompleted}
+        isMexicano={props.tournament.config.mode === "MEXICANO"}
         linkCopied={linkCopied}
         onClose={props.onCloseLiveOptions}
         onCopyShareLink={onCopyShareLink}

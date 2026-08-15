@@ -54,6 +54,20 @@ test("createTournamentSchema accepts Regular full-set win-by-2 + TB 7", () => {
   assert.equal(parsed.regularScoring?.setTiebreakTo, 7);
 });
 
+test("createTournamentSchema accepts Mexicano without tournament time", () => {
+  const parsed = createTournamentSchema.parse({
+    name: "Open Mexicano",
+    mode: "MEXICANO",
+    variant: "CLASSIC",
+    schedulingMode: "TOTAL_TIME",
+    players: Array.from({ length: 8 }, (_, i) => ({ name: `P${i + 1}` })),
+    courts: 2,
+    pointsPerMatch: 24
+  });
+  assert.equal(parsed.mode, "MEXICANO");
+  assert.equal(parsed.tournamentTimeMinutes, undefined);
+});
+
 test("createTournamentSchema rejects Mexicano with fewer than 8 players", () => {
   const result = createTournamentSchema.safeParse({
     name: "Tiny Mexicano",
@@ -62,8 +76,7 @@ test("createTournamentSchema rejects Mexicano with fewer than 8 players", () => 
     schedulingMode: "TOTAL_TIME",
     players: basePlayers,
     courts: 1,
-    pointsPerMatch: 24,
-    tournamentTimeMinutes: 90
+    pointsPerMatch: 24
   });
   assert.equal(result.success, false);
   if (!result.success) {

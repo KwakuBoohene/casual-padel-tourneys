@@ -72,6 +72,7 @@ interface LiveTournamentConfirmSheetsProps {
   showAdjustCourtsConfirmModal: boolean;
   showIntegrateConfirmModal: boolean;
   showFinishConfirmModal: boolean;
+  isMexicano?: boolean;
   currentCourts: number;
   proposedCourts: number;
   pendingCount: number;
@@ -120,9 +121,16 @@ export function LiveTournamentConfirmSheets(props: LiveTournamentConfirmSheetsPr
       <AlertSheet
         visible={props.showFinishConfirmModal}
         variant="warning"
-        title="Finish tournament?"
-        message="Results will be locked."
-        primaryAction={{ label: "Finish", onPress: props.onConfirmFinishTournament }}
+        title={props.isMexicano ? "End this Mexicano night?" : "Finish tournament?"}
+        message={
+          props.isMexicano
+            ? "You’ll go to the leaderboard. You can still open this tournament from the list."
+            : "Results will be locked."
+        }
+        primaryAction={{
+          label: props.isMexicano ? "End night" : "Finish",
+          onPress: props.onConfirmFinishTournament
+        }}
         secondaryAction={{ label: "Cancel", onPress: props.onCloseFinishConfirm }}
         onDismiss={props.onCloseFinishConfirm}
       />

@@ -13,6 +13,7 @@ interface LiveTournamentHeaderProps {
   tournamentNameDraft: string;
   isEditingCompletedTournament: boolean;
   roundsCount: number;
+  openEndedRounds?: boolean;
   displayedRoundNumber: number | null;
   canGoPrev: boolean;
   canGoNext: boolean;
@@ -32,8 +33,12 @@ export function LiveTournamentHeader(props: LiveTournamentHeaderProps) {
     props.tournament.config.scoringMode
   );
   const roundLabel =
-    props.displayedRoundNumber != null && props.roundsCount > 0
-      ? `Round ${props.displayedRoundNumber} of ${props.roundsCount}`
+    props.displayedRoundNumber != null
+      ? props.openEndedRounds
+        ? `Round ${props.displayedRoundNumber}`
+        : props.roundsCount > 0
+          ? `Round ${props.displayedRoundNumber} of ${props.roundsCount}`
+          : "No round"
       : "No round";
 
   return (

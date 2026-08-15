@@ -52,13 +52,15 @@ export function GameEstimatorView(props: GameEstimatorViewProps) {
   const courts = toInt(props.courtsText, 2);
   const points = toInt(props.pointsText, 24);
   const isRegular = props.scoringMode === "REGULAR";
-  const minPlayers = Math.max(courts * 4, props.mode === "MEXICANO" ? MEXICANO_MIN_PLAYERS : 0);
-  const impossible =
-    !props.estimate ||
-    players < minPlayers ||
-    courts < 1 ||
-    (!isRegular && points < 1) ||
-    (isRegular && props.setsToWin < 1);
+  const isMexicano = props.mode === "MEXICANO";
+  const minPlayers = Math.max(courts * 4, isMexicano ? MEXICANO_MIN_PLAYERS : 0);
+  const impossible = isMexicano
+    ? players < minPlayers || courts < 1 || points < 1
+    : !props.estimate ||
+      players < minPlayers ||
+      courts < 1 ||
+      (!isRegular && points < 1) ||
+      (isRegular && props.setsToWin < 1);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

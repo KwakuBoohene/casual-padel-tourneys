@@ -139,6 +139,34 @@ export interface KohUnit {
   playerBId: string;
   playerAName: string;
   playerBName: string;
+  /** Present on live hub for edit/rankings chrome. */
+  matchesWon?: number;
+  matchesLost?: number;
+}
+
+/** One row on the KOH rankings board (doubles unit). */
+export interface KohRankingRow {
+  rank: number;
+  unitId: string;
+  courtNumber: number;
+  playerAName: string;
+  playerBName: string;
+  matchesWon: number;
+  matchesLost: number;
+  /** gamesWon − gamesLost */
+  gameDiff: number;
+  specialLosses: number;
+  /** Bottom of This court when promotion is enabled. */
+  weakest?: boolean;
+}
+
+export interface KohRankingsBoard {
+  tournamentId: string;
+  version: number;
+  promotionEnabled: boolean;
+  /** Court filter used for this payload; null = all courts. */
+  courtNumber: number | null;
+  rows: KohRankingRow[];
 }
 
 /**

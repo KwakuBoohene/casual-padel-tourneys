@@ -16,3 +16,5 @@ export {
 } from "./winnerStays.js";
 
 export { applyOrganizerPromotionPick, findWeakestCandidates, maybePromote } from "./promotion.js";
+
+export { sortKohRankings, type KohRankingCandidate, type KohSortedRanking } from "./rankings.js";

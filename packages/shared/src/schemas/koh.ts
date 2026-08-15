@@ -195,3 +195,22 @@ export const promoteKohPickSchema = z.object({
 });
 
 export type PromoteKohPickInput = z.infer<typeof promoteKohPickSchema>;
+
+export const renameKohPlayerSchema = z.object({
+  newName: z.string().min(1).max(80),
+  expectedVersion: z.number().int().min(0)
+});
+
+export type RenameKohPlayerInput = z.infer<typeof renameKohPlayerSchema>;
+
+/**
+ * Replace one partner on a doubles unit. Ladder slot + unit match W–L stay;
+ * new Player row is created for the replacement name.
+ */
+export const replaceKohPartnerSchema = z.object({
+  leavePlayerId: z.string().min(1),
+  replacement: kohPlayerInputSchema,
+  expectedVersion: z.number().int().min(0)
+});
+
+export type ReplaceKohPartnerInput = z.infer<typeof replaceKohPartnerSchema>;

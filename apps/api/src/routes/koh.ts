@@ -3,7 +3,9 @@ import {
   assignKohCourtsSchema,
   createKohTournamentSchema,
   promoteKohPickSchema,
+  renameKohPlayerSchema,
   reorderKohQueueSchema,
+  replaceKohPartnerSchema,
   submitKohScoreSchema,
   swapKohUnitSchema
 } from "@padel/shared";
@@ -13,10 +15,13 @@ import {
   assignKohCourts,
   createKohTournament,
   getKohHub,
+  getKohRankings,
   KohVersionConflictError,
   pickKohPromotion,
   randomizeKohCourtQueue,
+  renameKohPlayer,
   reorderKohCourtQueue,
+  replaceKohPartner,
   submitKohCourtScore,
   swapKohCourtSlot
 } from "../lib/kohStore.js";
@@ -264,6 +269,96 @@ export async function registerKohRoutes(server: FastifyInstance): Promise<void> 
           return versionConflictReply(reply, error);
         }
         const message = (error as Error).message || "Promote pick failed.";
+        reply.status(isNotFoundMessage(message) ? 404 : 400);
+        return { message };
+      }
+    }
+  );
+
+  server.get("/koh/tournaments/:id/rankings", { preHandler: requireOrganizerAccess }, async (request, reply) => {
+    const params = request.params as { id: string };
+    const query = request.query as { courtNumber?: string };
+    if (!request.user) {
+      reply.status(401);
+      return { message: "Unauthorized" };
+    }
+    let courtNumber: number | undefined;
+    if (query.courtNumber !== undefined && query.courtNumber !== "") {
+      courtNumber = Number(query.courtNumber);
+      if (!Number.isInteger(courtNumber) || courtNumber < 1) {
+        reply.status(400);
+        return { message: "courtNumber must be a positive integer." };
+      }
+    }
+    try {
+      const data = await getKohRankings(params.id, request.user.id, courtNumber);
+      request.log.info({ id: params.id, courtNumber: courtNumber ?? null }, "GET .../rankings");
+      return { data };
+    } catch (error) {
+      const message = (error as Error).message || "Rankings failed.";
+      reply.status(isNotFoundMessage(message) ? 404 : 400);
+      return { message };
+    }
+  });
+
+  server.post(
+    "/koh/tournaments/:id/players/:playerId/rename",
+    { preHandler: requireOrganizerAccess },
+    async (request, reply) => {
+      const params = request.params as { id: string; playerId: string };
+      const parsed = renameKohPlayerSchema.safeParse(request.body);
+      if (!parsed.success) {
+        reply.status(400);
+        return { errors: parsed.error.flatten() };
+      }
+      if (!request.user) {
+        reply.status(401);
+        return { message: "Unauthorized" };
+      }
+      try {
+        const data = await renameKohPlayer(params.id, request.user.id, params.playerId, parsed.data);
+        const event = { type: "KOH_HUB_UPDATED" as const, tournamentId: data.id, payload: data };
+        await publishEvent(server.redis, event);
+        broadcastToTournament(server.subscriptions, data.id, event);
+        request.log.info({ id: params.id, playerId: params.playerId }, "POST .../players/.../rename");
+        return { data };
+      } catch (error) {
+        if (error instanceof KohVersionConflictError) {
+          return versionConflictReply(reply, error);
+        }
+        const message = (error as Error).message || "Rename failed.";
+        reply.status(isNotFoundMessage(message) ? 404 : 400);
+        return { message };
+      }
+    }
+  );
+
+  server.post(
+    "/koh/tournaments/:id/units/:unitId/replace-partner",
+    { preHandler: requireOrganizerAccess },
+    async (request, reply) => {
+      const params = request.params as { id: string; unitId: string };
+      const parsed = replaceKohPartnerSchema.safeParse(request.body);
+      if (!parsed.success) {
+        reply.status(400);
+        return { errors: parsed.error.flatten() };
+      }
+      if (!request.user) {
+        reply.status(401);
+        return { message: "Unauthorized" };
+      }
+      try {
+        const data = await replaceKohPartner(params.id, request.user.id, params.unitId, parsed.data);
+        const event = { type: "KOH_HUB_UPDATED" as const, tournamentId: data.id, payload: data };
+        await publishEvent(server.redis, event);
+        broadcastToTournament(server.subscriptions, data.id, event);
+        request.log.info({ id: params.id, unitId: params.unitId }, "POST .../replace-partner");
+        return { data };
+      } catch (error) {
+        if (error instanceof KohVersionConflictError) {
+          return versionConflictReply(reply, error);
+        }
+        const message = (error as Error).message || "Replace partner failed.";
         reply.status(isNotFoundMessage(message) ? 404 : 400);
         return { message };
       }

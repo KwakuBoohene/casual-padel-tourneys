@@ -5,10 +5,13 @@ import type {
   KohCourtChange,
   KohPendingPromote,
   KohPromotionRule,
+  KohRankingsBoard,
   KohTempSwap,
   KohUnit,
   MatchSet,
   PromoteKohPickInput,
+  RenameKohPlayerInput,
+  ReplaceKohPartnerInput,
   SubmitKohScoreInput,
   SwapKohUnitInput
 } from "@padel/shared";
@@ -20,6 +23,7 @@ import {
   applyOrganizerPromotionPick,
   maybePromote,
   shuffleQueueOnce,
+  sortKohRankings,
   type KohEngineCourt,
   type KohEngineUnit,
   type KohPromotionNotify
@@ -123,13 +127,17 @@ function mapUnit(row: {
   playerBId: string;
   playerA: { name: string };
   playerB: { name: string };
+  matchesWon?: number;
+  matchesLost?: number;
 }): KohUnit {
   return {
     id: row.id,
     playerAId: row.playerAId,
     playerBId: row.playerBId,
     playerAName: row.playerA.name,
-    playerBName: row.playerB.name
+    playerBName: row.playerB.name,
+    matchesWon: row.matchesWon ?? 0,
+    matchesLost: row.matchesLost ?? 0
   };
 }
 
@@ -191,6 +199,8 @@ function mapCourt(row: {
     playerBId: string;
     playerA: { name: string };
     playerB: { name: string };
+    matchesWon?: number;
+    matchesLost?: number;
   }>;
   matches?: Array<{
     id: string;
@@ -603,6 +613,7 @@ function toEngineCourt(court: {
     matchesWon: number;
     matchesLost: number;
     kingWinStreak: number;
+    specialLosses?: number;
   }>;
 }): KohEngineCourt {
   const ordered = [...court.units].sort((a, b) => a.queuePosition - b.queuePosition);
@@ -616,7 +627,8 @@ function toEngineCourt(court: {
         playerBId: unit.playerBId,
         matchesWon: unit.matchesWon,
         matchesLost: unit.matchesLost,
-        kingWinStreak: unit.kingWinStreak
+        kingWinStreak: unit.kingWinStreak,
+        specialLosses: unit.specialLosses ?? 0
       })
     )
   };
@@ -707,6 +719,30 @@ async function replaceMatchSets(matchId: string, sets: SubmitKohScoreInput["sets
       winMethodsB: set.winMethodsB ?? []
     }))
   });
+}
+
+function isSpecialMethod(method: "REGULAR" | "GOLDEN" | "STAR"): boolean {
+  return method === "GOLDEN" || method === "STAR";
+}
+
+/** Games + golden/star losses for side A / B from submitted sets. */
+function tallyKohSetStats(sets: SubmitKohScoreInput["sets"]): {
+  gamesA: number;
+  gamesB: number;
+  specialLossA: number;
+  specialLossB: number;
+} {
+  let gamesA = 0;
+  let gamesB = 0;
+  let specialLossA = 0;
+  let specialLossB = 0;
+  for (const set of sets) {
+    gamesA += set.gamesA;
+    gamesB += set.gamesB;
+    specialLossA += (set.winMethodsB ?? []).filter(isSpecialMethod).length;
+    specialLossB += (set.winMethodsA ?? []).filter(isSpecialMethod).length;
+  }
+  return { gamesA, gamesB, specialLossA, specialLossB };
 }
 
 /**
@@ -896,6 +932,8 @@ export async function submitKohCourtScore(
     };
   }
 
+  const setStats = tallyKohSetStats(input.sets);
+
   await prisma.$transaction(async (tx) => {
     await tx.kohMatchSet.deleteMany({ where: { matchId } });
     await tx.kohMatchSet.createMany({
@@ -942,6 +980,23 @@ export async function submitKohCourtScore(
         });
       }
     }
+
+    await tx.kohUnit.update({
+      where: { id: unitAId },
+      data: {
+        gamesWon: { increment: setStats.gamesA },
+        gamesLost: { increment: setStats.gamesB },
+        specialLosses: { increment: setStats.specialLossA }
+      }
+    });
+    await tx.kohUnit.update({
+      where: { id: unitBId },
+      data: {
+        gamesWon: { increment: setStats.gamesB },
+        gamesLost: { increment: setStats.gamesA },
+        specialLosses: { increment: setStats.specialLossB }
+      }
+    });
 
     await tx.kohCourt.update({
       where: { id: courtId },
@@ -1127,4 +1182,203 @@ export async function pickKohPromotion(
     ...hub,
     lastCourtChange: notifyToCourtChange(notify)
   };
+}
+
+export async function getKohRankings(
+  tournamentId: string,
+  organizerId: string,
+  courtNumber?: number
+): Promise<KohRankingsBoard> {
+  const row = await requireKohTournament(tournamentId, organizerId);
+  const promotionEnabled = row.kohPromotionRules.length > 0;
+
+  if (courtNumber !== undefined) {
+    if (!Number.isInteger(courtNumber) || courtNumber < 1 || courtNumber > row.courts) {
+      throw new Error(`courtNumber must be between 1 and ${row.courts}.`);
+    }
+  }
+
+  const courts =
+    courtNumber === undefined
+      ? row.kohCourts
+      : row.kohCourts.filter((court) => court.courtNumber === courtNumber);
+
+  const nameByUnitId = new Map<string, { playerAName: string; playerBName: string }>();
+  const candidates = courts.flatMap((court) =>
+    court.units.map((unit) => {
+      nameByUnitId.set(unit.id, {
+        playerAName: unit.playerA.name,
+        playerBName: unit.playerB.name
+      });
+      return {
+        id: unit.id,
+        playerAId: unit.playerAId,
+        playerBId: unit.playerBId,
+        matchesWon: unit.matchesWon,
+        matchesLost: unit.matchesLost,
+        kingWinStreak: unit.kingWinStreak,
+        specialLosses: unit.specialLosses,
+        courtNumber: court.courtNumber,
+        gamesWon: unit.gamesWon,
+        gamesLost: unit.gamesLost
+      };
+    })
+  );
+
+  const sorted = sortKohRankings(candidates);
+  const weakestId =
+    promotionEnabled && courtNumber !== undefined && sorted.length > 0
+      ? sorted[sorted.length - 1].id
+      : null;
+
+  return {
+    tournamentId: row.id,
+    version: row.version,
+    promotionEnabled,
+    courtNumber: courtNumber ?? null,
+    rows: sorted.map((unit, index) => {
+      const names = nameByUnitId.get(unit.id)!;
+      return {
+        rank: index + 1,
+        unitId: unit.id,
+        courtNumber: unit.courtNumber,
+        playerAName: names.playerAName,
+        playerBName: names.playerBName,
+        matchesWon: unit.matchesWon,
+        matchesLost: unit.matchesLost,
+        gameDiff: unit.gameDiff,
+        specialLosses: unit.specialLosses ?? 0,
+        weakest: weakestId !== null && unit.id === weakestId ? true : undefined
+      };
+    })
+  };
+}
+
+export async function renameKohPlayer(
+  tournamentId: string,
+  organizerId: string,
+  playerId: string,
+  input: RenameKohPlayerInput
+): Promise<KohTournamentHub> {
+  const row = await requireKohTournament(tournamentId, organizerId);
+  if (row.version !== input.expectedVersion) {
+    throw new KohVersionConflictError(input.expectedVersion, row.version);
+  }
+
+  const player = row.players.find((entry) => entry.id === playerId);
+  if (!player) {
+    throw new Error("Player not found.");
+  }
+
+  const newName = input.newName.trim();
+  if (!newName) {
+    throw new Error("Name is required.");
+  }
+
+  const taken = row.players.some(
+    (entry) => entry.id !== playerId && entry.name.trim().toLowerCase() === newName.toLowerCase()
+  );
+  if (taken) {
+    throw new Error("Player names must be unique across the KOH tournament.");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.player.update({
+      where: { id: playerId },
+      data: { name: newName }
+    });
+    await tx.tournament.update({
+      where: { id: tournamentId },
+      data: { version: { increment: 1 }, updatedAt: new Date() }
+    });
+  });
+
+  logger.info("kohStore/renameKohPlayer", { tournamentId, playerId });
+  return getKohHub(tournamentId, organizerId);
+}
+
+export async function replaceKohPartner(
+  tournamentId: string,
+  organizerId: string,
+  unitId: string,
+  input: ReplaceKohPartnerInput
+): Promise<KohTournamentHub> {
+  const row = await requireKohTournament(tournamentId, organizerId);
+  if (row.version !== input.expectedVersion) {
+    throw new KohVersionConflictError(input.expectedVersion, row.version);
+  }
+
+  let unitCourt: (typeof row.kohCourts)[number] | undefined;
+  let unit: (typeof row.kohCourts)[number]["units"][number] | undefined;
+  for (const court of row.kohCourts) {
+    const found = court.units.find((entry) => entry.id === unitId);
+    if (found) {
+      unitCourt = court;
+      unit = found;
+      break;
+    }
+  }
+  if (!unit || !unitCourt) {
+    throw new Error("Unit not found.");
+  }
+
+  if (unitCourt.matches.length > 0) {
+    const open = unitCourt.matches[0];
+    if (open && (open.unitAId === unitId || open.unitBId === unitId)) {
+      throw new Error("Cannot replace a partner while a match is in progress.");
+    }
+  }
+
+  const leaveIsA = unit.playerAId === input.leavePlayerId;
+  const leaveIsB = unit.playerBId === input.leavePlayerId;
+  if (!leaveIsA && !leaveIsB) {
+    throw new Error("leavePlayerId is not on this unit.");
+  }
+
+  const replacementName = input.replacement.name.trim();
+  if (!replacementName) {
+    throw new Error("Replacement name is required.");
+  }
+
+  const stayName = leaveIsA ? unit.playerB.name : unit.playerA.name;
+  if (replacementName.toLowerCase() === stayName.trim().toLowerCase()) {
+    throw new Error("A KOH unit needs two different players.");
+  }
+
+  const duplicate = row.players.some(
+    (player) => player.name.trim().toLowerCase() === replacementName.toLowerCase()
+  );
+  if (duplicate) {
+    throw new Error("Player names must be unique across the KOH tournament.");
+  }
+
+  const newPlayerId = createId("player");
+  await prisma.$transaction(async (tx) => {
+    await tx.player.create({
+      data: {
+        id: newPlayerId,
+        tournamentId,
+        name: replacementName,
+        gender: input.replacement.gender ?? null,
+        gamesPlayed: 0,
+        totalPoints: 0
+      }
+    });
+    await tx.kohUnit.update({
+      where: { id: unitId },
+      data: leaveIsA ? { playerAId: newPlayerId } : { playerBId: newPlayerId }
+    });
+    await tx.tournament.update({
+      where: { id: tournamentId },
+      data: { version: { increment: 1 }, updatedAt: new Date() }
+    });
+  });
+
+  logger.info("kohStore/replaceKohPartner", {
+    tournamentId,
+    unitId,
+    leavePlayerId: input.leavePlayerId,
+    newPlayerId
+  });
+  return getKohHub(tournamentId, organizerId);
 }

@@ -58,7 +58,7 @@ export function KohLiveActions(props: KohLiveActionsProps) {
       </Pressable>
       <View style={{ flexDirection: "row", gap: spacing.xs }}>
         {chip("Swap", props.onSwap)}
-        {chip("Rename", props.onRename)}
+        {chip("Edit", props.onRename)}
         {chip("Share", props.onShare)}
         {chip("Rank", props.onRank)}
       </View>

@@ -241,6 +241,10 @@ model KohUnit {
   queuePosition   Int
   matchesWon      Int      @default(0)
   matchesLost     Int      @default(0)
+  /** Golden + star game losses — rankings / weakest tie-break. */
+  specialLosses   Int      @default(0)
+  gamesWon        Int      @default(0)
+  gamesLost       Int      @default(0)
   /** Consecutive wins as king — used for promotion streaks. */
   kingWinStreak   Int      @default(0)
   court           KohCourt @relation(fields: [courtId], references: [id], onDelete: Cascade)

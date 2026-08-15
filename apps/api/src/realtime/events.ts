@@ -20,7 +20,8 @@ export interface TournamentEvent<T = unknown> {
     | "KOH_QUEUE_REORDERED"
     | "KOH_SCORE_SUBMITTED"
     | "KOH_COURT_CHANGE"
-    | "KOH_SWAP_APPLIED";
+    | "KOH_SWAP_APPLIED"
+    | "KOH_HUB_UPDATED";
   tournamentId: string;
   payload: T;
 }

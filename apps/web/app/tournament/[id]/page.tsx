@@ -1,3 +1,5 @@
+import { KohViewer } from "./KohViewer";
+import { isKohPublicHub } from "./kohTypes";
 import { TournamentViewer } from "./TournamentViewer";
 import type { TournamentViewModel } from "./types";
 
@@ -10,7 +12,7 @@ async function getTournament(token: string) {
   if (!response.ok) {
     return null;
   }
-  const payload = (await response.json()) as { data: TournamentViewModel };
+  const payload = (await response.json()) as { data: unknown };
   return payload.data;
 }
 
@@ -29,5 +31,16 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
       </main>
     );
   }
-  return <TournamentViewer initial={tournament} apiBaseUrl={publicApiBaseUrl} token={route.id} />;
+
+  if (isKohPublicHub(tournament)) {
+    return <KohViewer initial={tournament} apiBaseUrl={publicApiBaseUrl} token={route.id} />;
+  }
+
+  return (
+    <TournamentViewer
+      initial={tournament as TournamentViewModel}
+      apiBaseUrl={publicApiBaseUrl}
+      token={route.id}
+    />
+  );
 }

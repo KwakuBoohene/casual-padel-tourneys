@@ -293,6 +293,28 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
       return { data: publicData };
     }
 
+    const meta = await prisma.tournament.findUnique({
+      where: { publicToken: params.token },
+      select: { id: true, mode: true }
+    });
+    if (!meta) {
+      reply.status(404);
+      request.log.warn({ token: params.token }, "GET /public/:token not found");
+      return { message: "Public tournament not found." };
+    }
+
+    if (meta.mode === "KING_OF_THE_HILL") {
+      const { getKohHubByPublicToken } = await import("../lib/kohStore.js");
+      const hub = await getKohHubByPublicToken(params.token);
+      if (!hub) {
+        reply.status(404);
+        return { message: "Public tournament not found." };
+      }
+      const { organizerId: _organizerId, ...publicData } = hub;
+      request.log.info({ token: params.token, mode: "KOH" }, "GET /public/:token");
+      return { data: publicData };
+    }
+
     const row = await prisma.tournament.findUnique({
       where: { publicToken: params.token },
       include: tournamentInclude
@@ -305,6 +327,32 @@ export async function registerTournamentRoutes(server: FastifyInstance): Promise
     const { organizerId: _organizerId, ...publicData } = mapDbTournamentToState(row);
     request.log.info({ token: params.token }, "GET /public/:token");
     return { data: publicData };
+  });
+
+  server.get("/public/:token/rankings", async (request, reply) => {
+    const params = request.params as { token: string };
+    const query = request.query as { courtNumber?: string };
+    let courtNumber: number | undefined;
+    if (query.courtNumber !== undefined && query.courtNumber !== "") {
+      courtNumber = Number(query.courtNumber);
+      if (!Number.isInteger(courtNumber) || courtNumber < 1) {
+        reply.status(400);
+        return { message: "courtNumber must be a positive integer." };
+      }
+    }
+    const { getKohRankingsByPublicToken } = await import("../lib/kohStore.js");
+    try {
+      const data = await getKohRankingsByPublicToken(params.token, courtNumber);
+      if (!data) {
+        reply.status(404);
+        return { message: "Public tournament not found." };
+      }
+      request.log.info({ token: params.token, courtNumber: courtNumber ?? null }, "GET /public/:token/rankings");
+      return { data };
+    } catch (error) {
+      reply.status(400);
+      return { message: (error as Error).message || "Rankings failed." };
+    }
   });
 
   server.post("/tournaments", { preHandler: requireOrganizerAccess }, async (request, reply) => {

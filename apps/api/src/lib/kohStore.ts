@@ -3,6 +3,7 @@ import type {
   CreateKohTournamentInput,
   KohCourt,
   KohCourtChange,
+  KohLastResult,
   KohPendingPromote,
   KohPromotionRule,
   KohRankingsBoard,
@@ -44,12 +45,11 @@ const kohInclude = {
         orderBy: { queuePosition: "asc" as const }
       },
       matches: {
-        where: { completed: false },
         include: {
           sets: { orderBy: { setNumber: "asc" as const } }
         },
         orderBy: { updatedAt: "desc" as const },
-        take: 1
+        take: 8
       }
     },
     orderBy: { courtNumber: "asc" as const }
@@ -185,6 +185,42 @@ function mapTempSwap(row: {
   };
 }
 
+function mapLastResult(
+  matches: Array<{
+    completed: boolean;
+    sets: Array<{
+      gamesA: number;
+      gamesB: number;
+      winMethodsA: Array<"REGULAR" | "GOLDEN" | "STAR">;
+      winMethodsB: Array<"REGULAR" | "GOLDEN" | "STAR">;
+    }>;
+  }>
+): KohLastResult | null {
+  const completed = matches.find((match) => match.completed);
+  if (!completed || completed.sets.length === 0) {
+    return null;
+  }
+  let gamesA = 0;
+  let gamesB = 0;
+  let hadGolden = false;
+  let hadStar = false;
+  for (const set of completed.sets) {
+    gamesA += set.gamesA;
+    gamesB += set.gamesB;
+    for (const method of [...set.winMethodsA, ...set.winMethodsB]) {
+      if (method === "GOLDEN") hadGolden = true;
+      if (method === "STAR") hadStar = true;
+    }
+  }
+  const hadSpecialFinish = hadGolden || hadStar;
+  return {
+    gamesA,
+    gamesB,
+    hadSpecialFinish,
+    specialLabel: hadStar ? "Star" : hadGolden ? "Golden" : undefined
+  };
+}
+
 function mapCourt(row: {
   id: string;
   courtNumber: number;
@@ -220,7 +256,8 @@ function mapCourt(row: {
 }): KohHubCourt {
   const ordered = [...row.units].sort((a, b) => a.queuePosition - b.queuePosition);
   const mapped = ordered.map(mapUnit);
-  const draft = row.matches?.[0];
+  const matches = row.matches ?? [];
+  const draft = matches.find((match) => !match.completed);
   return {
     id: row.id,
     courtNumber: row.courtNumber,
@@ -233,6 +270,7 @@ function mapCourt(row: {
       tempSwapOutUnitId: row.tempSwapOutUnitId ?? null,
       tempSwapReason: row.tempSwapReason ?? null
     }),
+    lastResult: mapLastResult(matches),
     unitCount: mapped.length,
     activeMatch: draft
       ? {
@@ -1054,7 +1092,7 @@ export async function swapKohCourtSlot(
   if (!court) {
     throw new Error("Court not found.");
   }
-  if (court.matches.length > 0) {
+  if (court.matches.some((match) => !match.completed)) {
     throw new Error("Cannot swap while a match is in progress.");
   }
   if (court.units.length < 2) {
@@ -1190,6 +1228,42 @@ export async function getKohRankings(
   courtNumber?: number
 ): Promise<KohRankingsBoard> {
   const row = await requireKohTournament(tournamentId, organizerId);
+  return buildKohRankingsBoard(row, courtNumber);
+}
+
+export async function getKohHubByPublicToken(publicToken: string): Promise<KohTournamentHub | null> {
+  const meta = await prisma.tournament.findUnique({
+    where: { publicToken },
+    select: { id: true, mode: true }
+  });
+  if (!meta || meta.mode !== "KING_OF_THE_HILL") {
+    return null;
+  }
+  return getKohHub(meta.id);
+}
+
+export async function getKohRankingsByPublicToken(
+  publicToken: string,
+  courtNumber?: number
+): Promise<KohRankingsBoard | null> {
+  const meta = await prisma.tournament.findUnique({
+    where: { publicToken },
+    select: { id: true, mode: true }
+  });
+  if (!meta || meta.mode !== "KING_OF_THE_HILL") {
+    return null;
+  }
+  const row = await loadKohRow(meta.id);
+  if (!row) {
+    return null;
+  }
+  return buildKohRankingsBoard(row, courtNumber);
+}
+
+function buildKohRankingsBoard(
+  row: NonNullable<KohDbTournament>,
+  courtNumber?: number
+): KohRankingsBoard {
   const promotionEnabled = row.kohPromotionRules.length > 0;
 
   if (courtNumber !== undefined) {
@@ -1322,8 +1396,8 @@ export async function replaceKohPartner(
     throw new Error("Unit not found.");
   }
 
-  if (unitCourt.matches.length > 0) {
-    const open = unitCourt.matches[0];
+  if (unitCourt.matches.some((match) => !match.completed)) {
+    const open = unitCourt.matches.find((match) => !match.completed);
     if (open && (open.unitAId === unitId || open.unitBId === unitId)) {
       throw new Error("Cannot replace a partner while a match is in progress.");
     }

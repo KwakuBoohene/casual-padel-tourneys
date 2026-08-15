@@ -20,12 +20,14 @@ interface KohLiveHubProps {
   errorText: string;
   setErrorText: (value: string) => void;
   markEmailVerifyRequired: (dueAt?: number) => void;
+  viewerBaseUrl: string;
   onBackToList: () => void;
 }
 
 export function KohLiveHub(props: KohLiveHubProps) {
   const { colors } = useTheme();
   const [panel, setPanel] = useState<"live" | "rankings" | "edit">("live");
+  const [shareOpen, setShareOpen] = useState(false);
   const live = useKohLive({
     hub: props.hub,
     setHub: props.setHub,
@@ -40,6 +42,7 @@ export function KohLiveHub(props: KohLiveHubProps) {
     ? `${court.challenger.playerAName} / ${court.challenger.playerBName}`
     : "Challenger";
   const unitsById = new Map(collectHubUnits(props.hub.courts).map((unit) => [unit.id, unit]));
+  const spectatorUrl = `${props.viewerBaseUrl}/tournament/${props.hub.publicToken}`;
   const backToLive = () => {
     props.setErrorText("");
     setPanel("live");
@@ -100,7 +103,7 @@ export function KohLiveHub(props: KohLiveHubProps) {
             onEnterResult={live.openScore}
             onSwap={() => live.setSwapOpen(true)}
             onRename={() => setPanel("edit")}
-            onShare={() => live.showInfo("Share", "Share links ship in a later ticket.")}
+            onShare={() => setShareOpen(true)}
             onRank={() => setPanel("rankings")}
             onBack={props.onBackToList}
           />
@@ -114,6 +117,8 @@ export function KohLiveHub(props: KohLiveHubProps) {
         scoreOpen={live.scoreOpen}
         methodsOpen={live.methodsOpen}
         swapOpen={live.swapOpen}
+        shareOpen={shareOpen}
+        spectatorUrl={spectatorUrl}
         saving={live.saving}
         canComplete={live.canComplete}
         scoreDraft={live.scoreDraft}
@@ -131,6 +136,7 @@ export function KohLiveHub(props: KohLiveHubProps) {
         confirmMethods={live.confirmMethods}
         applySwap={live.applySwap}
         setSwapOpen={live.setSwapOpen}
+        setShareOpen={setShareOpen}
         dismissCourtChange={live.dismissCourtChange}
         applyPromotePick={live.applyPromotePick}
         dismissInfo={live.dismissInfo}

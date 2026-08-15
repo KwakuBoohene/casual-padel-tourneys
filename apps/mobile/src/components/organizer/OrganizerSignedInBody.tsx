@@ -241,6 +241,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         errorText={errorText}
         setErrorText={setErrorText}
         markEmailVerifyRequired={markEmailVerifyRequired}
+        viewerBaseUrl={viewerBaseUrl}
         onBackToList={() => {
           clearKohHub();
           setStep("LIST");

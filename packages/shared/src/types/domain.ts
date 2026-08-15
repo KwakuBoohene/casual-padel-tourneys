@@ -190,6 +190,15 @@ export interface KohTempSwap {
   reason: string;
 }
 
+/** Summary of the last completed match on a court (viewer + hub). */
+export interface KohLastResult {
+  gamesA: number;
+  gamesB: number;
+  /** True when any game was won via GOLDEN or STAR. */
+  hadSpecialFinish: boolean;
+  specialLabel?: "Golden" | "Star";
+}
+
 /** Live court hub shape: king vs challenger, then FIFO waiting list. */
 export interface KohCourt {
   id: string;
@@ -200,6 +209,7 @@ export interface KohCourt {
   /** FIFO queue after the on-court challenger. */
   waiting: KohUnit[];
   tempSwap?: KohTempSwap | null;
+  lastResult?: KohLastResult | null;
 }
 
 /** Pending promotion when multiple weakest candidates share the same rank. */

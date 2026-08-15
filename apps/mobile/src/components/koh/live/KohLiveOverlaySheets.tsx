@@ -6,6 +6,7 @@ import type { KohScoreDraft } from "../../../utilities/koh/scorePayload";
 
 import { KohCourtChangeSheet } from "./KohCourtChangeSheet";
 import { KohPromotePickSheet } from "./KohPromotePickSheet";
+import { KohShareSheet } from "./KohShareSheet";
 import { KohSwapSheet } from "./KohSwapSheet";
 import { KohWinMethodSheet } from "./KohWinMethodSheet";
 
@@ -24,6 +25,8 @@ interface KohLiveOverlaySheetsProps {
   scoreOpen: boolean;
   methodsOpen: boolean;
   swapOpen: boolean;
+  shareOpen: boolean;
+  spectatorUrl: string;
   saving: boolean;
   canComplete: boolean;
   scoreDraft: KohScoreDraft;
@@ -46,6 +49,7 @@ interface KohLiveOverlaySheetsProps {
     permanent?: boolean;
   }) => void;
   setSwapOpen: (open: boolean) => void;
+  setShareOpen: (open: boolean) => void;
   dismissCourtChange: () => void;
   applyPromotePick: (id: string) => void;
   dismissInfo: () => void;
@@ -107,6 +111,11 @@ export function KohLiveOverlaySheets(props: KohLiveOverlaySheetsProps) {
           onPick={(id) => void props.applyPromotePick(id)}
         />
       ) : null}
+      <KohShareSheet
+        visible={props.shareOpen}
+        spectatorUrl={props.spectatorUrl}
+        onDismiss={() => props.setShareOpen(false)}
+      />
       <AlertSheet
         visible={Boolean(props.infoTitle)}
         variant="info"

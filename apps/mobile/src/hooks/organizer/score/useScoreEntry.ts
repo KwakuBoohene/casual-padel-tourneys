@@ -1,15 +1,17 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 
 import type { LiveTournamentState } from "../../../types/organizer/tournament";
-
 import { findMatchInTournament } from "../../../utilities/organizer/scoreDraftActions";
+import { initialScorePair, type ScoreEntryState } from "../../../utilities/organizer/scoreEntryHelpers";
 import {
-  initialScorePair,
-  persistScoreEntry,
-  validateAmericanoScores,
-  type ScoreEntryState
-} from "../../../utilities/organizer/scoreEntryHelpers";
+  buildScoreEntryFromPair,
+  changeRegularSide,
+  nextScoreEntryAfterChange,
+  restoreScoreEntryUndo
+} from "../../../utilities/organizer/scoreEntryTransitions";
+import { runAmericanoScoreSave, runRegularScoreSave } from "../../../utilities/organizer/scoreSaveFlows";
 import type { ScoreDraftMap } from "./useScoreDraftPersistence";
+import { useScoreEntryMeta } from "./useScoreEntryMeta";
 
 export type { ScoreEntryState } from "../../../utilities/organizer/scoreEntryHelpers";
 
@@ -26,47 +28,34 @@ export function useScoreEntry(params: {
   const [scoreSheetError, setScoreSheetError] = useState<string | null>(null);
   const [savingScore, setSavingScore] = useState(false);
   const points = liveTournament?.config.pointsPerMatch ?? 0;
+  const meta = useScoreEntryMeta(liveTournament, scoreEntry);
   const clamp = (value: number) => Math.max(0, Math.min(points, value));
 
   const openEntry = (matchId: string) => {
     if (!liveTournament) return;
     setScoreSheetError(null);
-    setScoreEntry({ matchId, ...initialScorePair(liveTournament, matchId, scoreInputs), undoStack: [] });
-  };
-
-  const pushChange = (scoreA: number | null, scoreB: number | null) => {
-    setScoreEntry((prev) =>
-      prev
-        ? {
-            ...prev,
-            undoStack: [...prev.undoStack, { scoreA: prev.scoreA, scoreB: prev.scoreB }],
-            scoreA,
-            scoreB
-          }
-        : prev
+    setScoreEntry(
+      buildScoreEntryFromPair(liveTournament, matchId, initialScorePair(liveTournament, matchId, scoreInputs))
     );
   };
 
-  const saveScoreEntry = async () => {
+  const runSave = async (complete: boolean) => {
     if (!liveTournament || !scoreEntry) return;
-    const invalid = validateAmericanoScores(scoreEntry.scoreA, scoreEntry.scoreB, points);
-    if (invalid) {
-      setScoreSheetError(invalid);
-      return;
-    }
     setSavingScore(true);
     setScoreSheetError(null);
     setErrorText("");
     try {
-      await persistScoreEntry({
-        tournament: liveTournament,
-        matchId: scoreEntry.matchId,
-        scoreA: scoreEntry.scoreA as number,
-        scoreB: scoreEntry.scoreB as number,
-        onTournamentUpdated,
-        setScoreInputs
-      });
-      setScoreEntry(null);
+      const error = meta.regular
+        ? await runRegularScoreSave({ tournament: liveTournament, entry: scoreEntry, complete, onTournamentUpdated })
+        : await runAmericanoScoreSave({
+            tournament: liveTournament,
+            entry: scoreEntry,
+            points,
+            onTournamentUpdated,
+            setScoreInputs
+          });
+      if (error) setScoreSheetError(error);
+      else setScoreEntry(null);
     } catch (error) {
       setScoreSheetError(error instanceof Error ? error.message : "Could not save score. Please try again.");
     } finally {
@@ -74,8 +63,19 @@ export function useScoreEntry(params: {
     }
   };
 
+  const applyAmericano = (scoreA: number, scoreB: number) => {
+    if (!liveTournament) return;
+    setScoreEntry((prev) =>
+      prev ? nextScoreEntryAfterChange(prev, liveTournament, { scoreA, scoreB, sets: [] }) : prev
+    );
+  };
+
   return {
     scoreEntry,
+    scoreEntryContextLine: meta.contextLine,
+    scoreEntryCanComplete: meta.canComplete,
+    scoreEntryPlusDisabledA: meta.plusDisabledA,
+    scoreEntryPlusDisabledB: meta.plusDisabledB,
     requestOpenScoreEntry: (matchId: string) => {
       if (!liveTournament) return;
       if (findMatchInTournament(liveTournament, matchId)?.completed) {
@@ -89,20 +89,31 @@ export function useScoreEntry(params: {
       setScoreSheetError(null);
     },
     changeScoreA: (next: number) => {
+      if (!scoreEntry || !liveTournament) return;
+      const regularNext = changeRegularSide(scoreEntry, liveTournament, "A", next);
+      if (regularNext) {
+        setScoreEntry((prev) => (prev ? nextScoreEntryAfterChange(prev, liveTournament, regularNext) : prev));
+        return;
+      }
       const scoreA = clamp(next);
-      pushChange(scoreA, clamp(points - scoreA));
+      applyAmericano(scoreA, clamp(points - scoreA));
     },
     changeScoreB: (next: number) => {
+      if (!scoreEntry || !liveTournament) return;
+      const regularNext = changeRegularSide(scoreEntry, liveTournament, "B", next);
+      if (regularNext) {
+        setScoreEntry((prev) => (prev ? nextScoreEntryAfterChange(prev, liveTournament, regularNext) : prev));
+        return;
+      }
       const scoreB = clamp(next);
-      pushChange(clamp(points - scoreB), scoreB);
+      applyAmericano(clamp(points - scoreB), scoreB);
     },
     undoScoreEntry: () =>
-      setScoreEntry((prev) => {
-        if (!prev?.undoStack.length) return prev;
-        const undoStack = [...prev.undoStack];
-        return { ...prev, ...undoStack.pop()!, undoStack };
-      }),
-    saveScoreEntry,
+      setScoreEntry((prev) =>
+        prev && liveTournament ? (restoreScoreEntryUndo(prev, liveTournament) ?? prev) : prev
+      ),
+    saveScoreEntry: () => void runSave(meta.regular ? meta.canComplete : true),
+    saveScoreDraft: () => void runSave(false),
     savingScore,
     pendingCompletedEditMatchId,
     confirmEditCompletedScore: () => {

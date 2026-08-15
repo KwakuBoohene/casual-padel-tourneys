@@ -129,12 +129,17 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     updateScoreInput,
     submitRoundScores,
     scoreEntry,
+    scoreEntryContextLine,
+    scoreEntryCanComplete,
+    scoreEntryPlusDisabledA,
+    scoreEntryPlusDisabledB,
     requestOpenScoreEntry,
     closeScoreEntry,
     changeScoreA,
     changeScoreB,
     undoScoreEntry,
     saveScoreEntry,
+    saveScoreDraft,
     savingScore,
     pendingCompletedEditMatchId,
     confirmEditCompletedScore,
@@ -309,6 +314,10 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         maxCourts={maxCourts}
         canAdjustCourts={canAdjustCourts}
         scoreEntry={scoreEntry}
+        scoreEntryContextLine={scoreEntryContextLine}
+        scoreEntryCanComplete={scoreEntryCanComplete}
+        scoreEntryPlusDisabledA={scoreEntryPlusDisabledA}
+        scoreEntryPlusDisabledB={scoreEntryPlusDisabledB}
         savingScore={savingScore}
         pendingCompletedEditMatchId={pendingCompletedEditMatchId}
         scoreSheetError={scoreSheetError}
@@ -344,6 +353,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         onChangeScoreB={changeScoreB}
         onUndoScoreEntry={undoScoreEntry}
         onSaveScoreEntry={() => void saveScoreEntry()}
+        onSaveScoreDraft={() => void saveScoreDraft()}
         onConfirmEditCompletedScore={confirmEditCompletedScore}
         onCancelEditCompletedScore={cancelEditCompletedScore}
         onClearScoreSheetError={clearScoreSheetError}

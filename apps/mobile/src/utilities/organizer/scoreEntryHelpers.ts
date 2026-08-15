@@ -1,14 +1,32 @@
+import type { MatchSet, ScoringMode } from "@padel/shared";
+
 import type { LiveTournamentState } from "../../types/organizer/tournament";
 
-import { findMatchInTournament, submitMatchScore } from "./scoreDraftActions";
+import { findMatchInTournament, submitMatchScore, submitRegularMatchScore } from "./scoreDraftActions";
+import {
+  initialRegularSets,
+  isRegularTournament,
+  regularConfigOf,
+  regularDisplayScores
+} from "./regularScoreEntry";
 import type { ScoreDraftMap } from "../../hooks/organizer/score/useScoreDraftPersistence";
 
-export type ScorePair = { scoreA: number | null; scoreB: number | null };
+export type ScorePair = {
+  scoreA: number | null;
+  scoreB: number | null;
+  sets?: MatchSet[];
+  matchTbA?: number;
+  matchTbB?: number;
+};
 
 export type ScoreEntryState = {
   matchId: string;
+  scoringMode: ScoringMode;
   scoreA: number | null;
   scoreB: number | null;
+  sets: MatchSet[];
+  matchTbA?: number;
+  matchTbB?: number;
   undoStack: ScorePair[];
 };
 
@@ -17,6 +35,20 @@ export function initialScorePair(
   matchId: string,
   drafts: ScoreDraftMap
 ): ScorePair {
+  if (isRegularTournament(tournament)) {
+    const config = regularConfigOf(tournament)!;
+    const sets = initialRegularSets(tournament, matchId);
+    const display = regularDisplayScores(sets, config);
+    const match = findMatchInTournament(tournament, matchId);
+    return {
+      scoreA: display.scoreA,
+      scoreB: display.scoreB,
+      sets,
+      matchTbA: match?.matchTbA,
+      matchTbB: match?.matchTbB
+    };
+  }
+
   const match = findMatchInTournament(tournament, matchId);
   const draft = drafts[matchId];
   const points = tournament.config.pointsPerMatch;
@@ -27,10 +59,10 @@ export function initialScorePair(
   };
   const a = parse(draft?.scoreA, match?.scoreA);
   const b = parse(draft?.scoreB, match?.scoreB);
-  if (a !== null && b !== null) return { scoreA: a, scoreB: b };
-  if (a !== null) return { scoreA: a, scoreB: Math.max(0, points - a) };
-  if (b !== null) return { scoreA: Math.max(0, points - b), scoreB: b };
-  return { scoreA: null, scoreB: null };
+  if (a !== null && b !== null) return { scoreA: a, scoreB: b, sets: [] };
+  if (a !== null) return { scoreA: a, scoreB: Math.max(0, points - a), sets: [] };
+  if (b !== null) return { scoreA: Math.max(0, points - b), scoreB: b, sets: [] };
+  return { scoreA: null, scoreB: null, sets: [] };
 }
 
 export function validateAmericanoScores(
@@ -75,5 +107,25 @@ export async function persistScoreEntry(input: {
     const next = { ...previous };
     delete next[input.matchId];
     return next;
+  });
+}
+
+export async function persistRegularScoreEntry(input: {
+  tournament: LiveTournamentState;
+  matchId: string;
+  sets: MatchSet[];
+  complete: boolean;
+  matchTbA?: number;
+  matchTbB?: number;
+  onTournamentUpdated: (data: LiveTournamentState) => void;
+}): Promise<void> {
+  await submitRegularMatchScore({
+    tournament: input.tournament,
+    matchId: input.matchId,
+    sets: input.sets,
+    status: input.complete ? "COMPLETE" : "DRAFT",
+    matchTbA: input.matchTbA,
+    matchTbB: input.matchTbB,
+    onTournamentUpdated: input.onTournamentUpdated
   });
 }

@@ -31,6 +31,10 @@ export interface LiveTournamentViewProps {
     scoreB: number | null;
     undoStack: Array<{ scoreA: number | null; scoreB: number | null }>;
   } | null;
+  scoreEntryContextLine: string | null;
+  scoreEntryCanComplete: boolean;
+  scoreEntryPlusDisabledA: boolean;
+  scoreEntryPlusDisabledB: boolean;
   savingScore: boolean;
   pendingCompletedEditMatchId: string | null;
   scoreSheetError: string | null;
@@ -76,6 +80,7 @@ export interface LiveTournamentViewProps {
   onChangeScoreB: (value: number) => void;
   onUndoScoreEntry: () => void;
   onSaveScoreEntry: () => void;
+  onSaveScoreDraft?: () => void;
   onConfirmEditCompletedScore: () => void;
   onCancelEditCompletedScore: () => void;
   onClearScoreSheetError: () => void;

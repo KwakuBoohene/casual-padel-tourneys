@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
+import type { MatchSet } from "@padel/shared";
 
 import { apiPost } from "../../api/client";
 import type { LiveTournamentState, TournamentResponse } from "../../types/organizer/tournament";
@@ -34,6 +35,28 @@ export async function submitMatchScore(params: {
     matchId: params.matchId,
     scoreA: params.scoreA,
     scoreB: params.scoreB,
+    expectedVersion: params.tournament.version
+  });
+  params.onTournamentUpdated(response.data);
+  return response.data;
+}
+
+export async function submitRegularMatchScore(params: {
+  tournament: LiveTournamentState;
+  matchId: string;
+  sets: MatchSet[];
+  status: "DRAFT" | "COMPLETE";
+  matchTbA?: number;
+  matchTbB?: number;
+  onTournamentUpdated: (data: LiveTournamentState) => void;
+}): Promise<LiveTournamentState> {
+  const response = await apiPost<TournamentResponse>("/tournaments/score", {
+    tournamentId: params.tournament.id,
+    matchId: params.matchId,
+    sets: params.sets,
+    status: params.status,
+    matchTbA: params.matchTbA,
+    matchTbB: params.matchTbB,
     expectedVersion: params.tournament.version
   });
   params.onTournamentUpdated(response.data);

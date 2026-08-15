@@ -20,6 +20,7 @@ interface ScoreEntrySideRowProps {
   value: number | null;
   min: number;
   max: number;
+  plusDisabled?: boolean;
   onChange: (next: number) => void;
 }
 
@@ -118,7 +119,7 @@ export function ScoreEntrySideRow(props: ScoreEntrySideRowProps) {
             padding: 0
           }}
         />
-        {chip("+", props.value === null ? 0 : current + 1, props.value !== null && current >= props.max)}
+        {chip("+", props.value === null ? 0 : current + 1, Boolean(props.plusDisabled) || (props.value !== null && current >= props.max))}
       </View>
     </View>
   );

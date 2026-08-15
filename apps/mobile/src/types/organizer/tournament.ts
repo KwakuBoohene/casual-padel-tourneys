@@ -1,4 +1,12 @@
-import type { PendingPlayer, SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
+import type {
+  MatchSet,
+  PendingPlayer,
+  RegularScoringConfig,
+  SchedulingMode,
+  ScoringMode,
+  TournamentMode,
+  TournamentVariant
+} from "@padel/shared";
 
 export type { Estimate, EstimatorCreateDraft, SetupStep } from "./setup";
 
@@ -14,6 +22,8 @@ export interface LiveTournamentState {
     schedulingMode: SchedulingMode;
     courts: number;
     pointsPerMatch: number;
+    scoringMode?: ScoringMode;
+    regularScoring?: RegularScoringConfig;
     targetGamesPerPlayer?: number;
     tournamentTimeMinutes?: number;
   };
@@ -25,6 +35,12 @@ export interface LiveTournamentState {
     totalPoints: number;
     gamesPlayed: number;
     rank: number;
+    matchesWon?: number;
+    matchesLost?: number;
+    setsWon?: number;
+    setsLost?: number;
+    gamesWon?: number;
+    gamesLost?: number;
   }>;
   rounds: Array<{
     id: string;
@@ -38,6 +54,9 @@ export interface LiveTournamentState {
       scoreA?: number;
       scoreB?: number;
       completed: boolean;
+      sets?: MatchSet[];
+      matchTbA?: number;
+      matchTbB?: number;
     }>;
   }>;
 }

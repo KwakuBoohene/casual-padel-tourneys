@@ -1,104 +1,94 @@
 import { Pressable, Text, View } from "react-native";
 
-import { BottomSheet, SheetButton } from "../../../components/sheets";
-import { radius, spacing, touch } from "../../../theme";
+import { BottomSheet } from "../../../components/sheets";
+import { spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
 interface LiveTournamentOptionsSheetProps {
   visible: boolean;
-  currentCourts: number;
-  proposedCourts: number;
-  maxCourts: number;
   canAdjustCourts: boolean;
   canFinish: boolean;
+  linkCopied: boolean;
   onClose: () => void;
-  onChangeProposedCourts: (value: number) => void;
-  onOpenAdjustCourtsConfirm: () => void;
   onCopyShareLink: () => void;
+  onOpenRenamePlayers: () => void;
+  onOpenAdjustCourts: () => void;
   onOpenAddPendingPlayer: () => void;
-  onFinishTournament: () => void;
-  onBackToList: () => void;
+  onOpenFinishConfirm: () => void;
 }
 
-function OptionRow(props: { label: string; onPress: () => void }) {
+function OptionRow(props: {
+  label: string;
+  detail: string;
+  onPress: () => void;
+  emphasized?: boolean;
+  disabled?: boolean;
+}) {
   const { colors } = useTheme();
   return (
     <Pressable
       onPress={props.onPress}
+      disabled={props.disabled}
       style={{
-        minHeight: touch.minSecondary,
-        borderRadius: radius.lg,
-        borderWidth: 1,
-        borderColor: colors.border,
+        minHeight: touch.minPrimary,
+        borderRadius: 14,
+        borderWidth: props.emphasized ? 2 : 1,
+        borderColor: props.emphasized ? colors.primary : colors.border,
         backgroundColor: colors.surface,
         paddingHorizontal: spacing.md,
-        justifyContent: "center"
+        paddingVertical: spacing.md,
+        gap: 4,
+        opacity: props.disabled ? 0.45 : 1
       }}
     >
       <Text style={{ color: colors.text, fontWeight: "600", fontSize: 16 }}>{props.label}</Text>
+      <Text style={{ color: colors.muted, fontSize: 13 }}>{props.detail}</Text>
     </Pressable>
   );
 }
 
 export function LiveTournamentOptionsSheet(props: LiveTournamentOptionsSheetProps) {
-  const { colors } = useTheme();
-
   return (
     <BottomSheet visible={props.visible} title="Options" onDismiss={props.onClose}>
       <View style={{ gap: spacing.sm }}>
         <OptionRow
-          label="Copy viewer link"
+          label={props.linkCopied ? "Link copied" : "Copy viewer link"}
+          detail="Spectators · read-only"
+          onPress={props.onCopyShareLink}
+        />
+        <OptionRow
+          label="Rename players"
+          detail="Fix names mid-event"
           onPress={() => {
-            props.onCopyShareLink();
             props.onClose();
+            props.onOpenRenamePlayers();
           }}
         />
         <OptionRow
-          label="Add pending"
+          label="Adjust courts"
+          detail="Recalculate remaining"
+          disabled={!props.canAdjustCourts}
+          onPress={() => {
+            props.onClose();
+            props.onOpenAdjustCourts();
+          }}
+        />
+        <OptionRow
+          label="Add pending player"
+          detail="Late arrival"
           onPress={() => {
             props.onClose();
             props.onOpenAddPendingPlayer();
           }}
         />
-        {props.canAdjustCourts ? (
-          <View style={{ gap: spacing.sm }}>
-            <Text style={{ fontWeight: "700", color: colors.text }}>Adjust courts</Text>
-            <Text style={{ color: colors.muted }}>
-              Current {props.currentCourts} · Proposed {props.proposedCourts} · Max {props.maxCourts}
-            </Text>
-            <View style={{ flexDirection: "row", gap: spacing.sm }}>
-              <SheetButton
-                label="-"
-                style={{ flex: 1 }}
-                disabled={props.proposedCourts <= 1}
-                onPress={() => props.onChangeProposedCourts(Math.max(1, props.proposedCourts - 1))}
-              />
-              <SheetButton
-                label="+"
-                style={{ flex: 1 }}
-                disabled={props.proposedCourts >= props.maxCourts}
-                onPress={() =>
-                  props.onChangeProposedCourts(Math.min(props.maxCourts, props.proposedCourts + 1))
-                }
-              />
-            </View>
-            <SheetButton label="Apply court change" variant="primary" onPress={props.onOpenAdjustCourtsConfirm} />
-          </View>
-        ) : null}
-        {props.canFinish ? (
-          <OptionRow
-            label="Finish tournament"
-            onPress={() => {
-              props.onClose();
-              props.onFinishTournament();
-            }}
-          />
-        ) : null}
         <OptionRow
-          label="Back to list"
+          label="Finish tournament"
+          detail={props.canFinish ? "Lock results" : "Score all matches first"}
+          emphasized
+          disabled={!props.canFinish}
           onPress={() => {
             props.onClose();
-            props.onBackToList();
+            props.onOpenFinishConfirm();
           }}
         />
       </View>

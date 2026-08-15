@@ -144,6 +144,13 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     openIntegrateConfirmModal,
     closeIntegrateConfirmModal,
     confirmIntegratePendingPlayers,
+    renamePlayersVisible,
+    renameDrafts,
+    renameSaving,
+    openRenamePlayers,
+    closeRenamePlayers,
+    changeRenameDraft,
+    saveRenames,
     viewerBaseUrl,
     handleSignOut
   } = org;
@@ -343,6 +350,13 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         onOpenIntegrateConfirm={openIntegrateConfirmModal}
         onCloseIntegrateConfirm={closeIntegrateConfirmModal}
         onConfirmIntegratePendingPlayers={() => void confirmIntegratePendingPlayers()}
+        renamePlayersVisible={renamePlayersVisible}
+        renameDrafts={renameDrafts}
+        renameSaving={renameSaving}
+        onOpenRenamePlayers={openRenamePlayers}
+        onCloseRenamePlayers={closeRenamePlayers}
+        onChangeRenameDraft={changeRenameDraft}
+        onSaveRenames={() => void saveRenames()}
       />
     );
   }

@@ -1,5 +1,9 @@
+import { useState } from "react";
+
 import { AlertSheet } from "../../../components/sheets";
 
+import { LiveAdjustCourtsSheet } from "./LiveAdjustCourtsSheet";
+import { LiveRenamePlayersSheet } from "./LiveRenamePlayersSheet";
 import { LiveScoreEntrySheets } from "./LiveScoreEntrySheets";
 import { LiveTournamentOptionsSheet } from "./LiveTournamentOptionsSheet";
 import {
@@ -13,20 +17,26 @@ interface LiveTournamentSheetsProps {
   showError: boolean;
   onDismissError: () => void;
   onCopyShareLink: () => void;
+  linkCopied: boolean;
 }
 
 export function LiveTournamentSheets({
   props,
   showError,
   onDismissError,
-  onCopyShareLink
+  onCopyShareLink,
+  linkCopied
 }: LiveTournamentSheetsProps) {
+  const [showAdjustCourtsSheet, setShowAdjustCourtsSheet] = useState(false);
+  const [showFinishConfirm, setShowFinishConfirm] = useState(false);
+
   return (
     <>
       <LiveTournamentConfirmSheets
         showEditConfirmModal={props.showEditConfirmModal}
         showAdjustCourtsConfirmModal={props.showAdjustCourtsConfirmModal}
         showIntegrateConfirmModal={props.showIntegrateConfirmModal}
+        showFinishConfirmModal={showFinishConfirm}
         currentCourts={props.currentCourts}
         proposedCourts={props.proposedCourts}
         pendingCount={props.tournament.pendingPlayers.length}
@@ -36,21 +46,44 @@ export function LiveTournamentSheets({
         onConfirmAdjustCourts={props.onConfirmAdjustCourts}
         onCloseIntegrateConfirm={props.onCloseIntegrateConfirm}
         onConfirmIntegratePendingPlayers={props.onConfirmIntegratePendingPlayers}
+        onCloseFinishConfirm={() => setShowFinishConfirm(false)}
+        onConfirmFinishTournament={() => {
+          setShowFinishConfirm(false);
+          props.onFinishTournament();
+        }}
       />
       <LiveTournamentOptionsSheet
         visible={props.showLiveOptionsModal}
+        canAdjustCourts={props.canAdjustCourts}
+        canFinish={props.isTournamentCompleted}
+        linkCopied={linkCopied}
+        onClose={props.onCloseLiveOptions}
+        onCopyShareLink={onCopyShareLink}
+        onOpenRenamePlayers={props.onOpenRenamePlayers}
+        onOpenAdjustCourts={() => setShowAdjustCourtsSheet(true)}
+        onOpenAddPendingPlayer={props.onOpenAddPendingPlayer}
+        onOpenFinishConfirm={() => setShowFinishConfirm(true)}
+      />
+      <LiveAdjustCourtsSheet
+        visible={showAdjustCourtsSheet}
         currentCourts={props.currentCourts}
         proposedCourts={props.proposedCourts}
         maxCourts={props.maxCourts}
-        canAdjustCourts={props.canAdjustCourts}
-        canFinish={props.isLastRound && !props.isTournamentCompleted}
-        onClose={props.onCloseLiveOptions}
+        onClose={() => setShowAdjustCourtsSheet(false)}
         onChangeProposedCourts={props.onChangeProposedCourts}
-        onOpenAdjustCourtsConfirm={props.onOpenAdjustCourtsConfirm}
-        onCopyShareLink={onCopyShareLink}
-        onOpenAddPendingPlayer={props.onOpenAddPendingPlayer}
-        onFinishTournament={props.onFinishTournament}
-        onBackToList={props.onBackToList}
+        onContinue={() => {
+          setShowAdjustCourtsSheet(false);
+          props.onOpenAdjustCourtsConfirm();
+        }}
+      />
+      <LiveRenamePlayersSheet
+        visible={props.renamePlayersVisible}
+        players={props.tournament.players}
+        drafts={props.renameDrafts}
+        saving={props.renameSaving}
+        onChangeDraft={props.onChangeRenameDraft}
+        onSave={() => void props.onSaveRenames()}
+        onClose={props.onCloseRenamePlayers}
       />
       <LiveScoreEntrySheets props={props} />
       <LiveTournamentPendingSheet

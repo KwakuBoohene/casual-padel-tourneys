@@ -7,6 +7,7 @@ import { useLiveRounds } from "./useLiveRounds";
 import { useLiveTournamentActions } from "./useLiveTournamentActions";
 import { useLiveTournamentCore } from "./useLiveTournamentCore";
 import { usePendingPlayers } from "./usePendingPlayers";
+import { useRenamePlayers } from "./useRenamePlayers";
 
 export interface UseLiveTournamentParams {
   setStep: (step: SetupStep) => void;
@@ -46,5 +47,11 @@ export function useLiveTournament({
     setErrorText
   });
 
-  return { ...core, ...rounds, ...insights, ...actions, ...pendingPlayers };
+  const renamePlayers = useRenamePlayers({
+    liveTournament: core.liveTournament,
+    onTournamentUpdated: core.applyTournamentUpdate,
+    setErrorText
+  });
+
+  return { ...core, ...rounds, ...insights, ...actions, ...pendingPlayers, ...renamePlayers };
 }

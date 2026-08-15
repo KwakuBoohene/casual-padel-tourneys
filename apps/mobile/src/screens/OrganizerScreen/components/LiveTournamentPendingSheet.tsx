@@ -23,7 +23,10 @@ export function LiveTournamentPendingSheet(props: LiveTournamentPendingSheetProp
   const { colors } = useTheme();
 
   return (
-    <BottomSheet visible={props.visible} title="Add Player to Queue" onDismiss={props.onClose}>
+    <BottomSheet visible={props.visible} title="Add pending player" onDismiss={props.onClose}>
+      <Text style={{ color: colors.muted, fontSize: 14 }}>
+        Joins when you integrate · may page if many
+      </Text>
       <TextInput
         placeholder="Player name"
         value={props.nameDraft}
@@ -53,16 +56,13 @@ export function LiveTournamentPendingSheet(props: LiveTournamentPendingSheetProp
         </View>
       ) : null}
       {props.errorText ? <Text style={{ color: colors.danger, fontSize: 12 }}>{props.errorText}</Text> : null}
-      <View style={{ flexDirection: "row", gap: spacing.sm }}>
-        <SheetButton label="Cancel" style={{ flex: 1 }} onPress={props.onClose} />
-        <SheetButton
-          label="Add Player"
-          variant="primary"
-          style={{ flex: 1 }}
-          disabled={!props.nameDraft.trim()}
-          onPress={props.onSubmit}
-        />
-      </View>
+      <SheetButton label="Cancel" onPress={props.onClose} style={{ minHeight: touch.minPrimary }} />
+      <SheetButton
+        label="Add player"
+        variant="primary"
+        disabled={!props.nameDraft.trim()}
+        onPress={props.onSubmit}
+      />
     </BottomSheet>
   );
 }
@@ -71,6 +71,7 @@ interface LiveTournamentConfirmSheetsProps {
   showEditConfirmModal: boolean;
   showAdjustCourtsConfirmModal: boolean;
   showIntegrateConfirmModal: boolean;
+  showFinishConfirmModal: boolean;
   currentCourts: number;
   proposedCourts: number;
   pendingCount: number;
@@ -80,6 +81,8 @@ interface LiveTournamentConfirmSheetsProps {
   onConfirmAdjustCourts: () => void;
   onCloseIntegrateConfirm: () => void;
   onConfirmIntegratePendingPlayers: () => void;
+  onCloseFinishConfirm: () => void;
+  onConfirmFinishTournament: () => void;
 }
 
 export function LiveTournamentConfirmSheets(props: LiveTournamentConfirmSheetsProps) {
@@ -105,7 +108,7 @@ export function LiveTournamentConfirmSheets(props: LiveTournamentConfirmSheetsPr
       />
       <AlertSheet
         visible={props.showIntegrateConfirmModal}
-        variant="info"
+        variant="warning"
         title="Integrate Players?"
         message={`Integrate ${props.pendingCount} waiting player${
           props.pendingCount !== 1 ? "s" : ""
@@ -113,6 +116,15 @@ export function LiveTournamentConfirmSheets(props: LiveTournamentConfirmSheetsPr
         primaryAction={{ label: "Confirm", onPress: props.onConfirmIntegratePendingPlayers }}
         secondaryAction={{ label: "Cancel", onPress: props.onCloseIntegrateConfirm }}
         onDismiss={props.onCloseIntegrateConfirm}
+      />
+      <AlertSheet
+        visible={props.showFinishConfirmModal}
+        variant="warning"
+        title="Finish tournament?"
+        message="Results will be locked."
+        primaryAction={{ label: "Finish", onPress: props.onConfirmFinishTournament }}
+        secondaryAction={{ label: "Cancel", onPress: props.onCloseFinishConfirm }}
+        onDismiss={props.onCloseFinishConfirm}
       />
     </>
   );

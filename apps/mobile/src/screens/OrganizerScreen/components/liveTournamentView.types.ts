@@ -39,6 +39,13 @@ export interface LiveTournamentViewProps {
   pendingPlayerNameDraft: string;
   pendingPlayerGender: PlayerGender | undefined;
   showIntegrateConfirmModal: boolean;
+  renamePlayersVisible: boolean;
+  renameDrafts: Record<string, string>;
+  renameSaving: boolean;
+  onOpenRenamePlayers: () => void;
+  onCloseRenamePlayers: () => void;
+  onChangeRenameDraft: (playerId: string, name: string) => void;
+  onSaveRenames: () => void;
   onOpenAddPendingPlayer: () => void;
   onCloseAddPendingPlayer: () => void;
   onChangePendingPlayerName: (value: string) => void;

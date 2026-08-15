@@ -132,6 +132,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
         showError={showError}
         onDismissError={() => setShowError(false)}
         onCopyShareLink={() => void onCopyShareLink()}
+        linkCopied={linkCopied}
       />
     </Fragment>
   );

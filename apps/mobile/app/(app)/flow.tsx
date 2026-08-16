@@ -2,9 +2,7 @@ import { PageShell } from "../../src/layout";
 import { OrganizerSignedInBody } from "../../src/components/organizer/OrganizerSignedInBody";
 import { useOrganizerSession } from "../../src/providers/OrganizerSessionProvider";
 
-/**
- * Temporary host for create / live / KOH / account-players until tickets 04–05.
- */
+/** Temp host for KOH create/live and account-players. */
 export default function OrganizerFlowRoute() {
   const org = useOrganizerSession();
 

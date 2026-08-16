@@ -2,10 +2,10 @@ import { router } from "expo-router";
 import { useRef, useState } from "react";
 
 import { useAuthSessionContext } from "../../providers/AuthSessionProvider";
+import type { CreateRouteIntent } from "../../types/organizer/createIntent";
 import type { SetupStep } from "../../types/organizer/tournament";
 import { openOrganizerTournament, type OpenOrganizerResult } from "../../utilities/organizer/openOrganizerTournament";
 import { useKohLiveSession } from "../koh/useKohLiveSession";
-import { useCreateTournament } from "./useCreateTournament";
 import { useGameEstimator } from "./useGameEstimator";
 import { useLiveTournament } from "./live/useLiveTournament";
 import { useScoreDrafts } from "./score/useScoreDrafts";
@@ -16,6 +16,7 @@ export function useOrganizerScreen() {
   const [step, setStep] = useState<SetupStep>("LIST");
   const [errorText, setErrorText] = useState("");
   const viewerBaseUrl = process.env.EXPO_PUBLIC_VIEWER_BASE_URL ?? "http://localhost:3000";
+  const createIntentRef = useRef<CreateRouteIntent | null>(null);
   const liveCallbacks = useRef({
     openTournament: (async () => "error") as (
       tournamentId: string,
@@ -38,15 +39,6 @@ export function useOrganizerScreen() {
     setTournaments: list.setTournaments,
     setErrorText,
     markEmailVerifyRequired: auth.markEmailVerifyRequired
-  });
-  const create = useCreateTournament({
-    tournaments: list.tournaments,
-    suggestedPlayerNames: list.suggestedPlayerNames,
-    setTournaments: list.setTournaments,
-    setStep,
-    setErrorText,
-    markEmailVerifyRequired: auth.markEmailVerifyRequired,
-    adoptTournament: live.adoptTournament
   });
   const koh = useKohLiveSession({
     setErrorText,
@@ -87,13 +79,21 @@ export function useOrganizerScreen() {
   };
 
   return {
-    ...create,
     ...estimator,
     ...list,
     ...live,
     ...drafts,
     ...koh,
     openTournament: openTournamentSmart,
+    beginCreate: (intent: CreateRouteIntent) => {
+      createIntentRef.current = intent;
+      router.push("/create");
+    },
+    consumeCreateIntent: () => {
+      const intent = createIntentRef.current;
+      createIntentRef.current = null;
+      return intent;
+    },
     authReady: auth.ready,
     authToken: auth.authToken,
     currentUser: auth.currentUser,

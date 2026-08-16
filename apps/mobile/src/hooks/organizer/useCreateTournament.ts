@@ -5,7 +5,6 @@ import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/s
 import type {
   EstimatorCreateDraft,
   LiveTournamentState,
-  SetupStep,
   TournamentListResponse
 } from "../../types/organizer/tournament";
 import { submitCreateTournament } from "../../utilities/organizer/submitCreateTournament";
@@ -14,26 +13,26 @@ import { useMatchSettings } from "./useMatchSettings";
 import { usePlayerRoster } from "./usePlayerRoster";
 
 export type { EstimatorCreateDraft };
+export type CreateWizardStep = "NAME" | "OPTIONS" | "PLAYERS" | "SETTINGS";
 
-export interface UseCreateTournamentParams {
+type Params = {
   tournaments: TournamentListResponse["data"];
   suggestedPlayerNames: string[];
   setTournaments: Dispatch<SetStateAction<TournamentListResponse["data"]>>;
-  setStep: (step: SetupStep) => void;
   setErrorText: (value: string) => void;
   markEmailVerifyRequired: (dueAt?: number) => void;
   adoptTournament: (data: LiveTournamentState, editMode: boolean) => void;
-}
+};
 
 export function useCreateTournament({
   tournaments,
   suggestedPlayerNames,
   setTournaments,
-  setStep,
   setErrorText,
   markEmailVerifyRequired,
   adoptTournament
-}: UseCreateTournamentParams) {
+}: Params) {
+  const [wizardStep, setWizardStep] = useState<CreateWizardStep>("NAME");
   const [name, setName] = useState("");
   const [mode, setMode] = useState<TournamentMode>("AMERICANO");
   const [modeLockedFromList, setModeLockedFromList] = useState(false);
@@ -57,7 +56,7 @@ export function useCreateTournament({
     setVariant("CLASSIC");
     setSchedulingMode(preset === "MEXICANO" ? "TOTAL_TIME" : "TARGET_GAMES");
     settings.prepareSettingsForMode(preset);
-    setStep("NAME");
+    setWizardStep("NAME");
   };
 
   const startCreateFromEstimator = (draft: EstimatorCreateDraft) => {
@@ -69,7 +68,7 @@ export function useCreateTournament({
     setSchedulingMode(draft.mode === "MEXICANO" ? "TOTAL_TIME" : draft.schedulingMode);
     settings.applySettings(draft);
     if (draft.mode === "MEXICANO") settings.prepareSettingsForMode("MEXICANO");
-    setStep("NAME");
+    setWizardStep("NAME");
   };
 
   const createTournament = () =>
@@ -99,6 +98,8 @@ export function useCreateTournament({
   return {
     ...roster,
     ...settings,
+    wizardStep,
+    setWizardStep,
     name,
     setName,
     canContinueFromName: name.trim().length >= 2,
@@ -109,7 +110,6 @@ export function useCreateTournament({
     startCreateFromEstimator,
     cancelCreateToList: () => {
       setModeLockedFromList(false);
-      setStep("LIST");
       router.replace("/tournaments");
     },
     variant,

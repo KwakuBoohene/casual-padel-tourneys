@@ -32,8 +32,8 @@ export default function TournamentsListRoute() {
       showTournamentActionConfirmModal={org.showTournamentActionConfirmModal}
       pendingTournamentAction={org.pendingTournamentAction}
       onRefresh={() => void org.loadTournaments()}
-      onCreateAmericano={() => goFlow(() => org.startCreateWithMode("AMERICANO"))}
-      onCreateMexicano={() => goFlow(() => org.startCreateWithMode("MEXICANO"))}
+      onCreateAmericano={() => org.beginCreate({ kind: "mode", mode: "AMERICANO" })}
+      onCreateMexicano={() => org.beginCreate({ kind: "mode", mode: "MEXICANO" })}
       onCreateKingOfTheHill={() =>
         goFlow(() => {
           org.setErrorText("");

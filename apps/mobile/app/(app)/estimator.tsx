@@ -31,18 +31,20 @@ export default function EstimatorRoute() {
       onChangeTournamentTime={org.onChangeEstimatorTournamentTimeValue}
       onBack={() => router.replace("/tournaments")}
       onUseInNewTournament={() => {
-        org.startCreateFromEstimator({
-          mode: org.estimatorMode,
-          variant: org.estimatorVariant,
-          schedulingMode: org.effectiveEstimatorSchedulingMode,
-          courtsText: org.estimatorCourtsText,
-          pointsText: org.estimatorPointsText,
-          targetGamesText: org.estimatorTargetGamesText,
-          tournamentTimeText: org.estimatorTournamentTimeText,
-          scoringMode: org.estimatorScoringMode,
-          setsToWin: org.estimatorSetsToWin
+        org.beginCreate({
+          kind: "estimator",
+          draft: {
+            mode: org.estimatorMode,
+            variant: org.estimatorVariant,
+            schedulingMode: org.effectiveEstimatorSchedulingMode,
+            courtsText: org.estimatorCourtsText,
+            pointsText: org.estimatorPointsText,
+            targetGamesText: org.estimatorTargetGamesText,
+            tournamentTimeText: org.estimatorTournamentTimeText,
+            scoringMode: org.estimatorScoringMode,
+            setsToWin: org.estimatorSetsToWin
+          }
         });
-        router.push("/flow");
       }}
     />
   );

@@ -1,84 +1,26 @@
 import { router } from "expo-router";
 import { KohScreen } from "../../screens/KohScreen";
 import { useOrganizerScreen } from "../../hooks/organizer/useOrganizerScreen";
-import { formatTournamentMode } from "../../utilities/organizer/formatLabels";
-import { tournamentLeaderboardPath, tournamentLivePath } from "../../utilities/organizer/tournamentRoutes";
 
 import { AccountPlayersFlow } from "../accountPlayers/AccountPlayersFlow";
 import { KohLiveHub } from "../koh/live/KohLiveHub";
-import { MatchSettingsStepView } from "./create/MatchSettingsStepView";
-import { NameStepView } from "./create/NameStepView";
-import { PlayersStepView } from "./create/PlayersStepView";
-import { TeamPlayersStepView } from "./create/TeamPlayersStepView";
-import { TournamentOptionsStepView } from "./create/TournamentOptionsStepView";
 
 function backToList(setStep: (step: "LIST") => void): void {
   setStep("LIST");
   router.replace("/tournaments");
 }
 
+/**
+ * Temp host for KOH + account-players until those get dedicated routes.
+ * Create / live / list / profile live under Expo Router.
+ */
 export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrganizerScreen> }) {
   const {
     currentUser,
     step,
     setStep,
-    name,
-    setName,
-    canContinueFromName,
-    mode,
-    setMode,
-    modeLockedFromList,
-    cancelCreateToList,
-    variant,
-    setVariant,
-    setSchedulingMode,
-    effectiveSchedulingMode,
-    players,
-    playerGenders,
-    teams,
-    isTeamMexicano,
-    sanitizedPlayers,
-    minPlayers,
-    minTeams,
-    canContinueFromPlayers,
-    allKnownPlayerNames,
-    addPlayer,
-    addTeam,
-    updateTeam,
-    removeTeam,
-    updatePlayer,
-    removePlayerInput,
-    selectSuggestion,
-    hasDuplicatePlayerNames,
-    courtsText,
-    pointsText,
-    targetGamesText,
-    tournamentTimeText,
-    estimate,
-    prepareSettingsForMode,
-    onChangeCourtsValue,
-    onChangePointsValue,
-    onChangeTargetGamesValue,
-    onChangeTournamentTimeValue,
-    settingsPhase,
-    setSettingsPhase,
-    scoringMode,
-    setScoringMode,
-    setFormat,
-    setSetFormat,
-    gameWinBy,
-    setGameWinBy,
-    setsToWin,
-    setSetsToWin,
-    setTiebreakTo,
-    setSetTiebreakTo,
-    matchTiebreak,
-    setMatchTiebreak,
-    responseText,
-    createTournament,
     errorText,
     loadTournaments,
-    liveTournament,
     viewerBaseUrl,
     kohHub,
     adoptKohHub,
@@ -88,20 +30,21 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     markEmailVerifyRequired
   } = org;
 
-  const modeLabel = formatTournamentMode(mode);
-
-  if (step === "LIST" || step === "ESTIMATOR" || step === "PROFILE" || step === "ATTACH") {
-    backToList(setStep);
-    return null;
-  }
-
-  if (step === "LIVE" || step === "LEADERBOARD" || step === "PLAYER_GAMES") {
-    if (liveTournament) {
-      router.replace(
-        step === "LEADERBOARD"
-          ? tournamentLeaderboardPath(liveTournament.id)
-          : tournamentLivePath(liveTournament.id)
-      );
+  if (
+    step === "LIST" ||
+    step === "ESTIMATOR" ||
+    step === "PROFILE" ||
+    step === "ATTACH" ||
+    step === "NAME" ||
+    step === "OPTIONS" ||
+    step === "PLAYERS" ||
+    step === "SETTINGS" ||
+    step === "LIVE" ||
+    step === "LEADERBOARD" ||
+    step === "PLAYER_GAMES"
+  ) {
+    if (step === "NAME" || step === "OPTIONS" || step === "PLAYERS" || step === "SETTINGS") {
+      router.replace("/create");
       return null;
     }
     backToList(setStep);
@@ -154,124 +97,6 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     );
   }
 
-  if (step === "NAME") {
-    return (
-      <NameStepView
-        modeLabel={modeLabel}
-        name={name}
-        canContinue={canContinueFromName}
-        onChangeName={setName}
-        onBack={cancelCreateToList}
-        onNext={() => setStep("OPTIONS")}
-      />
-    );
-  }
-
-  if (step === "OPTIONS") {
-    return (
-      <TournamentOptionsStepView
-        mode={mode}
-        modeLocked={modeLockedFromList}
-        modeLabel={modeLabel}
-        variant={variant}
-        schedulingMode={effectiveSchedulingMode}
-        onChangeMode={(value) => {
-          setMode(value);
-          if (value === "MEXICANO") setSchedulingMode("TOTAL_TIME");
-          if (value !== "MEXICANO" && variant === "TEAM") setVariant("CLASSIC");
-          prepareSettingsForMode(value);
-        }}
-        onChangeVariant={setVariant}
-        onChangeSchedulingMode={setSchedulingMode}
-        onBack={() => setStep("NAME")}
-        onNext={() => setStep("PLAYERS")}
-      />
-    );
-  }
-
-  if (step === "PLAYERS") {
-    if (isTeamMexicano) {
-      return (
-        <TeamPlayersStepView
-          modeLabel={modeLabel}
-          teams={teams}
-          minTeams={minTeams}
-          canContinue={canContinueFromPlayers}
-          hasDuplicateNames={hasDuplicatePlayerNames}
-          onAddTeam={addTeam}
-          onUpdateTeam={updateTeam}
-          onRemoveTeam={removeTeam}
-          onBack={() => setStep("OPTIONS")}
-          onNext={() => {
-            const suggestedCourts = Math.max(1, Math.floor(sanitizedPlayers.length / 4) || 1);
-            onChangeCourtsValue(String(suggestedCourts));
-            prepareSettingsForMode("MEXICANO");
-            setStep("SETTINGS");
-          }}
-        />
-      );
-    }
-    return (
-      <PlayersStepView
-        modeLabel={modeLabel}
-        players={players}
-        genders={playerGenders}
-        variant={variant}
-        minPlayers={minPlayers}
-        canContinue={canContinueFromPlayers}
-        hasDuplicateNames={hasDuplicatePlayerNames}
-        allSuggestions={allKnownPlayerNames}
-        onAddPlayer={addPlayer}
-        onUpdatePlayer={updatePlayer}
-        onRemovePlayer={removePlayerInput}
-        onSelectSuggestion={selectSuggestion}
-        onBack={() => setStep("OPTIONS")}
-        onNext={() => {
-          const suggestedCourts = Math.max(1, Math.floor(sanitizedPlayers.length / 4) || 1);
-          onChangeCourtsValue(String(suggestedCourts));
-          if (mode === "MEXICANO") {
-            prepareSettingsForMode("MEXICANO");
-          }
-          setStep("SETTINGS");
-        }}
-      />
-    );
-  }
-
-  return (
-    <MatchSettingsStepView
-      mode={mode}
-      modeLabel={modeLabel}
-      schedulingMode={effectiveSchedulingMode}
-      settingsPhase={settingsPhase}
-      scoringMode={scoringMode}
-      setFormat={setFormat}
-      gameWinBy={gameWinBy}
-      setsToWin={setsToWin}
-      setTiebreakTo={setTiebreakTo}
-      matchTiebreak={matchTiebreak}
-      courtsText={courtsText}
-      pointsText={pointsText}
-      targetGamesText={targetGamesText}
-      tournamentTimeText={tournamentTimeText}
-      estimate={estimate}
-      responseText={responseText}
-      errorText={errorText}
-      playersCount={sanitizedPlayers.length}
-      onChangeScoringMode={setScoringMode}
-      onChangeSetFormat={setSetFormat}
-      onChangeGameWinBy={setGameWinBy}
-      onChangeSetsToWin={setSetsToWin}
-      onChangeSetTiebreakTo={setSetTiebreakTo}
-      onChangeMatchTiebreak={setMatchTiebreak}
-      onChangeCourts={onChangeCourtsValue}
-      onChangePoints={onChangePointsValue}
-      onChangeTargetGames={onChangeTargetGamesValue}
-      onChangeTournamentTime={onChangeTournamentTimeValue}
-      onBackToPlayers={() => setStep("PLAYERS")}
-      onBackToMode={() => setSettingsPhase("MODE")}
-      onNextFromMode={() => setSettingsPhase("DETAILS")}
-      onCreate={() => void createTournament()}
-    />
-  );
+  backToList(setStep);
+  return null;
 }

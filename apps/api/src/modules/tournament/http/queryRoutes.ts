@@ -2,12 +2,21 @@ import type { FastifyInstance } from "fastify";
 import { prisma } from "../../../lib/prisma.js";
 import { requireOrganizerAccess } from "../../../lib/auth.js";
 import { mapAppError } from "../../../shared/http/mapAppError.js";
+import {
+  getKohHub,
+  getKohHubByPublicToken,
+  getKohRankingsByPublicToken
+} from "../../koh/application/readKohHub.js";
+import { PrismaKohRepository } from "../../koh/infrastructure/PrismaKohRepository.js";
 import type { TournamentModuleDeps } from "../application/ports.js";
 
 export function registerTournamentQueryRoutes(
   server: FastifyInstance,
   deps: TournamentModuleDeps
 ): void {
+  // KOH hubs are a separate aggregate; reads here delegate to the KOH module.
+  const koh = { repo: new PrismaKohRepository() };
+
   server.get("/health", async () => ({ status: "ok" }));
 
   server.get("/tournaments", { preHandler: requireOrganizerAccess }, async (request) => {
@@ -32,8 +41,10 @@ export function registerTournamentQueryRoutes(
         select: { mode: true }
       });
       if (row?.mode === "KING_OF_THE_HILL") {
-        const { getKohHub } = await import("../../../lib/kohStore.js");
-        const data = await getKohHub(params.id, request.user.id);
+        const data = await getKohHub(koh, {
+          tournamentId: params.id,
+          organizerId: request.user.id
+        });
         request.log.info({ id: params.id }, "GET /tournaments/:id KOH hub");
         return { data };
       }
@@ -62,8 +73,7 @@ export function registerTournamentQueryRoutes(
     }
 
     if (meta.mode === "KING_OF_THE_HILL") {
-      const { getKohHubByPublicToken } = await import("../../../lib/kohStore.js");
-      const hub = await getKohHubByPublicToken(params.token);
+      const hub = await getKohHubByPublicToken(koh, params.token);
       if (!hub) {
         reply.status(404);
         return { message: "Public tournament not found." };
@@ -93,9 +103,8 @@ export function registerTournamentQueryRoutes(
         return { message: "courtNumber must be a positive integer." };
       }
     }
-    const { getKohRankingsByPublicToken } = await import("../../../lib/kohStore.js");
     try {
-      const data = await getKohRankingsByPublicToken(params.token, courtNumber);
+      const data = await getKohRankingsByPublicToken(koh, params.token, courtNumber);
       if (!data) {
         reply.status(404);
         return { message: "Public tournament not found." };

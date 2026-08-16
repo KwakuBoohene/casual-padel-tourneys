@@ -1,7 +1,8 @@
 /**
  * Tournament HTTP module entry.
- * Temporary dual-path note: KOH create/detail still delegates to `routes/koh` / `kohStore`
- * until epic-10. Americano/Mexicano live behind use-cases + Prisma repository.
+ * Dual-path note: `POST /tournaments` and the organizer / public token reads branch on
+ * `mode === "KING_OF_THE_HILL"` and delegate to `modules/koh`. Americano/Mexicano live
+ * behind this module's use-cases + Prisma repository.
  */
 import type { FastifyInstance } from "fastify";
 

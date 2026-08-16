@@ -3,6 +3,7 @@ import { createTournamentSchema } from "@padel/shared";
 
 import { requireOrganizerAccess } from "../../../lib/auth.js";
 import { mapAppError } from "../../../shared/http/mapAppError.js";
+import { handleCreateKohTournament } from "../../koh/http/createKoh.js";
 import { createTournament } from "../application/createTournament.js";
 import type { TournamentModuleDeps } from "../application/ports.js";
 import { ensureOrganizerUser } from "../infrastructure/ensureOrganizerUser.js";
@@ -19,7 +20,6 @@ export function registerTournamentCreateRoutes(
 
     const body = request.body as { mode?: string } | undefined;
     if (body?.mode === "KING_OF_THE_HILL") {
-      const { handleCreateKohTournament } = await import("../../../routes/koh.js");
       const result = await handleCreateKohTournament(server, request.body, request.user.id);
       reply.status(result.status);
       return result.payload;

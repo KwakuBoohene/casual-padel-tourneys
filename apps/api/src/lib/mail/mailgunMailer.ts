@@ -50,7 +50,7 @@ export class MailgunMailer implements Mailer {
       });
     } catch (error) {
       logger.error("mail/mailgun: network error", { domain: this.domain });
-      throw new Error("Could not send email.");
+      throw new Error("Could not send email.", { cause: error });
     }
 
     if (!response.ok) {

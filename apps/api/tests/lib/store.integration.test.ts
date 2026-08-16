@@ -341,7 +341,6 @@ test("integratePendingPlayers recalculates remaining rounds", () => {
   };
 
   const tournament = createTournament(config, "org-1");
-  const originalRoundCount = tournament.rounds.length;
 
   // Add pending players
   let updated = addPendingPlayer(tournament.id, "New Player 1", undefined);
@@ -408,8 +407,8 @@ test("integratePendingPlayers throws error if current round incomplete", () => {
   const tournament = createTournament(config, "org-1");
 
   // Add 2 pending players
-  let updated = addPendingPlayer(tournament.id, "New Player 1", undefined);
-  updated = addPendingPlayer(tournament.id, "New Player 2", undefined);
+  addPendingPlayer(tournament.id, "New Player 1", undefined);
+  addPendingPlayer(tournament.id, "New Player 2", undefined);
 
   // Don't complete rounds - they remain incomplete
 
@@ -548,7 +547,7 @@ test("integratePendingPlayers supports multiple waves", () => {
   updated = addPendingPlayer(tournament.id, "Wave1-P2", undefined);
 
   // Complete first round
-  let firstRound = updated.rounds[0];
+  const firstRound = updated.rounds[0];
   firstRound.isLocked = true;
   for (const match of firstRound.matches) {
     match.completed = true;

@@ -129,11 +129,15 @@ async function loginWithPassword(
 
   let finishLoginRequest: string;
   try {
-    ({ finishLoginRequest } = passwordProtocol.client.finishLogin({
+    const finished = passwordProtocol.client.finishLogin({
       clientLoginState,
       loginResponse,
       password
-    }));
+    });
+    if (!finished) {
+      return { statusCode: 401, body: { message: "client finish failed" } };
+    }
+    finishLoginRequest = finished.finishLoginRequest;
   } catch {
     return { statusCode: 401, body: { message: "client finish failed" } };
   }
@@ -250,7 +254,10 @@ test("password reset: old password fails after replace; new password works", asy
     const reset = await completePasswordReset(app, resetTicket, newPassword);
     assert.equal(reset.statusCode, 200, JSON.stringify(reset.body));
     assert.ok(typeof reset.body.token === "string");
-    const claims = jwt.verify(reset.body.token as string, JWT_SECRET) as jwt.JwtPayload;
+    const claims = jwt.verify(reset.body.token as string, JWT_SECRET) as {
+      sub?: string;
+      emailVerified?: boolean;
+    };
     assert.equal(claims.sub, user.id);
     assert.equal(claims.emailVerified, true);
 

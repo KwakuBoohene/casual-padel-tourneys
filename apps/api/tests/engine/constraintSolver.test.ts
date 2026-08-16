@@ -195,14 +195,14 @@ test("buildRound updates matrices after match creation", () => {
 
   // Opponent pairs should be recorded (4 pairs: each teamA player vs each teamB player)
   let opponentCount = 0;
-  for (const [key, value] of opponentMatrix.entries()) {
+  for (const value of opponentMatrix.values()) {
     if (value === 1) opponentCount++;
   }
   assert.equal(opponentCount, 4, "Should record 4 opponent pairings");
 
   // Co-player matrix should record all 6 pairs (combination of 4 players)
   let coPlayerCount = 0;
-  for (const [key, value] of coPlayerMatrix.entries()) {
+  for (const value of coPlayerMatrix.values()) {
     if (value === 1) coPlayerCount++;
   }
   assert.equal(coPlayerCount, 6, "Should record 6 co-player pairings");

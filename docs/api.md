@@ -26,7 +26,8 @@ Base URL: `http://localhost:3001`
 
 ## Health
 
-- `GET /health`
+- `GET /health` — liveness, `{ status: "ok", ok: true }` (no database access)
+- `GET /ready` — readiness, `{ status, ok, checks: { database } }`; `503` when Postgres is unreachable
 
 ## Tournament Read
 

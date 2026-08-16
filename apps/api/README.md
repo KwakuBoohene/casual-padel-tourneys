@@ -23,15 +23,18 @@ Useful scripts (from `apps/api` or via `--workspace @padel/api`):
 |--------|---------|
 | `dev` | `tsx watch` on `src/server.ts` |
 | `build` / `start` | Compile + run `dist` |
+| `lint` | ESLint (flat config, `--max-warnings 0`) incl. layer boundaries |
+| `typecheck` | `tsc --noEmit` |
 | `test` | Node test runner over `tests/**/*.test.ts` |
 | `db:migrate` / `db:generate` / `db:push` | Prisma |
 | `simulate` | Engine simulation helper |
 
-Health: `GET /health` → `{ ok: true }`.
+Health: `GET /health` → `{ status: "ok", ok: true }` · readiness: `GET /ready` (see [Ops](#ops)).
 
 ## Architecture overview
 
-The API is moving to **modular hexagonal + light DDD** (epic-09). Americano / Mexicano / Regular tournaments already live in that shape; KOH and most auth still use classic Fastify route modules (epic-10).
+The API is **modular hexagonal + light DDD** (epics 09–10). Tournaments (Americano / Mexicano /
+Regular), KOH, auth and organizer players all live as modules under `src/modules/`.
 
 ```text
 HTTP (Fastify)  →  application use-cases  →  domain / pure engines
@@ -44,6 +47,11 @@ HTTP (Fastify)  →  application use-cases  →  domain / pure engines
 - `http` → `application` → `domain` / `engine`
 - `infrastructure` implements application **ports**
 - `domain` / `engine` never import Fastify, Prisma, or ioredis
+
+This is enforced by ESLint (`eslint.config.js`, `boundaries/dependencies`), not by convention:
+`npm run lint --workspace @padel/api` fails if `modules/*/domain/**` imports `fastify`,
+`@prisma/client` or `ioredis`, or if `modules/*/application/**` imports `fastify` or
+`@prisma/client`. `tests/lint/boundaries.test.ts` asserts those rules still bite.
 
 Longer rationale: [`plans/implementation/backend/epic-09-api-modular-hexagonal/adr-modular-hexagonal.md`](../../plans/implementation/backend/epic-09-api-modular-hexagonal/adr-modular-hexagonal.md).
 
@@ -71,19 +79,20 @@ apps/api/
 │   │   │   ├── application/# use-cases + ports
 │   │   │   ├── domain/     # aggregate mutations (pure)
 │   │   │   └── infrastructure/  # Prisma repo, realtime adapter, mappers
-│   │   └── koh/            # King of the Hill bounded context (same four layers)
+│   │   ├── koh/            # King of the Hill bounded context (same four layers)
+│   │   ├── auth/           # guest/Google/password/magic-link/reset (same four layers)
+│   │   └── organizerPlayers/  # cross-event player careers (`/me/players/*`)
 │   ├── shared/
 │   │   ├── kernel/         # AppError, Result helpers
-│   │   └── http/           # mapAppError
+│   │   └── http/           # mapAppError, global error handler, /health + /ready, request id
 │   ├── engine/             # pure schedulers / scoring (Americano, Mexicano, Regular, KOH math)
 │   ├── realtime/           # WebSocket hub + Redis pub/sub
-│   ├── routes/             # legacy-style modules (mePlayers)
 │   ├── lib/                # auth shim, mail, prisma client, logger; store.ts = test harness only
 │   └── types/
 └── tests/                  # mirrors src/ (do not put *.test.ts under src/)
 ```
 
-Module-local notes: [`src/modules/tournament/README.md`](./src/modules/tournament/README.md), [`src/modules/koh/README.md`](./src/modules/koh/README.md), [`src/modules/auth/README.md`](./src/modules/auth/README.md).  
+Module-local notes: [`src/modules/tournament/README.md`](./src/modules/tournament/README.md), [`src/modules/koh/README.md`](./src/modules/koh/README.md), [`src/modules/auth/README.md`](./src/modules/auth/README.md), [`src/modules/organizerPlayers/README.md`](./src/modules/organizerPlayers/README.md).  
 Test layout: [`tests/README.md`](./tests/README.md).
 
 ### What lives where
@@ -94,8 +103,9 @@ Test layout: [`tests/README.md`](./tests/README.md).
 | Pairing & scoring algorithms | `engine/` | Keep pure; call from application/domain |
 | KOH hubs & queues | `modules/koh/` | Hexagonal; `POST /tournaments` + public token reads branch in from the tournament module |
 | Auth (guest, Google, password, magic link, reset, attach) | `modules/auth/` | Hexagonal; JWT + OPAQUE behind adapters. `lib/auth.ts` re-exports the preHandlers |
-| Organizer saved players | `routes/mePlayers.ts` | Authenticated `/me/players` |
+| Organizer player careers | `modules/organizerPlayers/` | Authenticated `/me/players/*`; KOH credits careers through `infrastructure/careerCredits.ts` |
 | Realtime subscriptions | `realtime/socketHub.ts` | Clients subscribe by public share token |
+| Health / readiness / request id | `shared/http/` | Registered once from `app.ts` |
 
 ## HTTP surface (high level)
 
@@ -120,6 +130,57 @@ KOH routes (`/koh/tournaments/...`) are registered by `registerKohModule` from `
 - Hub loads tournament access from **Prisma** (public token → tournament), then fans out scoreboard updates.
 - Optional `REDIS_URL`: cross-process pub/sub. Without Redis, in-process subscriptions still work for a single API instance.
 
+## Ops
+
+Sized for a self-hosted deployment with **&lt;1000 users** — boring basics, no APM stack.
+
+### Health vs readiness
+
+| Endpoint | Meaning | Body | Notes |
+|----------|---------|------|-------|
+| `GET /health` | Liveness — the process is up | `{ status: "ok", ok: true }` | Never touches Postgres, so a DB blip does not trigger restarts |
+| `GET /ready` | Readiness — can serve traffic | `{ status, ok, checks: { database } }` | `SELECT 1` against Postgres; **fails closed with 503** when the DB is unreachable |
+
+Both are registered from `app.ts` via `shared/http/opsRoutes.ts` and are exempt from the global
+rate limit so probes never get throttled.
+
+### Request ids and log safety
+
+- Incoming `x-request-id` is reused as the Fastify request id (trimmed, max 128 chars);
+  otherwise a UUID is generated. The value appears as `reqId` on every request log line and is
+  echoed back in the `x-request-id` response header.
+- The request log serializer (`shared/http/requestContext.ts`) logs method, redacted URL and
+  remote address only — **no headers, no cookies**, so JWTs and `x-organizer-token` never land in
+  logs. Share tokens in the path (`/public/:token`) and in `?token=` queries are replaced with
+  `[redacted]`.
+
+### Error contract
+
+`app.ts` registers one global handler (`shared/http/errorHandler.ts`):
+
+- An `AppError` that escapes a route becomes its declared status with `{ message }` — the same
+  body routes already produce through `mapAppError`.
+- Anything else is handed back to Fastify, preserving the `{ statusCode, error, message }`
+  envelope that auth routes and the rate limiter return.
+
+### Rate limits
+
+Global: **100 requests / minute** per IP (`@fastify/rate-limit`, in-memory per instance).
+Per-route overrides for the unauthenticated auth surface (`modules/auth/http/rateLimits.ts`):
+
+| Cluster | Routes | Limit |
+|---------|--------|-------|
+| Email send | `POST /auth/magic-link`, `POST /auth/password/reset` | 5 / 15 min |
+| Credentials | `/auth/password/{register,login}/*`, `/auth/password/reset/register/*`, `/auth/google`, `/auth/guest` | 20 / 15 min |
+| Token redeem | `/auth/magic-link/consume`, `/auth/password/reset/consume` | 20 / 15 min |
+| Verify resend | `POST /auth/verify/resend` (authenticated) | 5 / 15 min |
+| Ops probes | `/health`, `/ready` | exempt |
+
+Authenticated organizer routes stay on the global limit; at this user count they are not a
+plausible abuse vector, and password login also has its own attempt tracking
+(`lib/passwordLoginAttempts.ts`). Limits are per process — with more than one API instance,
+move the store to Redis before tightening further.
+
 ## Configuration
 
 Common env vars (see also repo root / `infra` docs):
@@ -142,6 +203,12 @@ npm test --workspace @padel/api
 - Place tests in `tests/` with the same relative path as `src/` (workspace rule).
 - Tournament use-case / HTTP tests target the modular stack.
 - `lib/store.ts` remains a **test harness** wrapping domain helpers — not the production live store.
+- The runner does **not** use `--test-force-exit`: it made the process exit before every test file
+  had reported, so runs silently dropped whole files (counts drifted between 263 and 284 while
+  still printing `fail 0`). Integration tests need Postgres reachable; a hanging run means an open
+  handle, so fix the handle instead of re-adding the flag.
+- Tests that write career rows (`OrganizerPlayerStatDelta`) must use a unique organizer id and
+  clean up — those rows have no natural expiry and will break row-count assertions on re-runs.
 
 ## Extending the API
 
@@ -152,9 +219,11 @@ npm test --workspace @padel/api
 3. Wire ports if you need new persistence or events.
 4. Keep HTTP adapters thin: validate → use-case → `mapAppError`.
 
-**New bounded context (KOH, auth, …)**
+**New bounded context**
 
-Follow the same `modules/<name>/{domain,application,infrastructure,http}` layout when extracting from `routes/` (see epic-10 plans).
+Follow the same `modules/<name>/{domain,application,infrastructure,http}` layout and register it
+from `app.ts` (see epic-10 plans). ESLint enforces the layering, so start from the port, not the
+Prisma call.
 
 **Do not**
 

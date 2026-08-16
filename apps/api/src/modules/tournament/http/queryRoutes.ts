@@ -17,8 +17,6 @@ export function registerTournamentQueryRoutes(
   // KOH hubs are a separate aggregate; reads here delegate to the KOH module.
   const koh = { repo: new PrismaKohRepository() };
 
-  server.get("/health", async () => ({ status: "ok" }));
-
   server.get("/tournaments", { preHandler: requireOrganizerAccess }, async (request) => {
     if (!request.user) {
       return { data: [] };

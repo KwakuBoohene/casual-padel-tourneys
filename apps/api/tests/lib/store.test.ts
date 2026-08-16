@@ -497,7 +497,6 @@ test("adjustCourts recalculates remaining tournament", () => {
   };
 
   const tournament = createTournament(config, "org_recalc");
-  const initialRoundCount = tournament.rounds.length;
 
   const updated = adjustCourts(tournament.id, 3);
 

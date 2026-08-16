@@ -13,10 +13,12 @@ import {
 } from "../application/passwordRegister.js";
 import type { AuthModuleDeps } from "../application/ports.js";
 import { mapAuthError } from "./mapAuthError.js";
+import { AUTH_CREDENTIAL_RATE_LIMIT } from "./rateLimits.js";
 
 export function registerPasswordAuthRoutes(server: FastifyInstance, deps: AuthModuleDeps): void {
   server.post(
     "/auth/password/register/start",
+    { config: AUTH_CREDENTIAL_RATE_LIMIT },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const parsed = passwordRegisterStartSchema.safeParse(request.body);
       if (!parsed.success) {
@@ -33,6 +35,7 @@ export function registerPasswordAuthRoutes(server: FastifyInstance, deps: AuthMo
 
   server.post(
     "/auth/password/register/finish",
+    { config: AUTH_CREDENTIAL_RATE_LIMIT },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const parsed = passwordRegisterFinishSchema.safeParse(request.body);
       if (!parsed.success) {
@@ -50,6 +53,7 @@ export function registerPasswordAuthRoutes(server: FastifyInstance, deps: AuthMo
 
   server.post(
     "/auth/password/login/start",
+    { config: AUTH_CREDENTIAL_RATE_LIMIT },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const parsed = passwordLoginStartSchema.safeParse(request.body);
       if (!parsed.success) {
@@ -66,6 +70,7 @@ export function registerPasswordAuthRoutes(server: FastifyInstance, deps: AuthMo
 
   server.post(
     "/auth/password/login/finish",
+    { config: AUTH_CREDENTIAL_RATE_LIMIT },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const parsed = passwordLoginFinishSchema.safeParse(request.body);
       if (!parsed.success) {

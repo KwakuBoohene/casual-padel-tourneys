@@ -1,7 +1,7 @@
 import type { SubmitKohScoreInput } from "@padel/shared";
 import { Prisma } from "@prisma/client";
 
-import { creditKohMatchToOrganizerPlayers } from "../../../../lib/organizerPlayers.js";
+import { creditKohMatchToOrganizerPlayers } from "../../../organizerPlayers/infrastructure/careerCredits.js";
 import { prisma } from "../../../../lib/prisma.js";
 import type { KohEngineCourt } from "../../../../engine/koh/index.js";
 import { kohSetRows, tallyKohSetStats } from "./kohSetStats.js";

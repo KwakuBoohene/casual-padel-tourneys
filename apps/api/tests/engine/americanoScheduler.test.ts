@@ -34,7 +34,7 @@ test("generateTournament creates players with correct properties", () => {
     targetGamesPerPlayer: 2
   };
 
-  const { players, rounds } = generateTournament(config);
+  const { players } = generateTournament(config);
 
   assert.equal(players.length, 4);
   for (const player of players) {
@@ -384,7 +384,7 @@ test("handicap reduces selection priority for players with higher effective game
   // Lock completed rounds
   initial.rounds[0].isLocked = true;
 
-  const recalculated = recalculateRemainingTournament(config, expandedPlayers, initial.rounds);
+  recalculateRemainingTournament(config, expandedPlayers, initial.rounds);
 
   // After recalculation, new players should have played some games
   const new1Games = expandedPlayers.find((p) => p.id === "new1")?.gamesPlayed ?? 0;
@@ -696,7 +696,7 @@ test("fairness maintained after integrating 2 players", () => {
   ];
 
   // Recalculate with expanded player list
-  const recalculated = recalculateRemainingTournament(config, expandedPlayers, initial.rounds);
+  recalculateRemainingTournament(config, expandedPlayers, initial.rounds);
 
   // Check fairness after regeneration
   const delta = maxGamesDelta(expandedPlayers);
@@ -736,7 +736,7 @@ test("fairness maintained with 4 integrated players", () => {
     { id: "new4", name: "New 4", gamesPlayed: 0, totalPoints: 0, handicap, integrationWave: 1 }
   ];
 
-  const recalculated = recalculateRemainingTournament(config, expandedPlayers, initial.rounds);
+  recalculateRemainingTournament(config, expandedPlayers, initial.rounds);
 
   const delta = maxGamesDelta(expandedPlayers);
   // With 4 integrated players at once, greedy algorithm may produce delta up to 3
@@ -762,7 +762,7 @@ test("fairness maintained across multiple integration waves", () => {
     targetGamesPerPlayer: 6
   };
 
-  let state = generateTournament(config);
+  const state = generateTournament(config);
   state.rounds[0].isLocked = true;
 
   // Wave 1: Add 2 players
@@ -853,7 +853,7 @@ test("fairness maintained with MIXED variant integration", () => {
     }
   ];
 
-  const recalculated = recalculateRemainingTournament(config, expandedPlayers, initial.rounds);
+  recalculateRemainingTournament(config, expandedPlayers, initial.rounds);
 
   const delta = maxGamesDelta(expandedPlayers);
   assert.ok(delta <= 1, `maxGamesDelta should be ≤ 1 for MIXED variant, got ${delta}`);
@@ -892,7 +892,7 @@ test("fairness maintained with large player base after integration", () => {
     { id: "new4", name: "New 4", gamesPlayed: 0, totalPoints: 0, handicap, integrationWave: 1 }
   ];
 
-  const recalculated = recalculateRemainingTournament(config, expandedPlayers, initial.rounds);
+  recalculateRemainingTournament(config, expandedPlayers, initial.rounds);
 
   const delta = maxGamesDelta(expandedPlayers);
   // With large player base (20 total), some unfairness is expected
@@ -932,7 +932,7 @@ test("fairness edge case: integration early in tournament", () => {
     { id: "new2", name: "New 2", gamesPlayed: 0, totalPoints: 0, handicap, integrationWave: 1 }
   ];
 
-  const recalculated = recalculateRemainingTournament(config, expandedPlayers, initial.rounds);
+  recalculateRemainingTournament(config, expandedPlayers, initial.rounds);
 
   // Early integration with many rounds remaining can still produce unfairness
   const delta = maxGamesDelta(expandedPlayers);
@@ -974,7 +974,7 @@ test("fairness edge case: integration late in tournament", () => {
     { id: "new2", name: "New 2", gamesPlayed: 0, totalPoints: 0, handicap, integrationWave: 1 }
   ];
 
-  const recalculated = recalculateRemainingTournament(config, expandedPlayers, initial.rounds);
+  recalculateRemainingTournament(config, expandedPlayers, initial.rounds);
 
   // Late integration has fewer rounds to balance, delta might be higher
   const delta = maxGamesDelta(expandedPlayers);
@@ -1032,7 +1032,7 @@ test("fairness with different handicap ratios", () => {
       }
     ];
 
-    const recalculated = recalculateRemainingTournament(config, expandedPlayers, initial.rounds);
+    recalculateRemainingTournament(config, expandedPlayers, initial.rounds);
 
     const delta = maxGamesDelta(expandedPlayers);
     // Higher handicap ratios (especially 1.0) can produce higher deltas

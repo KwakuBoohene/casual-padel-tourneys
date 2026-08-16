@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { maxGamesDelta, countTeammateRepeats, countOpponentRepeats } from "../../src/engine/fairnessEvaluator.js";
-import type { Player, Round, Match } from "@padel/shared";
+import type { Player, Round } from "@padel/shared";
 import { createId } from "@padel/shared";
 
 // ========== maxGamesDelta Tests ==========

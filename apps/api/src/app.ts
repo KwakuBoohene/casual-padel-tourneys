@@ -6,22 +6,42 @@ import { Redis } from "ioredis";
 
 import { registerAuthModule } from "./modules/auth/http/register.js";
 import { registerKohModule } from "./modules/koh/http/register.js";
+import { registerOrganizerPlayersModule } from "./modules/organizerPlayers/http/register.js";
 import { registerTournamentModule } from "./modules/tournament/http/register.js";
 import { mountSocketHub } from "./realtime/socketHub.js";
 import { logger } from "./lib/logger.js";
+import { registerAppErrorHandler } from "./shared/http/errorHandler.js";
+import { registerOpsRoutes } from "./shared/http/opsRoutes.js";
+import {
+  REQUEST_ID_HEADER,
+  normalizeIncomingRequestId,
+  registerRequestId,
+  serializeRequest
+} from "./shared/http/requestContext.js";
 
 export async function createApp() {
   const loggerLevel = process.env.API_LOG_LEVEL ?? "info";
   const server = Fastify({
     logger: {
-      level: loggerLevel
-    }
+      level: loggerLevel,
+      serializers: { req: serializeRequest }
+    },
+    // Correlation ids are generated here so an incoming header is length-bounded first.
+    requestIdHeader: false,
+    genReqId: (request) => normalizeIncomingRequestId(request.headers[REQUEST_ID_HEADER])
   });
   logger.info("createApp: starting Fastify server", { loggerLevel });
   await server.register(cors, {
     origin: true,
     methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "x-organizer-token", "Authorization", "x-public-token"]
+    allowedHeaders: [
+      "Content-Type",
+      "x-organizer-token",
+      "Authorization",
+      "x-public-token",
+      REQUEST_ID_HEADER
+    ],
+    exposedHeaders: [REQUEST_ID_HEADER]
   });
   await server.register(rateLimit, { max: 100, timeWindow: "1 minute" });
   await server.register(websocket);
@@ -33,12 +53,14 @@ export async function createApp() {
     server.decorate("redis", undefined);
   }
   server.decorate("subscriptions", mountSocketHub(server));
+  registerRequestId(server);
+  registerAppErrorHandler(server);
   logger.info("createApp: registering routes");
+  registerOpsRoutes(server);
   await registerAuthModule(server);
   await registerTournamentModule(server);
   await registerKohModule(server);
-  const { registerMePlayerRoutes } = await import("./routes/mePlayers.js");
-  await registerMePlayerRoutes(server);
+  registerOrganizerPlayersModule(server);
   logger.info("createApp: server ready");
   return server;
 }

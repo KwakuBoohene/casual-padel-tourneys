@@ -1,9 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import jwt from "jsonwebtoken";
 
-import { createApp } from "../../src/app.js";
-import { prisma } from "../../src/lib/prisma.js";
+import { createApp } from "../../../src/app.js";
+import { prisma } from "../../../src/lib/prisma.js";
 
 const JWT_SECRET = "test-secret-key-for-unit-tests";
 
@@ -29,17 +30,29 @@ async function ensureUser(id: string): Promise<void> {
   });
 }
 
-async function withApp<T>(fn: (app: Awaited<ReturnType<typeof createApp>>) => Promise<T>): Promise<T> {
+/** Career rows accumulate forever, so every run owns a throwaway organizer and drops it. */
+async function deleteOrganizer(id: string): Promise<void> {
+  await prisma.organizerPlayerStatDelta.deleteMany({ where: { organizerId: id } });
+  await prisma.organizerPlayer.deleteMany({ where: { organizerId: id } });
+  await prisma.tournament.deleteMany({ where: { organizerId: id } });
+  await prisma.user.deleteMany({ where: { id } });
+}
+
+async function withApp<T>(
+  fn: (app: Awaited<ReturnType<typeof createApp>>, organizerId: string) => Promise<T>
+): Promise<T> {
+  const organizerId = `career-owner-${randomUUID()}`;
   const originalSecret = process.env.JWT_SECRET;
   const originalRedis = process.env.REDIS_URL;
   process.env.JWT_SECRET = JWT_SECRET;
   delete process.env.REDIS_URL;
   const app = await createApp();
   try {
-    await ensureUser("career-owner");
-    return await fn(app);
+    await ensureUser(organizerId);
+    return await fn(app, organizerId);
   } finally {
     await app.close();
+    await deleteOrganizer(organizerId);
     if (originalSecret === undefined) delete process.env.JWT_SECRET;
     else process.env.JWT_SECRET = originalSecret;
     if (originalRedis === undefined) delete process.env.REDIS_URL;
@@ -56,8 +69,8 @@ const winSet = {
 };
 
 test("KOH complete credits organizer player career; replace keeps past on leaver", async () => {
-  await withApp(async (app) => {
-    const token = signUser("career-owner");
+  await withApp(async (app, organizerId) => {
+    const token = signUser(organizerId);
     const create = await app.inject({
       method: "POST",
       url: "/tournaments",
@@ -162,5 +175,36 @@ test("KOH complete credits organizer player career; replace keeps past on leaver
     assert.equal(detail.statusCode, 200);
     assert.equal(detail.json().data.gamesWon, 6);
     assert.ok(detail.json().data.recentEvents.some((e: { tournamentName: string }) => e.tournamentName === "Career KOH"));
+  });
+});
+
+test("guest organizers get a career upsell instead of stats", async () => {
+  await withApp(async (app) => {
+    const guestId = `guest-${randomUUID()}`;
+    const guestToken = jwt.sign(
+      { sub: guestId, email: `${guestId}@guest.local`, name: "Guest", isGuest: true },
+      JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    const board = await app.inject({
+      method: "GET",
+      url: "/me/players/leaderboard",
+      headers: { authorization: `Bearer ${guestToken}` }
+    });
+    assert.equal(board.statusCode, 200);
+    assert.deepEqual(board.json().data, {
+      range: "all",
+      rows: [],
+      guest: true,
+      message: "Attach an account to track player careers across events."
+    });
+
+    const detail = await app.inject({
+      method: "GET",
+      url: "/me/players/orgplayer_whatever",
+      headers: { authorization: `Bearer ${guestToken}` }
+    });
+    assert.equal(detail.statusCode, 403);
   });
 });

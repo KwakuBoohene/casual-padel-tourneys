@@ -9,9 +9,9 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/apps/api/src/server.js",
     "postinstall": "prisma generate",
-    "lint": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test --import tsx --test-force-exit $(find tests -name '*.test.ts' | sort)",
+    "test": "node --test --import tsx $(find tests -name '*.test.ts' | sort)",
     "simulate": "node --import tsx src/engine/simulate.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
@@ -31,7 +31,9 @@
     "jsonwebtoken": "9.0.3"
   },
   "devDependencies": {
+    "eslint-plugin-boundaries": "7.2.0",
     "prisma": "6.19.2",
-    "tsx": "4.21.0"
+    "tsx": "4.21.0",
+    "typescript-eslint": "8.67.0"
   }
 }

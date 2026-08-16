@@ -1,0 +1,25 @@
+# Organizer players module (Modular Hexagonal)
+
+Cross-event player careers for one organizer: every credited match adds an
+`OrganizerPlayerStatDelta` row, and `/me/players/*` aggregates those rows per range
+(`month` / `year` / `all`).
+
+```text
+http/            → /me/players/leaderboard, /me/players/:id
+application/     → read use-cases + OrganizerPlayerRepository port
+domain/          → range boundaries + pure aggregation (leaderboard, detail)
+infrastructure/  → Prisma repository (reads) + careerCredits (writes)
+```
+
+## Notes
+
+- **Write side lives in `infrastructure/careerCredits.ts`.** `ensureOrganizerPlayer` and
+  `creditKohMatchToOrganizerPlayers` run inside the caller's Prisma transaction, so KOH scoring
+  and roster changes credit careers atomically with the score. That file is the stable entry
+  point for other modules — do not reach into the repository from outside.
+- Crediting is idempotent per `(matchId, organizerPlayerId)`: re-submitting a score overwrites
+  the delta instead of double counting, and a player who leaves a unit keeps past results.
+- Identity is `organizerId` + normalized display name (`domain/careerRange.ts`), so renames
+  within one organizer merge into the same career.
+- Guests have no career: the leaderboard answers 200 with an upsell payload and the detail route
+  answers 403. Keep that messaging when changing the routes.

@@ -13,7 +13,7 @@ export function estimateTournament(config: TournamentConfig): EstimatedTournamen
   const playersCount = config.players.length;
   const playersPerRound = config.courts * 4;
   const matchMinutes = matchDurationMinutes(config);
-  let roundsFromTarget = 1;
+  let roundsFromTarget: number;
   if (config.schedulingMode === "ROUND_ROBIN") {
     roundsFromTarget = Math.max(1, playersCount - 1);
   } else if (config.schedulingMode === "TARGET_GAMES") {

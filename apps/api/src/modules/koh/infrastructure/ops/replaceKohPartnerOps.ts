@@ -2,7 +2,7 @@ import type { ReplaceKohPartnerInput } from "@padel/shared";
 import { createId } from "@padel/shared";
 
 import { logger } from "../../../../lib/logger.js";
-import { ensureOrganizerPlayer } from "../../../../lib/organizerPlayers.js";
+import { ensureOrganizerPlayer } from "../../../organizerPlayers/infrastructure/careerCredits.js";
 import { prisma } from "../../../../lib/prisma.js";
 import { validation } from "../../../../shared/kernel/appError.js";
 import type { KohTournamentHub } from "../../domain/types.js";

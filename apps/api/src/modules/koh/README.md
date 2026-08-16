@@ -30,5 +30,7 @@ infrastructure/  → Prisma ops/mappers + realtime adapter
 | `GET /tournaments/:id` (KOH hub) | tournament `queryRoutes` | `application/readKohHub.ts` |
 | `GET /public/:token[/rankings]` | tournament `queryRoutes` | `application/readKohHub.ts` |
 
-Organizer-player crediting still comes from `lib/organizerPlayers.ts` until epic-10 ticket 06
-moves it into its own module.
+Organizer-player crediting comes from the organizerPlayers module
+(`modules/organizerPlayers/infrastructure/careerCredits.ts`): `ensureOrganizerPlayer` on
+assignment / partner replacement, `creditKohMatchToOrganizerPlayers` on a completed score. Those
+calls join the KOH transaction, so careers never drift from the persisted result.

@@ -1,10 +1,6 @@
 import type { Match, Player } from "@padel/shared";
 
-import {
-  awardDeltasForWinner,
-  evaluateMatch,
-  type Side
-} from "../../../engine/regularScoring.js";
+import { awardDeltasForWinner, type Side } from "../../../engine/regularScoring.js";
 import type { TournamentState } from "../../../types/state.js";
 import { logger } from "../../../lib/logger.js";
 

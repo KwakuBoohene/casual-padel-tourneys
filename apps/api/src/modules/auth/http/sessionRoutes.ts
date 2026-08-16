@@ -6,6 +6,7 @@ import { googleSignIn } from "../application/googleSignIn.js";
 import { guestSignIn } from "../application/guestSignIn.js";
 import type { AuthModuleDeps } from "../application/ports.js";
 import { mapAuthError, rethrowAuthError } from "./mapAuthError.js";
+import { AUTH_CREDENTIAL_RATE_LIMIT } from "./rateLimits.js";
 
 type GoogleAuthBody = { idToken: string };
 type GuestAuthBody = { guestId: string };
@@ -13,6 +14,7 @@ type GuestAuthBody = { guestId: string };
 export function registerAuthSessionRoutes(server: FastifyInstance, deps: AuthModuleDeps): void {
   server.post(
     "/auth/google",
+    { config: AUTH_CREDENTIAL_RATE_LIMIT },
     async (
       request: FastifyRequest<{ Body: GoogleAuthBody }>,
       reply: FastifyReply
@@ -31,6 +33,7 @@ export function registerAuthSessionRoutes(server: FastifyInstance, deps: AuthMod
 
   server.post(
     "/auth/guest",
+    { config: AUTH_CREDENTIAL_RATE_LIMIT },
     async (
       request: FastifyRequest<{ Body: GuestAuthBody }>,
       reply: FastifyReply

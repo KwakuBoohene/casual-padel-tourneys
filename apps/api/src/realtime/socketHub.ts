@@ -38,7 +38,7 @@ async function loadTournamentAccess(tournamentId: string): Promise<TournamentAcc
       return null;
     }
     return { organizerId: row.organizerId, publicToken: row.publicToken };
-  } catch (error) {
+  } catch {
     logger.warn("socketHub: failed to load tournament for subscribe auth", { tournamentId });
     return null;
   }

@@ -77,13 +77,13 @@ apps/api/
 │   │   └── http/           # mapAppError
 │   ├── engine/             # pure schedulers / scoring (Americano, Mexicano, Regular, KOH math)
 │   ├── realtime/           # WebSocket hub + Redis pub/sub
-│   ├── routes/             # legacy-style modules (auth*, mePlayers)
-│   ├── lib/                # auth helpers, mail, prisma client, logger; store.ts = test harness only
+│   ├── routes/             # legacy-style modules (mePlayers)
+│   ├── lib/                # auth shim, mail, prisma client, logger; store.ts = test harness only
 │   └── types/
 └── tests/                  # mirrors src/ (do not put *.test.ts under src/)
 ```
 
-Module-local notes: [`src/modules/tournament/README.md`](./src/modules/tournament/README.md), [`src/modules/koh/README.md`](./src/modules/koh/README.md).  
+Module-local notes: [`src/modules/tournament/README.md`](./src/modules/tournament/README.md), [`src/modules/koh/README.md`](./src/modules/koh/README.md), [`src/modules/auth/README.md`](./src/modules/auth/README.md).  
 Test layout: [`tests/README.md`](./tests/README.md).
 
 ### What lives where
@@ -93,7 +93,7 @@ Test layout: [`tests/README.md`](./tests/README.md).
 | Create / score / live AM·MX·Regular | `modules/tournament/` | Prefer this path for new tournament work |
 | Pairing & scoring algorithms | `engine/` | Keep pure; call from application/domain |
 | KOH hubs & queues | `modules/koh/` | Hexagonal; `POST /tournaments` + public token reads branch in from the tournament module |
-| Auth (guest, Google, password, magic link, reset) | `routes/auth*.ts` | JWT + Opaque; epic-10 module later |
+| Auth (guest, Google, password, magic link, reset, attach) | `modules/auth/` | Hexagonal; JWT + OPAQUE behind adapters. `lib/auth.ts` re-exports the preHandlers |
 | Organizer saved players | `routes/mePlayers.ts` | Authenticated `/me/players` |
 | Realtime subscriptions | `realtime/socketHub.ts` | Clients subscribe by public share token |
 
@@ -112,7 +112,7 @@ Typical tournament routes (registered by `registerTournamentModule`):
 - `GET /public/tournaments/:publicToken` — viewer snapshot
 - Score / advance / regenerate / player mutations — under the tournament module HTTP adapters
 
-KOH routes (`/koh/tournaments/...`) are registered by `registerKohModule` from `modules/koh/http/`. Auth routes remain under `src/routes/` with their existing prefixes (`/auth`, …). Prefer reading the route files or OpenAPI-ish comments there for exact paths and bodies.
+KOH routes (`/koh/tournaments/...`) are registered by `registerKohModule` from `modules/koh/http/`. Auth routes (`/auth/...`) are registered by `registerAuthModule` from `modules/auth/http/`. Prefer reading the route files or OpenAPI-ish comments there for exact paths and bodies.
 
 ## Realtime
 

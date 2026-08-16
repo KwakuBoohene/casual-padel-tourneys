@@ -4,13 +4,9 @@ import websocket from "@fastify/websocket";
 import rateLimit from "@fastify/rate-limit";
 import { Redis } from "ioredis";
 
+import { registerAuthModule } from "./modules/auth/http/register.js";
 import { registerKohModule } from "./modules/koh/http/register.js";
 import { registerTournamentModule } from "./modules/tournament/http/register.js";
-import { registerAuthRoutes } from "./routes/auth.js";
-import { registerAttachAuthRoutes } from "./routes/authAttach.js";
-import { registerMagicLinkRoutes } from "./routes/authMagicLink.js";
-import { registerPasswordAuthRoutes } from "./routes/authPassword.js";
-import { registerPasswordResetRoutes } from "./routes/authPasswordReset.js";
 import { mountSocketHub } from "./realtime/socketHub.js";
 import { logger } from "./lib/logger.js";
 
@@ -38,11 +34,7 @@ export async function createApp() {
   }
   server.decorate("subscriptions", mountSocketHub(server));
   logger.info("createApp: registering routes");
-  await registerAuthRoutes(server);
-  await registerAttachAuthRoutes(server);
-  await registerMagicLinkRoutes(server);
-  await registerPasswordAuthRoutes(server);
-  await registerPasswordResetRoutes(server);
+  await registerAuthModule(server);
   await registerTournamentModule(server);
   await registerKohModule(server);
   const { registerMePlayerRoutes } = await import("./routes/mePlayers.js");

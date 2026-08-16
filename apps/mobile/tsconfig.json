@@ -9,6 +9,6 @@
       "@padel/shared/*": ["../../packages/shared/src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "index.ts", "App.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "app/**/*.ts", "app/**/*.tsx"],
   "exclude": ["tests", "dist", "node_modules"]
 }

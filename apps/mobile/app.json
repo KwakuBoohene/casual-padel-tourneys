@@ -11,6 +11,9 @@
       "android",
       "web"
     ],
+    "plugins": [
+      "expo-router"
+    ],
     "android": {
       "package": "com.anonymous.padelorganizer"
     },

@@ -111,8 +111,8 @@ export function prepareCreateTournamentRequest(
 
   const teams = isTeamMexicano
     ? (draft.teams ?? []).map((team) => ({
-        playerA: { name: team.playerA.trim() },
-        playerB: { name: team.playerB.trim() }
+        playerA: { name: team.playerA.trim(), gender: undefined as PlayerGender | undefined },
+        playerB: { name: team.playerB.trim(), gender: undefined as PlayerGender | undefined }
       }))
     : undefined;
 

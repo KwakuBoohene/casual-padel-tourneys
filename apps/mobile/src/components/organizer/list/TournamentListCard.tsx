@@ -22,6 +22,9 @@ export function TournamentListCard(props: TournamentListCardProps) {
     <Pressable
       onPress={props.onOpen}
       onLongPress={props.onOpenOptions}
+      accessibilityRole="button"
+      accessibilityLabel={`${props.tournament.config.name}, ${subtitle}`}
+      accessibilityHint={props.onOpenOptions ? "Long press for options" : undefined}
       style={{
         minHeight: touch.minSecondary,
         borderRadius: radius.lg,
@@ -37,7 +40,12 @@ export function TournamentListCard(props: TournamentListCardProps) {
           {props.tournament.config.name}
         </Text>
         {props.onOpenOptions ? (
-          <Pressable onPress={props.onOpenOptions} hitSlop={10}>
+          <Pressable
+            onPress={props.onOpenOptions}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={`Options for ${props.tournament.config.name}`}
+          >
             <Text style={{ color: colors.primary, fontWeight: "600", fontSize: 13 }}>Options</Text>
           </Pressable>
         ) : null}

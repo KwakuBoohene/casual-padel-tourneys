@@ -38,6 +38,8 @@ export function TournamentListCreateActions(props: TournamentListCreateActionsPr
       {props.onOpenAccountPlayers ? (
         <Pressable
           onPress={props.onOpenAccountPlayers}
+          accessibilityRole="button"
+          accessibilityLabel="Players leaderboard"
           style={{
             ...secondary,
             borderColor: colors.primary,
@@ -51,16 +53,36 @@ export function TournamentListCreateActions(props: TournamentListCreateActionsPr
           </Text>
         </Pressable>
       ) : null}
-      <Pressable onPress={props.onCreateAmericano} style={primary}>
+      <Pressable
+        onPress={props.onCreateAmericano}
+        style={primary}
+        accessibilityRole="button"
+        accessibilityLabel="New Americano tournament"
+      >
         <Text style={{ color: colors.onPrimary, fontWeight: "700", fontSize: 17 }}>New Americano</Text>
       </Pressable>
-      <Pressable onPress={props.onCreateMexicano} style={secondary}>
+      <Pressable
+        onPress={props.onCreateMexicano}
+        style={secondary}
+        accessibilityRole="button"
+        accessibilityLabel="New Mexicano tournament"
+      >
         <Text style={{ color: colors.text, fontWeight: "600", fontSize: 17 }}>New Mexicano</Text>
       </Pressable>
-      <Pressable onPress={props.onCreateKingOfTheHill} style={secondary}>
+      <Pressable
+        onPress={props.onCreateKingOfTheHill}
+        style={secondary}
+        accessibilityRole="button"
+        accessibilityLabel="New King of the Hill tournament"
+      >
         <Text style={{ color: colors.text, fontWeight: "600", fontSize: 17 }}>New King of the Hill</Text>
       </Pressable>
-      <Pressable onPress={props.onOpenEstimator} style={{ ...secondary, minHeight: touch.minSecondary }}>
+      <Pressable
+        onPress={props.onOpenEstimator}
+        style={{ ...secondary, minHeight: touch.minSecondary }}
+        accessibilityRole="button"
+        accessibilityLabel="Game Estimator"
+      >
         <Text style={{ color: colors.text, fontWeight: "600", fontSize: 15 }}>Game Estimator</Text>
       </Pressable>
     </View>

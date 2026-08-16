@@ -21,6 +21,9 @@ export function AuthMethodButton(props: AuthMethodButtonProps) {
     <Pressable
       disabled={disabled}
       onPress={props.onPress}
+      accessibilityRole="button"
+      accessibilityLabel={props.label}
+      accessibilityState={{ disabled, busy }}
       style={{
         paddingVertical: spacing.sm,
         paddingHorizontal: spacing.lg,

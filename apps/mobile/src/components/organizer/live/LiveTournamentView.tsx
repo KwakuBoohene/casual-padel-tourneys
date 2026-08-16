@@ -5,24 +5,24 @@ import { ScrollView, View } from "react-native";
 import { layoutTokens, useBreakpoint } from "../../../layout";
 import { spacing } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
+import type { LiveTournamentViewProps } from "../../../types/organizer/liveTournamentView";
 
 import { LiveTournamentActions } from "./LiveTournamentActions";
 import { LiveTournamentHeader } from "./LiveTournamentHeader";
 import { LiveTournamentMatchList } from "./LiveTournamentMatchList";
 import { LiveTournamentSheets } from "./LiveTournamentSheets";
 import { LiveTournamentStickyActions } from "./LiveTournamentStickyActions";
-import type { LiveTournamentViewProps } from "../../../types/organizer/liveTournamentView";
 
 export type { LiveTournamentViewProps };
 
-export function LiveTournamentView(props: LiveTournamentViewProps) {
+export function LiveTournamentView({ session, score, sheets, actions }: LiveTournamentViewProps) {
   const { colors } = useTheme();
   const { isWide, width } = useBreakpoint();
   const sidebarWidth = Math.min(
     layoutTokens.liveSidebarMaxWidth,
     Math.max(layoutTokens.liveSidebarMinWidth, Math.round(width * 0.32))
   );
-  const shareUrl = `${props.viewerBaseUrl}/tournament/${props.tournament.publicToken}`;
+  const shareUrl = `${session.viewerBaseUrl}/tournament/${session.tournament.publicToken}`;
   const [linkCopied, setLinkCopied] = useState(false);
   const [showError, setShowError] = useState(false);
   const onCopyShareLink = useCallback(async () => {
@@ -31,18 +31,11 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
     setTimeout(() => setLinkCopied(false), 2000);
   }, [shareUrl]);
 
-  const {
-    focusSubmitMatchId,
-    onSubmitFocusHandled,
-    errorText,
-    isTournamentCompleted,
-    isEditingCompletedTournament,
-    sortedRounds,
-    displayedRound
-  } = props;
-  const canEditScores = !isTournamentCompleted || isEditingCompletedTournament;
-  const roundsCount = sortedRounds.length;
-  const matches = displayedRound?.matches ?? [];
+  const { focusSubmitMatchId } = score;
+  const { onSubmitFocusHandled } = actions;
+  const canEditScores = !session.isTournamentCompleted || session.isEditingCompletedTournament;
+  const roundsCount = session.sortedRounds.length;
+  const matches = session.displayedRound?.matches ?? [];
   const canSubmitScores = canEditScores && matches.length > 0;
 
   useEffect(() => {
@@ -50,8 +43,8 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
   }, [focusSubmitMatchId, onSubmitFocusHandled]);
 
   useEffect(() => {
-    if (errorText) setShowError(true);
-  }, [errorText]);
+    if (session.errorText) setShowError(true);
+  }, [session.errorText]);
 
   const scrollPad = {
     paddingHorizontal: spacing.xl,
@@ -62,21 +55,21 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
 
   const header = (
     <LiveTournamentHeader
-      tournament={props.tournament}
-      tournamentNameDraft={props.tournamentNameDraft}
-      isEditingCompletedTournament={isEditingCompletedTournament}
+      tournament={session.tournament}
+      tournamentNameDraft={session.tournamentNameDraft}
+      isEditingCompletedTournament={session.isEditingCompletedTournament}
       roundsCount={roundsCount}
-      openEndedRounds={props.tournament.config.mode === "MEXICANO"}
-      displayedRoundNumber={displayedRound?.roundNumber ?? null}
-      canGoPrev={props.selectedRoundIndex > 0}
-      canGoNext={props.selectedRoundIndex < roundsCount - 1 && roundsCount > 0}
-      onBackToList={props.onBackToList}
-      onChangeTournamentName={props.onChangeTournamentName}
-      onSaveTournamentName={props.onSaveTournamentName}
-      onOpenAddPendingPlayer={props.onOpenAddPendingPlayer}
-      onOpenIntegrateConfirm={props.onOpenIntegrateConfirm}
-      onPrevRound={props.onPrevRound}
-      onNextRound={props.onNextRound}
+      openEndedRounds={session.tournament.config.mode === "MEXICANO"}
+      displayedRoundNumber={session.displayedRound?.roundNumber ?? null}
+      canGoPrev={session.selectedRoundIndex > 0}
+      canGoNext={session.selectedRoundIndex < roundsCount - 1 && roundsCount > 0}
+      onBackToList={actions.onBackToList}
+      onChangeTournamentName={actions.onChangeTournamentName}
+      onSaveTournamentName={actions.onSaveTournamentName}
+      onOpenAddPendingPlayer={actions.onOpenAddPendingPlayer}
+      onOpenIntegrateConfirm={actions.onOpenIntegrateConfirm}
+      onPrevRound={actions.onPrevRound}
+      onNextRound={actions.onNextRound}
     />
   );
 
@@ -84,32 +77,32 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
     <LiveTournamentMatchList
       matches={matches}
       canEditScores={canEditScores}
-      scoreInputs={props.scoreInputs}
-      playerNameById={props.playerNameById}
-      scoringMode={props.tournament.config.scoringMode}
-      onOpenScoreEntry={props.onOpenScoreEntry}
+      scoreInputs={score.scoreInputs}
+      playerNameById={session.playerNameById}
+      scoringMode={session.tournament.config.scoringMode}
+      onOpenScoreEntry={actions.onOpenScoreEntry}
       header={opts.header}
       style={opts.style}
       contentContainerStyle={{ ...scrollPad, flexGrow: 1 }}
     />
   );
 
-  const actions = (
+  const actionBar = (
     <LiveTournamentActions
       canSubmitScores={canSubmitScores}
-      canGenerateNextRound={Boolean(props.canGenerateNextRound)}
-      generatingNextRound={Boolean(props.generatingNextRound)}
-      isTournamentCompleted={isTournamentCompleted}
-      isEditingCompletedTournament={isEditingCompletedTournament}
-      allowEditAfterComplete={props.tournament.config.mode !== "MEXICANO"}
+      canGenerateNextRound={Boolean(session.canGenerateNextRound)}
+      generatingNextRound={Boolean(session.generatingNextRound)}
+      isTournamentCompleted={session.isTournamentCompleted}
+      isEditingCompletedTournament={session.isEditingCompletedTournament}
+      allowEditAfterComplete={session.tournament.config.mode !== "MEXICANO"}
       linkCopied={linkCopied}
-      onSubmitRoundScores={() => void props.onSubmitRoundScores()}
-      onGenerateNextRound={() => void props.onGenerateNextRound?.()}
-      onOpenEditConfirm={props.onOpenEditConfirm}
-      onSaveGameEdits={props.onSaveGameEdits}
+      onSubmitRoundScores={() => void actions.onSubmitRoundScores()}
+      onGenerateNextRound={() => void actions.onGenerateNextRound?.()}
+      onOpenEditConfirm={actions.onOpenEditConfirm}
+      onSaveGameEdits={actions.onSaveGameEdits}
       onShare={() => void onCopyShareLink()}
-      onViewLeaderboard={props.onViewLeaderboard}
-      onOpenLiveOptions={props.onOpenLiveOptions}
+      onViewLeaderboard={actions.onViewLeaderboard}
+      onOpenLiveOptions={actions.onOpenLiveOptions}
     />
   );
 
@@ -120,7 +113,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
           <ScrollView style={{ width: sidebarWidth, flexShrink: 0 }} contentContainerStyle={scrollPad}>
             <View style={{ gap: spacing.md }}>
               {header}
-              {actions}
+              {actionBar}
             </View>
           </ScrollView>
           {matchList({ style: { flex: 1, minWidth: 0 } })}
@@ -131,11 +124,14 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
             header: <View style={{ gap: spacing.md, marginBottom: spacing.md }}>{header}</View>,
             style: { flex: 1 }
           })}
-          <LiveTournamentStickyActions>{actions}</LiveTournamentStickyActions>
+          <LiveTournamentStickyActions>{actionBar}</LiveTournamentStickyActions>
         </View>
       )}
       <LiveTournamentSheets
-        props={props}
+        session={session}
+        score={score}
+        sheets={sheets}
+        actions={actions}
         showError={showError}
         onDismissError={() => setShowError(false)}
         onCopyShareLink={() => void onCopyShareLink()}

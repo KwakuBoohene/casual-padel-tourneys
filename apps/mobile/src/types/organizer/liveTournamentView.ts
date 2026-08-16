@@ -2,22 +2,19 @@ import type { PlayerGender } from "@padel/shared";
 
 import type { LiveTournamentState } from "./tournament";
 
-export interface LiveTournamentViewProps {
+export type LiveRound = LiveTournamentState["rounds"][number];
+
+export interface LiveTournamentSessionState {
   tournament: LiveTournamentState;
   viewerBaseUrl: string;
   errorText: string;
-  activeRound: LiveTournamentState["rounds"][number] | null;
-  displayedRound: LiveTournamentState["rounds"][number] | null;
-  sortedRounds: LiveTournamentState["rounds"];
+  activeRound: LiveRound | null;
+  displayedRound: LiveRound | null;
+  sortedRounds: LiveRound[];
   selectedRoundIndex: number;
   isLastRound: boolean;
   isTournamentCompleted: boolean;
   isEditingCompletedTournament: boolean;
-  scoreInputs: Record<string, { scoreA: string; scoreB: string }>;
-  playerNameById: Map<string, string>;
-  showEditConfirmModal: boolean;
-  showLiveOptionsModal: boolean;
-  showAdjustCourtsConfirmModal: boolean;
   tournamentNameDraft: string;
   roundsLeft: number;
   estimatedMinutesLeft: number;
@@ -25,6 +22,14 @@ export interface LiveTournamentViewProps {
   proposedCourts: number;
   maxCourts: number;
   canAdjustCourts: boolean;
+  playerNameById: Map<string, string>;
+  canGenerateNextRound?: boolean;
+  generatingNextRound?: boolean;
+  canFinishNight?: boolean;
+}
+
+export interface LiveTournamentScoreState {
+  scoreInputs: Record<string, { scoreA: string; scoreB: string }>;
   scoreEntry: {
     matchId: string;
     scoreA: number | null;
@@ -39,6 +44,12 @@ export interface LiveTournamentViewProps {
   pendingCompletedEditMatchId: string | null;
   scoreSheetError: string | null;
   focusSubmitMatchId: string | null;
+}
+
+export interface LiveTournamentSheetState {
+  showEditConfirmModal: boolean;
+  showLiveOptionsModal: boolean;
+  showAdjustCourtsConfirmModal: boolean;
   showAddPendingPlayerModal: boolean;
   pendingPlayerNameDraft: string;
   pendingPlayerGender: PlayerGender | undefined;
@@ -46,6 +57,9 @@ export interface LiveTournamentViewProps {
   renamePlayersVisible: boolean;
   renameDrafts: Record<string, string>;
   renameSaving: boolean;
+}
+
+export interface LiveTournamentActions {
   onOpenRenamePlayers: () => void;
   onCloseRenamePlayers: () => void;
   onChangeRenameDraft: (playerId: string, name: string) => void;
@@ -89,8 +103,12 @@ export interface LiveTournamentViewProps {
   onPrevRound: () => void;
   onNextRound: () => void;
   onSubmitRoundScores: () => void;
-  canGenerateNextRound?: boolean;
-  generatingNextRound?: boolean;
-  canFinishNight?: boolean;
   onGenerateNextRound?: () => void;
+}
+
+export interface LiveTournamentViewProps {
+  session: LiveTournamentSessionState;
+  score: LiveTournamentScoreState;
+  sheets: LiveTournamentSheetState;
+  actions: LiveTournamentActions;
 }

@@ -54,10 +54,16 @@ export function LiveTournamentMatchCard(props: LiveTournamentMatchCardProps) {
     : americanoStatusLine({ match, canEditScores, scoreInputs });
   const statusColor = status.emphasize ? colors.primary : colors.muted;
 
+  const teamA = namePair(match.teamA, playerNameById);
+  const teamB = namePair(match.teamB, playerNameById);
+
   return (
     <Pressable
       disabled={!canEditScores}
       onPress={() => onOpenScoreEntry(match.id)}
+      accessibilityRole="button"
+      accessibilityLabel={`Court ${match.court}, ${teamA} versus ${teamB}, ${status.text}`}
+      accessibilityState={{ disabled: !canEditScores }}
       style={{
         borderRadius: 14,
         borderWidth: 1,
@@ -70,9 +76,9 @@ export function LiveTournamentMatchCard(props: LiveTournamentMatchCardProps) {
     >
       <Text style={{ color: colors.primary, fontWeight: "700", fontSize: 12 }}>Court {match.court}</Text>
       <Text style={{ color: colors.text, fontWeight: "600", fontSize: 15 }}>
-        {namePair(match.teamA, playerNameById)}
+        {teamA}
         {"  vs  "}
-        {namePair(match.teamB, playerNameById)}
+        {teamB}
       </Text>
       <Text style={{ color: statusColor, fontWeight: "500", fontSize: 13 }}>{status.text}</Text>
     </Pressable>

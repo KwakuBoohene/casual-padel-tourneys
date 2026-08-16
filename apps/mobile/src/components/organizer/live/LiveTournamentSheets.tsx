@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { AlertSheet } from "../../sheets";
+import type { LiveTournamentViewProps } from "../../../types/organizer/liveTournamentView";
 
 import { LiveAdjustCourtsSheet } from "./LiveAdjustCourtsSheet";
 import { LiveRenamePlayersSheet } from "./LiveRenamePlayersSheet";
@@ -10,18 +11,19 @@ import {
   LiveTournamentConfirmSheets,
   LiveTournamentPendingSheet
 } from "./LiveTournamentPendingSheet";
-import type { LiveTournamentViewProps } from "../../../types/organizer/liveTournamentView";
 
-interface LiveTournamentSheetsProps {
-  props: LiveTournamentViewProps;
+type LiveTournamentSheetsProps = LiveTournamentViewProps & {
   showError: boolean;
   onDismissError: () => void;
   onCopyShareLink: () => void;
   linkCopied: boolean;
-}
+};
 
 export function LiveTournamentSheets({
-  props,
+  session,
+  score,
+  sheets,
+  actions,
   showError,
   onDismissError,
   onCopyShareLink,
@@ -33,78 +35,78 @@ export function LiveTournamentSheets({
   return (
     <>
       <LiveTournamentConfirmSheets
-        showEditConfirmModal={props.showEditConfirmModal}
-        showAdjustCourtsConfirmModal={props.showAdjustCourtsConfirmModal}
-        showIntegrateConfirmModal={props.showIntegrateConfirmModal}
+        showEditConfirmModal={sheets.showEditConfirmModal}
+        showAdjustCourtsConfirmModal={sheets.showAdjustCourtsConfirmModal}
+        showIntegrateConfirmModal={sheets.showIntegrateConfirmModal}
         showFinishConfirmModal={showFinishConfirm}
-        isMexicano={props.tournament.config.mode === "MEXICANO"}
-        currentCourts={props.currentCourts}
-        proposedCourts={props.proposedCourts}
-        pendingCount={props.tournament.pendingPlayers.length}
-        onCloseEditConfirm={props.onCloseEditConfirm}
-        onConfirmEditGame={props.onConfirmEditGame}
-        onCloseAdjustCourtsConfirm={props.onCloseAdjustCourtsConfirm}
-        onConfirmAdjustCourts={props.onConfirmAdjustCourts}
-        onCloseIntegrateConfirm={props.onCloseIntegrateConfirm}
-        onConfirmIntegratePendingPlayers={props.onConfirmIntegratePendingPlayers}
+        isMexicano={session.tournament.config.mode === "MEXICANO"}
+        currentCourts={session.currentCourts}
+        proposedCourts={session.proposedCourts}
+        pendingCount={session.tournament.pendingPlayers.length}
+        onCloseEditConfirm={actions.onCloseEditConfirm}
+        onConfirmEditGame={actions.onConfirmEditGame}
+        onCloseAdjustCourtsConfirm={actions.onCloseAdjustCourtsConfirm}
+        onConfirmAdjustCourts={actions.onConfirmAdjustCourts}
+        onCloseIntegrateConfirm={actions.onCloseIntegrateConfirm}
+        onConfirmIntegratePendingPlayers={actions.onConfirmIntegratePendingPlayers}
         onCloseFinishConfirm={() => setShowFinishConfirm(false)}
         onConfirmFinishTournament={() => {
           setShowFinishConfirm(false);
-          props.onFinishTournament();
+          actions.onFinishTournament();
         }}
       />
       <LiveTournamentOptionsSheet
-        visible={props.showLiveOptionsModal}
-        canAdjustCourts={props.canAdjustCourts}
-        canFinish={props.canFinishNight ?? props.isTournamentCompleted}
-        isMexicano={props.tournament.config.mode === "MEXICANO"}
+        visible={sheets.showLiveOptionsModal}
+        canAdjustCourts={session.canAdjustCourts}
+        canFinish={session.canFinishNight ?? session.isTournamentCompleted}
+        isMexicano={session.tournament.config.mode === "MEXICANO"}
         linkCopied={linkCopied}
-        onClose={props.onCloseLiveOptions}
+        onClose={actions.onCloseLiveOptions}
         onCopyShareLink={onCopyShareLink}
-        onOpenRenamePlayers={props.onOpenRenamePlayers}
+        onOpenRenamePlayers={actions.onOpenRenamePlayers}
         onOpenAdjustCourts={() => setShowAdjustCourtsSheet(true)}
-        onOpenAddPendingPlayer={props.onOpenAddPendingPlayer}
+        onOpenAddPendingPlayer={actions.onOpenAddPendingPlayer}
         onOpenFinishConfirm={() => setShowFinishConfirm(true)}
-        onBackToList={props.onBackToList}
+        onBackToList={actions.onBackToList}
       />
       <LiveAdjustCourtsSheet
         visible={showAdjustCourtsSheet}
-        currentCourts={props.currentCourts}
-        proposedCourts={props.proposedCourts}
-        maxCourts={props.maxCourts}
+        currentCourts={session.currentCourts}
+        proposedCourts={session.proposedCourts}
+        maxCourts={session.maxCourts}
         onClose={() => setShowAdjustCourtsSheet(false)}
-        onChangeProposedCourts={props.onChangeProposedCourts}
+        onChangeProposedCourts={actions.onChangeProposedCourts}
         onContinue={() => {
           setShowAdjustCourtsSheet(false);
-          props.onOpenAdjustCourtsConfirm();
+          actions.onOpenAdjustCourtsConfirm();
         }}
       />
       <LiveRenamePlayersSheet
-        visible={props.renamePlayersVisible}
-        players={props.tournament.players}
-        drafts={props.renameDrafts}
-        saving={props.renameSaving}
-        onChangeDraft={props.onChangeRenameDraft}
-        onSave={() => void props.onSaveRenames()}
-        onClose={props.onCloseRenamePlayers}
+        visible={sheets.renamePlayersVisible}
+        players={session.tournament.players}
+        drafts={sheets.renameDrafts}
+        saving={sheets.renameSaving}
+        onChangeDraft={actions.onChangeRenameDraft}
+        onSave={() => void actions.onSaveRenames()}
+        onClose={actions.onCloseRenamePlayers}
       />
-      <LiveScoreEntrySheets props={props} />
+      <LiveScoreEntrySheets session={session} score={score} actions={actions} />
       <LiveTournamentPendingSheet
-        tournament={props.tournament}
-        errorText={props.errorText}
-        visible={props.showAddPendingPlayerModal}
-        nameDraft={props.pendingPlayerNameDraft}
-        gender={props.pendingPlayerGender}
-        onClose={props.onCloseAddPendingPlayer}
-        onChangeName={props.onChangePendingPlayerName}
-        onChangeGender={props.onChangePendingPlayerGender}
-        onSubmit={props.onSubmitAddPendingPlayer}
+        tournament={session.tournament}
+        errorText={session.errorText}
+        visible={sheets.showAddPendingPlayerModal}
+        nameDraft={sheets.pendingPlayerNameDraft}
+        gender={sheets.pendingPlayerGender}
+        onClose={actions.onCloseAddPendingPlayer}
+        onChangeName={actions.onChangePendingPlayerName}
+        onChangeGender={actions.onChangePendingPlayerGender}
+        onSubmit={actions.onSubmitAddPendingPlayer}
       />
       <AlertSheet
-        visible={showError && Boolean(props.errorText)}
+        visible={showError && Boolean(session.errorText)}
         variant="error"
         title="Something went wrong"
-        message={props.errorText || "Please try again."}
+        message={session.errorText || "Please try again."}
         primaryAction={{ label: "OK", onPress: onDismissError }}
         onDismiss={onDismissError}
       />

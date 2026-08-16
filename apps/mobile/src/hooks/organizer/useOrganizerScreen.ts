@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 
-import { useAuthSession } from "../useAuthSession";
+import { useAuthSessionContext } from "../../providers/AuthSessionProvider";
 import type { SetupStep } from "../../types/organizer/tournament";
 import { openOrganizerTournament } from "../../utilities/organizer/openOrganizerTournament";
 import { useKohLiveSession } from "../koh/useKohLiveSession";
@@ -11,7 +11,7 @@ import { useScoreDrafts } from "./score/useScoreDrafts";
 import { useTournamentList } from "./useTournamentList";
 
 export function useOrganizerScreen() {
-  const auth = useAuthSession();
+  const auth = useAuthSessionContext();
   const [step, setStep] = useState<SetupStep>("LIST");
   const [errorText, setErrorText] = useState("");
   const viewerBaseUrl = process.env.EXPO_PUBLIC_VIEWER_BASE_URL ?? "http://localhost:3000";

@@ -16,3 +16,13 @@ test("parseAuthDeepLink: reset custom scheme", () => {
 test("parseAuthDeepLink: rejects missing token", () => {
   assert.equal(parseAuthDeepLink("padel://auth/magic"), null);
 });
+
+test("parseAuthDeepLink: Expo Router path-style magic", () => {
+  const link = parseAuthDeepLink("/auth/magic?token=path-magic-token");
+  assert.deepEqual(link, { kind: "magic", token: "path-magic-token" });
+});
+
+test("parseAuthDeepLink: https web-style reset", () => {
+  const link = parseAuthDeepLink("https://example.com/auth/reset?token=web-reset-token");
+  assert.deepEqual(link, { kind: "reset", token: "web-reset-token" });
+});

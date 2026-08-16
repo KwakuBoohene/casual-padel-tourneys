@@ -4,6 +4,7 @@ import { Platform, StatusBar } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
+import { AuthSessionProvider } from "../src/providers/AuthSessionProvider";
 import { ThemeProvider, useTheme } from "../src/theme/ThemeProvider";
 
 function RootChrome({ children }: { children: ReactNode }) {
@@ -23,9 +24,11 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <RootChrome>
-            <Stack screenOptions={{ headerShown: false, contentStyle: { flex: 1 } }} />
-          </RootChrome>
+          <AuthSessionProvider>
+            <RootChrome>
+              <Stack screenOptions={{ headerShown: false, contentStyle: { flex: 1 } }} />
+            </RootChrome>
+          </AuthSessionProvider>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

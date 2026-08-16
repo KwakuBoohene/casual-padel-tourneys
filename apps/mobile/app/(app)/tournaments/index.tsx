@@ -2,6 +2,7 @@ import { router } from "expo-router";
 
 import { OrganizerListScreen } from "../../../src/components/organizer/list/OrganizerListScreen";
 import { useOrganizerSession } from "../../../src/providers/OrganizerSessionProvider";
+import { tournamentLivePath, tournamentLeaderboardPath } from "../../../src/utilities/organizer/tournamentRoutes";
 
 export default function TournamentsListRoute() {
   const org = useOrganizerSession();
@@ -9,6 +10,17 @@ export default function TournamentsListRoute() {
   const goFlow = (start: () => void) => {
     start();
     router.push("/flow");
+  };
+
+  const openListedTournament = (id: string, edit = false) => {
+    const listed = org.tournaments.find((item) => item.id === id);
+    if (listed?.config.mode === "KING_OF_THE_HILL") {
+      goFlow(() => {
+        void org.openTournament(id, edit);
+      });
+      return;
+    }
+    router.push(tournamentLivePath(id, edit));
   };
 
   return (
@@ -29,11 +41,7 @@ export default function TournamentsListRoute() {
         })
       }
       onOpenEstimator={() => router.push("/estimator")}
-      onOpenTournament={(id) =>
-        goFlow(() => {
-          void org.openTournament(id);
-        })
-      }
+      onOpenTournament={(id) => openListedTournament(id)}
       onOpenOptions={org.openTournamentOptions}
       onOpenProfile={() => router.push("/profile")}
       onOpenAccountPlayers={() =>
@@ -47,12 +55,18 @@ export default function TournamentsListRoute() {
       onRequestDelete={() => org.requestTournamentAction("DELETE")}
       onCancelActionConfirm={() => org.setShowTournamentActionConfirmModal(false)}
       onConfirmAction={() => {
-        const wasEdit = org.pendingTournamentAction === "EDIT";
         void (async () => {
-          await org.confirmTournamentAction();
-          if (wasEdit) {
-            router.push("/flow");
+          const result = await org.confirmTournamentAction();
+          if (!result || result.action !== "EDIT") return;
+          if (result.openResult === "koh" || result.openResult === "error") {
+            if (result.openResult === "koh") router.push("/flow");
+            return;
           }
+          if (result.openResult === "leaderboard") {
+            router.push(tournamentLeaderboardPath(result.tournamentId));
+            return;
+          }
+          router.push(tournamentLivePath(result.tournamentId, true));
         })();
       }}
     />

@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 
 import { useAuthSessionContext } from "../../providers/AuthSessionProvider";
 import type { SetupStep } from "../../types/organizer/tournament";
-import { openOrganizerTournament } from "../../utilities/organizer/openOrganizerTournament";
+import { openOrganizerTournament, type OpenOrganizerResult } from "../../utilities/organizer/openOrganizerTournament";
 import { useKohLiveSession } from "../koh/useKohLiveSession";
 import { useCreateTournament } from "./useCreateTournament";
 import { useGameEstimator } from "./useGameEstimator";
@@ -17,7 +17,10 @@ export function useOrganizerScreen() {
   const [errorText, setErrorText] = useState("");
   const viewerBaseUrl = process.env.EXPO_PUBLIC_VIEWER_BASE_URL ?? "http://localhost:3000";
   const liveCallbacks = useRef({
-    openTournament: (async () => {}) as (tournamentId: string, editMode?: boolean) => Promise<void>,
+    openTournament: (async () => "error") as (
+      tournamentId: string,
+      editMode?: boolean
+    ) => Promise<OpenOrganizerResult>,
     onTournamentDeleted: (_id: string) => {}
   });
 
@@ -32,7 +35,6 @@ export function useOrganizerScreen() {
   });
 
   const live = useLiveTournament({
-    setStep,
     setTournaments: list.setTournaments,
     setErrorText,
     markEmailVerifyRequired: auth.markEmailVerifyRequired

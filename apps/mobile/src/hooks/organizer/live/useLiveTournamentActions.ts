@@ -1,12 +1,13 @@
+import { router } from "expo-router";
 import { useState, type Dispatch, type SetStateAction } from "react";
 
 import { apiPost } from "../../../api/client";
 import type {
   LiveTournamentState,
-  SetupStep,
   TournamentListResponse,
   TournamentResponse
 } from "../../../types/organizer/tournament";
+import { tournamentLeaderboardPath } from "../../../utilities/organizer/tournamentRoutes";
 
 export interface UseLiveTournamentActionsParams {
   liveTournament: LiveTournamentState | null;
@@ -18,7 +19,6 @@ export interface UseLiveTournamentActionsParams {
   clampProposedCourts: (playersCount: number) => void;
   setIsEditingCompletedTournament: (value: boolean) => void;
   setTournaments: Dispatch<SetStateAction<TournamentListResponse["data"]>>;
-  setStep: (step: SetupStep) => void;
   setErrorText: (value: string) => void;
 }
 
@@ -52,7 +52,7 @@ export function useLiveTournamentActions(params: UseLiveTournamentActionsParams)
           prev.map((item) => (item.id === response.data.id ? response.data : item))
         );
         params.setIsEditingCompletedTournament(false);
-        params.setStep("LEADERBOARD");
+        router.replace(tournamentLeaderboardPath(liveTournament.id));
       } catch (error) {
         setErrorText((error as Error).message);
       }
@@ -61,7 +61,7 @@ export function useLiveTournamentActions(params: UseLiveTournamentActionsParams)
 
     setTournaments((prev) => prev.map((item) => (item.id === liveTournament.id ? liveTournament : item)));
     params.setIsEditingCompletedTournament(false);
-    params.setStep("LEADERBOARD");
+    router.replace(tournamentLeaderboardPath(liveTournament.id));
   };
 
   const generateNextMexicanoRound = async () => {

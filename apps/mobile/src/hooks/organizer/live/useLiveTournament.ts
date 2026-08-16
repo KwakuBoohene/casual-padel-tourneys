@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 
-import type { SetupStep, TournamentListResponse } from "../../../types/organizer/tournament";
+import type { TournamentListResponse } from "../../../types/organizer/tournament";
 
 import { useLiveInsights } from "./useLiveInsights";
 import { useLiveRounds } from "./useLiveRounds";
@@ -10,19 +10,17 @@ import { usePendingPlayers } from "./usePendingPlayers";
 import { useRenamePlayers } from "./useRenamePlayers";
 
 export interface UseLiveTournamentParams {
-  setStep: (step: SetupStep) => void;
   setTournaments: Dispatch<SetStateAction<TournamentListResponse["data"]>>;
   setErrorText: (value: string) => void;
   markEmailVerifyRequired: (dueAt?: number) => void;
 }
 
 export function useLiveTournament({
-  setStep,
   setTournaments,
   setErrorText,
   markEmailVerifyRequired
 }: UseLiveTournamentParams) {
-  const core = useLiveTournamentCore({ setStep, setErrorText, markEmailVerifyRequired });
+  const core = useLiveTournamentCore({ setErrorText, markEmailVerifyRequired });
   const rounds = useLiveRounds(core.liveTournament);
   const insights = useLiveInsights(core.liveTournament, rounds.isTournamentCompleted);
 
@@ -36,7 +34,6 @@ export function useLiveTournament({
     clampProposedCourts: core.clampProposedCourts,
     setIsEditingCompletedTournament: core.setIsEditingCompletedTournament,
     setTournaments,
-    setStep,
     setErrorText
   });
 

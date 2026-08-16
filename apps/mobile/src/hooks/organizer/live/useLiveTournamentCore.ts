@@ -2,16 +2,14 @@ import { useState } from "react";
 
 import { apiGet } from "../../../api/client";
 import { isEmailVerifyRequired } from "../../../api/errors";
-import type { LiveTournamentState, SetupStep, TournamentResponse } from "../../../types/organizer/tournament";
+import type { LiveTournamentState, TournamentResponse } from "../../../types/organizer/tournament";
 
 export interface UseLiveTournamentCoreParams {
-  setStep: (step: SetupStep) => void;
   setErrorText: (value: string) => void;
   markEmailVerifyRequired: (dueAt?: number) => void;
 }
 
 export function useLiveTournamentCore({
-  setStep,
   setErrorText,
   markEmailVerifyRequired
 }: UseLiveTournamentCoreParams) {
@@ -41,22 +39,28 @@ export function useLiveTournamentCore({
     setIsEditingCompletedTournament(editMode);
   };
 
-  const openTournament = async (tournamentId: string, editMode = false) => {
+  const openTournament = async (
+    tournamentId: string,
+    editMode = false
+  ): Promise<"live" | "leaderboard" | "needs_koh" | "error"> => {
     try {
       setErrorText("");
       const response = await apiGet<TournamentResponse>(`/tournaments/${tournamentId}`);
+      if (response.data.config.mode === "KING_OF_THE_HILL") {
+        return "needs_koh";
+      }
       adoptTournament(response.data, editMode);
       if (response.data.config.mode === "MEXICANO" && response.data.endedAt) {
-        setStep("LEADERBOARD");
-      } else {
-        setStep("LIVE");
+        return "leaderboard";
       }
+      return "live";
     } catch (error) {
       if (isEmailVerifyRequired(error)) {
         markEmailVerifyRequired(error.verifyBy);
-        return;
+        return "error";
       }
       setErrorText((error as Error).message);
+      return "error";
     }
   };
 

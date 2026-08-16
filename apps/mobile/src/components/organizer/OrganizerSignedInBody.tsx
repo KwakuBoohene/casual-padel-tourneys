@@ -2,14 +2,12 @@ import { router } from "expo-router";
 import { KohScreen } from "../../screens/KohScreen";
 import { useOrganizerScreen } from "../../hooks/organizer/useOrganizerScreen";
 import { formatTournamentMode } from "../../utilities/organizer/formatLabels";
+import { tournamentLeaderboardPath, tournamentLivePath } from "../../utilities/organizer/tournamentRoutes";
 
 import { AccountPlayersFlow } from "../accountPlayers/AccountPlayersFlow";
 import { KohLiveHub } from "../koh/live/KohLiveHub";
-import { LeaderboardView } from "./leaderboard/LeaderboardView";
 import { MatchSettingsStepView } from "./create/MatchSettingsStepView";
 import { NameStepView } from "./create/NameStepView";
-import { OrganizerLiveScreen } from "./live/OrganizerLiveScreen";
-import { PlayerGamesView } from "./leaderboard/PlayerGamesView";
 import { PlayersStepView } from "./create/PlayersStepView";
 import { TeamPlayersStepView } from "./create/TeamPlayersStepView";
 import { TournamentOptionsStepView } from "./create/TournamentOptionsStepView";
@@ -81,84 +79,6 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     errorText,
     loadTournaments,
     liveTournament,
-    liveTournamentNameDraft,
-    setLiveTournamentNameDraft,
-    saveTournamentName,
-    activeRound,
-    displayedRound,
-    sortedRounds,
-    selectedRoundIndex,
-    goToPrevRound,
-    goToNextRound,
-    isLastRound,
-    isTournamentCompleted,
-    isEditingCompletedTournament,
-    setIsEditingCompletedTournament,
-    liveTimeStatus,
-    maxCourts,
-    canAdjustCourts,
-    proposedCourts,
-    setProposedCourts,
-    showLiveOptionsModal,
-    setShowLiveOptionsModal,
-    showAdjustCourtsConfirmModal,
-    setShowAdjustCourtsConfirmModal,
-    adjustTournamentCourts,
-    leaderboardRows,
-    selectedPlayerId,
-    setSelectedPlayerId,
-    selectedPlayerGames,
-    finishTournament,
-    generateNextMexicanoRound,
-    generatingNextRound,
-    canGenerateNextRound,
-    canFinishNight,
-    refreshTournament,
-    scoreInputs,
-    updateScoreInput,
-    submitRoundScores,
-    scoreEntry,
-    scoreEntryContextLine,
-    scoreEntryCanComplete,
-    scoreEntryPlusDisabledA,
-    scoreEntryPlusDisabledB,
-    requestOpenScoreEntry,
-    closeScoreEntry,
-    changeScoreA,
-    changeScoreB,
-    undoScoreEntry,
-    saveScoreEntry,
-    saveScoreDraft,
-    savingScore,
-    pendingCompletedEditMatchId,
-    confirmEditCompletedScore,
-    cancelEditCompletedScore,
-    scoreSheetError,
-    clearScoreSheetError,
-    focusSubmitMatchId,
-    setFocusSubmitMatchId,
-    playerNameById,
-    showEditConfirmModal,
-    setShowEditConfirmModal,
-    showAddPendingPlayerModal,
-    pendingPlayerNameDraft,
-    setPendingPlayerNameDraft,
-    pendingPlayerGender,
-    setPendingPlayerGender,
-    showIntegrateConfirmModal,
-    openAddPendingPlayerModal,
-    closeAddPendingPlayerModal,
-    submitAddPendingPlayer,
-    openIntegrateConfirmModal,
-    closeIntegrateConfirmModal,
-    confirmIntegratePendingPlayers,
-    renamePlayersVisible,
-    renameDrafts,
-    renameSaving,
-    openRenamePlayers,
-    closeRenamePlayers,
-    changeRenameDraft,
-    saveRenames,
     viewerBaseUrl,
     kohHub,
     adoptKohHub,
@@ -171,7 +91,19 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
   const modeLabel = formatTournamentMode(mode);
 
   if (step === "LIST" || step === "ESTIMATOR" || step === "PROFILE" || step === "ATTACH") {
-    // These live under Expo Router — bounce if we land here on /flow.
+    backToList(setStep);
+    return null;
+  }
+
+  if (step === "LIVE" || step === "LEADERBOARD" || step === "PLAYER_GAMES") {
+    if (liveTournament) {
+      router.replace(
+        step === "LEADERBOARD"
+          ? tournamentLeaderboardPath(liveTournament.id)
+          : tournamentLivePath(liveTournament.id)
+      );
+      return null;
+    }
     backToList(setStep);
     return null;
   }
@@ -302,132 +234,6 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
           }
           setStep("SETTINGS");
         }}
-      />
-    );
-  }
-
-  if (step === "LIVE" && liveTournament) {
-    return (
-      <OrganizerLiveScreen
-        tournament={liveTournament}
-        viewerBaseUrl={viewerBaseUrl}
-        errorText={errorText}
-        activeRound={activeRound}
-        displayedRound={displayedRound}
-        sortedRounds={sortedRounds}
-        selectedRoundIndex={selectedRoundIndex}
-        isLastRound={isLastRound}
-        isTournamentCompleted={isTournamentCompleted}
-        isEditingCompletedTournament={isEditingCompletedTournament}
-        showLiveOptionsModal={showLiveOptionsModal}
-        showAdjustCourtsConfirmModal={showAdjustCourtsConfirmModal}
-        tournamentNameDraft={liveTournamentNameDraft}
-        roundsLeft={liveTimeStatus.roundsLeft}
-        estimatedMinutesLeft={liveTimeStatus.estimatedMinutesLeft}
-        currentCourts={liveTournament.config.courts}
-        proposedCourts={proposedCourts}
-        maxCourts={maxCourts}
-        canAdjustCourts={canAdjustCourts}
-        scoreEntry={scoreEntry}
-        scoreEntryContextLine={scoreEntryContextLine}
-        scoreEntryCanComplete={scoreEntryCanComplete}
-        scoreEntryPlusDisabledA={scoreEntryPlusDisabledA}
-        scoreEntryPlusDisabledB={scoreEntryPlusDisabledB}
-        savingScore={savingScore}
-        pendingCompletedEditMatchId={pendingCompletedEditMatchId}
-        scoreSheetError={scoreSheetError}
-        focusSubmitMatchId={focusSubmitMatchId}
-        scoreInputs={scoreInputs}
-        playerNameById={playerNameById}
-        showEditConfirmModal={showEditConfirmModal}
-        onBackToList={() => backToList(setStep)}
-        onViewLeaderboard={() => setStep("LEADERBOARD")}
-        onRefresh={() => void refreshTournament()}
-        onFinishTournament={() => void finishTournament()}
-        canGenerateNextRound={canGenerateNextRound}
-        generatingNextRound={generatingNextRound}
-        canFinishNight={canFinishNight}
-        onGenerateNextRound={() => void generateNextMexicanoRound()}
-        onChangeTournamentName={setLiveTournamentNameDraft}
-        onChangeProposedCourts={setProposedCourts}
-        onSaveTournamentName={() => void saveTournamentName()}
-        onOpenEditConfirm={() => setShowEditConfirmModal(true)}
-        onCloseEditConfirm={() => setShowEditConfirmModal(false)}
-        onConfirmEditGame={() => {
-          setShowEditConfirmModal(false);
-          setIsEditingCompletedTournament(true);
-        }}
-        onOpenLiveOptions={() => setShowLiveOptionsModal(true)}
-        onCloseLiveOptions={() => setShowLiveOptionsModal(false)}
-        onOpenAdjustCourtsConfirm={() => {
-          setShowLiveOptionsModal(false);
-          setShowAdjustCourtsConfirmModal(true);
-        }}
-        onCloseAdjustCourtsConfirm={() => setShowAdjustCourtsConfirmModal(false)}
-        onConfirmAdjustCourts={() => void adjustTournamentCourts()}
-        onSaveGameEdits={() => setIsEditingCompletedTournament(false)}
-        onOpenScoreEntry={requestOpenScoreEntry}
-        onCloseScoreEntry={closeScoreEntry}
-        onChangeScoreA={changeScoreA}
-        onChangeScoreB={changeScoreB}
-        onUndoScoreEntry={undoScoreEntry}
-        onSaveScoreEntry={() => void saveScoreEntry()}
-        onSaveScoreDraft={() => void saveScoreDraft()}
-        onConfirmEditCompletedScore={confirmEditCompletedScore}
-        onCancelEditCompletedScore={cancelEditCompletedScore}
-        onClearScoreSheetError={clearScoreSheetError}
-        onSubmitFocusHandled={() => setFocusSubmitMatchId(null)}
-        onUpdateScoreInput={updateScoreInput}
-        onPrevRound={goToPrevRound}
-        onNextRound={goToNextRound}
-        onSubmitRoundScores={() => void submitRoundScores()}
-        showAddPendingPlayerModal={showAddPendingPlayerModal}
-        pendingPlayerNameDraft={pendingPlayerNameDraft}
-        pendingPlayerGender={pendingPlayerGender}
-        showIntegrateConfirmModal={showIntegrateConfirmModal}
-        onOpenAddPendingPlayer={openAddPendingPlayerModal}
-        onCloseAddPendingPlayer={closeAddPendingPlayerModal}
-        onChangePendingPlayerName={setPendingPlayerNameDraft}
-        onChangePendingPlayerGender={setPendingPlayerGender}
-        onSubmitAddPendingPlayer={() => void submitAddPendingPlayer()}
-        onOpenIntegrateConfirm={openIntegrateConfirmModal}
-        onCloseIntegrateConfirm={closeIntegrateConfirmModal}
-        onConfirmIntegratePendingPlayers={() => void confirmIntegratePendingPlayers()}
-        renamePlayersVisible={renamePlayersVisible}
-        renameDrafts={renameDrafts}
-        renameSaving={renameSaving}
-        onOpenRenamePlayers={openRenamePlayers}
-        onCloseRenamePlayers={closeRenamePlayers}
-        onChangeRenameDraft={changeRenameDraft}
-        onSaveRenames={() => void saveRenames()}
-      />
-    );
-  }
-
-  if (step === "LEADERBOARD" && liveTournament) {
-    return (
-      <LeaderboardView
-        tournament={liveTournament}
-        rows={leaderboardRows}
-        onBack={() => setStep("LIVE")}
-        onBackToList={() => backToList(setStep)}
-        onOpenPlayer={(playerId) => {
-          setSelectedPlayerId(playerId);
-          setStep("PLAYER_GAMES");
-        }}
-      />
-    );
-  }
-
-  if (step === "PLAYER_GAMES" && selectedPlayerId) {
-    const playerName = playerNameById.get(selectedPlayerId) ?? selectedPlayerId;
-    const row = leaderboardRows.find((entry) => entry.playerId === selectedPlayerId);
-    return (
-      <PlayerGamesView
-        playerName={playerName}
-        row={row}
-        games={selectedPlayerGames}
-        onBack={() => setStep("LEADERBOARD")}
       />
     );
   }

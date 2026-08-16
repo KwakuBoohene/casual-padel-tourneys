@@ -92,7 +92,6 @@ export function useCreateTournament({
       setErrorText,
       setResponseText,
       setTournaments,
-      setStep,
       markEmailVerifyRequired,
       adoptTournament
     });

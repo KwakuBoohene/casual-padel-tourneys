@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { apiDelete, apiGet } from "../../api/client";
 import { isEmailVerifyRequired } from "../../api/errors";
 import type { TournamentListResponse } from "../../types/organizer/tournament";
+import type { OpenOrganizerResult } from "../../utilities/organizer/openOrganizerTournament";
 
 export interface UseTournamentListParams {
   authReady: boolean;
@@ -10,9 +11,13 @@ export interface UseTournamentListParams {
   setErrorText: (value: string) => void;
   markEmailVerifyRequired: (dueAt?: number) => void;
   clearEmailVerifyRequired: () => void;
-  openTournament: (tournamentId: string, editMode?: boolean) => Promise<void>;
+  openTournament: (tournamentId: string, editMode?: boolean) => Promise<OpenOrganizerResult | void>;
   onTournamentDeleted: (tournamentId: string) => void;
 }
+
+export type ConfirmTournamentActionResult =
+  | { action: "DELETE"; tournamentId: string }
+  | { action: "EDIT"; tournamentId: string; openResult: OpenOrganizerResult | void };
 
 export function useTournamentList({
   authReady,
@@ -71,22 +76,26 @@ export function useTournamentList({
     setShowTournamentActionConfirmModal(true);
   };
 
-  const confirmTournamentAction = async () => {
+  const confirmTournamentAction = async (): Promise<ConfirmTournamentActionResult | null> => {
     if (!selectedTournamentId || !pendingTournamentAction) {
       setShowTournamentActionConfirmModal(false);
-      return;
+      return null;
     }
+    const tournamentId = selectedTournamentId;
+    const action = pendingTournamentAction;
     try {
       setErrorText("");
-      if (pendingTournamentAction === "DELETE") {
-        await apiDelete<{ ok: boolean }>(`/tournaments/${selectedTournamentId}`);
-        setTournaments((previous) => previous.filter((item) => item.id !== selectedTournamentId));
-        onTournamentDeleted(selectedTournamentId);
-      } else {
-        await openTournament(selectedTournamentId, true);
+      if (action === "DELETE") {
+        await apiDelete<{ ok: boolean }>(`/tournaments/${tournamentId}`);
+        setTournaments((previous) => previous.filter((item) => item.id !== tournamentId));
+        onTournamentDeleted(tournamentId);
+        return { action: "DELETE", tournamentId };
       }
+      const openResult = await openTournament(tournamentId, true);
+      return { action: "EDIT", tournamentId, openResult };
     } catch (error) {
       setErrorText((error as Error).message);
+      return null;
     } finally {
       setShowTournamentActionConfirmModal(false);
       setPendingTournamentAction(null);

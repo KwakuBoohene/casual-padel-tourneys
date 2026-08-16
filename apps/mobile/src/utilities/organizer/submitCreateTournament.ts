@@ -8,12 +8,15 @@ import type {
   TournamentVariant
 } from "@padel/shared";
 
+import { router } from "expo-router";
+
 import { apiPost } from "../../api/client";
 import { isEmailVerifyRequired } from "../../api/errors";
-import type { CreateTournamentResponse, LiveTournamentState, SetupStep } from "../../types/organizer/tournament";
+import type { CreateTournamentResponse, LiveTournamentState } from "../../types/organizer/tournament";
 
 import { prepareCreateTournamentRequest } from "./createTournamentRequest";
 import type { TeamPairDraft } from "../../hooks/organizer/usePlayerRoster";
+import { tournamentLivePath } from "./tournamentRoutes";
 
 export async function submitCreateTournament(input: {
   name: string;
@@ -34,7 +37,6 @@ export async function submitCreateTournament(input: {
   setErrorText: (value: string) => void;
   setResponseText: (value: string) => void;
   setTournaments: Dispatch<SetStateAction<LiveTournamentState[]>>;
-  setStep: (step: SetupStep) => void;
   markEmailVerifyRequired: (dueAt?: number) => void;
   adoptTournament: (data: LiveTournamentState, editMode: boolean) => void;
 }): Promise<void> {
@@ -68,7 +70,7 @@ export async function submitCreateTournament(input: {
       response.data,
       ...previous.filter((item) => item.id !== response.data.id)
     ]);
-    input.setStep("LIVE");
+    router.replace(tournamentLivePath(response.data.id));
   } catch (error) {
     if (isEmailVerifyRequired(error)) {
       input.markEmailVerifyRequired(error.verifyBy);

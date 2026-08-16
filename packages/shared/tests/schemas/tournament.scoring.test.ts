@@ -139,6 +139,25 @@ test("createTournamentSchema rejects full-set win-by-2 without setTiebreakTo", (
   }
 });
 
+test("createTournamentSchema rejects setsToWin above best-of-7 max", () => {
+  const result = createTournamentSchema.safeParse({
+    name: "Sunday Mix",
+    mode: "AMERICANO",
+    variant: "CLASSIC",
+    schedulingMode: "TARGET_GAMES",
+    players: basePlayers,
+    courts: 1,
+    targetGamesPerPlayer: 4,
+    scoringMode: "REGULAR",
+    regularScoring: {
+      setFormat: "FULL_SET",
+      gameWinBy: 1,
+      setsToWin: 5
+    }
+  });
+  assert.equal(result.success, false);
+});
+
 test("submitScoreSchema accepts Americano points body", () => {
   const parsed = submitScoreSchema.parse({
     tournamentId: "t1",

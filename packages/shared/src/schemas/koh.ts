@@ -46,15 +46,6 @@ export const createKohTournamentSchema = z
     promotionRules: z.array(kohPromotionRuleSchema).optional()
   })
   .superRefine((value, ctx) => {
-    const regular = value.regularScoring;
-    if (regular.setFormat === "FULL_SET" && regular.gameWinBy === 2 && regular.setTiebreakTo === undefined) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["regularScoring", "setTiebreakTo"],
-        message: "Provide setTiebreakTo (7 or 10) for full set win-by-2."
-      });
-    }
-
     if (value.courts === 1) {
       if (value.promotionRules && value.promotionRules.length > 0) {
         ctx.addIssue({

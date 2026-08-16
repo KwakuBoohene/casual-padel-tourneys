@@ -104,14 +104,18 @@ export interface Round {
   isLocked: boolean;
 }
 
-/** Regular (games/sets) rules — never named “tennis” in code or UI. */
+/**
+ * Regular (games/sets) rules — never named “tennis” in code or UI.
+ * Match length presets: see `REGULAR_MATCH_LENGTH_PRESETS` / `docs/regular-scoring.md`.
+ */
 export interface RegularScoringConfig {
   setFormat: RegularSetFormat;
   gameWinBy: GameWinBy;
+  /** First to this many sets wins; max 4 (best of 7). */
   setsToWin: number;
   /** Set tiebreak target when full set + win-by-2 (typically 7 or 10). */
   setTiebreakTo?: TiebreakPoints;
-  /** Match tiebreak when sets are even / deciding set rules need it. */
+  /** When true with `setsToWin: 2`, play sets to 1–1 then a match tiebreak. */
   matchTiebreak?: boolean;
 }
 

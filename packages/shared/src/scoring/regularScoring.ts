@@ -1,5 +1,7 @@
 import type { MatchSet, RegularScoringConfig } from "../types/domain.js";
 
+import { maxSetsForRegularMatch } from "./regularMatchLength.js";
+
 export type Side = "A" | "B";
 
 export interface SetEvaluation {
@@ -220,7 +222,11 @@ export function evaluateMatch(
     };
   }
 
-  if (config.matchTiebreak && setsWonA === setsWonB && ordered.length > 0) {
+  const allSetsComplete = ordered.every((set) => evaluateSet(set, config).complete);
+  const evenSets = setsWonA === setsWonB;
+  const maxSets = maxSetsForRegularMatch(config);
+
+  if (config.matchTiebreak && evenSets && ordered.length > 0 && allSetsComplete) {
     const tb = matchTbComplete(matchTb?.a, matchTb?.b);
     if (tb.error) {
       return {
@@ -254,7 +260,7 @@ export function evaluateMatch(
     };
   }
 
-  if (setsWonA === setsWonB && ordered.every((set) => evaluateSet(set, config).complete)) {
+  if (evenSets && allSetsComplete && ordered.length >= maxSets) {
     return {
       complete: false,
       winner: null,
@@ -264,7 +270,7 @@ export function evaluateMatch(
       gamesWonB,
       error: config.matchTiebreak
         ? "Match tiebreak required when sets are even."
-        : "Match incomplete: sets are even and match tiebreak is disabled."
+        : "Match incomplete: sets are even after the maximum number of sets."
     };
   }
 

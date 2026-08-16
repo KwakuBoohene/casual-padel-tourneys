@@ -1,5 +1,5 @@
 import * as Clipboard from "expo-clipboard";
-import { Fragment, useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState, type ReactElement } from "react";
 import { ScrollView, View } from "react-native";
 
 import { layoutTokens, useBreakpoint } from "../../../layout";
@@ -8,7 +8,7 @@ import { useTheme } from "../../../theme/ThemeProvider";
 
 import { LiveTournamentActions } from "./LiveTournamentActions";
 import { LiveTournamentHeader } from "./LiveTournamentHeader";
-import { LiveTournamentMatchCard } from "./LiveTournamentMatchCard";
+import { LiveTournamentMatchList } from "./LiveTournamentMatchList";
 import { LiveTournamentSheets } from "./LiveTournamentSheets";
 import type { LiveTournamentViewProps } from "../../../types/organizer/liveTournamentView";
 
@@ -32,8 +32,8 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
 
   const canEditScores = !props.isTournamentCompleted || props.isEditingCompletedTournament;
   const roundsCount = props.sortedRounds.length;
-  const canSubmitScores =
-    canEditScores && Boolean(props.displayedRound && props.displayedRound.matches.length > 0);
+  const matches = props.displayedRound?.matches ?? [];
+  const canSubmitScores = canEditScores && matches.length > 0;
 
   useEffect(() => {
     if (props.focusSubmitMatchId) props.onSubmitFocusHandled();
@@ -47,7 +47,6 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.xxl,
     paddingBottom: spacing.md,
-    gap: spacing.md,
     backgroundColor: colors.background
   };
 
@@ -71,17 +70,19 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
     />
   );
 
-  const matches = (props.displayedRound?.matches ?? []).map((match) => (
-    <LiveTournamentMatchCard
-      key={match.id}
-      match={match}
+  const matchList = (opts: { header?: ReactElement | null; style?: object }) => (
+    <LiveTournamentMatchList
+      matches={matches}
       canEditScores={canEditScores}
       scoreInputs={props.scoreInputs}
       playerNameById={props.playerNameById}
       scoringMode={props.tournament.config.scoringMode}
       onOpenScoreEntry={props.onOpenScoreEntry}
+      header={opts.header}
+      style={opts.style}
+      contentContainerStyle={{ ...scrollPad, flexGrow: 1 }}
     />
-  ));
+  );
 
   const actions = (
     <LiveTournamentActions
@@ -107,19 +108,19 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
       {isWide ? (
         <View style={{ flex: 1, flexDirection: "row", gap: spacing.md, minHeight: 0 }}>
           <ScrollView style={{ width: sidebarWidth, flexShrink: 0 }} contentContainerStyle={scrollPad}>
-            {header}
-            {actions}
+            <View style={{ gap: spacing.md }}>
+              {header}
+              {actions}
+            </View>
           </ScrollView>
-          <ScrollView style={{ flex: 1, minWidth: 0 }} contentContainerStyle={scrollPad}>
-            {matches}
-          </ScrollView>
+          {matchList({ style: { flex: 1, minWidth: 0 } })}
         </View>
       ) : (
         <View style={{ flex: 1, backgroundColor: colors.background }}>
-          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ ...scrollPad, flexGrow: 1 }}>
-            {header}
-            {matches}
-          </ScrollView>
+          {matchList({
+            header: <View style={{ gap: spacing.md, marginBottom: spacing.md }}>{header}</View>,
+            style: { flex: 1 }
+          })}
           <View
             style={{
               paddingHorizontal: spacing.xl,

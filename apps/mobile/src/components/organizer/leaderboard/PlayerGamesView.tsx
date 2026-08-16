@@ -1,4 +1,5 @@
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { FlashList } from "@shopify/flash-list";
+import { Pressable, Text, View } from "react-native";
 
 import { useBreakpoint } from "../../../layout";
 import { spacing, touch, typography } from "../../../theme";
@@ -41,48 +42,46 @@ export function PlayerGamesView(props: PlayerGamesViewProps) {
   const matchCount = props.games.length;
 
   return (
-    <ScrollView
+    <FlashList
+      data={props.games}
+      keyExtractor={(item) => item.matchId}
+      style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={{
         paddingHorizontal: spacing.xl,
         paddingTop: spacing.xxl,
         paddingBottom: spacing.xl,
-        gap: spacing.md,
-        backgroundColor: colors.background,
         maxWidth: formMaxWidth,
         width: "100%",
         alignSelf: "center",
         flexGrow: 1
       }}
-    >
-      <Pressable onPress={props.onBack} hitSlop={8}>
-        <Text style={{ color: colors.primary, fontWeight: "500", fontSize: 14 }}>← Leaderboard</Text>
-      </Pressable>
-      <Text style={[typography.title, { color: colors.text }]}>{props.playerName}</Text>
-      <Text style={{ fontSize: 14, color: colors.muted }}>{formatSummary(props.row, matchCount)}</Text>
-
-      {props.games.length === 0 ? (
-        <Text style={{ color: colors.muted }}>No games yet for this player.</Text>
-      ) : null}
-
-      <View style={{ gap: spacing.sm }}>
-        {props.games.map((game) => (
-          <View
-            key={game.matchId}
-            style={{
-              minHeight: touch.minSecondary,
-              borderRadius: 14,
-              borderWidth: 1,
-              borderColor: colors.border,
-              backgroundColor: colors.surface,
-              paddingHorizontal: spacing.md + 2,
-              paddingVertical: spacing.md + 2,
-              justifyContent: "center"
-            }}
-          >
-            <Text style={{ fontSize: 15, fontWeight: "600", color: colors.text }}>{formatGameLine(game)}</Text>
-          </View>
-        ))}
-      </View>
-    </ScrollView>
+      ListHeaderComponent={
+        <View style={{ gap: spacing.md, marginBottom: spacing.sm }}>
+          <Pressable onPress={props.onBack} hitSlop={8}>
+            <Text style={{ color: colors.primary, fontWeight: "500", fontSize: 14 }}>← Leaderboard</Text>
+          </Pressable>
+          <Text style={[typography.title, { color: colors.text }]}>{props.playerName}</Text>
+          <Text style={{ fontSize: 14, color: colors.muted }}>{formatSummary(props.row, matchCount)}</Text>
+        </View>
+      }
+      ListEmptyComponent={<Text style={{ color: colors.muted }}>No games yet for this player.</Text>}
+      ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
+      renderItem={({ item }) => (
+        <View
+          style={{
+            minHeight: touch.minSecondary,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: colors.border,
+            backgroundColor: colors.surface,
+            paddingHorizontal: spacing.md + 2,
+            paddingVertical: spacing.md + 2,
+            justifyContent: "center"
+          }}
+        >
+          <Text style={{ fontSize: 15, fontWeight: "600", color: colors.text }}>{formatGameLine(item)}</Text>
+        </View>
+      )}
+    />
   );
 }

@@ -1,4 +1,5 @@
-import { RefreshControl, ScrollView, Text, View } from "react-native";
+import { FlashList } from "@shopify/flash-list";
+import { RefreshControl, Text, View } from "react-native";
 
 import { useBreakpoint } from "../../../layout";
 import { spacing } from "../../../theme";
@@ -25,78 +26,84 @@ interface TournamentListViewProps {
   onOpenAccountPlayers?: () => void;
 }
 
+type TournamentListRow = {
+  id: string;
+  tournament: LiveTournamentState;
+  status: "LIVE" | "COMPLETED";
+};
+
+function isActiveTournament(tournament: LiveTournamentState): boolean {
+  if (tournament.config.mode === "KING_OF_THE_HILL") return !tournament.endedAt;
+  if (tournament.config.mode === "MEXICANO") return !tournament.endedAt;
+  return !tournament.rounds.every((round) => round.matches.every((match) => match.completed));
+}
+
 export function TournamentListView(props: TournamentListViewProps) {
   const { colors } = useTheme();
   const { formMaxWidth } = useBreakpoint();
 
-  const activeTournaments = props.tournaments.filter((tournament) => {
-    if (tournament.config.mode === "KING_OF_THE_HILL") return !tournament.endedAt;
-    if (tournament.config.mode === "MEXICANO") return !tournament.endedAt;
-    return !tournament.rounds.every((round) => round.matches.every((match) => match.completed));
-  });
-  const completedTournaments = props.tournaments.filter((tournament) => {
-    if (tournament.config.mode === "KING_OF_THE_HILL") return Boolean(tournament.endedAt);
-    if (tournament.config.mode === "MEXICANO") return Boolean(tournament.endedAt);
-    return tournament.rounds.every((round) => round.matches.every((match) => match.completed));
-  });
-  const hasAny = props.tournaments.length > 0;
+  const rows: TournamentListRow[] = [
+    ...props.tournaments.filter(isActiveTournament).map((tournament) => ({
+      id: tournament.id,
+      tournament,
+      status: "LIVE" as const
+    })),
+    ...props.tournaments.filter((tournament) => !isActiveTournament(tournament)).map((tournament) => ({
+      id: tournament.id,
+      tournament,
+      status: "COMPLETED" as const
+    }))
+  ];
 
   return (
-    <ScrollView
+    <FlashList
+      data={rows}
+      keyExtractor={(item) => item.id}
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={{
         paddingHorizontal: spacing.xl,
         paddingTop: spacing.xxl,
         paddingBottom: spacing.xl,
-        gap: spacing.md,
         maxWidth: formMaxWidth,
         width: "100%",
         alignSelf: "center",
         flexGrow: 1
       }}
       refreshControl={<RefreshControl refreshing={props.refreshing} onRefresh={props.onRefresh} />}
-    >
-      <TournamentListHeader onOpenProfile={props.onOpenProfile} />
-
-      <TournamentListCreateActions
-        onCreateAmericano={props.onCreateAmericano}
-        onCreateMexicano={props.onCreateMexicano}
-        onCreateKingOfTheHill={props.onCreateKingOfTheHill}
-        onOpenEstimator={props.onOpenEstimator}
-        onOpenAccountPlayers={props.onOpenAccountPlayers}
-      />
-
-      {!hasAny ? (
+      ListHeaderComponent={
+        <View style={{ gap: spacing.md, marginBottom: spacing.sm }}>
+          <TournamentListHeader onOpenProfile={props.onOpenProfile} />
+          <TournamentListCreateActions
+            onCreateAmericano={props.onCreateAmericano}
+            onCreateMexicano={props.onCreateMexicano}
+            onCreateKingOfTheHill={props.onCreateKingOfTheHill}
+            onOpenEstimator={props.onOpenEstimator}
+            onOpenAccountPlayers={props.onOpenAccountPlayers}
+          />
+        </View>
+      }
+      ListEmptyComponent={
         <View style={{ gap: spacing.xs, marginTop: spacing.sm }}>
           <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>No tournaments yet</Text>
           <Text style={{ color: colors.muted, fontSize: 14 }}>
             Start with Americano, Mexicano, or King of the Hill.
           </Text>
         </View>
-      ) : (
-        <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
-          {activeTournaments.map((tournament) => (
-            <TournamentListCard
-              key={tournament.id}
-              tournament={tournament}
-              status="LIVE"
-              onOpen={() => props.onOpenTournament(tournament.id)}
-              onOpenOptions={() => props.onOpenOptions(tournament.id)}
-            />
-          ))}
-          {completedTournaments.map((tournament) => (
-            <TournamentListCard
-              key={tournament.id}
-              tournament={tournament}
-              status="COMPLETED"
-              onOpen={() => props.onOpenTournament(tournament.id)}
-              onOpenOptions={() => props.onOpenOptions(tournament.id)}
-            />
-          ))}
-        </View>
+      }
+      ListFooterComponent={
+        props.errorText ? (
+          <Text style={{ color: colors.danger, marginTop: spacing.md }}>Error: {props.errorText}</Text>
+        ) : null
+      }
+      ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
+      renderItem={({ item }) => (
+        <TournamentListCard
+          tournament={item.tournament}
+          status={item.status}
+          onOpen={() => props.onOpenTournament(item.tournament.id)}
+          onOpenOptions={() => props.onOpenOptions(item.tournament.id)}
+        />
       )}
-
-      {props.errorText ? <Text style={{ color: colors.danger }}>Error: {props.errorText}</Text> : null}
-    </ScrollView>
+    />
   );
 }

@@ -8,7 +8,7 @@ import {
 interface KohCourtChangeSheetProps {
   visible: boolean;
   change: KohCourtChange | null;
-  courts: Array<{ king: KohUnit | null; challenger: KohUnit | null; waiting: KohUnit[] }>;
+  courts: { king: KohUnit | null; challenger: KohUnit | null; waiting: KohUnit[] }[];
   onDismiss: () => void;
 }
 

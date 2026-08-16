@@ -20,27 +20,22 @@ function formatPrefix(level: LogLevel): string {
 export const logger = {
   debug(...args: unknown[]) {
     if (shouldLog("debug")) {
-      // eslint-disable-next-line no-console
       console.debug(formatPrefix("debug"), ...args);
     }
   },
   info(...args: unknown[]) {
     if (shouldLog("info")) {
-      // eslint-disable-next-line no-console
       console.info(formatPrefix("info"), ...args);
     }
   },
   warn(...args: unknown[]) {
     if (shouldLog("warn")) {
-      // eslint-disable-next-line no-console
       console.warn(formatPrefix("warn"), ...args);
     }
   },
   error(...args: unknown[]) {
     if (shouldLog("error")) {
-      // eslint-disable-next-line no-console
       console.error(formatPrefix("error"), ...args);
     }
   }
 };
-

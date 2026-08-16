@@ -11,7 +11,7 @@ interface KohFormatStepProps {
   onNext: () => void;
 }
 
-const OPTIONS: Array<{ value: KohMatchFormatChoice; title: string; detail: string }> = [
+const OPTIONS: { value: KohMatchFormatChoice; title: string; detail: string }[] = [
   { value: "FULL_SET", title: "Full set to 6", detail: "Classic set · win by 2 or tiebreak" },
   { value: "BO3_GAMES", title: "Best of 3", detail: "First to 2 games wins the match" },
   { value: "BO5_GAMES", title: "Best of 5", detail: "First to 3 games wins the match" }

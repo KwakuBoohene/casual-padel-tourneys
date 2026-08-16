@@ -4,7 +4,7 @@ import type { OrganizerPlayerLeaderboardRow, OrganizerPlayerRange } from "@padel
 import { radius, spacing, touch, typography } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
 
-const RANGES: Array<{ id: OrganizerPlayerRange; label: string }> = [
+const RANGES: { id: OrganizerPlayerRange; label: string }[] = [
   { id: "month", label: "Month" },
   { id: "year", label: "Year" },
   { id: "all", label: "All time" }

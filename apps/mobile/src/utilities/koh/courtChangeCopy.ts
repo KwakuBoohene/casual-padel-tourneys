@@ -34,7 +34,7 @@ export function formatCourtChangeLines(
 }
 
 export function collectHubUnits(
-  courts: Array<{ king: KohUnit | null; challenger: KohUnit | null; waiting: KohUnit[] }>
+  courts: { king: KohUnit | null; challenger: KohUnit | null; waiting: KohUnit[] }[]
 ): KohUnit[] {
   const units: KohUnit[] = [];
   for (const court of courts) {

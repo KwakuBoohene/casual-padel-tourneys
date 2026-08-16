@@ -11,7 +11,7 @@
     "build:web": "eas build --platform web --profile preview",
     "preexport:web": "npm run build --workspace @padel/shared",
     "export:web": "expo export --platform web",
-    "lint": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test --import tsx --test-force-exit $(find tests -name '*.test.ts' | sort)",
     "android": "expo run:android",
@@ -41,6 +41,7 @@
   },
   "devDependencies": {
     "@types/react": "19.1.17",
+    "eslint-config-expo": "~10.0.0",
     "tsx": "4.23.12"
   }
 }

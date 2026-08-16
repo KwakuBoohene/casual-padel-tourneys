@@ -20,7 +20,7 @@ interface RegularSettingsFieldsProps {
   onChangeMatchTiebreak: (value: boolean) => void;
 }
 
-const SET_FORMATS: Array<{ value: RegularSetFormat; title: string; detail: string }> = [
+const SET_FORMATS: { value: RegularSetFormat; title: string; detail: string }[] = [
   { value: "BO3_GAMES", title: "Best of 3 games", detail: "First to 2 games wins the set" },
   { value: "BO5_GAMES", title: "Best of 5 games", detail: "First to 3 games wins the set" },
   { value: "FULL_SET", title: "Full set · first to 6", detail: "Classic set to 6 games" }

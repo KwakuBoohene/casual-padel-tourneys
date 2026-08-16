@@ -27,11 +27,11 @@ export interface LiveTournamentState {
     targetGamesPerPlayer?: number;
     tournamentTimeMinutes?: number;
   };
-  players: Array<{ id: string; name: string; totalPoints?: number; matchesWon?: number; matchesLost?: number; setsWon?: number; gamesWon?: number }>;
+  players: { id: string; name: string; totalPoints?: number; matchesWon?: number; matchesLost?: number; setsWon?: number; gamesWon?: number }[];
   pendingPlayers: PendingPlayer[];
   /** Present when organizer ended the event (KOH / Mexicano). */
   endedAt?: string | null;
-  leaderboard: Array<{
+  leaderboard: {
     playerId: string;
     name: string;
     totalPoints: number;
@@ -43,12 +43,12 @@ export interface LiveTournamentState {
     setsLost?: number;
     gamesWon?: number;
     gamesLost?: number;
-  }>;
-  rounds: Array<{
+  }[];
+  rounds: {
     id: string;
     roundNumber: number;
     isLocked: boolean;
-    matches: Array<{
+    matches: {
       id: string;
       court: number;
       teamA: [string, string];
@@ -59,8 +59,8 @@ export interface LiveTournamentState {
       sets?: MatchSet[];
       matchTbA?: number;
       matchTbB?: number;
-    }>;
-  }>;
+    }[];
+  }[];
 }
 
 export interface CreateTournamentResponse {

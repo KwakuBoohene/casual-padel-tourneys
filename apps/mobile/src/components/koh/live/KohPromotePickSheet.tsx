@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text } from "react-native";
 
 import type { KohPendingPromote, KohUnit } from "@padel/shared";
 import { BottomSheet, SheetButton } from "../../sheets";

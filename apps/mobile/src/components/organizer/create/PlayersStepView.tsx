@@ -17,7 +17,7 @@ import { WizardChrome } from "./WizardChrome";
 interface PlayersStepViewProps {
   modeLabel: string;
   players: string[];
-  genders: Array<PlayerGender | undefined>;
+  genders: (PlayerGender | undefined)[];
   variant: TournamentVariant;
   minPlayers: number;
   canContinue: boolean;

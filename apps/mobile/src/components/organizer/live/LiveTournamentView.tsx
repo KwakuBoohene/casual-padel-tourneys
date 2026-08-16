@@ -10,6 +10,7 @@ import { LiveTournamentActions } from "./LiveTournamentActions";
 import { LiveTournamentHeader } from "./LiveTournamentHeader";
 import { LiveTournamentMatchList } from "./LiveTournamentMatchList";
 import { LiveTournamentSheets } from "./LiveTournamentSheets";
+import { LiveTournamentStickyActions } from "./LiveTournamentStickyActions";
 import type { LiveTournamentViewProps } from "../../../types/organizer/liveTournamentView";
 
 export type { LiveTournamentViewProps };
@@ -30,18 +31,27 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
     setTimeout(() => setLinkCopied(false), 2000);
   }, [shareUrl]);
 
-  const canEditScores = !props.isTournamentCompleted || props.isEditingCompletedTournament;
-  const roundsCount = props.sortedRounds.length;
-  const matches = props.displayedRound?.matches ?? [];
+  const {
+    focusSubmitMatchId,
+    onSubmitFocusHandled,
+    errorText,
+    isTournamentCompleted,
+    isEditingCompletedTournament,
+    sortedRounds,
+    displayedRound
+  } = props;
+  const canEditScores = !isTournamentCompleted || isEditingCompletedTournament;
+  const roundsCount = sortedRounds.length;
+  const matches = displayedRound?.matches ?? [];
   const canSubmitScores = canEditScores && matches.length > 0;
 
   useEffect(() => {
-    if (props.focusSubmitMatchId) props.onSubmitFocusHandled();
-  }, [props.focusSubmitMatchId, props.onSubmitFocusHandled]);
+    if (focusSubmitMatchId) onSubmitFocusHandled();
+  }, [focusSubmitMatchId, onSubmitFocusHandled]);
 
   useEffect(() => {
-    if (props.errorText) setShowError(true);
-  }, [props.errorText]);
+    if (errorText) setShowError(true);
+  }, [errorText]);
 
   const scrollPad = {
     paddingHorizontal: spacing.xl,
@@ -54,10 +64,10 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
     <LiveTournamentHeader
       tournament={props.tournament}
       tournamentNameDraft={props.tournamentNameDraft}
-      isEditingCompletedTournament={props.isEditingCompletedTournament}
+      isEditingCompletedTournament={isEditingCompletedTournament}
       roundsCount={roundsCount}
       openEndedRounds={props.tournament.config.mode === "MEXICANO"}
-      displayedRoundNumber={props.displayedRound?.roundNumber ?? null}
+      displayedRoundNumber={displayedRound?.roundNumber ?? null}
       canGoPrev={props.selectedRoundIndex > 0}
       canGoNext={props.selectedRoundIndex < roundsCount - 1 && roundsCount > 0}
       onBackToList={props.onBackToList}
@@ -89,8 +99,8 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
       canSubmitScores={canSubmitScores}
       canGenerateNextRound={Boolean(props.canGenerateNextRound)}
       generatingNextRound={Boolean(props.generatingNextRound)}
-      isTournamentCompleted={props.isTournamentCompleted}
-      isEditingCompletedTournament={props.isEditingCompletedTournament}
+      isTournamentCompleted={isTournamentCompleted}
+      isEditingCompletedTournament={isEditingCompletedTournament}
       allowEditAfterComplete={props.tournament.config.mode !== "MEXICANO"}
       linkCopied={linkCopied}
       onSubmitRoundScores={() => void props.onSubmitRoundScores()}
@@ -121,18 +131,7 @@ export function LiveTournamentView(props: LiveTournamentViewProps) {
             header: <View style={{ gap: spacing.md, marginBottom: spacing.md }}>{header}</View>,
             style: { flex: 1 }
           })}
-          <View
-            style={{
-              paddingHorizontal: spacing.xl,
-              paddingBottom: spacing.xl,
-              paddingTop: spacing.sm,
-              borderTopWidth: 1,
-              borderTopColor: colors.border,
-              backgroundColor: colors.background
-            }}
-          >
-            {actions}
-          </View>
+          <LiveTournamentStickyActions>{actions}</LiveTournamentStickyActions>
         </View>
       )}
       <LiveTournamentSheets

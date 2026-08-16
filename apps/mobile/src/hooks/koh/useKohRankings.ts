@@ -10,6 +10,7 @@ export function useKohRankings(params: {
   setErrorText: (value: string) => void;
   markEmailVerifyRequired: (dueAt?: number) => void;
 }) {
+  const { tournamentId, courtNumber, setErrorText, markEmailVerifyRequired } = params;
   const [scope, setScope] = useState<"court" | "all">("court");
   const [board, setBoard] = useState<KohRankingsBoard | null>(null);
   const [loading, setLoading] = useState(false);
@@ -18,22 +19,19 @@ export function useKohRankings(params: {
   const reload = useCallback(async () => {
     setLoading(true);
     try {
-      params.setErrorText("");
-      const data = await getKohRankings(
-        params.tournamentId,
-        scope === "court" ? params.courtNumber : undefined
-      );
+      setErrorText("");
+      const data = await getKohRankings(tournamentId, scope === "court" ? courtNumber : undefined);
       setBoard(data);
     } catch (error) {
       if (isEmailVerifyRequired(error)) {
-        params.markEmailVerifyRequired(error.verifyBy);
+        markEmailVerifyRequired(error.verifyBy);
       } else {
-        params.setErrorText((error as Error).message);
+        setErrorText((error as Error).message);
       }
     } finally {
       setLoading(false);
     }
-  }, [params.tournamentId, params.courtNumber, scope]);
+  }, [tournamentId, courtNumber, scope, setErrorText, markEmailVerifyRequired]);
 
   useEffect(() => {
     void reload();

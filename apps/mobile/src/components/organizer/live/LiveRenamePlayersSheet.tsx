@@ -6,7 +6,7 @@ import { useTheme } from "../../../theme/ThemeProvider";
 
 interface LiveRenamePlayersSheetProps {
   visible: boolean;
-  players: Array<{ id: string; name: string }>;
+  players: { id: string; name: string }[];
   drafts: Record<string, string>;
   saving: boolean;
   onChangeDraft: (playerId: string, name: string) => void;

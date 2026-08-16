@@ -1,8 +1,7 @@
-import type { LeaderboardRow, LiveTournamentState } from "../../types/organizer/tournament";
+import type { LeaderboardRow, LiveTournamentState , PlayerGameRow } from "../../types/organizer/tournament";
 import { evaluateMatch } from "@padel/shared";
 
 import { formatRegularMatchScore } from "./regularMatchDisplay";
-import type { PlayerGameRow } from "../../types/organizer/tournament";
 
 function isRegular(tournament: LiveTournamentState): boolean {
   return (tournament.config.scoringMode ?? "AMERICANO_POINTS") === "REGULAR";

@@ -23,7 +23,7 @@ export function usePlayerRoster({
   suggestedPlayerNames
 }: UsePlayerRosterParams) {
   const [players, setPlayers] = useState<string[]>([]);
-  const [playerGenders, setPlayerGenders] = useState<Array<PlayerGender | undefined>>([]);
+  const [playerGenders, setPlayerGenders] = useState<(PlayerGender | undefined)[]>([]);
   const [teams, setTeams] = useState<TeamPairDraft[]>([]);
   const isTeamMexicano = mode === "MEXICANO" && variant === "TEAM";
   const minPlayers = mode === "MEXICANO" ? MEXICANO_MIN_PLAYERS : 4;

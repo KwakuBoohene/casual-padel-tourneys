@@ -13,6 +13,7 @@ export function useAccountPlayers(params: {
   setErrorText: (value: string) => void;
   markEmailVerifyRequired: (dueAt?: number) => void;
 }) {
+  const { setErrorText, markEmailVerifyRequired } = params;
   const [range, setRange] = useState<OrganizerPlayerRange>("year");
   const [board, setBoard] = useState<OrganizerPlayerLeaderboard | null>(null);
   const [guestMessage, setGuestMessage] = useState<string | null>(null);
@@ -23,7 +24,7 @@ export function useAccountPlayers(params: {
   const reloadBoard = useCallback(async () => {
     setLoading(true);
     try {
-      params.setErrorText("");
+      setErrorText("");
       const data = await getAccountPlayerLeaderboard(range);
       if (data.guest) {
         setGuestMessage(data.message ?? "Attach an account to track careers.");
@@ -33,12 +34,12 @@ export function useAccountPlayers(params: {
         setBoard(data);
       }
     } catch (error) {
-      if (isEmailVerifyRequired(error)) params.markEmailVerifyRequired(error.verifyBy);
-      else params.setErrorText((error as Error).message);
+      if (isEmailVerifyRequired(error)) markEmailVerifyRequired(error.verifyBy);
+      else setErrorText((error as Error).message);
     } finally {
       setLoading(false);
     }
-  }, [range, params.setErrorText, params.markEmailVerifyRequired]);
+  }, [range, setErrorText, markEmailVerifyRequired]);
 
   useEffect(() => {
     void reloadBoard();
@@ -53,13 +54,13 @@ export function useAccountPlayers(params: {
     void (async () => {
       setLoading(true);
       try {
-        params.setErrorText("");
+        setErrorText("");
         const next = await getAccountPlayerDetail(selectedId, range);
         if (!cancelled) setDetail(next);
       } catch (error) {
         if (cancelled) return;
-        if (isEmailVerifyRequired(error)) params.markEmailVerifyRequired(error.verifyBy);
-        else params.setErrorText((error as Error).message);
+        if (isEmailVerifyRequired(error)) markEmailVerifyRequired(error.verifyBy);
+        else setErrorText((error as Error).message);
         setSelectedId(null);
       } finally {
         if (!cancelled) setLoading(false);
@@ -68,7 +69,7 @@ export function useAccountPlayers(params: {
     return () => {
       cancelled = true;
     };
-  }, [selectedId, range, params.setErrorText, params.markEmailVerifyRequired]);
+  }, [selectedId, range, setErrorText, markEmailVerifyRequired]);
 
   return {
     range,

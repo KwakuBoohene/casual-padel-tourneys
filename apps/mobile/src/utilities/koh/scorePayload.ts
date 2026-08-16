@@ -8,7 +8,7 @@ export type KohScoreDraft = {
   tbB?: number;
   winMethodsA: KohGameWinMethod[];
   winMethodsB: KohGameWinMethod[];
-  undoStack: Array<{ gamesA: number; gamesB: number }>;
+  undoStack: { gamesA: number; gamesB: number }[];
 };
 
 export function emptyKohScoreDraft(): KohScoreDraft {

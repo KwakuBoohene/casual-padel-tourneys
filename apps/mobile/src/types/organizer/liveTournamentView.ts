@@ -29,7 +29,7 @@ export interface LiveTournamentViewProps {
     matchId: string;
     scoreA: number | null;
     scoreB: number | null;
-    undoStack: Array<{ scoreA: number | null; scoreB: number | null }>;
+    undoStack: { scoreA: number | null; scoreB: number | null }[];
   } | null;
   scoreEntryContextLine: string | null;
   scoreEntryCanComplete: boolean;

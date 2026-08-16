@@ -23,7 +23,7 @@ export async function submitCreateTournament(input: {
   variant: TournamentVariant;
   schedulingMode: SchedulingMode;
   players: string[];
-  playerGenders: Array<PlayerGender | undefined>;
+  playerGenders: (PlayerGender | undefined)[];
   teams?: TeamPairDraft[];
   sanitizedPlayersCount: number;
   hasDuplicatePlayerNames: boolean;

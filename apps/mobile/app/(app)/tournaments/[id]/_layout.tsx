@@ -67,6 +67,8 @@ function TournamentLoadGate({ children }: { children: ReactNode }) {
       setStatus("error");
       setMessage(org.errorText || "Could not open this tournament.");
     })();
+    // Intentionally keyed by route params only — org session identity is unstable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once per id/edit
   }, [id, editMode]);
 
   if (!id) {

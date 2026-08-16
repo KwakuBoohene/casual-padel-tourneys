@@ -11,7 +11,7 @@ interface KohDeuceStepProps {
   onNext: () => void;
 }
 
-const OPTIONS: Array<{ value: KohDeuceMode; title: string; detail: string }> = [
+const OPTIONS: { value: KohDeuceMode; title: string; detail: string }[] = [
   { value: "ADVANTAGE", title: "Advantage", detail: "Play until win by 2 points" },
   { value: "GOLDEN", title: "Golden point", detail: "No-ad · deciding point at deuce" },
   { value: "STAR", title: "Star point", detail: "Two deuces, then a final deciding point" }

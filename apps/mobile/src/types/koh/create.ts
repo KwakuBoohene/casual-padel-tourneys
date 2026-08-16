@@ -69,25 +69,21 @@ export interface KohTournamentHub {
     regularScoring: RegularScoringConfig;
     promotionRules?: KohPromotionRule[];
   };
-  players: Array<{ id: string; name: string; gender?: "MALE" | "FEMALE" }>;
-  courts: Array<
-    KohCourt & {
+  players: { id: string; name: string; gender?: "MALE" | "FEMALE" }[];
+  courts: (KohCourt & {
       unitCount: number;
       activeMatch: {
         id: string;
         unitAId: string;
         unitBId: string;
         completed: boolean;
-        sets: Array<
-          MatchSet & {
-            winMethodsA?: Array<"REGULAR" | "GOLDEN" | "STAR">;
-            winMethodsB?: Array<"REGULAR" | "GOLDEN" | "STAR">;
-          }
-        >;
+        sets: (MatchSet & {
+            winMethodsA?: ("REGULAR" | "GOLDEN" | "STAR")[];
+            winMethodsB?: ("REGULAR" | "GOLDEN" | "STAR")[];
+          })[];
       } | null;
       tempSwap?: KohTempSwap | null;
-    }
-  >;
+    })[];
   ready: boolean;
   balanceHint: string | null;
   endedAt?: string | null;

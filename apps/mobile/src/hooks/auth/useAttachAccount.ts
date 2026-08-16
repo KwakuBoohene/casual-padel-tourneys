@@ -24,6 +24,7 @@ interface UseAttachAccountParams {
 }
 
 export function useAttachAccount(params: UseAttachAccountParams) {
+  const { onAttached, onEmailPending } = params;
   const redirectUri = AuthSession.makeRedirectUri({ scheme: APP_SCHEME });
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
@@ -43,10 +44,11 @@ export function useAttachAccount(params: UseAttachAccountParams) {
     if (response?.type !== "success" || !response.params.id_token) {
       return;
     }
+    const idToken = response.params.id_token;
     void (async () => {
       setLoading(true);
       try {
-        params.onAttached(await attachGoogle(response.params.id_token));
+        onAttached(await attachGoogle(idToken));
       } catch (error) {
         logger.error("useAttachAccount: google failed", { error });
         setErrorMessage(error instanceof Error ? error.message : "Could not attach Google.");
@@ -54,14 +56,14 @@ export function useAttachAccount(params: UseAttachAccountParams) {
         setLoading(false);
       }
     })();
-  }, [response]);
+  }, [response, onAttached]);
 
   async function submitEmail() {
     setLoading(true);
     setInfoMessage(null);
     try {
       const result = await attachEmail(email.trim().toLowerCase());
-      params.onEmailPending(result.user, result.message);
+      onEmailPending(result.user, result.message);
       setInfoMessage(result.message);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not attach email.");
@@ -73,7 +75,7 @@ export function useAttachAccount(params: UseAttachAccountParams) {
   async function submitPassword() {
     setLoading(true);
     try {
-      params.onAttached(await attachPasswordToGuest(email.trim().toLowerCase(), password));
+      onAttached(await attachPasswordToGuest(email.trim().toLowerCase(), password));
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not attach password.");
     } finally {

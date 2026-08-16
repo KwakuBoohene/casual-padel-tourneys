@@ -1,8 +1,7 @@
-import { Redirect } from "expo-router";
+import { Redirect , router } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import * as Linking from "expo-linking";
-import { router } from "expo-router";
 
 import { parseAuthDeepLink } from "../src/api/authDeepLink";
 import { logger } from "../src/logger";

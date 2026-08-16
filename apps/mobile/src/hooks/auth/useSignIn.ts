@@ -1,7 +1,7 @@
 import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   requestMagicLink as requestMagicLinkApi,
@@ -23,6 +23,7 @@ interface UseSignInParams {
 }
 
 export function useSignIn(params: UseSignInParams) {
+  const { onSignedIn } = params;
   const redirectUri = AuthSession.makeRedirectUri({ scheme: APP_SCHEME });
   const googleWebClientId =
     process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
@@ -41,25 +42,28 @@ export function useSignIn(params: UseSignInParams) {
   const [magicSentMessage, setMagicSentMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const exchangeIdToken = useCallback(
+    async (idToken: string) => {
+      setGoogleLoading(true);
+      try {
+        onSignedIn(await signInWithGoogle(idToken));
+      } catch (error) {
+        logger.error("useSignIn: Google exchange failed", { error });
+        setErrorMessage(error instanceof Error ? error.message : "Could not sign in with Google.");
+      } finally {
+        setGoogleLoading(false);
+      }
+    },
+    [onSignedIn]
+  );
+
   useEffect(() => {
     if (response?.type === "success" && response.params.id_token) {
       void exchangeIdToken(response.params.id_token);
     } else if (response?.type === "error") {
       setErrorMessage("Google sign-in did not complete. Please try again.");
     }
-  }, [response]);
-
-  async function exchangeIdToken(idToken: string) {
-    setGoogleLoading(true);
-    try {
-      params.onSignedIn(await signInWithGoogle(idToken));
-    } catch (error) {
-      logger.error("useSignIn: Google exchange failed", { error });
-      setErrorMessage(error instanceof Error ? error.message : "Could not sign in with Google.");
-    } finally {
-      setGoogleLoading(false);
-    }
-  }
+  }, [response, exchangeIdToken]);
 
   async function continueAsGuest() {
     setGuestLoading(true);
@@ -69,7 +73,7 @@ export function useSignIn(params: UseSignInParams) {
         guestId = generateGuestId();
         await storeGuestId(guestId);
       }
-      params.onSignedIn(await signInAsGuest(guestId));
+      onSignedIn(await signInAsGuest(guestId));
     } catch (error) {
       logger.error("useSignIn: guest sign-in failed", { error });
       setErrorMessage(error instanceof Error ? error.message : "Could not continue as guest.");

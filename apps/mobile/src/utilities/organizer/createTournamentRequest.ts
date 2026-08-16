@@ -16,7 +16,7 @@ export interface CreateTournamentDraft {
   variant: TournamentVariant;
   schedulingMode: SchedulingMode;
   players: string[];
-  playerGenders: Array<PlayerGender | undefined>;
+  playerGenders: (PlayerGender | undefined)[];
   teams?: TeamPairDraft[];
   sanitizedPlayersCount: number;
   hasDuplicatePlayerNames: boolean;
@@ -33,11 +33,11 @@ export interface CreateTournamentPayload {
   mode: TournamentMode;
   variant: TournamentVariant;
   schedulingMode: SchedulingMode;
-  players: Array<{ name: string; gender: PlayerGender | undefined }>;
-  teams?: Array<{
+  players: { name: string; gender: PlayerGender | undefined }[];
+  teams?: {
     playerA: { name: string; gender?: PlayerGender };
     playerB: { name: string; gender?: PlayerGender };
-  }>;
+  }[];
   courts: number;
   pointsPerMatch?: number;
   scoringMode: ScoringMode;

@@ -51,7 +51,8 @@ export function registerTournamentCreateRoutes(
           teams: data.variant === "TEAM" ? data.teams : undefined,
           scoringMode: data.scoringMode,
           regularScoring: data.regularScoring,
-          pointsPerMatch: data.pointsPerMatch ?? 24
+          pointsPerMatch: data.pointsPerMatch ?? 24,
+          contributeToCareerLeaderboard: data.contributeToCareerLeaderboard
         }
       });
       request.log.info({ id: tournament.id }, "POST /tournaments created");

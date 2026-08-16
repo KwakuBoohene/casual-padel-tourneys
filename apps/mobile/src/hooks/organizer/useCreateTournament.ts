@@ -36,6 +36,7 @@ export function useCreateTournament({
   const [modeLockedFromList, setModeLockedFromList] = useState(false);
   const [variant, setVariant] = useState<TournamentVariant>("CLASSIC");
   const [schedulingMode, setSchedulingMode] = useState<SchedulingMode>("TARGET_GAMES");
+  const [contributeToCareerLeaderboard, setContributeToCareerLeaderboard] = useState(true);
   const [responseText, setResponseText] = useState("No tournament created yet.");
   const effectiveSchedulingMode: SchedulingMode = mode === "MEXICANO" ? "TOTAL_TIME" : schedulingMode;
 
@@ -53,6 +54,7 @@ export function useCreateTournament({
     setModeLockedFromList(true);
     setVariant("CLASSIC");
     setSchedulingMode(preset === "MEXICANO" ? "TOTAL_TIME" : "TARGET_GAMES");
+    setContributeToCareerLeaderboard(true);
     settings.prepareSettingsForMode(preset);
     setWizardStep("NAME");
   };
@@ -86,6 +88,7 @@ export function useCreateTournament({
       tournamentTimeText: settings.tournamentTimeText,
       scoringMode: settings.scoringMode,
       regularScoring: settings.regularScoring,
+      contributeToCareerLeaderboard,
       setErrorText,
       setResponseText,
       markEmailVerifyRequired,
@@ -114,6 +117,8 @@ export function useCreateTournament({
     schedulingMode,
     setSchedulingMode,
     effectiveSchedulingMode,
+    contributeToCareerLeaderboard,
+    setContributeToCareerLeaderboard,
     responseText,
     createTournament
   };

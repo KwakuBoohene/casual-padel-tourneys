@@ -37,6 +37,10 @@ export function AccountPlayersFlow(props: AccountPlayersFlowProps) {
       <AccountPlayersPanel
         range={players.range}
         onRange={players.setRange}
+        mode={players.mode}
+        onMode={players.setMode}
+        searchQuery={players.searchQuery}
+        onSearchQuery={players.setSearchQuery}
         rows={players.board?.rows ?? []}
         loading={players.loading}
         errorText={props.errorText}

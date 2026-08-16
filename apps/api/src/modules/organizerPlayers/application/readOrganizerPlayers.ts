@@ -1,7 +1,7 @@
 import type {
   OrganizerPlayerDetail,
   OrganizerPlayerLeaderboard,
-  OrganizerPlayerRange
+  OrganizerPlayerLeaderboardQuery
 } from "@padel/shared";
 
 import { rangeStart } from "../domain/careerRange.js";
@@ -11,10 +11,15 @@ import type { OrganizerPlayersDeps } from "./ports.js";
 export async function getOrganizerPlayerLeaderboard(
   deps: OrganizerPlayersDeps,
   organizerId: string,
-  range: OrganizerPlayerRange
+  query: OrganizerPlayerLeaderboardQuery
 ): Promise<OrganizerPlayerLeaderboard> {
-  const deltas = await deps.repo.listDeltas({ organizerId, since: rangeStart(range) });
-  return buildLeaderboard(range, deltas);
+  const deltas = await deps.repo.listDeltas({
+    organizerId,
+    since: rangeStart(query.range),
+    mode: query.mode,
+    q: query.q
+  });
+  return buildLeaderboard(query.range, deltas, { mode: query.mode, q: query.q });
 }
 
 /** `null` when the career identity does not belong to this organizer. */
@@ -22,7 +27,7 @@ export async function getOrganizerPlayerDetail(
   deps: OrganizerPlayersDeps,
   organizerId: string,
   organizerPlayerId: string,
-  range: OrganizerPlayerRange
+  query: Pick<OrganizerPlayerLeaderboardQuery, "range">
 ): Promise<OrganizerPlayerDetail | null> {
   const player = await deps.repo.findPlayer(organizerId, organizerPlayerId);
   if (!player) return null;
@@ -30,7 +35,7 @@ export async function getOrganizerPlayerDetail(
   const deltas = await deps.repo.listDeltas({
     organizerId,
     organizerPlayerId,
-    since: rangeStart(range)
+    since: rangeStart(query.range)
   });
-  return buildDetail(player, range, deltas);
+  return buildDetail(player, query.range, deltas);
 }

@@ -1,14 +1,36 @@
+import type { OrganizerPlayerLeaderboardMode } from "@padel/shared";
+
 import { prisma } from "../../../lib/prisma.js";
 import type { CareerDeltaQuery, OrganizerPlayerRepository } from "../application/ports.js";
 import type { CareerDelta } from "../domain/careerStats.js";
 
 export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepository {
   async listDeltas(query: CareerDeltaQuery): Promise<CareerDelta[]> {
+    let tournamentIds: string[] | undefined;
+    if (query.mode && query.mode !== "overall") {
+      const tournaments = await prisma.tournament.findMany({
+        where: { organizerId: query.organizerId, mode: query.mode },
+        select: { id: true }
+      });
+      tournamentIds = tournaments.map((row) => row.id);
+      if (tournamentIds.length === 0) {
+        return [];
+      }
+    }
+
     const rows = await prisma.organizerPlayerStatDelta.findMany({
       where: {
         organizerId: query.organizerId,
         ...(query.organizerPlayerId ? { organizerPlayerId: query.organizerPlayerId } : {}),
-        ...(query.since ? { occurredAt: { gte: query.since } } : {})
+        ...(query.since ? { occurredAt: { gte: query.since } } : {}),
+        ...(tournamentIds ? { tournamentId: { in: tournamentIds } } : {}),
+        ...(query.q?.trim()
+          ? {
+              organizerPlayer: {
+                name: { contains: query.q.trim(), mode: "insensitive" }
+              }
+            }
+          : {})
       },
       orderBy: { occurredAt: "desc" },
       select: {

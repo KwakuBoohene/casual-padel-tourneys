@@ -38,6 +38,8 @@ export function OrganizerCreateWizard({
         modeLabel={modeLabel}
         variant={create.variant}
         schedulingMode={create.effectiveSchedulingMode}
+        contributeToCareerLeaderboard={create.contributeToCareerLeaderboard}
+        onChangeContributeToCareerLeaderboard={create.setContributeToCareerLeaderboard}
         onChangeMode={(value) => {
           create.setMode(value);
           if (value === "MEXICANO") create.setSchedulingMode("TOTAL_TIME");

@@ -27,6 +27,10 @@ export function KohCreateSteps(props: KohCreateStepsProps) {
         stepCount={stepCount}
         name={draft.name}
         canContinue={wizard.canContinueFromName}
+        contributeToCareerLeaderboard={draft.contributeToCareerLeaderboard}
+        onChangeContributeToCareerLeaderboard={(value) =>
+          setDraft((prev) => ({ ...prev, contributeToCareerLeaderboard: value }))
+        }
         onChangeName={(name) => setDraft((prev) => ({ ...prev, name }))}
         onBack={wizard.goBack}
         onNext={wizard.goNext}

@@ -69,6 +69,7 @@ export function scalarTournamentData(state: TournamentState) {
     integrationWaveCount: state.integrationWaveCount,
     enableAutoIntegration: state.config.enableAutoIntegration ?? false,
     integrationThreshold: state.config.integrationThreshold ?? 2,
+    contributeToCareerLeaderboard: state.config.contributeToCareerLeaderboard ?? true,
     version: state.version,
     updatedAt: new Date(state.updatedAt),
     endedAt: state.endedAt ? new Date(state.endedAt) : null

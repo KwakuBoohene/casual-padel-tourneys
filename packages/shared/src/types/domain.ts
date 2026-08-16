@@ -133,6 +133,8 @@ export interface TournamentConfig {
   tournamentTimeMinutes?: number;
   enableAutoIntegration?: boolean;
   integrationThreshold?: number;
+  /** When true (default), scored matches credit organizer career leaderboard. */
+  contributeToCareerLeaderboard?: boolean;
 }
 
 export interface Tournament {

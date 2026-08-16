@@ -1,5 +1,6 @@
 import { Text, TextInput, View } from "react-native";
 
+import { CareerOptInToggle } from "../organizer/create/CareerOptInToggle";
 import { WizardChrome } from "../organizer/create/WizardChrome";
 import { radius, spacing } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
@@ -9,6 +10,8 @@ interface KohNameStepProps {
   stepCount: number;
   name: string;
   canContinue: boolean;
+  contributeToCareerLeaderboard: boolean;
+  onChangeContributeToCareerLeaderboard: (value: boolean) => void;
   onChangeName: (value: string) => void;
   onBack: () => void;
   onNext: () => void;
@@ -19,7 +22,7 @@ export function KohNameStep(props: KohNameStepProps) {
 
   return (
     <WizardChrome
-      modeLabel="King of the Hill"
+      modeLabel="King of the Court"
       stepIndex={props.stepIndex}
       stepCount={props.stepCount}
       title="Name your night"
@@ -47,6 +50,10 @@ export function KohNameStep(props: KohNameStepProps) {
           style={{ color: colors.text, fontSize: 18, fontWeight: "600", paddingVertical: spacing.xs }}
         />
       </View>
+      <CareerOptInToggle
+        value={props.contributeToCareerLeaderboard}
+        onChange={props.onChangeContributeToCareerLeaderboard}
+      />
     </WizardChrome>
   );
 }

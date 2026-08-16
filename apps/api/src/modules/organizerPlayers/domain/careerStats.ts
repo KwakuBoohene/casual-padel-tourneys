@@ -1,6 +1,7 @@
 import type {
   OrganizerPlayerDetail,
   OrganizerPlayerLeaderboard,
+  OrganizerPlayerLeaderboardMode,
   OrganizerPlayerRange
 } from "@padel/shared";
 
@@ -20,7 +21,8 @@ const MAX_RECENT_EVENTS = 12;
 
 export function buildLeaderboard(
   range: OrganizerPlayerRange,
-  deltas: CareerDelta[]
+  deltas: CareerDelta[],
+  filters?: { mode?: OrganizerPlayerLeaderboardMode; q?: string }
 ): OrganizerPlayerLeaderboard {
   const byPlayer = new Map<
     string,
@@ -53,10 +55,10 @@ export function buildLeaderboard(
     byPlayer.set(delta.organizerPlayerId, current);
   }
 
-  const rows = [...byPlayer.values()]
+  let rows = [...byPlayer.values()]
     .sort((a, b) => {
-      if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
       if (b.matchesWon !== a.matchesWon) return b.matchesWon - a.matchesWon;
+      if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
       return a.name.localeCompare(b.name);
     })
     .map((row, index) => ({
@@ -70,7 +72,18 @@ export function buildLeaderboard(
       eventsPlayed: row.events.size
     }));
 
-  return { range, rows };
+  const q = filters?.q?.trim().toLowerCase();
+  if (q) {
+    rows = rows.filter((row) => row.name.toLowerCase().includes(q));
+    rows = rows.map((row, index) => ({ ...row, rank: index + 1 }));
+  }
+
+  return {
+    range,
+    rows,
+    ...(filters?.mode && filters.mode !== "overall" ? { mode: filters.mode } : {}),
+    ...(q ? { q: filters?.q?.trim() } : {})
+  };
 }
 
 /** `deltas` must already be ordered newest first so `recentEvents` stays recent. */

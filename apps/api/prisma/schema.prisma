@@ -126,6 +126,8 @@ model Tournament {
   kohPendingPromote     Json?
   /** Set when organizer ends a live event (KOH and future modes). */
   endedAt               DateTime?
+  /** When true (default), scored matches credit organizer career leaderboard. */
+  contributeToCareerLeaderboard Boolean @default(true)
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
   organizerId           String?

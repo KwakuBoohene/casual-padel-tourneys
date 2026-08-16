@@ -2,11 +2,14 @@ import { useCallback, useEffect, useState } from "react";
 import type {
   OrganizerPlayerDetail,
   OrganizerPlayerLeaderboard,
+  OrganizerPlayerLeaderboardMode,
   OrganizerPlayerRange
 } from "@padel/shared";
 
 import { getAccountPlayerDetail, getAccountPlayerLeaderboard } from "../../api/accountPlayers";
 import { isEmailVerifyRequired } from "../../api/errors";
+
+const SEARCH_DEBOUNCE_MS = 250;
 
 export function useAccountPlayers(params: {
   isGuest: boolean;
@@ -15,20 +18,32 @@ export function useAccountPlayers(params: {
 }) {
   const { setErrorText, markEmailVerifyRequired } = params;
   const [range, setRange] = useState<OrganizerPlayerRange>("year");
+  const [mode, setMode] = useState<OrganizerPlayerLeaderboardMode>("overall");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [board, setBoard] = useState<OrganizerPlayerLeaderboard | null>(null);
   const [guestMessage, setGuestMessage] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<OrganizerPlayerDetail | null>(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedSearch(searchQuery.trim()), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(handle);
+  }, [searchQuery]);
+
   const reloadBoard = useCallback(async () => {
     setLoading(true);
     try {
       setErrorText("");
-      const data = await getAccountPlayerLeaderboard(range);
+      const data = await getAccountPlayerLeaderboard({
+        range,
+        mode,
+        q: debouncedSearch || undefined
+      });
       if (data.guest) {
         setGuestMessage(data.message ?? "Attach an account to track careers.");
-        setBoard({ range, rows: [] });
+        setBoard({ range, rows: [], mode, q: debouncedSearch || undefined });
       } else {
         setGuestMessage(null);
         setBoard(data);
@@ -39,7 +54,7 @@ export function useAccountPlayers(params: {
     } finally {
       setLoading(false);
     }
-  }, [range, setErrorText, markEmailVerifyRequired]);
+  }, [range, mode, debouncedSearch, setErrorText, markEmailVerifyRequired]);
 
   useEffect(() => {
     void reloadBoard();
@@ -74,6 +89,10 @@ export function useAccountPlayers(params: {
   return {
     range,
     setRange,
+    mode,
+    setMode,
+    searchQuery,
+    setSearchQuery,
     board,
     guestMessage,
     selectedId,

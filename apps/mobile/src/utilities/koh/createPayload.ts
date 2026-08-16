@@ -28,7 +28,8 @@ export function buildCreatePayload(draft: KohCreateDraft): CreateKohTournamentIn
     pairingMode: "WINNER_STAYS",
     courts: draft.courts,
     regularScoring,
-    promotionRules
+    promotionRules,
+    contributeToCareerLeaderboard: draft.contributeToCareerLeaderboard
   };
 }
 

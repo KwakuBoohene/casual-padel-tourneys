@@ -33,6 +33,7 @@ export async function createKohTournament(
       pairingMode,
       publicToken,
       organizerId,
+      contributeToCareerLeaderboard: input.contributeToCareerLeaderboard ?? true,
       version: 0,
       createdAt: now,
       updatedAt: now,

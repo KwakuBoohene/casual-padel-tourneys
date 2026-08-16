@@ -5,6 +5,7 @@ import { radius, spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 import { formatTournamentMode } from "../../../utilities/organizer/formatLabels";
 
+import { CareerOptInToggle } from "./CareerOptInToggle";
 import { WizardChrome } from "./WizardChrome";
 
 interface TournamentOptionsStepViewProps {
@@ -13,6 +14,8 @@ interface TournamentOptionsStepViewProps {
   modeLabel: string;
   variant: TournamentVariant;
   schedulingMode: SchedulingMode;
+  contributeToCareerLeaderboard: boolean;
+  onChangeContributeToCareerLeaderboard: (value: boolean) => void;
   onChangeMode: (value: TournamentMode) => void;
   onChangeVariant: (value: TournamentVariant) => void;
   onChangeSchedulingMode: (value: SchedulingMode) => void;
@@ -124,6 +127,10 @@ export function TournamentOptionsStepView(props: TournamentOptionsStepViewProps)
           )}
         </View>
       ) : null}
+      <CareerOptInToggle
+        value={props.contributeToCareerLeaderboard}
+        onChange={props.onChangeContributeToCareerLeaderboard}
+      />
     </WizardChrome>
   );
 }

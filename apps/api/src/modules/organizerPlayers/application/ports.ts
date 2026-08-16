@@ -1,3 +1,5 @@
+import type { OrganizerPlayerLeaderboardMode } from "@padel/shared";
+
 import type { CareerDelta } from "../domain/careerStats.js";
 
 export interface CareerDeltaQuery {
@@ -5,6 +7,8 @@ export interface CareerDeltaQuery {
   /** `null` = no lower bound (the `all` range). */
   since: Date | null;
   organizerPlayerId?: string;
+  mode?: OrganizerPlayerLeaderboardMode;
+  q?: string;
 }
 
 export interface OrganizerPlayerRepository {

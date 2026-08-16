@@ -11,6 +11,7 @@ export type CompletedKohMatchWrite = {
   tournamentId: string;
   tournamentName: string;
   organizerId: string | null;
+  contributeToCareerLeaderboard: boolean;
   courtId: string;
   matchId: string;
   unitAId: string;
@@ -75,7 +76,7 @@ export async function persistCompletedKohMatch(write: CompletedKohMatchWrite): P
       }
     });
 
-    if (write.organizerId) {
+    if (write.organizerId && write.contributeToCareerLeaderboard) {
       const unitA = await tx.kohUnit.findUnique({
         where: { id: write.unitAId },
         select: { playerAId: true, playerBId: true }

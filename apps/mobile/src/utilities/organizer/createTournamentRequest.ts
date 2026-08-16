@@ -26,6 +26,7 @@ export interface CreateTournamentDraft {
   tournamentTimeText: string;
   scoringMode: ScoringMode;
   regularScoring: RegularScoringConfig;
+  contributeToCareerLeaderboard: boolean;
 }
 
 export interface CreateTournamentPayload {
@@ -44,6 +45,7 @@ export interface CreateTournamentPayload {
   regularScoring?: RegularScoringConfig;
   targetGamesPerPlayer: number | undefined;
   tournamentTimeMinutes: number | undefined;
+  contributeToCareerLeaderboard: boolean;
 }
 
 export type PreparedCreateTournamentRequest =
@@ -136,7 +138,8 @@ export function prepareCreateTournamentRequest(
     targetGamesPerPlayer:
       draft.mode !== "MEXICANO" && draft.schedulingMode === "TARGET_GAMES" ? targetGames : undefined,
     tournamentTimeMinutes:
-      draft.mode !== "MEXICANO" && draft.schedulingMode === "TOTAL_TIME" ? tournamentTime : undefined
+      draft.mode !== "MEXICANO" && draft.schedulingMode === "TOTAL_TIME" ? tournamentTime : undefined,
+    contributeToCareerLeaderboard: draft.contributeToCareerLeaderboard
   };
 
   if (scoringMode === "REGULAR") {

@@ -15,7 +15,8 @@ const baseDraft = {
   courtsText: "2",
   pointsText: "24",
   targetGamesText: "4",
-  tournamentTimeText: "90"
+  tournamentTimeText: "90",
+  contributeToCareerLeaderboard: true
 };
 
 test("prepareCreateTournamentRequest includes Regular scoring fields without points", () => {
@@ -44,7 +45,8 @@ test("prepareCreateTournamentRequest keeps Americano points and omits regularSco
       setFormat: "BO3_GAMES",
       gameWinBy: 1,
       setsToWin: 1
-    }
+    },
+    contributeToCareerLeaderboard: true
   });
   assert.equal(prepared.ok, true);
   if (!prepared.ok) return;
@@ -72,4 +74,14 @@ test("prepareCreateTournamentRequest rejects Mexicano with fewer than 8 players"
   assert.equal(prepared.ok, false);
   if (prepared.ok) return;
   assert.match(prepared.error, /at least 8/i);
+});
+
+test("prepareCreateTournamentRequest omits career flag when toggle is off", () => {
+  const prepared = prepareCreateTournamentRequest({
+    ...baseDraft,
+    contributeToCareerLeaderboard: false
+  });
+  assert.equal(prepared.ok, true);
+  if (!prepared.ok) return;
+  assert.equal(prepared.payload.contributeToCareerLeaderboard, false);
 });

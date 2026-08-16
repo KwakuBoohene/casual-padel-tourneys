@@ -33,6 +33,7 @@ export async function submitCreateTournament(input: {
   tournamentTimeText: string;
   scoringMode: ScoringMode;
   regularScoring: RegularScoringConfig;
+  contributeToCareerLeaderboard: boolean;
   setErrorText: (value: string) => void;
   setResponseText: (value: string) => void;
   markEmailVerifyRequired: (dueAt?: number) => void;
@@ -54,7 +55,8 @@ export async function submitCreateTournament(input: {
     targetGamesText: input.targetGamesText,
     tournamentTimeText: input.tournamentTimeText,
     scoringMode: input.scoringMode,
-    regularScoring: input.regularScoring
+    regularScoring: input.regularScoring,
+    contributeToCareerLeaderboard: input.contributeToCareerLeaderboard
   });
   if (!prepared.ok) {
     input.setErrorText(prepared.error);

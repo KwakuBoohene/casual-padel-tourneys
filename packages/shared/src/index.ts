@@ -8,4 +8,5 @@ export * from "./theme/tokens.js";
 export * from "./scoring/regularScoring.js";
 export * from "./scoring/regularMatchLength.js";
 export * from "./mexicano/ladder.js";
+export * from "./americano/teams.js";
 

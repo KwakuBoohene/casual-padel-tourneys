@@ -14,7 +14,7 @@ export interface TournamentState {
   organizerId?: string;
   pendingPlayers: PendingPlayer[];
   integrationWaveCount: number;
-  /** Team Mexicano fixed pairs (absent for Classic / Mixed). */
+  /** Team Mexicano / Team Americano fixed pairs (absent for Classic / Mixed). */
   fixedPairs?: FixedPair[];
 }
 

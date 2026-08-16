@@ -84,6 +84,62 @@ test("createTournamentSchema rejects Mexicano with fewer than 8 players", () => 
   }
 });
 
+test("createTournamentSchema accepts Team Americano with two fixed pairs", () => {
+  const teams = [
+    { playerA: { name: "A1" }, playerB: { name: "A2" } },
+    { playerA: { name: "B1" }, playerB: { name: "B2" } }
+  ];
+  const parsed = createTournamentSchema.parse({
+    name: "Team Am",
+    mode: "AMERICANO",
+    variant: "TEAM",
+    schedulingMode: "TARGET_GAMES",
+    players: [],
+    teams,
+    courts: 1,
+    pointsPerMatch: 24,
+    targetGamesPerPlayer: 2
+  });
+  assert.equal(parsed.variant, "TEAM");
+  assert.equal(parsed.teams?.length, 2);
+});
+
+test("createTournamentSchema rejects Team Americano with one pair", () => {
+  const result = createTournamentSchema.safeParse({
+    name: "Tiny Team Am",
+    mode: "AMERICANO",
+    variant: "TEAM",
+    schedulingMode: "TARGET_GAMES",
+    players: [],
+    teams: [{ playerA: { name: "A1" }, playerB: { name: "A2" } }],
+    courts: 1,
+    pointsPerMatch: 24,
+    targetGamesPerPlayer: 2
+  });
+  assert.equal(result.success, false);
+  if (!result.success) {
+    assert.match(result.error.issues.map((i) => i.message).join(" "), /Team Americano/i);
+  }
+});
+
+test("createTournamentSchema rejects teams when variant is not TEAM", () => {
+  const result = createTournamentSchema.safeParse({
+    name: "Classic with teams",
+    mode: "AMERICANO",
+    variant: "CLASSIC",
+    schedulingMode: "TARGET_GAMES",
+    players: basePlayers,
+    teams: [
+      { playerA: { name: "A1" }, playerB: { name: "A2" } },
+      { playerA: { name: "B1" }, playerB: { name: "B2" } }
+    ],
+    courts: 1,
+    pointsPerMatch: 24,
+    targetGamesPerPlayer: 2
+  });
+  assert.equal(result.success, false);
+});
+
 test("createTournamentSchema rejects Regular without set format", () => {
   const result = createTournamentSchema.safeParse({
     name: "Sunday Mix",

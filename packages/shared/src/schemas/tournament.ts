@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { AMERICANO_MIN_TEAMS } from "../americano/teams.js";
 import { MEXICANO_MIN_PLAYERS, MEXICANO_MIN_TEAMS } from "../mexicano/ladder.js";
 import { REGULAR_SETS_TO_WIN_MAX } from "../scoring/regularMatchLength.js";
 
@@ -80,15 +81,23 @@ export const createTournamentSchema = z
         message: "Provide tournamentTimeMinutes for TOTAL_TIME mode."
       });
     }
-    if (isMexicano && value.variant === "TEAM") {
+    if (value.variant === "TEAM") {
       const teams = value.teams ?? [];
-      if (teams.length < MEXICANO_MIN_TEAMS) {
+      const minTeams = isMexicano ? MEXICANO_MIN_TEAMS : AMERICANO_MIN_TEAMS;
+      const label = isMexicano ? "Team Mexicano" : "Team Americano";
+      if (teams.length < minTeams) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["teams"],
-          message: `Team Mexicano requires at least ${MEXICANO_MIN_TEAMS} fixed pairs.`
+          message: `${label} requires at least ${minTeams} fixed pairs.`
         });
       }
+    } else if (value.teams && value.teams.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["teams"],
+        message: "Fixed teams are only valid with variant TEAM."
+      });
     } else if (isMexicano && value.players.length < MEXICANO_MIN_PLAYERS) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

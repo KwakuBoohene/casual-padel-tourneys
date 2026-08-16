@@ -30,7 +30,7 @@ export interface TournamentPlayerInput {
   gender?: PlayerGender;
 }
 
-/** Create-time fixed doubles pair (Team Mexicano). */
+/** Create-time fixed doubles pair (Team Mexicano / Team Americano). */
 export interface FixedTeamInput {
   playerA: TournamentPlayerInput;
   playerB: TournamentPlayerInput;
@@ -38,7 +38,7 @@ export interface FixedTeamInput {
   name?: string;
 }
 
-/** Persisted fixed pair — both players share this unit for Team Mexicano ladder. */
+/** Persisted fixed pair — both players share this unit for Team Mexicano / Team Americano. */
 export interface FixedPair {
   id: string;
   playerAId: string;
@@ -54,7 +54,7 @@ export interface Player {
   totalPoints: number;
   handicap?: number;
   integrationWave?: number;
-  /** Shared by both partners in Team Mexicano (`FixedPair.id`). */
+  /** Shared by both partners in Team Mexicano / Team Americano (`FixedPair.id`). */
   pairId?: string;
   /** Regular standings — omitted / 0 for Americano points tournaments. */
   matchesWon?: number;
@@ -125,7 +125,7 @@ export interface TournamentConfig {
   variant: TournamentVariant;
   schedulingMode: SchedulingMode;
   players: TournamentPlayerInput[];
-  /** Team Mexicano: fixed pairs (also flattened into `players`). */
+  /** Team Mexicano / Team Americano: fixed pairs (also flattened into `players`). */
   teams?: FixedTeamInput[];
   courts: number;
   /** Required for Americano points; unused for Regular standings. */

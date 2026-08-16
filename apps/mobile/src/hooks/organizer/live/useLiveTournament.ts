@@ -8,6 +8,7 @@ import { useLiveTournamentActions } from "./useLiveTournamentActions";
 import { useLiveTournamentCore } from "./useLiveTournamentCore";
 import { usePendingPlayers } from "./usePendingPlayers";
 import { useRenamePlayers } from "./useRenamePlayers";
+import { useTournamentSocket } from "./useTournamentSocket";
 
 export interface UseLiveTournamentParams {
   setTournaments: Dispatch<SetStateAction<TournamentListResponse["data"]>>;
@@ -23,6 +24,24 @@ export function useLiveTournament({
   const core = useLiveTournamentCore({ setErrorText, markEmailVerifyRequired });
   const rounds = useLiveRounds(core.liveTournament);
   const insights = useLiveInsights(core.liveTournament, rounds.isTournamentCompleted);
+
+  useTournamentSocket({
+    tournamentId: core.liveTournament?.id ?? null,
+    publicToken: core.liveTournament?.publicToken ?? null,
+    enabled: Boolean(core.liveTournament),
+    onTournament: (data) => {
+      core.applyTournamentUpdate(data);
+      core.clampProposedCourts(data.players.length);
+      if (!data.rounds.every((round) => round.matches.every((match) => match.completed))) {
+        core.setIsEditingCompletedTournament(false);
+      }
+      setTournaments((previous) => previous.map((item) => (item.id === data.id ? data : item)));
+    },
+    onDeleted: (tournamentId) => {
+      core.setLiveTournament(null);
+      setTournaments((previous) => previous.filter((item) => item.id !== tournamentId));
+    }
+  });
 
   const actions = useLiveTournamentActions({
     liveTournament: core.liveTournament,

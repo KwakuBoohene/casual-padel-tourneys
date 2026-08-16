@@ -1,3 +1,5 @@
+import type { TournamentMode } from "@padel/shared";
+
 import type { TournamentEvent } from "../../../realtime/events.js";
 import type { TournamentState } from "../../../types/state.js";
 
@@ -19,7 +21,28 @@ export interface TournamentEvents {
   publish(event: TournamentEvent): Promise<void>;
 }
 
+export interface CareerCreditRequest {
+  organizerId: string;
+  tournamentId: string;
+  tournamentName: string;
+  tournamentMode: TournamentMode;
+  matchId: string;
+  /** Every named player on the side — doubles credits all four. */
+  teamAPlayerIds: string[];
+  teamBPlayerIds: string[];
+  /** `null` for a drawn points match. */
+  winnerSide: "A" | "B" | null;
+  gamesA: number;
+  gamesB: number;
+}
+
+/** Career board write port — implemented by the organizer players module's credit adapter. */
+export interface CareerCredits {
+  creditCompletedMatch(request: CareerCreditRequest): Promise<void>;
+}
+
 export type TournamentModuleDeps = {
   repo: TournamentRepository;
   events: TournamentEvents;
+  career: CareerCredits;
 };

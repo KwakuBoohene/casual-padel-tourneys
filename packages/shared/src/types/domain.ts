@@ -133,6 +133,8 @@ export interface TournamentConfig {
   tournamentTimeMinutes?: number;
   enableAutoIntegration?: boolean;
   integrationThreshold?: number;
+  /** Opt-in (default true) for crediting completed matches to the organizer career board. */
+  contributeToCareerLeaderboard?: boolean;
 }
 
 export interface Tournament {

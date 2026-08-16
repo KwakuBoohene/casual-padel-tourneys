@@ -43,7 +43,8 @@ export const createKohTournamentSchema = z
     pairingMode: kohPairingModeSchema.default("WINNER_STAYS"),
     courts: z.number().int().min(1),
     regularScoring: regularScoringSchema,
-    promotionRules: z.array(kohPromotionRuleSchema).optional()
+    promotionRules: z.array(kohPromotionRuleSchema).optional(),
+    contributeToCareerLeaderboard: z.boolean().default(true)
   })
   .superRefine((value, ctx) => {
     const regular = value.regularScoring;

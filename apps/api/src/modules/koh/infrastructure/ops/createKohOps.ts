@@ -31,6 +31,7 @@ export async function createKohTournament(
       regularSetTiebreakTo: input.regularScoring.setTiebreakTo ?? null,
       regularMatchTiebreak: input.regularScoring.matchTiebreak ?? null,
       pairingMode,
+      contributeToCareerLeaderboard: input.contributeToCareerLeaderboard,
       publicToken,
       organizerId,
       version: 0,

@@ -1,7 +1,9 @@
 import type {
   OrganizerPlayerDetail,
   OrganizerPlayerLeaderboard,
-  OrganizerPlayerRange
+  OrganizerPlayerLeaderboardMode,
+  OrganizerPlayerRange,
+  TournamentMode
 } from "@padel/shared";
 
 /** One credited match result for one career identity. */
@@ -10,16 +12,36 @@ export interface CareerDelta {
   organizerPlayerName: string;
   tournamentId: string;
   tournamentName: string;
+  tournamentMode: TournamentMode;
   gamesWon: number;
   gamesLost: number;
   matchesWon: number;
   matchesLost: number;
 }
 
+/** What the caller asked for; echoed back so clients can confirm the active filters. */
+export interface LeaderboardView {
+  range: OrganizerPlayerRange;
+  mode: OrganizerPlayerLeaderboardMode;
+  /** Case-insensitive substring of the display name; blank or absent means no name filter. */
+  q?: string;
+}
+
 const MAX_RECENT_EVENTS = 12;
 
+/** Case-insensitive substring match on the aggregated display name. */
+function matchesSearch(name: string, needle: string): boolean {
+  return name.toLowerCase().includes(needle);
+}
+
+/**
+ * Ranks by **match wins**, then display name, so an Americano 14–10 win counts exactly as much as
+ * a Regular or King of the Hill 6–4 win. Games are carried as a secondary stat only — they never
+ * drive rank. Ranks are assigned over the whole range + mode aggregate before `q` narrows the
+ * rows, so a searched player keeps the position they hold on the unfiltered board.
+ */
 export function buildLeaderboard(
-  range: OrganizerPlayerRange,
+  view: LeaderboardView,
   deltas: CareerDelta[]
 ): OrganizerPlayerLeaderboard {
   const byPlayer = new Map<
@@ -53,9 +75,8 @@ export function buildLeaderboard(
     byPlayer.set(delta.organizerPlayerId, current);
   }
 
-  const rows = [...byPlayer.values()]
+  const ranked = [...byPlayer.values()]
     .sort((a, b) => {
-      if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
       if (b.matchesWon !== a.matchesWon) return b.matchesWon - a.matchesWon;
       return a.name.localeCompare(b.name);
     })
@@ -70,7 +91,15 @@ export function buildLeaderboard(
       eventsPlayed: row.events.size
     }));
 
-  return { range, rows };
+  const needle = view.q?.trim().toLowerCase() ?? "";
+  const rows = needle ? ranked.filter((row) => matchesSearch(row.name, needle)) : ranked;
+
+  return {
+    range: view.range,
+    mode: view.mode,
+    ...(needle ? { q: view.q?.trim() } : {}),
+    rows
+  };
 }
 
 /** `deltas` must already be ordered newest first so `recentEvents` stays recent. */

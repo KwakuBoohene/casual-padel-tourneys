@@ -1,12 +1,13 @@
-import { createId } from "@padel/shared";
+import { createId, type TournamentMode } from "@padel/shared";
 import type { Prisma } from "@prisma/client";
 
 import { normalizeOrganizerPlayerName } from "../domain/careerRange.js";
 
 /**
  * Write side of career tracking. These run inside the caller's transaction (KOH scoring,
- * assignment and partner swaps), so they take a `TransactionClient` rather than owning one.
- * This is the module's stable entry point for other bounded contexts.
+ * assignment and partner swaps, Americano/Mexicano score submits), so they take a
+ * `TransactionClient` rather than owning one. This is the module's stable entry point for other
+ * bounded contexts.
  */
 
 /** Upsert a career identity for the organizer and return its id. */
@@ -38,6 +39,24 @@ export async function ensureOrganizerPlayer(
   return id;
 }
 
+export interface MatchCredit {
+  tx: Prisma.TransactionClient;
+  organizerId: string;
+  tournamentId: string;
+  tournamentName: string;
+  /** Stored on every delta so the board can be filtered per mode. */
+  tournamentMode: TournamentMode;
+  matchId: string;
+  /** Every named player on the side — doubles credits all four across both sides. */
+  sideAPlayerIds: string[];
+  sideBPlayerIds: string[];
+  /** `null` for a drawn Americano match: games count, match wins do not. */
+  winnerSide: "A" | "B" | null;
+  gamesA: number;
+  gamesB: number;
+  occurredAt?: Date;
+}
+
 export interface KohMatchCredit {
   tx: Prisma.TransactionClient;
   organizerId: string;
@@ -53,17 +72,40 @@ export interface KohMatchCredit {
 }
 
 interface CreditSide {
-  playerIds: [string, string];
+  playerIds: string[];
   gamesWon: number;
   gamesLost: number;
   matchesWon: number;
   matchesLost: number;
 }
 
-/** Idempotent per (match, career player): re-submitting a score overwrites the delta. */
-export async function creditKohMatchToOrganizerPlayers(input: KohMatchCredit): Promise<void> {
+function creditSides(input: MatchCredit): CreditSide[] {
+  return [
+    {
+      playerIds: input.sideAPlayerIds,
+      gamesWon: input.gamesA,
+      gamesLost: input.gamesB,
+      matchesWon: input.winnerSide === "A" ? 1 : 0,
+      matchesLost: input.winnerSide === "B" ? 1 : 0
+    },
+    {
+      playerIds: input.sideBPlayerIds,
+      gamesWon: input.gamesB,
+      gamesLost: input.gamesA,
+      matchesWon: input.winnerSide === "B" ? 1 : 0,
+      matchesLost: input.winnerSide === "A" ? 1 : 0
+    }
+  ];
+}
+
+/**
+ * Credit one completed match to every named player's career.
+ * Idempotent per (match, career player): re-submitting a score overwrites the delta.
+ */
+export async function creditMatchToOrganizerPlayers(input: MatchCredit): Promise<void> {
+  const playerIds = [...input.sideAPlayerIds, ...input.sideBPlayerIds];
   const players = await input.tx.player.findMany({
-    where: { id: { in: [...input.unitAPlayerIds, ...input.unitBPlayerIds] } },
+    where: { id: { in: playerIds } },
     select: { id: true, organizerPlayerId: true, name: true }
   });
   const byId = new Map(players.map((player) => [player.id, player]));
@@ -80,25 +122,8 @@ export async function creditKohMatchToOrganizerPlayers(input: KohMatchCredit): P
     return careerId;
   }
 
-  const sides: CreditSide[] = [
-    {
-      playerIds: input.unitAPlayerIds,
-      gamesWon: input.gamesA,
-      gamesLost: input.gamesB,
-      matchesWon: input.winnerSide === "A" ? 1 : 0,
-      matchesLost: input.winnerSide === "A" ? 0 : 1
-    },
-    {
-      playerIds: input.unitBPlayerIds,
-      gamesWon: input.gamesB,
-      gamesLost: input.gamesA,
-      matchesWon: input.winnerSide === "B" ? 1 : 0,
-      matchesLost: input.winnerSide === "B" ? 0 : 1
-    }
-  ];
-
   const occurredAt = input.occurredAt ?? new Date();
-  for (const side of sides) {
+  for (const side of creditSides(input)) {
     for (const playerId of side.playerIds) {
       const careerId = await resolveCareerId(playerId);
       if (!careerId) continue;
@@ -112,6 +137,7 @@ export async function creditKohMatchToOrganizerPlayers(input: KohMatchCredit): P
           organizerPlayerId: careerId,
           tournamentId: input.tournamentId,
           tournamentName: input.tournamentName,
+          tournamentMode: input.tournamentMode,
           matchId: input.matchId,
           gamesWon: side.gamesWon,
           gamesLost: side.gamesLost,
@@ -124,10 +150,29 @@ export async function creditKohMatchToOrganizerPlayers(input: KohMatchCredit): P
           gamesLost: side.gamesLost,
           matchesWon: side.matchesWon,
           matchesLost: side.matchesLost,
+          tournamentMode: input.tournamentMode,
           tournamentName: input.tournamentName,
           occurredAt
         }
       });
     }
   }
+}
+
+/** KOH units are always doubles pairs; the ladder never produces a draw. */
+export async function creditKohMatchToOrganizerPlayers(input: KohMatchCredit): Promise<void> {
+  await creditMatchToOrganizerPlayers({
+    tx: input.tx,
+    organizerId: input.organizerId,
+    tournamentId: input.tournamentId,
+    tournamentName: input.tournamentName,
+    tournamentMode: "KING_OF_THE_HILL",
+    matchId: input.matchId,
+    sideAPlayerIds: [...input.unitAPlayerIds],
+    sideBPlayerIds: [...input.unitBPlayerIds],
+    winnerSide: input.winnerSide,
+    gamesA: input.gamesA,
+    gamesB: input.gamesB,
+    occurredAt: input.occurredAt
+  });
 }

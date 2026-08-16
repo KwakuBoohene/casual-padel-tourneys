@@ -8,6 +8,7 @@ export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepositor
       where: {
         organizerId: query.organizerId,
         ...(query.organizerPlayerId ? { organizerPlayerId: query.organizerPlayerId } : {}),
+        ...(query.tournamentMode ? { tournamentMode: query.tournamentMode } : {}),
         ...(query.since ? { occurredAt: { gte: query.since } } : {})
       },
       orderBy: { occurredAt: "desc" },
@@ -15,6 +16,7 @@ export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepositor
         organizerPlayerId: true,
         tournamentId: true,
         tournamentName: true,
+        tournamentMode: true,
         gamesWon: true,
         gamesLost: true,
         matchesWon: true,
@@ -28,6 +30,7 @@ export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepositor
       organizerPlayerName: row.organizerPlayer.name,
       tournamentId: row.tournamentId,
       tournamentName: row.tournamentName,
+      tournamentMode: row.tournamentMode,
       gamesWon: row.gamesWon,
       gamesLost: row.gamesLost,
       matchesWon: row.matchesWon,

@@ -109,6 +109,7 @@ export async function submitKohCompleteScore(args: {
     tournamentId,
     tournamentName: row.name,
     organizerId: row.organizerId,
+    contributeToCareerLeaderboard: row.contributeToCareerLeaderboard,
     courtId: court.id,
     matchId: match.matchId,
     unitAId: match.unitAId,

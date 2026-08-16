@@ -5,16 +5,20 @@ import type {
 } from "@padel/shared";
 
 import { rangeStart } from "../domain/careerRange.js";
-import { buildDetail, buildLeaderboard } from "../domain/careerStats.js";
+import { buildDetail, buildLeaderboard, type LeaderboardView } from "../domain/careerStats.js";
 import type { OrganizerPlayersDeps } from "./ports.js";
 
 export async function getOrganizerPlayerLeaderboard(
   deps: OrganizerPlayersDeps,
   organizerId: string,
-  range: OrganizerPlayerRange
+  view: LeaderboardView
 ): Promise<OrganizerPlayerLeaderboard> {
-  const deltas = await deps.repo.listDeltas({ organizerId, since: rangeStart(range) });
-  return buildLeaderboard(range, deltas);
+  const deltas = await deps.repo.listDeltas({
+    organizerId,
+    since: rangeStart(view.range),
+    ...(view.mode === "overall" ? {} : { tournamentMode: view.mode })
+  });
+  return buildLeaderboard(view, deltas);
 }
 
 /** `null` when the career identity does not belong to this organizer. */

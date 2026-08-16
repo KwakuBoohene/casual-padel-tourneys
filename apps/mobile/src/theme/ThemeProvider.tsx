@@ -1,9 +1,8 @@
 import { THEME_STORAGE_KEY, getColors, type PadelColors, type ThemeMode } from "@padel/shared/theme";
-import * as SecureStore from "expo-secure-store";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Platform } from "react-native";
 
 import { getCardStyles } from "../theme";
+import { readLocalValue, writeLocalValue } from "../utilities/organizer/localValueStorage";
 
 interface ThemeContextValue {
   mode: ThemeMode;
@@ -17,11 +16,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 async function readStoredMode(): Promise<ThemeMode> {
   try {
-    if (Platform.OS === "web") {
-      const stored = globalThis.localStorage?.getItem(THEME_STORAGE_KEY);
-      return stored === "light" ? "light" : "dark";
-    }
-    const stored = await SecureStore.getItemAsync(THEME_STORAGE_KEY);
+    const stored = await readLocalValue(THEME_STORAGE_KEY);
     return stored === "light" ? "light" : "dark";
   } catch {
     return "dark";
@@ -30,11 +25,7 @@ async function readStoredMode(): Promise<ThemeMode> {
 
 async function writeStoredMode(mode: ThemeMode): Promise<void> {
   try {
-    if (Platform.OS === "web") {
-      globalThis.localStorage?.setItem(THEME_STORAGE_KEY, mode);
-      return;
-    }
-    await SecureStore.setItemAsync(THEME_STORAGE_KEY, mode);
+    await writeLocalValue(THEME_STORAGE_KEY, mode);
   } catch {
     // ignore persistence errors
   }

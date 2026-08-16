@@ -7,8 +7,11 @@ export function createBottomSheetStyles(colors: PadelColors) {
   return StyleSheet.create({
     overlay: {
       flex: 1,
-      backgroundColor: overlay.dim,
       justifyContent: "flex-end"
+    },
+    overlayScrim: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: overlay.dim
     },
     overlayDismissHit: {
       ...StyleSheet.absoluteFillObject
@@ -24,6 +27,9 @@ export function createBottomSheetStyles(colors: PadelColors) {
       width: "100%",
       alignSelf: "center",
       zIndex: 1
+    },
+    dragRegion: {
+      gap: spacing.md
     },
     handle: {
       alignSelf: "center",

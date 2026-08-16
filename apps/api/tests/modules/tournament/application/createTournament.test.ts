@@ -71,3 +71,50 @@ test("createTournament saves aggregate and publishes TOURNAMENT_CREATED", async 
   assert.ok(repo.store.has(tournament.id));
   assert.equal(published[0]?.type, "TOURNAMENT_CREATED");
 });
+
+test("createTournament saves Team Americano with fixed pairs", async () => {
+  const repo = memoryRepo();
+  const events: TournamentEvents = {
+    async publish() {
+      /* no-op */
+    }
+  };
+  const teams = [
+    { playerA: { name: "A1" }, playerB: { name: "A2" } },
+    { playerA: { name: "B1" }, playerB: { name: "B2" } },
+    { playerA: { name: "C1" }, playerB: { name: "C2" } },
+    { playerA: { name: "D1" }, playerB: { name: "D2" } }
+  ];
+
+  const tournament = await createTournament(
+    { repo, events },
+    {
+      organizerId: "org-team",
+      config: {
+        name: "Team Am",
+        mode: "AMERICANO",
+        variant: "TEAM",
+        schedulingMode: "TARGET_GAMES",
+        players: teams.flatMap((team) => [team.playerA, team.playerB]),
+        teams,
+        courts: 2,
+        pointsPerMatch: 24,
+        targetGamesPerPlayer: 2
+      }
+    }
+  );
+
+  assert.equal(tournament.config.variant, "TEAM");
+  assert.equal(tournament.fixedPairs?.length, 4);
+  assert.equal(tournament.players.length, 8);
+  assert.ok(tournament.players.every((player) => Boolean(player.pairId)));
+  assert.ok(tournament.rounds.length > 0);
+  for (const match of tournament.rounds[0].matches) {
+    const pairIds = match.teamA
+      .concat(match.teamB)
+      .map((id) => tournament.players.find((player) => player.id === id)?.pairId);
+    assert.equal(new Set(pairIds.slice(0, 2)).size, 1);
+    assert.equal(new Set(pairIds.slice(2, 4)).size, 1);
+    assert.notEqual(pairIds[0], pairIds[2]);
+  }
+});

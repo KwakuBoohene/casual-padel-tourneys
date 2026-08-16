@@ -1,15 +1,24 @@
 import { createId } from "@padel/shared";
-import type { Player, Round, TournamentConfig } from "@padel/shared";
+import type { FixedPair, Player, Round, TournamentConfig } from "@padel/shared";
 
 import { buildRound } from "./constraintSolver.js";
+import {
+  generateTeamAmericano,
+  recalculateTeamAmericanoRemaining
+} from "./teamAmericanoScheduler.js";
 import { estimateTournament } from "./timeEstimator.js";
 
 export interface ScheduledTournament {
   players: Player[];
   rounds: Round[];
+  fixedPairs?: FixedPair[];
 }
 
 export function generateTournament(config: TournamentConfig): ScheduledTournament {
+  if (config.variant === "TEAM") {
+    return generateTeamAmericano(config);
+  }
+
   const players: Player[] = config.players.map((input) => ({
     id: createId("player"),
     name: input.name,
@@ -26,6 +35,10 @@ export function recalculateRemainingTournament(
   players: Player[],
   existingRounds: Round[]
 ): Round[] {
+  if (config.variant === "TEAM") {
+    return recalculateTeamAmericanoRemaining(config, players, existingRounds);
+  }
+
   const lockedRounds = existingRounds.filter((round) => round.isLocked);
 
   // Reset gamesPlayed to only count locked rounds

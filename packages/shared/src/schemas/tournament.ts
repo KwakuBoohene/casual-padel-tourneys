@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+import { AMERICANO_MIN_TEAMS } from "../americano/teams.js";
 import { MEXICANO_MIN_PLAYERS, MEXICANO_MIN_TEAMS } from "../mexicano/ladder.js";
+import { REGULAR_SETS_TO_WIN_MAX } from "../scoring/regularMatchLength.js";
 
 export const tournamentModeSchema = z.enum(["AMERICANO", "MEXICANO", "KING_OF_THE_HILL"]);
 /** @deprecated Prefer tournamentModeSchema — kept for existing imports. */
@@ -14,13 +16,30 @@ export const regularSetFormatSchema = z.enum(["BO3_GAMES", "BO5_GAMES", "FULL_SE
 export const gameWinBySchema = z.union([z.literal(1), z.literal(2)]);
 export const tiebreakPointsSchema = z.union([z.literal(7), z.literal(10)]);
 
-export const regularScoringSchema = z.object({
-  setFormat: regularSetFormatSchema,
-  gameWinBy: gameWinBySchema,
-  setsToWin: z.number().int().min(1),
-  setTiebreakTo: tiebreakPointsSchema.optional(),
-  matchTiebreak: z.boolean().optional()
-});
+export const regularScoringSchema = z
+  .object({
+    setFormat: regularSetFormatSchema,
+    gameWinBy: gameWinBySchema,
+    setsToWin: z.number().int().min(1).max(REGULAR_SETS_TO_WIN_MAX),
+    setTiebreakTo: tiebreakPointsSchema.optional(),
+    matchTiebreak: z.boolean().optional()
+  })
+  .superRefine((value, ctx) => {
+    if (value.setFormat === "FULL_SET" && value.gameWinBy === 2 && value.setTiebreakTo === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["setTiebreakTo"],
+        message: "Provide setTiebreakTo (7 or 10) for full set win-by-2."
+      });
+    }
+    if (value.matchTiebreak === true && value.setsToWin !== 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["matchTiebreak"],
+        message: "Match tiebreak is only valid with setsToWin: 2 (two sets + match tiebreak)."
+      });
+    }
+  });
 
 const tournamentPlayerInputSchema = z.object({
   name: z.string().min(1),
@@ -63,15 +82,23 @@ export const createTournamentSchema = z
         message: "Provide tournamentTimeMinutes for TOTAL_TIME mode."
       });
     }
-    if (isMexicano && value.variant === "TEAM") {
+    if (value.variant === "TEAM") {
       const teams = value.teams ?? [];
-      if (teams.length < MEXICANO_MIN_TEAMS) {
+      const minTeams = isMexicano ? MEXICANO_MIN_TEAMS : AMERICANO_MIN_TEAMS;
+      const label = isMexicano ? "Team Mexicano" : "Team Americano";
+      if (teams.length < minTeams) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["teams"],
-          message: `Team Mexicano requires at least ${MEXICANO_MIN_TEAMS} fixed pairs.`
+          message: `${label} requires at least ${minTeams} fixed pairs.`
         });
       }
+    } else if (value.teams && value.teams.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["teams"],
+        message: "Fixed teams are only valid with variant TEAM."
+      });
     } else if (isMexicano && value.players.length < MEXICANO_MIN_PLAYERS) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -108,23 +135,12 @@ export const createTournamentSchema = z
       }
     }
 
-    if (scoringMode === "REGULAR") {
-      if (!value.regularScoring) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["regularScoring"],
-          message: "Provide regularScoring (set format) for Regular scoring."
-        });
-      } else {
-        const regular = value.regularScoring;
-        if (regular.setFormat === "FULL_SET" && regular.gameWinBy === 2 && regular.setTiebreakTo === undefined) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["regularScoring", "setTiebreakTo"],
-            message: "Provide setTiebreakTo (7 or 10) for full set win-by-2."
-          });
-        }
-      }
+    if (scoringMode === "REGULAR" && !value.regularScoring) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["regularScoring"],
+        message: "Provide regularScoring (set format) for Regular scoring."
+      });
     }
   });
 

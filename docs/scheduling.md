@@ -44,6 +44,17 @@ When players are integrated mid-tournament:
 - **Purpose**: Prevents newly integrated players from monopolizing early rounds
 - **Duration**: Handicap remains constant after integration, dilutes naturally as real games accumulate
 
+## Team Americano (fixed pairs)
+
+Americano `variant: TEAM` keeps **named doubles pairs** for the whole event (same roster
+shape as Team Mexicano). Partners never split.
+
+- Create with `teams[]` (min **2** pairs). Players are flattened for scoring / career credit.
+- Schedule is generated upfront like Classic Americano (`TARGET_GAMES` / `TOTAL_TIME` /
+  `ROUND_ROBIN`), but selection units are **pairs**: each court is pair vs pair.
+- Soft goals: balance games across pairs and minimize repeated pair matchups.
+- Unlike Team Mexicano, later rounds are **not** laddered from standings.
+
 ## Fairness Validation
 
 Simulation test runs 1,000 tournaments and checks:

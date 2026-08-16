@@ -76,3 +76,69 @@ test("evaluateMatch leaves draft mid-set incomplete", () => {
   assert.equal(result.complete, false);
   assert.equal(result.winner, null);
 });
+
+test("evaluateMatch best of 3 stays incomplete at 1–1 for a deciding set", () => {
+  const config: RegularScoringConfig = {
+    setFormat: "FULL_SET",
+    gameWinBy: 1,
+    setsToWin: 2,
+    matchTiebreak: false
+  };
+  const mid = evaluateMatch(
+    [
+      { setNumber: 1, gamesA: 6, gamesB: 4 },
+      { setNumber: 2, gamesA: 2, gamesB: 6 }
+    ],
+    config
+  );
+  assert.equal(mid.complete, false);
+  assert.equal(mid.error, undefined);
+
+  const done = evaluateMatch(
+    [
+      { setNumber: 1, gamesA: 6, gamesB: 4 },
+      { setNumber: 2, gamesA: 2, gamesB: 6 },
+      { setNumber: 3, gamesA: 6, gamesB: 3 }
+    ],
+    config
+  );
+  assert.equal(done.complete, true);
+  assert.equal(done.winner, "A");
+});
+
+test("evaluateMatch two sets + match TB decides on match tiebreak", () => {
+  const config: RegularScoringConfig = {
+    setFormat: "FULL_SET",
+    gameWinBy: 1,
+    setsToWin: 2,
+    matchTiebreak: true
+  };
+  const sets = [
+    { setNumber: 1, gamesA: 6, gamesB: 4 },
+    { setNumber: 2, gamesA: 3, gamesB: 6 }
+  ];
+  assert.equal(evaluateMatch(sets, config).complete, false);
+  const done = evaluateMatch(sets, config, { a: 7, b: 5 });
+  assert.equal(done.complete, true);
+  assert.equal(done.winner, "A");
+});
+
+test("evaluateMatch best of 7 completes when one side reaches four sets", () => {
+  const config: RegularScoringConfig = {
+    setFormat: "FULL_SET",
+    gameWinBy: 1,
+    setsToWin: 4
+  };
+  const result = evaluateMatch(
+    [
+      { setNumber: 1, gamesA: 6, gamesB: 4 },
+      { setNumber: 2, gamesA: 6, gamesB: 3 },
+      { setNumber: 3, gamesA: 6, gamesB: 2 },
+      { setNumber: 4, gamesA: 6, gamesB: 1 }
+    ],
+    config
+  );
+  assert.equal(result.complete, true);
+  assert.equal(result.winner, "A");
+  assert.equal(result.setsWonA, 4);
+});

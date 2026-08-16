@@ -89,7 +89,12 @@ export function buildOutstandingPlayerRows(tournament: TournamentWithLeaderboard
   });
 }
 
-export function isTournamentComplete(tournament: Pick<TournamentViewModel, "rounds">) {
+export function isTournamentComplete(
+  tournament: Pick<TournamentViewModel, "rounds" | "endedAt" | "config">
+): boolean {
+  if (tournament.config?.mode === "MEXICANO") {
+    return Boolean(tournament.endedAt);
+  }
   return (
     tournament.rounds.length > 0 &&
     tournament.rounds.every((round) => round.matches.every((match) => isMatchComplete(match)))

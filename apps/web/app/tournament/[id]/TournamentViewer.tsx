@@ -23,7 +23,12 @@ export function TournamentViewer({
   const [roundNumber, setRoundNumber] = useState(1);
   const onRoundChange = useCallback((n: number) => setRoundNumber(n), []);
 
-  const scoringLabel = formatScoringLabel(String(initial.config.mode), initial.config.scoringMode);
+  const scoringLabel = formatScoringLabel(
+    String(initial.config.mode),
+    initial.config.scoringMode,
+    String(initial.config.variant)
+  );
+  const isMexicano = initial.config.mode === "MEXICANO";
 
   return (
     <main className="min-h-screen bg-padel-background text-padel-text px-5 py-8 md:px-10 md:py-8">
@@ -36,6 +41,11 @@ export function TournamentViewer({
             <p className="text-sm text-padel-muted">
               Spectator · {scoringLabel} · Round {roundNumber} · read-only
             </p>
+            {isMexicano ? (
+              <p className="text-xs text-padel-muted">
+                Rounds appear as they are generated — not a fixed bracket.
+              </p>
+            ) : null}
           </div>
           <Link
             href={`/tournament/${token}/leaderboard`}

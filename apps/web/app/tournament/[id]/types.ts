@@ -4,6 +4,8 @@ export type TournamentViewModel = {
   id: string;
   publicToken?: string;
   updatedAt: string;
+  /** Present when organizer ended KOH / Mexicano night. */
+  endedAt?: string | null;
   config: {
     name: string;
     mode: TournamentMode | string;
@@ -50,15 +52,27 @@ export type TournamentViewModel = {
   }>;
 };
 
+export function isMexicanoMode(mode: string | undefined): boolean {
+  return mode === "MEXICANO";
+}
+
 export function isRegularScoring(scoringMode?: ScoringMode): boolean {
   return scoringMode === "REGULAR";
 }
 
-export function formatScoringLabel(mode: string, scoringMode?: ScoringMode): string {
+export function formatScoringLabel(
+  mode: string,
+  scoringMode?: ScoringMode,
+  variant?: string
+): string {
   if (scoringMode === "REGULAR") {
     return "Regular scoring";
   }
-  if (mode === "MEXICANO") return "Mexicano scoring";
+  if (mode === "MEXICANO") {
+    if (variant === "TEAM") return "Team Mexicano";
+    if (variant === "MIXED") return "Mixed Mexicano";
+    return "Mexicano ladder";
+  }
   if (mode === "AMERICANO") return "Americano scoring";
   return `${mode} scoring`;
 }

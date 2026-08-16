@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { MatchCard } from "./components/MatchCard";
+import { MexicanoStandingsStrip } from "./components/MexicanoStandingsStrip";
 import { isTournamentComplete } from "./components/outstandingPlayers";
 import { PlayerSearch } from "./components/PlayerSearch";
 import { RoundSection } from "./components/RoundSection";
 import {
   isMatchComplete,
+  isMexicanoMode,
   matchHasProgress,
   type TournamentViewModel
 } from "./types";
@@ -32,6 +34,7 @@ export function LiveTournament({
   const [searchQuery, setSearchQuery] = useState("");
   const [isConnected, setIsConnected] = useState(true);
   const scoringMode = tournament.config.scoringMode;
+  const isMexicano = isMexicanoMode(String(tournament.config.mode));
 
   useEffect(() => {
     const wsBase = apiBaseUrl.replace(/^http/, "ws");
@@ -82,12 +85,23 @@ export function LiveTournament({
   }, [tournament.players]);
 
   const currentRoundNumber = useMemo(() => {
-    const roundsWithProgress = tournament.rounds.filter((round) =>
+    const sorted = [...tournament.rounds].sort((a, b) => a.roundNumber - b.roundNumber);
+    if (sorted.length === 0) return 1;
+
+    if (isMexicano) {
+      // Prefer the first incomplete round (newly generated next round), else latest.
+      const incomplete = sorted.find((round) =>
+        round.matches.some((match) => !isMatchComplete(match))
+      );
+      return (incomplete ?? sorted[sorted.length - 1]).roundNumber;
+    }
+
+    const roundsWithProgress = sorted.filter((round) =>
       round.matches.some((match) => matchHasProgress(match))
     );
-    if (roundsWithProgress.length === 0) return tournament.rounds[0]?.roundNumber ?? 1;
+    if (roundsWithProgress.length === 0) return sorted[0].roundNumber;
     return Math.max(...roundsWithProgress.map((r) => r.roundNumber));
-  }, [tournament.rounds]);
+  }, [tournament.rounds, isMexicano]);
 
   useEffect(() => {
     onRoundChange?.(currentRoundNumber);
@@ -99,6 +113,7 @@ export function LiveTournament({
   ): MatchStatus => {
     if (isMatchComplete(match)) return "completed";
     if (roundNumber === currentRoundNumber) return "live";
+    if (isMexicano) return "pending";
     if (roundNumber === currentRoundNumber + 1) return "next";
     return "pending";
   };
@@ -122,12 +137,21 @@ export function LiveTournament({
 
   const { currentRound, previousRounds, upcomingRounds } = useMemo(() => {
     const sorted = [...tournament.rounds].sort((a, b) => a.roundNumber - b.roundNumber);
+    const upcoming = sorted.filter((r) => r.roundNumber > currentRoundNumber);
     return {
       currentRound: sorted.find((r) => r.roundNumber === currentRoundNumber),
       previousRounds: sorted.filter((r) => r.roundNumber < currentRoundNumber),
-      upcomingRounds: sorted.filter((r) => r.roundNumber > currentRoundNumber)
+      // Mexicano: only show already-generated future rounds (rare while viewing an older incomplete).
+      upcomingRounds: isMexicano ? upcoming.slice(0, 1) : upcoming
     };
-  }, [tournament.rounds, currentRoundNumber]);
+  }, [tournament.rounds, currentRoundNumber, isMexicano]);
+
+  const waitingForNextRound = useMemo(() => {
+    if (!isMexicano || tournamentComplete) return false;
+    const current = currentRound;
+    if (!current || current.matches.length === 0) return false;
+    return current.matches.every((match) => isMatchComplete(match)) && upcomingRounds.length === 0;
+  }, [isMexicano, tournamentComplete, currentRound, upcomingRounds.length]);
 
   const filteredMatchCount = useMemo(
     () =>
@@ -188,7 +212,9 @@ export function LiveTournament({
         <div className="rounded-2xl border border-padel-primary/40 bg-padel-primary/10 p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <p className="text-sm font-semibold text-padel-text">
-              Tournament completed. View final standings on the leaderboard.
+              {isMexicano
+                ? "Night ended. View final standings on the leaderboard."
+                : "Tournament completed. View final standings on the leaderboard."}
             </p>
             <Link
               href={`/tournament/${token}/leaderboard`}
@@ -197,6 +223,14 @@ export function LiveTournament({
               Go to leaderboard
             </Link>
           </div>
+        </div>
+      ) : null}
+
+      {isMexicano ? <MexicanoStandingsStrip tournament={tournament} token={token} /> : null}
+
+      {waitingForNextRound ? (
+        <div className="rounded-2xl border border-padel-border bg-padel-surfaceAlt/40 px-4 py-3 text-sm text-padel-muted">
+          Round complete — next pairings appear when the organizer generates the next round.
         </div>
       ) : null}
 
@@ -216,7 +250,7 @@ export function LiveTournament({
                 title={`Round ${currentRound.roundNumber}`}
                 matchCount={currentRound.matches.length}
                 completedMatches={getCompletedMatchCount(currentRound)}
-                isLive
+                isLive={!tournamentComplete}
                 isCollapsible={false}
               >
                 {renderMatchGrid(filteredMatches, currentRound.roundNumber)}
@@ -233,7 +267,9 @@ export function LiveTournament({
             if (!hasAny && searchQuery) return null;
             return (
               <div className="space-y-3">
-                <h3 className="text-sm font-bold text-padel-primary px-1">Upcoming</h3>
+                <h3 className="text-sm font-bold text-padel-primary px-1">
+                  {isMexicano ? "Pending" : "Upcoming"}
+                </h3>
                 {upcomingRounds.map((round) => {
                   const filteredMatches = round.matches.filter(matchesPlayerQuery);
                   if (filteredMatches.length === 0 && searchQuery) return null;
@@ -244,7 +280,7 @@ export function LiveTournament({
                       matchCount={round.matches.length}
                       completedMatches={getCompletedMatchCount(round)}
                       isCollapsible
-                      defaultExpanded={Boolean(searchQuery.trim())}
+                      defaultExpanded={Boolean(searchQuery.trim()) || isMexicano}
                     >
                       {renderMatchGrid(filteredMatches, round.roundNumber)}
                     </RoundSection>

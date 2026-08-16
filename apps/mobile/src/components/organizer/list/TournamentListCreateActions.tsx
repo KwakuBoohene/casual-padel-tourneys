@@ -1,6 +1,5 @@
 import { Pressable, Text, View } from "react-native";
 
-import { useBreakpoint } from "../../../layout";
 import { radius, spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
@@ -14,8 +13,6 @@ interface TournamentListCreateActionsProps {
 
 export function TournamentListCreateActions(props: TournamentListCreateActionsProps) {
   const { colors } = useTheme();
-  const { isWide, isMedium } = useBreakpoint();
-  const multiCol = isWide || isMedium;
 
   const primary = {
     minHeight: touch.minPrimary,
@@ -36,13 +33,6 @@ export function TournamentListCreateActions(props: TournamentListCreateActionsPr
     paddingHorizontal: spacing.xl
   };
 
-  const modeRowStyle = multiCol
-    ? ({ flexDirection: "row", flexWrap: "wrap", gap: spacing.md, width: "100%" } as const)
-    : ({ gap: spacing.md, width: "100%" } as const);
-  const modeBtnStyle = multiCol
-    ? ({ flexGrow: 1, flexBasis: isWide ? 0 : "47%", minWidth: isWide ? 180 : 160 } as const)
-    : ({ width: "100%" } as const);
-
   return (
     <View style={{ gap: spacing.md, width: "100%" }}>
       {props.onOpenAccountPlayers ? (
@@ -61,21 +51,16 @@ export function TournamentListCreateActions(props: TournamentListCreateActionsPr
           </Text>
         </Pressable>
       ) : null}
-      <View style={modeRowStyle}>
-        <Pressable onPress={props.onCreateAmericano} style={[primary, modeBtnStyle]}>
-          <Text style={{ color: colors.onPrimary, fontWeight: "700", fontSize: 17 }}>New Americano</Text>
-        </Pressable>
-        <Pressable onPress={props.onCreateMexicano} style={[secondary, modeBtnStyle]}>
-          <Text style={{ color: colors.text, fontWeight: "600", fontSize: 17 }}>New Mexicano</Text>
-        </Pressable>
-        <Pressable onPress={props.onCreateKingOfTheHill} style={[secondary, modeBtnStyle]}>
-          <Text style={{ color: colors.text, fontWeight: "600", fontSize: 17 }}>New King of the Hill</Text>
-        </Pressable>
-      </View>
-      <Pressable
-        onPress={props.onOpenEstimator}
-        style={{ ...secondary, minHeight: touch.minSecondary, alignSelf: multiCol ? "flex-start" : "stretch" }}
-      >
+      <Pressable onPress={props.onCreateAmericano} style={primary}>
+        <Text style={{ color: colors.onPrimary, fontWeight: "700", fontSize: 17 }}>New Americano</Text>
+      </Pressable>
+      <Pressable onPress={props.onCreateMexicano} style={secondary}>
+        <Text style={{ color: colors.text, fontWeight: "600", fontSize: 17 }}>New Mexicano</Text>
+      </Pressable>
+      <Pressable onPress={props.onCreateKingOfTheHill} style={secondary}>
+        <Text style={{ color: colors.text, fontWeight: "600", fontSize: 17 }}>New King of the Hill</Text>
+      </Pressable>
+      <Pressable onPress={props.onOpenEstimator} style={{ ...secondary, minHeight: touch.minSecondary }}>
         <Text style={{ color: colors.text, fontWeight: "600", fontSize: 15 }}>Game Estimator</Text>
       </Pressable>
     </View>

@@ -27,13 +27,7 @@ interface TournamentListViewProps {
 
 export function TournamentListView(props: TournamentListViewProps) {
   const { colors } = useTheme();
-  const { isWide } = useBreakpoint();
-  const cardWrapStyle = isWide
-    ? ({ flexDirection: "row", flexWrap: "wrap", gap: spacing.md } as const)
-    : undefined;
-  const wideCardStyle = isWide
-    ? ({ flexGrow: 1, flexBasis: "47%", minWidth: 260, maxWidth: 520 } as const)
-    : undefined;
+  const { formMaxWidth } = useBreakpoint();
 
   const activeTournaments = props.tournaments.filter((tournament) => {
     if (tournament.config.mode === "KING_OF_THE_HILL") return !tournament.endedAt;
@@ -49,13 +43,17 @@ export function TournamentListView(props: TournamentListViewProps) {
 
   return (
     <ScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={{
+        paddingHorizontal: spacing.xl,
         paddingTop: spacing.xxl,
         paddingBottom: spacing.xl,
         gap: spacing.md,
+        maxWidth: formMaxWidth,
+        width: "100%",
+        alignSelf: "center",
         flexGrow: 1
       }}
-      style={{ flex: 1, backgroundColor: colors.background }}
       refreshControl={<RefreshControl refreshing={props.refreshing} onRefresh={props.onRefresh} />}
     >
       <TournamentListHeader onOpenProfile={props.onOpenProfile} />
@@ -77,34 +75,24 @@ export function TournamentListView(props: TournamentListViewProps) {
         </View>
       ) : (
         <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
-          {activeTournaments.length > 0 ? (
-            <View style={cardWrapStyle}>
-              {activeTournaments.map((tournament) => (
-                <TournamentListCard
-                  key={tournament.id}
-                  tournament={tournament}
-                  status="LIVE"
-                  wideCardStyle={wideCardStyle}
-                  onOpen={() => props.onOpenTournament(tournament.id)}
-                  onOpenOptions={() => props.onOpenOptions(tournament.id)}
-                />
-              ))}
-            </View>
-          ) : null}
-          {completedTournaments.length > 0 ? (
-            <View style={[cardWrapStyle, { marginTop: activeTournaments.length ? spacing.sm : 0 }]}>
-              {completedTournaments.map((tournament) => (
-                <TournamentListCard
-                  key={tournament.id}
-                  tournament={tournament}
-                  status="COMPLETED"
-                  wideCardStyle={wideCardStyle}
-                  onOpen={() => props.onOpenTournament(tournament.id)}
-                  onOpenOptions={() => props.onOpenOptions(tournament.id)}
-                />
-              ))}
-            </View>
-          ) : null}
+          {activeTournaments.map((tournament) => (
+            <TournamentListCard
+              key={tournament.id}
+              tournament={tournament}
+              status="LIVE"
+              onOpen={() => props.onOpenTournament(tournament.id)}
+              onOpenOptions={() => props.onOpenOptions(tournament.id)}
+            />
+          ))}
+          {completedTournaments.map((tournament) => (
+            <TournamentListCard
+              key={tournament.id}
+              tournament={tournament}
+              status="COMPLETED"
+              onOpen={() => props.onOpenTournament(tournament.id)}
+              onOpenOptions={() => props.onOpenOptions(tournament.id)}
+            />
+          ))}
         </View>
       )}
 

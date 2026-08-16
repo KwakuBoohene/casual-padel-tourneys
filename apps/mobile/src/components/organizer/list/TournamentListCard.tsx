@@ -9,7 +9,6 @@ import { formatTournamentMode } from "../../../utilities/organizer/formatLabels"
 interface TournamentListCardProps {
   tournament: LiveTournamentState;
   status: "LIVE" | "COMPLETED";
-  wideCardStyle?: object;
   onOpen: () => void;
   onOpenOptions?: () => void;
 }
@@ -23,18 +22,15 @@ export function TournamentListCard(props: TournamentListCardProps) {
     <Pressable
       onPress={props.onOpen}
       onLongPress={props.onOpenOptions}
-      style={[
-        {
-          minHeight: touch.minSecondary,
-          borderRadius: radius.lg,
-          borderWidth: 1,
-          borderColor: colors.border,
-          backgroundColor: colors.surface,
-          padding: spacing.md,
-          gap: 6
-        },
-        props.wideCardStyle
-      ]}
+      style={{
+        minHeight: touch.minSecondary,
+        borderRadius: radius.lg,
+        borderWidth: 1,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        padding: spacing.md,
+        gap: 6
+      }}
     >
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: spacing.sm }}>
         <Text style={{ flex: 1, fontSize: 15, fontWeight: "700", color: colors.text }} numberOfLines={1}>

@@ -1,13 +1,12 @@
+import { Redirect } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import * as Linking from "expo-linking";
-import { Redirect, router } from "expo-router";
+import { router } from "expo-router";
 
 import { parseAuthDeepLink } from "../src/api/authDeepLink";
-import { PageShell } from "../src/layout";
 import { logger } from "../src/logger";
 import { useAuthSessionContext } from "../src/providers/AuthSessionProvider";
-import { OrganizerScreen } from "../src/screens/OrganizerScreen";
 import { useTheme } from "../src/theme/ThemeProvider";
 
 function redirectAuthUrl(url: string | null): void {
@@ -22,10 +21,7 @@ function redirectAuthUrl(url: string | null): void {
   }
 }
 
-/**
- * Signed-in home. Auth screens live under `app/(auth)/` (ticket 02).
- * Tournament URL split comes in tickets 03–05.
- */
+/** Root entry: auth redirects, then signed-in users land on tournament list. */
 export default function Index() {
   const { colors } = useTheme();
   const auth = useAuthSessionContext();
@@ -52,9 +48,5 @@ export default function Index() {
     return <Redirect href="/verify" />;
   }
 
-  return (
-    <PageShell>
-      <OrganizerScreen />
-    </PageShell>
-  );
+  return <Redirect href="/tournaments" />;
 }

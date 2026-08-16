@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useState, type Dispatch, type SetStateAction } from "react";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
@@ -108,7 +109,9 @@ export function useCreateTournament({
     startCreateWithMode,
     startCreateFromEstimator,
     cancelCreateToList: () => {
-      setModeLockedFromList(false); setStep("LIST");
+      setModeLockedFromList(false);
+      setStep("LIST");
+      router.replace("/tournaments");
     },
     variant,
     setVariant,

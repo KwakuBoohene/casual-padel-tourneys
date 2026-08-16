@@ -1,20 +1,23 @@
-import { ProfileScreen } from "../../screens/ProfileScreen";
+import { router } from "expo-router";
 import { KohScreen } from "../../screens/KohScreen";
 import { useOrganizerScreen } from "../../hooks/organizer/useOrganizerScreen";
 import { formatTournamentMode } from "../../utilities/organizer/formatLabels";
 
 import { AccountPlayersFlow } from "../accountPlayers/AccountPlayersFlow";
 import { KohLiveHub } from "../koh/live/KohLiveHub";
-import { GameEstimatorView } from "./estimator/GameEstimatorView";
 import { LeaderboardView } from "./leaderboard/LeaderboardView";
 import { MatchSettingsStepView } from "./create/MatchSettingsStepView";
 import { NameStepView } from "./create/NameStepView";
-import { OrganizerListScreen } from "./list/OrganizerListScreen";
 import { OrganizerLiveScreen } from "./live/OrganizerLiveScreen";
 import { PlayerGamesView } from "./leaderboard/PlayerGamesView";
 import { PlayersStepView } from "./create/PlayersStepView";
 import { TeamPlayersStepView } from "./create/TeamPlayersStepView";
 import { TournamentOptionsStepView } from "./create/TournamentOptionsStepView";
+
+function backToList(setStep: (step: "LIST") => void): void {
+  setStep("LIST");
+  router.replace("/tournaments");
+}
 
 export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrganizerScreen> }) {
   const {
@@ -27,8 +30,6 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     mode,
     setMode,
     modeLockedFromList,
-    startCreateWithMode,
-    startCreateFromEstimator,
     cancelCreateToList,
     variant,
     setVariant,
@@ -77,40 +78,8 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     setMatchTiebreak,
     responseText,
     createTournament,
-    estimatorMode,
-    setEstimatorMode,
-    estimatorVariant,
-    setEstimatorVariant,
-    setEstimatorSchedulingMode,
-    estimatorScoringMode,
-    setEstimatorScoringMode,
-    estimatorSetsToWin,
-    setEstimatorSetsToWin,
-    effectiveEstimatorSchedulingMode,
-    estimatorUsersText,
-    estimatorCourtsText,
-    estimatorPointsText,
-    estimatorTargetGamesText,
-    estimatorTournamentTimeText,
-    estimator,
-    onChangeEstimatorUsersValue,
-    onChangeEstimatorCourtsValue,
-    onChangeEstimatorPointsValue,
-    onChangeEstimatorTargetGamesValue,
-    onChangeEstimatorTournamentTimeValue,
-    tournaments,
-    listRefreshing,
     errorText,
     loadTournaments,
-    openTournamentOptions,
-    requestTournamentAction,
-    confirmTournamentAction,
-    showTournamentOptionsModal,
-    setShowTournamentOptionsModal,
-    showTournamentActionConfirmModal,
-    setShowTournamentActionConfirmModal,
-    pendingTournamentAction,
-    openTournament,
     liveTournament,
     liveTournamentNameDraft,
     setLiveTournamentNameDraft,
@@ -191,7 +160,6 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
     changeRenameDraft,
     saveRenames,
     viewerBaseUrl,
-    handleSignOut,
     kohHub,
     adoptKohHub,
     clearKohHub,
@@ -202,37 +170,10 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
 
   const modeLabel = formatTournamentMode(mode);
 
-  if (step === "LIST") {
-    return (
-      <OrganizerListScreen
-        tournaments={tournaments}
-        refreshing={listRefreshing}
-        errorText={errorText}
-        showTournamentOptionsModal={showTournamentOptionsModal}
-        showTournamentActionConfirmModal={showTournamentActionConfirmModal}
-        pendingTournamentAction={pendingTournamentAction}
-        onRefresh={() => void loadTournaments()}
-        onCreateAmericano={() => startCreateWithMode("AMERICANO")}
-        onCreateMexicano={() => startCreateWithMode("MEXICANO")}
-        onCreateKingOfTheHill={() => {
-          setErrorText("");
-          setStep("KOH");
-        }}
-        onOpenEstimator={() => setStep("ESTIMATOR")}
-        onOpenTournament={(id) => void openTournament(id)}
-        onOpenOptions={openTournamentOptions}
-        onOpenProfile={() => setStep("PROFILE")}
-        onOpenAccountPlayers={() => {
-          setErrorText("");
-          setStep("ACCOUNT_PLAYERS");
-        }}
-        onCloseOptionsModal={() => setShowTournamentOptionsModal(false)}
-        onRequestEdit={() => requestTournamentAction("EDIT")}
-        onRequestDelete={() => requestTournamentAction("DELETE")}
-        onCancelActionConfirm={() => setShowTournamentActionConfirmModal(false)}
-        onConfirmAction={() => void confirmTournamentAction()}
-      />
-    );
+  if (step === "LIST" || step === "ESTIMATOR" || step === "PROFILE" || step === "ATTACH") {
+    // These live under Expo Router — bounce if we land here on /flow.
+    backToList(setStep);
+    return null;
   }
 
   if (step === "ACCOUNT_PLAYERS") {
@@ -242,8 +183,8 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         errorText={errorText}
         setErrorText={setErrorText}
         markEmailVerifyRequired={markEmailVerifyRequired}
-        onBack={() => setStep("LIST")}
-        onAttach={() => setStep("ATTACH")}
+        onBack={() => backToList(setStep)}
+        onAttach={() => router.push("/profile/attach")}
       />
     );
   }
@@ -254,7 +195,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         errorText={errorText}
         setErrorText={setErrorText}
         markEmailVerifyRequired={markEmailVerifyRequired}
-        onCancel={() => setStep("LIST")}
+        onCancel={() => backToList(setStep)}
         onStarted={(hub) => {
           adoptKohHub(hub);
           void loadTournaments();
@@ -275,7 +216,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         viewerBaseUrl={viewerBaseUrl}
         onBackToList={() => {
           clearKohHub();
-          setStep("LIST");
+          backToList(setStep);
         }}
       />
     );
@@ -290,48 +231,6 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         onChangeName={setName}
         onBack={cancelCreateToList}
         onNext={() => setStep("OPTIONS")}
-      />
-    );
-  }
-
-  if (step === "ESTIMATOR") {
-    return (
-      <GameEstimatorView
-        mode={estimatorMode}
-        variant={estimatorVariant}
-        schedulingMode={effectiveEstimatorSchedulingMode}
-        scoringMode={estimatorScoringMode}
-        setsToWin={estimatorSetsToWin}
-        usersText={estimatorUsersText}
-        courtsText={estimatorCourtsText}
-        pointsText={estimatorPointsText}
-        targetGamesText={estimatorTargetGamesText}
-        tournamentTimeText={estimatorTournamentTimeText}
-        estimate={estimator}
-        onChangeMode={setEstimatorMode}
-        onChangeVariant={setEstimatorVariant}
-        onChangeSchedulingMode={setEstimatorSchedulingMode}
-        onChangeScoringMode={setEstimatorScoringMode}
-        onChangeSetsToWin={setEstimatorSetsToWin}
-        onChangeUsers={onChangeEstimatorUsersValue}
-        onChangeCourts={onChangeEstimatorCourtsValue}
-        onChangePoints={onChangeEstimatorPointsValue}
-        onChangeTargetGames={onChangeEstimatorTargetGamesValue}
-        onChangeTournamentTime={onChangeEstimatorTournamentTimeValue}
-        onBack={() => setStep("LIST")}
-        onUseInNewTournament={() =>
-          startCreateFromEstimator({
-            mode: estimatorMode,
-            variant: estimatorVariant,
-            schedulingMode: effectiveEstimatorSchedulingMode,
-            courtsText: estimatorCourtsText,
-            pointsText: estimatorPointsText,
-            targetGamesText: estimatorTargetGamesText,
-            tournamentTimeText: estimatorTournamentTimeText,
-            scoringMode: estimatorScoringMode,
-            setsToWin: estimatorSetsToWin
-          })
-        }
       />
     );
   }
@@ -441,7 +340,7 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         scoreInputs={scoreInputs}
         playerNameById={playerNameById}
         showEditConfirmModal={showEditConfirmModal}
-        onBackToList={() => setStep("LIST")}
+        onBackToList={() => backToList(setStep)}
         onViewLeaderboard={() => setStep("LEADERBOARD")}
         onRefresh={() => void refreshTournament()}
         onFinishTournament={() => void finishTournament()}
@@ -511,22 +410,11 @@ export function OrganizerSignedInBody({ org }: { org: ReturnType<typeof useOrgan
         tournament={liveTournament}
         rows={leaderboardRows}
         onBack={() => setStep("LIVE")}
-        onBackToList={() => setStep("LIST")}
+        onBackToList={() => backToList(setStep)}
         onOpenPlayer={(playerId) => {
           setSelectedPlayerId(playerId);
           setStep("PLAYER_GAMES");
         }}
-      />
-    );
-  }
-
-  if (step === "PROFILE" && currentUser) {
-    return (
-      <ProfileScreen
-        user={currentUser}
-        onBack={() => setStep("LIST")}
-        onSignOut={() => void handleSignOut()}
-        onAttachAccount={() => setStep("ATTACH")}
       />
     );
   }

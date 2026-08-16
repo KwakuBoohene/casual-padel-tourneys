@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useRef, useState } from "react";
 
 import { useAuthSessionContext } from "../../providers/AuthSessionProvider";
@@ -73,10 +74,12 @@ export function useOrganizerScreen() {
       if (live.liveTournament?.id === id) {
         live.setLiveTournament(null);
         setStep("LIST");
+        router.replace("/tournaments");
       }
       if (koh.kohHub?.id === id) {
         koh.clearKohHub();
         setStep("LIST");
+        router.replace("/tournaments");
       }
     }
   };
@@ -101,6 +104,7 @@ export function useOrganizerScreen() {
       live.setLiveTournament(null);
       koh.clearKohHub();
       setStep("LIST");
+      router.replace("/sign-in");
     },
     updateUser: auth.updateUser,
     clearEmailVerifyRequired: auth.clearEmailVerifyRequired,

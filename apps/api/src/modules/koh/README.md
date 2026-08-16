@@ -33,4 +33,6 @@ infrastructure/  → Prisma ops/mappers + realtime adapter
 Organizer-player crediting comes from the organizerPlayers module
 (`modules/organizerPlayers/infrastructure/careerCredits.ts`): `ensureOrganizerPlayer` on
 assignment / partner replacement, `creditKohMatchToOrganizerPlayers` on a completed score. Those
-calls join the KOH transaction, so careers never drift from the persisted result.
+calls join the KOH transaction, so careers never drift from the persisted result. Crediting is
+skipped when the tournament row has `contributeToCareerLeaderboard: false` — see
+[`docs/career-leaderboard.md`](../../../../../docs/career-leaderboard.md).

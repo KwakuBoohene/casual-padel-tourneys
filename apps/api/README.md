@@ -103,7 +103,7 @@ Test layout: [`tests/README.md`](./tests/README.md).
 | Pairing & scoring algorithms | `engine/` | Keep pure; call from application/domain |
 | KOH hubs & queues | `modules/koh/` | Hexagonal; `POST /tournaments` + public token reads branch in from the tournament module |
 | Auth (guest, Google, password, magic link, reset, attach) | `modules/auth/` | Hexagonal; JWT + OPAQUE behind adapters. `lib/auth.ts` re-exports the preHandlers |
-| Organizer player careers | `modules/organizerPlayers/` | Authenticated `/me/players/*`; KOH credits careers through `infrastructure/careerCredits.ts` |
+| Organizer player careers | `modules/organizerPlayers/` | Authenticated `/me/players/*`; every mode credits careers through `infrastructure/careerCredits.ts`. Rules: [`docs/career-leaderboard.md`](../../docs/career-leaderboard.md) |
 | Realtime subscriptions | `realtime/socketHub.ts` | Clients subscribe by public share token |
 | Health / readiness / request id | `shared/http/` | Registered once from `app.ts` |
 
@@ -233,6 +233,7 @@ Prisma call.
 
 ## Related docs
 
+- Career leaderboard ranking rules: [`docs/career-leaderboard.md`](../../docs/career-leaderboard.md)
 - Architecture ADR: `plans/implementation/backend/epic-09-api-modular-hexagonal/adr-modular-hexagonal.md`
 - Backend epics: `plans/implementation/backend/`
 - Shared types: `packages/shared`

@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useState, type Dispatch, type SetStateAction } from "react";
+import { useState } from "react";
 import type { SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 import type {
@@ -18,7 +18,6 @@ export type CreateWizardStep = "NAME" | "OPTIONS" | "PLAYERS" | "SETTINGS";
 type Params = {
   tournaments: TournamentListResponse["data"];
   suggestedPlayerNames: string[];
-  setTournaments: Dispatch<SetStateAction<TournamentListResponse["data"]>>;
   setErrorText: (value: string) => void;
   markEmailVerifyRequired: (dueAt?: number) => void;
   adoptTournament: (data: LiveTournamentState, editMode: boolean) => void;
@@ -27,7 +26,6 @@ type Params = {
 export function useCreateTournament({
   tournaments,
   suggestedPlayerNames,
-  setTournaments,
   setErrorText,
   markEmailVerifyRequired,
   adoptTournament
@@ -90,7 +88,6 @@ export function useCreateTournament({
       regularScoring: settings.regularScoring,
       setErrorText,
       setResponseText,
-      setTournaments,
       markEmailVerifyRequired,
       adoptTournament
     });

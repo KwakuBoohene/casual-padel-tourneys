@@ -1,13 +1,9 @@
-import { router } from "expo-router";
-import { useState, type Dispatch, type SetStateAction } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 import { apiPost } from "../../../api/client";
-import type {
-  LiveTournamentState,
-  TournamentListResponse,
-  TournamentResponse
-} from "../../../types/organizer/tournament";
-import { tournamentLeaderboardPath } from "../../../utilities/organizer/tournamentRoutes";
+import type { LiveTournamentState, TournamentResponse } from "../../../types/organizer/tournament";
+import { finishLiveTournament } from "../../../utilities/organizer/finishLiveTournament";
 
 export interface UseLiveTournamentActionsParams {
   liveTournament: LiveTournamentState | null;
@@ -15,53 +11,30 @@ export interface UseLiveTournamentActionsParams {
   proposedCourts: number;
   canFinishNight: boolean;
   applyTournamentUpdate: (data: LiveTournamentState) => void;
-  setLiveTournament: (data: LiveTournamentState) => void;
+  setLiveTournament: (data: LiveTournamentState | null) => void;
   clampProposedCourts: (playersCount: number) => void;
   setIsEditingCompletedTournament: (value: boolean) => void;
-  setTournaments: Dispatch<SetStateAction<TournamentListResponse["data"]>>;
   setErrorText: (value: string) => void;
 }
 
 export function useLiveTournamentActions(params: UseLiveTournamentActionsParams) {
-  const { liveTournament, setErrorText, setTournaments } = params;
+  const { liveTournament, setErrorText } = params;
+  const queryClient = useQueryClient();
   const [showEditConfirmModal, setShowEditConfirmModal] = useState(false);
   const [showLiveOptionsModal, setShowLiveOptionsModal] = useState(false);
   const [showAdjustCourtsConfirmModal, setShowAdjustCourtsConfirmModal] = useState(false);
   const [generatingNextRound, setGeneratingNextRound] = useState(false);
 
   const finishTournament = async () => {
-    if (!params.canFinishNight) {
-      setErrorText(
-        liveTournament?.config.mode === "MEXICANO"
-          ? "This Mexicano night has already ended."
-          : "Finish is only available after all round matches have scores."
-      );
-      return;
-    }
     if (!liveTournament) return;
-
-    if (liveTournament.config.mode === "MEXICANO") {
-      try {
-        setErrorText("");
-        const response = await apiPost<TournamentResponse>("/tournaments/end-night", {
-          tournamentId: liveTournament.id,
-          expectedVersion: liveTournament.version
-        });
-        params.applyTournamentUpdate(response.data);
-        setTournaments((prev) =>
-          prev.map((item) => (item.id === response.data.id ? response.data : item))
-        );
-        params.setIsEditingCompletedTournament(false);
-        router.replace(tournamentLeaderboardPath(liveTournament.id));
-      } catch (error) {
-        setErrorText((error as Error).message);
-      }
-      return;
-    }
-
-    setTournaments((prev) => prev.map((item) => (item.id === liveTournament.id ? liveTournament : item)));
-    params.setIsEditingCompletedTournament(false);
-    router.replace(tournamentLeaderboardPath(liveTournament.id));
+    await finishLiveTournament({
+      liveTournament,
+      canFinishNight: params.canFinishNight,
+      queryClient,
+      applyTournamentUpdate: params.applyTournamentUpdate,
+      setIsEditingCompletedTournament: params.setIsEditingCompletedTournament,
+      setErrorText
+    });
   };
 
   const generateNextMexicanoRound = async () => {
@@ -95,7 +68,6 @@ export function useLiveTournamentActions(params: UseLiveTournamentActionsParams)
         newName
       });
       params.applyTournamentUpdate(response.data);
-      setTournaments((prev) => prev.map((item) => (item.id === response.data.id ? response.data : item)));
     } catch (error) {
       setErrorText((error as Error).message);
     }

@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 import { AuthSessionProvider } from "../src/providers/AuthSessionProvider";
+import { QueryProvider } from "../src/providers/QueryProvider";
 import { useWebDocumentBackground } from "../src/layout/useWebDocumentBackground";
 import { ThemeProvider, useTheme } from "../src/theme/ThemeProvider";
 
@@ -25,11 +26,13 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <AuthSessionProvider>
-            <RootChrome>
-              <RootStack />
-            </RootChrome>
-          </AuthSessionProvider>
+          <QueryProvider>
+            <AuthSessionProvider>
+              <RootChrome>
+                <RootStack />
+              </RootChrome>
+            </AuthSessionProvider>
+          </QueryProvider>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

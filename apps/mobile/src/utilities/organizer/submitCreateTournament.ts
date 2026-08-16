@@ -1,4 +1,3 @@
-import type { Dispatch, SetStateAction } from "react";
 import type {
   PlayerGender,
   RegularScoringConfig,
@@ -36,7 +35,6 @@ export async function submitCreateTournament(input: {
   regularScoring: RegularScoringConfig;
   setErrorText: (value: string) => void;
   setResponseText: (value: string) => void;
-  setTournaments: Dispatch<SetStateAction<LiveTournamentState[]>>;
   markEmailVerifyRequired: (dueAt?: number) => void;
   adoptTournament: (data: LiveTournamentState, editMode: boolean) => void;
 }): Promise<void> {
@@ -66,10 +64,6 @@ export async function submitCreateTournament(input: {
     const response = await apiPost<CreateTournamentResponse>("/tournaments", prepared.payload);
     input.setResponseText(`Created ${response.data.id}\nShare token: ${response.data.publicToken}`);
     input.adoptTournament(response.data, false);
-    input.setTournaments((previous) => [
-      response.data,
-      ...previous.filter((item) => item.id !== response.data.id)
-    ]);
     router.replace(tournamentLivePath(response.data.id));
   } catch (error) {
     if (isEmailVerifyRequired(error)) {

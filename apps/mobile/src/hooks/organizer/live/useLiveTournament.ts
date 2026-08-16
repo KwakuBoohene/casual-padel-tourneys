@@ -1,6 +1,4 @@
-import type { Dispatch, SetStateAction } from "react";
-
-import type { TournamentListResponse } from "../../../types/organizer/tournament";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useLiveInsights } from "./useLiveInsights";
 import { useLiveRounds } from "./useLiveRounds";
@@ -9,18 +7,18 @@ import { useLiveTournamentCore } from "./useLiveTournamentCore";
 import { usePendingPlayers } from "./usePendingPlayers";
 import { useRenamePlayers } from "./useRenamePlayers";
 import { useTournamentSocket } from "./useTournamentSocket";
+import { removeTournamentCaches } from "../../../utilities/organizer/tournamentQueryCache";
 
 export interface UseLiveTournamentParams {
-  setTournaments: Dispatch<SetStateAction<TournamentListResponse["data"]>>;
   setErrorText: (value: string) => void;
   markEmailVerifyRequired: (dueAt?: number) => void;
 }
 
 export function useLiveTournament({
-  setTournaments,
   setErrorText,
   markEmailVerifyRequired
 }: UseLiveTournamentParams) {
+  const queryClient = useQueryClient();
   const core = useLiveTournamentCore({ setErrorText, markEmailVerifyRequired });
   const rounds = useLiveRounds(core.liveTournament);
   const insights = useLiveInsights(core.liveTournament, rounds.isTournamentCompleted);
@@ -35,11 +33,10 @@ export function useLiveTournament({
       if (!data.rounds.every((round) => round.matches.every((match) => match.completed))) {
         core.setIsEditingCompletedTournament(false);
       }
-      setTournaments((previous) => previous.map((item) => (item.id === data.id ? data : item)));
     },
     onDeleted: (tournamentId) => {
       core.setLiveTournament(null);
-      setTournaments((previous) => previous.filter((item) => item.id !== tournamentId));
+      removeTournamentCaches(queryClient, tournamentId);
     }
   });
 
@@ -52,7 +49,6 @@ export function useLiveTournament({
     setLiveTournament: core.setLiveTournament,
     clampProposedCourts: core.clampProposedCourts,
     setIsEditingCompletedTournament: core.setIsEditingCompletedTournament,
-    setTournaments,
     setErrorText
   });
 

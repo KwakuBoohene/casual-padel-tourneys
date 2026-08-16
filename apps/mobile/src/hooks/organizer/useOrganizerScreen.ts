@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useRef, useState } from "react";
 
@@ -13,6 +14,7 @@ import { useTournamentList } from "./useTournamentList";
 /** Session composition for signed-in organizer routes (not a step-based navigator). */
 export function useOrganizerScreen() {
   const auth = useAuthSessionContext();
+  const queryClient = useQueryClient();
   const [errorText, setErrorText] = useState("");
   const viewerBaseUrl = process.env.EXPO_PUBLIC_VIEWER_BASE_URL ?? "http://localhost:3000";
   const createIntentRef = useRef<CreateRouteIntent | null>(null);
@@ -35,7 +37,6 @@ export function useOrganizerScreen() {
   });
 
   const live = useLiveTournament({
-    setTournaments: list.setTournaments,
     setErrorText,
     markEmailVerifyRequired: auth.markEmailVerifyRequired
   });
@@ -98,7 +99,7 @@ export function useOrganizerScreen() {
     handleSignedIn: auth.handleSignedIn,
     handleSignOut: async () => {
       await auth.handleSignOut();
-      list.setTournaments([]);
+      queryClient.clear();
       live.setLiveTournament(null);
       koh.clearKohHub();
       router.replace("/sign-in");

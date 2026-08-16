@@ -24,7 +24,6 @@ export default function CreateTournamentRoute() {
   const create = useCreateTournament({
     tournaments: org.tournaments,
     suggestedPlayerNames: org.suggestedPlayerNames,
-    setTournaments: org.setTournaments,
     setErrorText: org.setErrorText,
     markEmailVerifyRequired: org.markEmailVerifyRequired,
     adoptTournament: org.adoptTournament

@@ -1,9 +1,19 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { apiDelete, apiGet } from "../../api/client";
 import { isEmailVerifyRequired } from "../../api/errors";
-import type { TournamentListResponse } from "../../types/organizer/tournament";
 import type { OpenOrganizerResult } from "../../utilities/organizer/openOrganizerTournament";
+import { removeTournamentCaches } from "../../utilities/organizer/tournamentQueryCache";
+import { tournamentQueryKeys } from "../../utilities/organizer/tournamentQueryKeys";
+import { fetchTournamentList } from "../../utilities/organizer/tournamentQueries";
+
+import {
+  useTournamentListModals,
+  type ConfirmTournamentActionResult
+} from "./useTournamentListModals";
+
+export type { ConfirmTournamentActionResult };
 
 export interface UseTournamentListParams {
   authReady: boolean;
@@ -15,10 +25,6 @@ export interface UseTournamentListParams {
   onTournamentDeleted: (tournamentId: string) => void;
 }
 
-export type ConfirmTournamentActionResult =
-  | { action: "DELETE"; tournamentId: string }
-  | { action: "EDIT"; tournamentId: string; openResult: OpenOrganizerResult | void };
-
 export function useTournamentList({
   authReady,
   authToken,
@@ -28,101 +34,79 @@ export function useTournamentList({
   openTournament,
   onTournamentDeleted
 }: UseTournamentListParams) {
-  const [tournaments, setTournaments] = useState<TournamentListResponse["data"]>([]);
-  const [listRefreshing, setListRefreshing] = useState(false);
-  const [selectedTournamentId, setSelectedTournamentId] = useState<string | null>(null);
-  const [pendingTournamentAction, setPendingTournamentAction] = useState<"EDIT" | "DELETE" | null>(null);
-  const [showTournamentOptionsModal, setShowTournamentOptionsModal] = useState(false);
-  const [showTournamentActionConfirmModal, setShowTournamentActionConfirmModal] = useState(false);
+  const queryClient = useQueryClient();
+  const modals = useTournamentListModals();
   const [suggestedPlayerNames, setSuggestedPlayerNames] = useState<string[]>([]);
 
-  const loadPlayerSuggestions = async () => {
-    try {
-      const response = await apiGet<{ names: string[] }>("/players/suggestions");
-      setSuggestedPlayerNames(response.names ?? []);
-    } catch {
-      // Ignore suggestion errors; autocomplete will fall back to local names.
+  const listQuery = useQuery({
+    queryKey: tournamentQueryKeys.list(),
+    queryFn: fetchTournamentList,
+    enabled: authReady && Boolean(authToken)
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (tournamentId: string) =>
+      apiDelete<{ ok: boolean }>(`/tournaments/${tournamentId}`),
+    onSuccess: (_data, tournamentId) => {
+      removeTournamentCaches(queryClient, tournamentId);
+      onTournamentDeleted(tournamentId);
     }
-  };
+  });
 
-  const loadTournaments = async () => {
-    try {
-      setErrorText("");
-      setListRefreshing(true);
-      const response = await apiGet<TournamentListResponse>("/tournaments");
-      setTournaments(response.data);
-      clearEmailVerifyRequired();
-      await loadPlayerSuggestions();
-    } catch (error) {
-      if (isEmailVerifyRequired(error)) {
-        markEmailVerifyRequired(error.verifyBy);
-        return;
-      }
-      setErrorText((error as Error).message);
-    } finally {
-      setListRefreshing(false);
+  useEffect(() => {
+    if (!listQuery.isSuccess) return;
+    clearEmailVerifyRequired();
+    void apiGet<{ names: string[] }>("/players/suggestions")
+      .then((response) => setSuggestedPlayerNames(response.names ?? []))
+      .catch(() => undefined);
+  }, [listQuery.isSuccess, listQuery.dataUpdatedAt, clearEmailVerifyRequired]);
+
+  useEffect(() => {
+    if (!listQuery.error) return;
+    if (isEmailVerifyRequired(listQuery.error)) {
+      markEmailVerifyRequired(listQuery.error.verifyBy);
+      return;
     }
-  };
-
-  const openTournamentOptions = (tournamentId: string) => {
-    setSelectedTournamentId(tournamentId);
-    setPendingTournamentAction(null);
-    setShowTournamentOptionsModal(true);
-  };
-
-  const requestTournamentAction = (action: "EDIT" | "DELETE") => {
-    setPendingTournamentAction(action);
-    setShowTournamentOptionsModal(false);
-    setShowTournamentActionConfirmModal(true);
-  };
+    setErrorText((listQuery.error as Error).message);
+  }, [listQuery.error, markEmailVerifyRequired, setErrorText]);
 
   const confirmTournamentAction = async (): Promise<ConfirmTournamentActionResult | null> => {
-    if (!selectedTournamentId || !pendingTournamentAction) {
-      setShowTournamentActionConfirmModal(false);
+    const tournamentId = modals.selectedTournamentId;
+    const action = modals.pendingTournamentAction;
+    if (!tournamentId || !action) {
+      modals.clearActionSelection();
       return null;
     }
-    const tournamentId = selectedTournamentId;
-    const action = pendingTournamentAction;
     try {
       setErrorText("");
       if (action === "DELETE") {
-        await apiDelete<{ ok: boolean }>(`/tournaments/${tournamentId}`);
-        setTournaments((previous) => previous.filter((item) => item.id !== tournamentId));
-        onTournamentDeleted(tournamentId);
+        await deleteMutation.mutateAsync(tournamentId);
         return { action: "DELETE", tournamentId };
       }
-      const openResult = await openTournament(tournamentId, true);
-      return { action: "EDIT", tournamentId, openResult };
+      return { action: "EDIT", tournamentId, openResult: await openTournament(tournamentId, true) };
     } catch (error) {
       setErrorText((error as Error).message);
       return null;
     } finally {
-      setShowTournamentActionConfirmModal(false);
-      setPendingTournamentAction(null);
-      setSelectedTournamentId(null);
+      modals.clearActionSelection();
     }
   };
 
-  useEffect(() => {
-    if (!authReady || !authToken) {
-      return;
-    }
-    void loadTournaments();
-  }, [authReady, authToken]);
-
   return {
-    tournaments,
-    setTournaments,
+    tournaments: listQuery.data ?? [],
     suggestedPlayerNames,
-    listRefreshing,
-    loadTournaments,
-    openTournamentOptions,
-    requestTournamentAction,
+    listRefreshing: listQuery.isFetching,
+    loadTournaments: async () => {
+      setErrorText("");
+      await listQuery.refetch();
+    },
+    openTournamentOptions: modals.openTournamentOptions,
+    requestTournamentAction: modals.requestTournamentAction,
     confirmTournamentAction,
-    showTournamentOptionsModal,
-    setShowTournamentOptionsModal,
-    showTournamentActionConfirmModal,
-    setShowTournamentActionConfirmModal,
-    pendingTournamentAction
+    showTournamentOptionsModal: modals.showTournamentOptionsModal,
+    setShowTournamentOptionsModal: modals.setShowTournamentOptionsModal,
+    showTournamentActionConfirmModal: modals.showTournamentActionConfirmModal,
+    setShowTournamentActionConfirmModal: modals.setShowTournamentActionConfirmModal,
+    pendingTournamentAction: modals.pendingTournamentAction
   };
 }

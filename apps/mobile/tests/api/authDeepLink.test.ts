@@ -26,3 +26,26 @@ test("parseAuthDeepLink: https web-style reset", () => {
   const link = parseAuthDeepLink("https://example.com/auth/reset?token=web-reset-token");
   assert.deepEqual(link, { kind: "reset", token: "web-reset-token" });
 });
+
+test("parseAuthDeepLink: empty / whitespace is null", () => {
+  assert.equal(parseAuthDeepLink(""), null);
+  assert.equal(parseAuthDeepLink("   "), null);
+});
+
+test("parseAuthDeepLink: unknown path with token is null", () => {
+  assert.equal(parseAuthDeepLink("padel://auth/other?token=abc"), null);
+  assert.equal(parseAuthDeepLink("https://example.com/home?token=abc"), null);
+});
+
+test("parseAuthDeepLink: trims token whitespace", () => {
+  const link = parseAuthDeepLink("padel://auth/magic?token=%20trim-me%20");
+  assert.deepEqual(link, { kind: "magic", token: "trim-me" });
+});
+
+test("parseAuthDeepLink: reset custom scheme without token is null", () => {
+  assert.equal(parseAuthDeepLink("padel://auth/reset?"), null);
+});
+
+test("parseAuthDeepLink: garbage string is null", () => {
+  assert.equal(parseAuthDeepLink("not a url :::"), null);
+});

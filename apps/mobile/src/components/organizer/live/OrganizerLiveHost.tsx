@@ -51,7 +51,6 @@ export function OrganizerLiveHost() {
         showEditConfirmModal={org.showEditConfirmModal}
         onBackToList={() => {
           org.setLiveTournament(null);
-          org.setStep("LIST");
           router.replace("/tournaments");
         }}
         onViewLeaderboard={() => router.push(tournamentLeaderboardPath(liveTournament.id))}

@@ -1,21 +1,5 @@
 import type { SchedulingMode, ScoringMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
-export type SetupStep =
-  | "LIST"
-  | "ESTIMATOR"
-  | "NAME"
-  | "OPTIONS"
-  | "PLAYERS"
-  | "SETTINGS"
-  | "LIVE"
-  | "KOH"
-  | "KOH_LIVE"
-  | "ACCOUNT_PLAYERS"
-  | "LEADERBOARD"
-  | "PLAYER_GAMES"
-  | "PROFILE"
-  | "ATTACH";
-
 export interface Estimate {
   rounds: number;
   gamesPerPlayer: number;

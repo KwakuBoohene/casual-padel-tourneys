@@ -3,7 +3,6 @@ import { useRef, useState } from "react";
 
 import { useAuthSessionContext } from "../../providers/AuthSessionProvider";
 import type { CreateRouteIntent } from "../../types/organizer/createIntent";
-import type { SetupStep } from "../../types/organizer/tournament";
 import { openOrganizerTournament, type OpenOrganizerResult } from "../../utilities/organizer/openOrganizerTournament";
 import { useKohLiveSession } from "../koh/useKohLiveSession";
 import { useGameEstimator } from "./useGameEstimator";
@@ -11,9 +10,9 @@ import { useLiveTournament } from "./live/useLiveTournament";
 import { useScoreDrafts } from "./score/useScoreDrafts";
 import { useTournamentList } from "./useTournamentList";
 
+/** Session composition for signed-in organizer routes (not a step-based navigator). */
 export function useOrganizerScreen() {
   const auth = useAuthSessionContext();
-  const [step, setStep] = useState<SetupStep>("LIST");
   const [errorText, setErrorText] = useState("");
   const viewerBaseUrl = process.env.EXPO_PUBLIC_VIEWER_BASE_URL ?? "http://localhost:3000";
   const createIntentRef = useRef<CreateRouteIntent | null>(null);
@@ -58,8 +57,7 @@ export function useOrganizerScreen() {
       editMode,
       listed: list.tournaments.find((item) => item.id === tournamentId),
       openKoh: koh.openKohTournament,
-      openAmericano: live.openTournament,
-      setStep
+      openAmericano: live.openTournament
     });
 
   liveCallbacks.current = {
@@ -67,12 +65,10 @@ export function useOrganizerScreen() {
     onTournamentDeleted: (id) => {
       if (live.liveTournament?.id === id) {
         live.setLiveTournament(null);
-        setStep("LIST");
         router.replace("/tournaments");
       }
       if (koh.kohHub?.id === id) {
         koh.clearKohHub();
-        setStep("LIST");
         router.replace("/tournaments");
       }
     }
@@ -105,14 +101,11 @@ export function useOrganizerScreen() {
       list.setTournaments([]);
       live.setLiveTournament(null);
       koh.clearKohHub();
-      setStep("LIST");
       router.replace("/sign-in");
     },
     updateUser: auth.updateUser,
     clearEmailVerifyRequired: auth.clearEmailVerifyRequired,
     markEmailVerifyRequired: auth.markEmailVerifyRequired,
-    step,
-    setStep,
     errorText,
     setErrorText,
     viewerBaseUrl

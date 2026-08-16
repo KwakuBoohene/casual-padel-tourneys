@@ -25,7 +25,6 @@ export default function TournamentLeaderboardRoute() {
         onBack={() => router.replace(tournamentLivePath(id))}
         onBackToList={() => {
           org.setLiveTournament(null);
-          org.setStep("LIST");
           router.replace("/tournaments");
         }}
         onOpenPlayer={(playerId) => router.push(tournamentPlayerGamesPath(id, playerId))}

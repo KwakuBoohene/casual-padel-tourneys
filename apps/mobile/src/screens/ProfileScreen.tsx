@@ -28,10 +28,11 @@ export function ProfileScreen(props: ProfileScreenProps) {
 
   return (
     <ScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={{
         flexGrow: 1,
-        backgroundColor: colors.background,
-        padding: spacing.lg,
+        paddingVertical: spacing.lg,
+        paddingHorizontal: spacing.lg,
         maxWidth: formMaxWidth,
         width: "100%",
         alignSelf: "center"

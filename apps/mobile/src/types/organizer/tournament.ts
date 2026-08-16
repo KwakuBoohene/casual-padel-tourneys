@@ -8,7 +8,7 @@ import type {
   TournamentVariant
 } from "@padel/shared";
 
-export type { Estimate, EstimatorCreateDraft, SetupStep } from "./setup";
+export type { Estimate, EstimatorCreateDraft } from "./setup";
 
 export interface LiveTournamentState {
   id: string;

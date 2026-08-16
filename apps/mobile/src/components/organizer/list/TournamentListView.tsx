@@ -50,13 +50,12 @@ export function TournamentListView(props: TournamentListViewProps) {
   return (
     <ScrollView
       contentContainerStyle={{
-        paddingHorizontal: spacing.xl,
         paddingTop: spacing.xxl,
         paddingBottom: spacing.xl,
         gap: spacing.md,
-        backgroundColor: colors.background,
         flexGrow: 1
       }}
+      style={{ flex: 1, backgroundColor: colors.background }}
       refreshControl={<RefreshControl refreshing={props.refreshing} onRefresh={props.onRefresh} />}
     >
       <TournamentListHeader onOpenProfile={props.onOpenProfile} />

@@ -74,7 +74,7 @@ function TournamentLoadGate({ children }: { children: ReactNode }) {
   }
 
   if (status === "koh") {
-    return <Redirect href="/flow" />;
+    return <Redirect href="/koh/live" />;
   }
 
   if (status === "leaderboard") {

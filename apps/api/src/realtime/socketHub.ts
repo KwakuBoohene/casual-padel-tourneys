@@ -2,7 +2,6 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { WebSocket } from "@fastify/websocket";
 
 import { tryAuthUser } from "../lib/auth.js";
-import { getTournament } from "../lib/store.js";
 import { prisma } from "../lib/prisma.js";
 import { logger } from "../lib/logger.js";
 import { getChannelName } from "./events.js";
@@ -30,10 +29,6 @@ function readPublicToken(request: FastifyRequest): string | undefined {
 }
 
 async function loadTournamentAccess(tournamentId: string): Promise<TournamentAccess | null> {
-  const inMemory = getTournament(tournamentId);
-  if (inMemory) {
-    return { organizerId: inMemory.organizerId, publicToken: inMemory.publicToken };
-  }
   try {
     const row = await prisma.tournament.findUnique({
       where: { id: tournamentId },

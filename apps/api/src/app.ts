@@ -4,7 +4,7 @@ import websocket from "@fastify/websocket";
 import rateLimit from "@fastify/rate-limit";
 import { Redis } from "ioredis";
 
-import { registerTournamentRoutes } from "./routes/tournaments.js";
+import { registerTournamentModule } from "./modules/tournament/http/register.js";
 import { registerKohRoutes } from "./routes/koh.js";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { registerAttachAuthRoutes } from "./routes/authAttach.js";
@@ -43,7 +43,7 @@ export async function createApp() {
   await registerMagicLinkRoutes(server);
   await registerPasswordAuthRoutes(server);
   await registerPasswordResetRoutes(server);
-  await registerTournamentRoutes(server);
+  await registerTournamentModule(server);
   await registerKohRoutes(server);
   const { registerMePlayerRoutes } = await import("./routes/mePlayers.js");
   await registerMePlayerRoutes(server);

@@ -9,7 +9,6 @@ interface KohEditUnitPanelProps {
   unit: KohUnit;
   role: string;
   midMatch: boolean;
-  errorText: string;
   onOpenRename: (playerId: string, name: string) => void;
   onOpenReplace: (playerId: string) => void;
   onBack: () => void;
@@ -85,7 +84,6 @@ export function KohEditUnitPanel(props: KohEditUnitPanelProps) {
           Blocked mid-match. Wait until the score is saved, same as swap.
         </Text>
       ) : null}
-      {props.errorText ? <Text style={{ color: colors.danger }}>{props.errorText}</Text> : null}
       <PartnerRow
         name={unit.playerAName}
         midMatch={props.midMatch}

@@ -25,7 +25,6 @@ export default function TournamentsListRoute() {
       <OrganizerListScreen
         tournaments={org.tournaments}
         refreshing={org.listRefreshing}
-        errorText={org.errorText}
         showTournamentOptionsModal={org.showTournamentOptionsModal}
         showTournamentActionConfirmModal={org.showTournamentActionConfirmModal}
         pendingTournamentAction={org.pendingTournamentAction}

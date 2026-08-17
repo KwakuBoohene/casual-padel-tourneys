@@ -9,11 +9,9 @@ import { TournamentOptionsStepView } from "./TournamentOptionsStepView";
 type Create = ReturnType<typeof useCreateTournament>;
 
 export function OrganizerCreateWizard({
-  create,
-  errorText
+  create
 }: {
   create: Create;
-  errorText: string;
 }) {
   const modeLabel = formatTournamentMode(create.mode);
 
@@ -75,7 +73,6 @@ export function OrganizerCreateWizard({
       tournamentTimeText={create.tournamentTimeText}
       estimate={create.estimate}
       responseText={create.responseText}
-      errorText={errorText}
       playersCount={create.sanitizedPlayers.length}
       onChangeScoringMode={create.setScoringMode}
       onChangeSetFormat={create.setSetFormat}

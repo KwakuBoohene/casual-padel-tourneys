@@ -9,7 +9,6 @@ import type { LiveTournamentState } from "../../../types/organizer/tournament";
 
 interface LiveTournamentPendingSheetProps {
   tournament: LiveTournamentState;
-  errorText: string;
   visible: boolean;
   nameDraft: string;
   gender: PlayerGender | undefined;
@@ -55,7 +54,6 @@ export function LiveTournamentPendingSheet(props: LiveTournamentPendingSheetProp
           ))}
         </View>
       ) : null}
-      {props.errorText ? <Text style={{ color: colors.danger, fontSize: 12 }}>{props.errorText}</Text> : null}
       <SheetButton label="Cancel" onPress={props.onClose} style={{ minHeight: touch.minPrimary }} />
       <SheetButton
         label="Add player"

@@ -6,7 +6,6 @@ import { AccountPlayersPanel } from "./AccountPlayersPanel";
 
 interface AccountPlayersFlowProps {
   isGuest: boolean;
-  errorText: string;
   setErrorText: (value: string) => void;
   markEmailVerifyRequired: (dueAt?: number) => void;
   onBack: () => void;
@@ -25,7 +24,6 @@ export function AccountPlayersFlow(props: AccountPlayersFlowProps) {
       <PageShell>
         <AccountPlayerDetailPanel
           detail={players.detail}
-          errorText={props.errorText}
           onBack={players.closeDetail}
         />
       </PageShell>
@@ -39,7 +37,6 @@ export function AccountPlayersFlow(props: AccountPlayersFlowProps) {
         onRange={players.setRange}
         rows={players.board?.rows ?? []}
         loading={players.loading}
-        errorText={props.errorText}
         guestMessage={players.guestMessage}
         onSelect={players.openDetail}
         onBack={props.onBack}

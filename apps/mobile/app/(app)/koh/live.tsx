@@ -16,7 +16,6 @@ export default function KohLiveRoute() {
       <KohLiveHub
         hub={org.kohHub}
         setHub={org.setKohHub}
-        errorText={org.errorText}
         setErrorText={org.setErrorText}
         markEmailVerifyRequired={org.markEmailVerifyRequired}
         viewerBaseUrl={org.viewerBaseUrl}

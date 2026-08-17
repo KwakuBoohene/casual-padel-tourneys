@@ -42,7 +42,6 @@ interface KohRankingsPanelProps {
   onScope: (scope: "court" | "all") => void;
   rows: KohRankingRow[];
   loading: boolean;
-  errorText: string;
   onHowRanking: () => void;
   onBack: () => void;
 }
@@ -81,7 +80,6 @@ export function KohRankingsPanel(props: KohRankingsPanelProps) {
           {tab("All courts", "all")}
         </View>
         {props.loading ? <Text style={{ color: colors.muted }}>Loading…</Text> : null}
-        {props.errorText ? <Text style={{ color: colors.danger }}>{props.errorText}</Text> : null}
         {props.rows.map((row) => (
           <RankingRowCard key={row.unitId} row={row} />
         ))}

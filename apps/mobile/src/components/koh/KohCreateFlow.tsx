@@ -1,4 +1,4 @@
-import { AlertSheet } from "../sheets";
+import { AlertSheet, ErrorAlertSheet } from "../sheets";
 import { useKohCreateWizard } from "../../hooks/koh/useKohCreateWizard";
 import type { KohTournamentHub } from "../../types/koh/create";
 
@@ -6,7 +6,6 @@ import { KohAddPairSheet } from "./KohAddPairSheet";
 import { KohCreateSteps } from "./KohCreateSteps";
 
 interface KohCreateFlowProps {
-  errorText: string;
   setErrorText: (value: string) => void;
   markEmailVerifyRequired: (dueAt?: number) => void;
   onCancel: () => void;
@@ -23,17 +22,21 @@ export function KohCreateFlow(props: KohCreateFlowProps) {
 
   return (
     <>
-      <KohCreateSteps wizard={wizard} errorText={props.errorText} />
+      <KohCreateSteps wizard={wizard} />
       <KohAddPairSheet
         visible={wizard.addPairOpen}
         courtNumber={wizard.activeCourt?.courtNumber ?? 1}
         playerA={wizard.pairA}
         playerB={wizard.pairB}
-        errorText={wizard.pairError}
         onChangePlayerA={wizard.setPairA}
         onChangePlayerB={wizard.setPairB}
         onSave={wizard.savePair}
         onDismiss={() => wizard.setAddPairOpen(false)}
+      />
+      <ErrorAlertSheet
+        visible={Boolean(wizard.pairError)}
+        message={wizard.pairError}
+        onDismiss={() => wizard.setPairError("")}
       />
       <AlertSheet
         visible={wizard.showRrInfo}

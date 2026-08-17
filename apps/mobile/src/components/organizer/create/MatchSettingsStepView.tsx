@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type {
   GameWinBy,
   RegularSetFormat,
@@ -35,7 +35,6 @@ interface MatchSettingsStepViewProps {
   tournamentTimeText: string;
   estimate: Estimate | null;
   responseText: string;
-  errorText: string;
   playersCount: number;
   onChangeScoringMode: (value: ScoringMode) => void;
   onChangeSetFormat: (value: RegularSetFormat) => void;
@@ -69,10 +68,6 @@ export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
   const isMode = !isMexicano && props.settingsPhase === "MODE";
   const isRegular = !isMexicano && props.scoringMode === "REGULAR";
 
-  useEffect(() => {
-    if (props.errorText) setShowError(true);
-  }, [props.errorText]);
-
   const tryCreate = () => {
     if (!canCreate) {
       setShowError(true);
@@ -81,11 +76,9 @@ export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
     props.onCreate();
   };
 
-  const errorMessage =
-    props.errorText ||
-    (!hasMinPlayers
-      ? `Mexicano needs at least ${MEXICANO_MIN_PLAYERS} players. Next rounds come from the leaderboard.`
-      : `You need at least ${minPlayersForCourts || 4} players for ${courts} court${courts === 1 ? "" : "s"}.`);
+  const errorMessage = !hasMinPlayers
+    ? `Mexicano needs at least ${MEXICANO_MIN_PLAYERS} players. Next rounds come from the leaderboard.`
+    : `You need at least ${minPlayersForCourts || 4} players for ${courts} court${courts === 1 ? "" : "s"}.`;
 
   return (
     <>

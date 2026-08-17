@@ -34,7 +34,6 @@ function StatRow(props: { label: string; value: number }) {
 
 interface AccountPlayerDetailPanelProps {
   detail: OrganizerPlayerDetail;
-  errorText: string;
   onBack: () => void;
 }
 
@@ -49,7 +48,6 @@ export function AccountPlayerDetailPanel(props: AccountPlayerDetailPanelProps) {
         </Pressable>
         <Text style={[typography.title, { color: colors.text }]}>{detail.name}</Text>
         <Text style={{ color: colors.muted }}>{rangeLabel(detail.range)}</Text>
-        {props.errorText ? <Text style={{ color: colors.danger }}>{props.errorText}</Text> : null}
         <StatRow label="Games won" value={detail.gamesWon} />
         <StatRow label="Matches won" value={detail.matchesWon} />
         <StatRow label="Events played" value={detail.eventsPlayed} />

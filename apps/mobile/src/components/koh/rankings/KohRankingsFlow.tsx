@@ -7,7 +7,6 @@ import { KohRankingsPanel } from "./KohRankingsPanel";
 interface KohRankingsFlowProps {
   tournamentId: string;
   courtNumber: number;
-  errorText: string;
   setErrorText: (value: string) => void;
   markEmailVerifyRequired: (dueAt?: number) => void;
   onBack: () => void;
@@ -29,7 +28,6 @@ export function KohRankingsFlow(props: KohRankingsFlowProps) {
         onScope={rankings.setScope}
         rows={rankings.board?.rows ?? []}
         loading={rankings.loading}
-        errorText={props.errorText}
         onHowRanking={() => rankings.setHelpOpen(true)}
         onBack={props.onBack}
       />

@@ -10,7 +10,6 @@ import { TournamentListView } from "./TournamentListView";
 interface OrganizerListScreenProps {
   tournaments: LiveTournamentState[];
   refreshing: boolean;
-  errorText: string;
   showTournamentOptionsModal: boolean;
   showTournamentActionConfirmModal: boolean;
   pendingTournamentAction: "EDIT" | "DELETE" | null;
@@ -38,7 +37,6 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
       <TournamentListView
         tournaments={props.tournaments}
         refreshing={props.refreshing}
-        errorText={props.errorText}
         onRefresh={props.onRefresh}
         onCreateAmericano={props.onCreateAmericano}
         onCreateMexicano={props.onCreateMexicano}

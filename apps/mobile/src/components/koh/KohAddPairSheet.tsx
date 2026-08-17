@@ -9,7 +9,6 @@ interface KohAddPairSheetProps {
   courtNumber: number;
   playerA: string;
   playerB: string;
-  errorText: string;
   onChangePlayerA: (value: string) => void;
   onChangePlayerB: (value: string) => void;
   onSave: () => void;
@@ -53,9 +52,6 @@ export function KohAddPairSheet(props: KohAddPairSheetProps) {
         </Text>
         {field("PLAYER 1", props.playerA, props.onChangePlayerA)}
         {field("PLAYER 2", props.playerB, props.onChangePlayerB)}
-        {props.errorText ? (
-          <Text style={{ color: colors.danger, fontSize: 13 }}>{props.errorText}</Text>
-        ) : null}
         <Text style={{ color: colors.muted, fontSize: 12 }}>
           Players are tracked individually for performance over time.
         </Text>

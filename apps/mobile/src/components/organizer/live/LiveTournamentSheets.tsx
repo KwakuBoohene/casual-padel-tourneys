@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-import { AlertSheet } from "../../sheets";
 import type { LiveTournamentViewProps } from "../../../types/organizer/liveTournamentView";
 
 import { LiveAdjustCourtsSheet } from "./LiveAdjustCourtsSheet";
@@ -13,8 +12,6 @@ import {
 } from "./LiveTournamentPendingSheet";
 
 type LiveTournamentSheetsProps = LiveTournamentViewProps & {
-  showError: boolean;
-  onDismissError: () => void;
   onCopyShareLink: () => void;
   linkCopied: boolean;
 };
@@ -24,8 +21,6 @@ export function LiveTournamentSheets({
   score,
   sheets,
   actions,
-  showError,
-  onDismissError,
   onCopyShareLink,
   linkCopied
 }: LiveTournamentSheetsProps) {
@@ -93,7 +88,6 @@ export function LiveTournamentSheets({
       <LiveScoreEntrySheets session={session} score={score} actions={actions} />
       <LiveTournamentPendingSheet
         tournament={session.tournament}
-        errorText={session.errorText}
         visible={sheets.showAddPendingPlayerModal}
         nameDraft={sheets.pendingPlayerNameDraft}
         gender={sheets.pendingPlayerGender}
@@ -101,14 +95,6 @@ export function LiveTournamentSheets({
         onChangeName={actions.onChangePendingPlayerName}
         onChangeGender={actions.onChangePendingPlayerGender}
         onSubmit={actions.onSubmitAddPendingPlayer}
-      />
-      <AlertSheet
-        visible={showError && Boolean(session.errorText)}
-        variant="error"
-        title="Something went wrong"
-        message={session.errorText || "Please try again."}
-        primaryAction={{ label: "OK", onPress: onDismissError }}
-        onDismiss={onDismissError}
       />
     </>
   );

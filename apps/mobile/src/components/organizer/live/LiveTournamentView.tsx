@@ -24,7 +24,6 @@ export function LiveTournamentView({ session, score, sheets, actions }: LiveTour
   );
   const shareUrl = `${session.viewerBaseUrl}/tournament/${session.tournament.publicToken}`;
   const [linkCopied, setLinkCopied] = useState(false);
-  const [showError, setShowError] = useState(false);
   const onCopyShareLink = useCallback(async () => {
     await Clipboard.setStringAsync(shareUrl);
     setLinkCopied(true);
@@ -41,10 +40,6 @@ export function LiveTournamentView({ session, score, sheets, actions }: LiveTour
   useEffect(() => {
     if (focusSubmitMatchId) onSubmitFocusHandled();
   }, [focusSubmitMatchId, onSubmitFocusHandled]);
-
-  useEffect(() => {
-    if (session.errorText) setShowError(true);
-  }, [session.errorText]);
 
   const scrollPad = {
     paddingHorizontal: spacing.xl,
@@ -132,8 +127,6 @@ export function LiveTournamentView({ session, score, sheets, actions }: LiveTour
         score={score}
         sheets={sheets}
         actions={actions}
-        showError={showError}
-        onDismissError={() => setShowError(false)}
         onCopyShareLink={() => void onCopyShareLink()}
         linkCopied={linkCopied}
       />

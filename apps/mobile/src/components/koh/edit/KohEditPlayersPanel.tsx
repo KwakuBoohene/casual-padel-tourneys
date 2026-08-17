@@ -7,7 +7,6 @@ import type { KohEditUnitRow } from "../../../utilities/koh/editPlayersList";
 
 interface KohEditPlayersPanelProps {
   rows: KohEditUnitRow[];
-  errorText: string;
   onSelect: (row: KohEditUnitRow) => void;
   onBack: () => void;
 }
@@ -21,7 +20,6 @@ export function KohEditPlayersPanel(props: KohEditPlayersPanelProps) {
         <Text style={{ color: colors.muted, fontSize: 13 }}>
           Fix a spelling or replace a partner who left. Unit slot and match record stay.
         </Text>
-        {props.errorText ? <Text style={{ color: colors.danger }}>{props.errorText}</Text> : null}
         {props.rows.map((row) => {
           const wl = `${row.unit.matchesWon ?? 0}-${row.unit.matchesLost ?? 0}`;
           return (

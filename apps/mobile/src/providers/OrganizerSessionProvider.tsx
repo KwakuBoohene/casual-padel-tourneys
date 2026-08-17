@@ -1,5 +1,6 @@
 import { createContext, useContext, type ReactNode } from "react";
 
+import { ErrorAlertSheet } from "../components/sheets";
 import { useOrganizerScreen } from "../hooks/organizer/useOrganizerScreen";
 
 type OrganizerSessionValue = ReturnType<typeof useOrganizerScreen>;
@@ -9,7 +10,14 @@ const OrganizerSessionContext = createContext<OrganizerSessionValue | null>(null
 export function OrganizerSessionProvider({ children }: { children: ReactNode }) {
   const value = useOrganizerScreen();
   return (
-    <OrganizerSessionContext.Provider value={value}>{children}</OrganizerSessionContext.Provider>
+    <OrganizerSessionContext.Provider value={value}>
+      {children}
+      <ErrorAlertSheet
+        visible={Boolean(value.errorText)}
+        message={value.errorText}
+        onDismiss={() => value.setErrorText("")}
+      />
+    </OrganizerSessionContext.Provider>
   );
 }
 

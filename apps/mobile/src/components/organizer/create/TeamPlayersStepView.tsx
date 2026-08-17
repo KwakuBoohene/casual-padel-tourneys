@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
-import { AlertSheet } from "../../sheets";
+import { AlertSheet, ErrorAlertSheet } from "../../sheets";
 import { radius, spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
@@ -148,11 +148,15 @@ export function TeamPlayersStepView(props: TeamPlayersStepViewProps) {
         title={editIndex !== null ? "Edit pair" : "Add pair"}
         playerA={playerA}
         playerB={playerB}
-        errorText={sheetError}
         onChangePlayerA={setPlayerA}
         onChangePlayerB={setPlayerB}
         onSave={savePair}
         onDismiss={() => setSheetOpen(false)}
+      />
+      <ErrorAlertSheet
+        visible={Boolean(sheetError)}
+        message={sheetError}
+        onDismiss={() => setSheetError("")}
       />
 
       <AlertSheet

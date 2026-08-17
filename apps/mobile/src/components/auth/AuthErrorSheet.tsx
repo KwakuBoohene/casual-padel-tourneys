@@ -1,4 +1,4 @@
-import { AlertSheet } from "../sheets";
+import { ErrorAlertSheet } from "../sheets";
 
 interface AuthErrorSheetProps {
   visible: boolean;
@@ -7,15 +7,13 @@ interface AuthErrorSheetProps {
   onDismiss: () => void;
 }
 
-/** Auth-facing error sheet — thin wrapper over shared AlertSheet. */
+/** Auth-facing error sheet — shared AlertSheet error variant. */
 export function AuthErrorSheet(props: AuthErrorSheetProps) {
   return (
-    <AlertSheet
+    <ErrorAlertSheet
       visible={props.visible}
-      variant="error"
-      title={props.title ?? "Something went wrong"}
+      title={props.title}
       message={props.message}
-      primaryAction={{ label: "OK", onPress: props.onDismiss }}
       onDismiss={props.onDismiss}
       dismissOnOverlay
     />

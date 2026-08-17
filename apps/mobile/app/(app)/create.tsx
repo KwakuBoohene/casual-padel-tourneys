@@ -67,7 +67,7 @@ export default function CreateTournamentRoute() {
 
   return (
     <PageShell>
-      <OrganizerCreateWizard create={create} errorText={org.errorText} />
+      <OrganizerCreateWizard create={create} />
     </PageShell>
   );
 }

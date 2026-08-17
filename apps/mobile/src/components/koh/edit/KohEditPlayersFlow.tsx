@@ -10,7 +10,6 @@ import { KohReplacePartnerSheet } from "./KohReplacePartnerSheet";
 interface KohEditPlayersFlowProps {
   hub: KohTournamentHub;
   setHub: (hub: KohTournamentHub) => void;
-  errorText: string;
   setErrorText: (value: string) => void;
   markEmailVerifyRequired: (dueAt?: number) => void;
   onBack: () => void;
@@ -33,7 +32,6 @@ export function KohEditPlayersFlow(props: KohEditPlayersFlowProps) {
           unit={unit}
           role={edit.selected.role}
           midMatch={edit.selected.midMatch}
-          errorText={props.errorText}
           onOpenRename={edit.openRename}
           onOpenReplace={edit.openReplace}
           onBack={() => {
@@ -77,7 +75,6 @@ export function KohEditPlayersFlow(props: KohEditPlayersFlowProps) {
     <PageShell>
       <KohEditPlayersPanel
         rows={edit.units}
-        errorText={props.errorText}
         onSelect={edit.setSelected}
         onBack={props.onBack}
       />

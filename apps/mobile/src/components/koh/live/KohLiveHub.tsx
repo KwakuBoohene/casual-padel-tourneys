@@ -13,7 +13,6 @@ import { KohLiveOverlaySheets } from "./KohLiveOverlaySheets";
 interface KohLiveHubProps {
   hub: KohTournamentHub;
   setHub: (hub: KohTournamentHub) => void;
-  errorText: string;
   setErrorText: (value: string) => void;
   markEmailVerifyRequired: (dueAt?: number) => void;
   viewerBaseUrl: string;
@@ -50,7 +49,6 @@ export function KohLiveHub(props: KohLiveHubProps) {
       <KohRankingsFlow
         tournamentId={props.hub.id}
         courtNumber={court?.courtNumber ?? 1}
-        errorText={props.errorText}
         setErrorText={props.setErrorText}
         markEmailVerifyRequired={props.markEmailVerifyRequired}
         onBack={backToLive}
@@ -63,7 +61,6 @@ export function KohLiveHub(props: KohLiveHubProps) {
       <KohEditPlayersFlow
         hub={props.hub}
         setHub={props.setHub}
-        errorText={props.errorText}
         setErrorText={props.setErrorText}
         markEmailVerifyRequired={props.markEmailVerifyRequired}
         onBack={backToLive}
@@ -76,7 +73,6 @@ export function KohLiveHub(props: KohLiveHubProps) {
       <KohLiveCourtBody
         name={props.hub.config.name}
         ended={ended}
-        errorText={props.errorText}
         court={court}
         courtCount={props.hub.courts.length}
         courtIndex={live.courtIndex}

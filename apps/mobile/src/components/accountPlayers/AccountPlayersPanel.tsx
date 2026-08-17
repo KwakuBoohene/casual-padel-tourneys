@@ -15,7 +15,6 @@ interface AccountPlayersPanelProps {
   onRange: (range: OrganizerPlayerRange) => void;
   rows: OrganizerPlayerLeaderboardRow[];
   loading: boolean;
-  errorText: string;
   guestMessage: string | null;
   onSelect: (id: string) => void;
   onBack: () => void;
@@ -83,7 +82,6 @@ export function AccountPlayersPanel(props: AccountPlayersPanelProps) {
           </View>
         ) : null}
         {props.loading ? <Text style={{ color: colors.muted }}>Loading…</Text> : null}
-        {props.errorText ? <Text style={{ color: colors.danger }}>{props.errorText}</Text> : null}
         {!props.loading && !props.guestMessage && props.rows.length === 0 ? (
           <Text style={{ color: colors.muted }}>No scored KOH games yet in this range.</Text>
         ) : null}

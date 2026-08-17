@@ -2,7 +2,6 @@ import { KohCreateFlow } from "../components/koh/KohCreateFlow";
 import type { KohTournamentHub } from "../types/koh/create";
 
 interface KohScreenProps {
-  errorText: string;
   setErrorText: (value: string) => void;
   markEmailVerifyRequired: (dueAt?: number) => void;
   onCancel: () => void;
@@ -13,7 +12,6 @@ interface KohScreenProps {
 export function KohScreen(props: KohScreenProps) {
   return (
     <KohCreateFlow
-      errorText={props.errorText}
       setErrorText={props.setErrorText}
       markEmailVerifyRequired={props.markEmailVerifyRequired}
       onCancel={props.onCancel}

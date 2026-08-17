@@ -11,7 +11,6 @@ export default function AccountPlayersRoute() {
     <PageShell>
       <AccountPlayersFlow
         isGuest={org.currentUser?.isGuest === true}
-        errorText={org.errorText}
         setErrorText={org.setErrorText}
         markEmailVerifyRequired={org.markEmailVerifyRequired}
         onBack={() => router.replace("/tournaments")}

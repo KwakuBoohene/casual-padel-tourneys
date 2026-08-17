@@ -107,6 +107,7 @@ export function useKohCreateWizard(params: UseKohCreateWizardParams) {
     pairB,
     setPairB,
     pairError,
+    setPairError,
     activeCourt,
     canContinueFromName: draft.name.trim().length >= 2,
     canStart: courtsReadyToStart(draft.courtUnits) && !hasDuplicatePlayerNames(draft.courtUnits),

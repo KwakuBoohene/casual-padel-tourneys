@@ -14,7 +14,6 @@ import { TournamentListHeader } from "./TournamentListHeader";
 interface TournamentListViewProps {
   tournaments: LiveTournamentState[];
   refreshing: boolean;
-  errorText: string;
   onRefresh: () => void;
   onCreateAmericano: () => void;
   onCreateMexicano: () => void;
@@ -89,11 +88,6 @@ export function TournamentListView(props: TournamentListViewProps) {
             Start with Americano, Mexicano, or King of the Court.
           </Text>
         </View>
-      }
-      ListFooterComponent={
-        props.errorText ? (
-          <Text style={{ color: colors.danger, marginTop: spacing.md }}>Error: {props.errorText}</Text>
-        ) : null
       }
       ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
       renderItem={({ item }) => (

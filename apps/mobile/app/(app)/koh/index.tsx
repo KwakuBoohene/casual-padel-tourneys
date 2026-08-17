@@ -10,7 +10,6 @@ export default function KohCreateRoute() {
   return (
     <PageShell>
       <KohScreen
-        errorText={org.errorText}
         setErrorText={org.setErrorText}
         markEmailVerifyRequired={org.markEmailVerifyRequired}
         onCancel={() => {

@@ -13,7 +13,6 @@ interface KohReviewStepProps {
   draft: KohCreateDraft;
   canStart: boolean;
   submitting: boolean;
-  errorText: string;
   onBack: () => void;
   onStart: () => void;
 }
@@ -74,7 +73,6 @@ export function KohReviewStep(props: KohReviewStepProps) {
       <Text style={{ color: colors.muted, fontSize: 12 }}>
         Doubles only. Each court needs at least 2 pairs. Max 12 per court.
       </Text>
-      {props.errorText ? <Text style={{ color: colors.danger }}>{props.errorText}</Text> : null}
     </WizardChrome>
   );
 }

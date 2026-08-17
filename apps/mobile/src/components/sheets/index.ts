@@ -5,5 +5,6 @@ export {
   type AlertSheetVariant,
   type SheetAction
 } from "./AlertSheet";
+export { ErrorAlertSheet } from "./ErrorAlertSheet";
 export { SheetButton } from "./SheetButton";
 export { ScoreEntrySheet, type ScoreEntrySheetProps } from "./ScoreEntrySheet";

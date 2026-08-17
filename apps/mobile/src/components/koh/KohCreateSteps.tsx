@@ -13,11 +13,10 @@ type Wizard = ReturnType<typeof useKohCreateWizard>;
 
 interface KohCreateStepsProps {
   wizard: Wizard;
-  errorText: string;
 }
 
 export function KohCreateSteps(props: KohCreateStepsProps) {
-  const { wizard, errorText } = props;
+  const { wizard } = props;
   const { draft, setDraft, stepIndex, stepCount } = wizard;
 
   if (wizard.step === "NAME") {
@@ -120,7 +119,6 @@ export function KohCreateSteps(props: KohCreateStepsProps) {
       draft={draft}
       canStart={wizard.canStart}
       submitting={wizard.submitting}
-      errorText={errorText}
       onBack={wizard.goBack}
       onStart={() => void wizard.startTournament()}
     />

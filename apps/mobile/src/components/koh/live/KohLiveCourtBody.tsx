@@ -13,7 +13,6 @@ type LiveCourt = KohTournamentHub["courts"][number];
 interface KohLiveCourtBodyProps {
   name: string;
   ended: boolean;
-  errorText: string;
   court: LiveCourt | undefined;
   courtCount: number;
   courtIndex: number;
@@ -55,7 +54,6 @@ export function KohLiveCourtBody(props: KohLiveCourtBodyProps) {
         ) : null}
         {court?.challenger ? <KohLiveUnitCard label="CHALLENGER" unit={court.challenger} /> : null}
         <KohLiveWaitingQueue units={court?.waiting ?? []} />
-        {props.errorText ? <Text style={{ color: colors.danger }}>{props.errorText}</Text> : null}
       </ScrollView>
       <View style={{ paddingHorizontal: spacing.xl }}>
         <KohLiveActions

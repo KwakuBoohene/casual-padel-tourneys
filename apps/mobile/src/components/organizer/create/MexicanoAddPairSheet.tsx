@@ -9,7 +9,6 @@ interface MexicanoAddPairSheetProps {
   title: string;
   playerA: string;
   playerB: string;
-  errorText: string;
   onChangePlayerA: (value: string) => void;
   onChangePlayerB: (value: string) => void;
   onSave: () => void;
@@ -51,9 +50,6 @@ export function MexicanoAddPairSheet(props: MexicanoAddPairSheetProps) {
         </Text>
         {field("PLAYER 1", props.playerA, props.onChangePlayerA)}
         {field("PLAYER 2", props.playerB, props.onChangePlayerB)}
-        {props.errorText ? (
-          <Text style={{ color: colors.danger, fontSize: 13 }}>{props.errorText}</Text>
-        ) : null}
         <SheetButton label="Save pair" onPress={props.onSave} />
         <SheetButton label="Cancel" onPress={props.onDismiss} />
       </View>

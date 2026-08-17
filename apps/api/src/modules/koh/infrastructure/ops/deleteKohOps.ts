@@ -1,11 +1,15 @@
 import { logger } from "../../../../lib/logger.js";
-import { prisma } from "../../../../lib/prisma.js";
+import { hardDeleteTournament } from "../../../tournament/infrastructure/hardDeleteTournament.js";
 
 import { requireKohTournament } from "./loadKohOps.js";
 
 /** Hard-delete a King of the Court event the organizer owns (including ended nights). */
-export async function deleteKohTournament(tournamentId: string, organizerId: string): Promise<void> {
+export async function deleteKohTournament(
+  tournamentId: string,
+  organizerId: string,
+  options?: { stripCareer?: boolean }
+): Promise<void> {
   await requireKohTournament(tournamentId, organizerId);
   logger.debug("koh/deleteKohTournament", { tournamentId, organizerId });
-  await prisma.tournament.delete({ where: { id: tournamentId } });
+  await hardDeleteTournament(tournamentId, options?.stripCareer === true);
 }

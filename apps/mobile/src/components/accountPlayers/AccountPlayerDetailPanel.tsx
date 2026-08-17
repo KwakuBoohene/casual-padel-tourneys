@@ -43,27 +43,13 @@ export function AccountPlayerDetailPanel(props: AccountPlayerDetailPanelProps) {
                 losses: detail.matchesLost,
                 draws: detail.matchesDrawn,
                 gamesWon: detail.gamesWon,
-                gamesLost: detail.gamesLost
+                gamesLost: detail.gamesLost,
+                americanoPointsWon: detail.americanoPointsWon,
+                americanoPointsLost: detail.americanoPointsLost
               })
             }
           ]}
         />
-        <View
-          style={{
-            flexDirection: "row",
-            gap: spacing.md
-          }}
-        >
-          <Text style={{ color: colors.text, fontWeight: "700", fontSize: 16 }}>
-            PW(A) {detail.americanoPointsWon}
-          </Text>
-          <Text style={{ color: colors.text, fontWeight: "700", fontSize: 16 }}>
-            PL(A) {detail.americanoPointsLost}
-          </Text>
-        </View>
-        <Text style={{ color: colors.muted, fontSize: 12 }}>
-          PW(A) / PL(A) are Americano rally points, not regular games.
-        </Text>
         <Text style={{ color: colors.muted }}>
           {detail.eventsPlayed} {detail.eventsPlayed === 1 ? "event" : "events"} played
         </Text>

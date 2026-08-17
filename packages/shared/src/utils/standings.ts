@@ -5,6 +5,8 @@ export interface StandingsLine {
   draws: number;
   gamesWon: number;
   gamesLost: number;
+  americanoPointsWon: number;
+  americanoPointsLost: number;
   points: number;
 }
 
@@ -16,6 +18,8 @@ export const STANDINGS_COLUMNS = [
   { key: "gw", header: "GW", title: "Games won" },
   { key: "gl", header: "GL", title: "Games lost" },
   { key: "gd", header: "GD", title: "Game difference" },
+  { key: "pwa", header: "PW(A)", title: "Americano rally points won" },
+  { key: "pla", header: "PL(A)", title: "Americano rally points lost" },
   { key: "pts", header: "PTS", title: "Points (1 per match win)" }
 ] as const;
 
@@ -35,6 +39,8 @@ export function standingsCells(line: StandingsLine): Record<StandingsColumnKey, 
     gw: String(line.gamesWon),
     gl: String(line.gamesLost),
     gd: formatGameDiff(line.gamesWon - line.gamesLost),
+    pwa: String(line.americanoPointsWon),
+    pla: String(line.americanoPointsLost),
     pts: String(line.points)
   };
 }
@@ -45,6 +51,8 @@ export function standingsLineFromRecord(input: {
   draws?: number;
   gamesWon: number;
   gamesLost: number;
+  americanoPointsWon?: number;
+  americanoPointsLost?: number;
 }): StandingsLine {
   const draws = input.draws ?? 0;
   return {
@@ -54,18 +62,18 @@ export function standingsLineFromRecord(input: {
     draws,
     gamesWon: input.gamesWon,
     gamesLost: input.gamesLost,
+    americanoPointsWon: input.americanoPointsWon ?? 0,
+    americanoPointsLost: input.americanoPointsLost ?? 0,
     points: input.wins
   };
 }
 
 export const STANDINGS_LEGEND =
-  "MP matches played · W wins · L losses · D draws · GW games won · GL games lost · GD game difference · PTS 1 per match win";
+  "MP matches played · W wins · L losses · D draws · GW games won · GL games lost · GD game difference · PW(A) Americano rally points won · PL(A) Americano rally points lost · PTS 1 per match win";
 
-export const STANDINGS_HELP_ABBREVIATIONS: { abbrev: string; meaning: string }[] = [
-  ...STANDINGS_COLUMNS.map((col) => ({ abbrev: col.header, meaning: col.title })),
-  { abbrev: "PW(A)", meaning: "Americano rally points won" },
-  { abbrev: "PL(A)", meaning: "Americano rally points lost" }
-];
+export const STANDINGS_HELP_ABBREVIATIONS: { abbrev: string; meaning: string }[] = STANDINGS_COLUMNS.map(
+  (col) => ({ abbrev: col.header, meaning: col.title })
+);
 
 /** Tie-break order after # rank. There is no separate rating number. */
 export const STANDINGS_RANKING_STEPS = [
@@ -77,4 +85,4 @@ export const STANDINGS_RANKING_STEPS = [
 ] as const;
 
 export const STANDINGS_HELP_BLURB =
-  "There is no separate rating. Rank is this table order. Each match win is +1 PTS. A tied Americano match is a draw: it counts in MP and D, and adds 0 PTS. GW and GL are regular games only. GD is games won minus games lost.";
+  "There is no separate rating. Rank is this table order. Each match win is +1 PTS. A tied Americano match is a draw: it counts in MP and D, and adds 0 PTS. GW and GL are regular games only. GD is games won minus games lost. PW(A) and PL(A) are Americano rally points.";

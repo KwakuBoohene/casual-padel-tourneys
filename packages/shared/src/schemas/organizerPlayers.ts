@@ -54,3 +54,22 @@ export interface OrganizerPlayerDetail {
   eventsPlayed: number;
   recentEvents: OrganizerPlayerEventSummary[];
 }
+
+export const organizerPlayerStatusSchema = z.enum(["active", "archived"]);
+export type OrganizerPlayerStatus = z.infer<typeof organizerPlayerStatusSchema>;
+
+export interface OrganizerManagedPlayer {
+  id: string;
+  name: string;
+  matchesWon: number;
+  matchesLost: number;
+  matchesDrawn: number;
+  suggestedRestoreName?: string;
+}
+
+export const mergeOrganizerPlayersSchema = z.object({
+  playerIdA: z.string().min(1),
+  playerIdB: z.string().min(1),
+  survivingName: z.string().trim().min(1).max(80)
+});
+export type MergeOrganizerPlayersInput = z.infer<typeof mergeOrganizerPlayersSchema>;

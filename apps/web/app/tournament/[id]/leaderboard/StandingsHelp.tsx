@@ -20,7 +20,7 @@ export function WebStandingsHelp() {
         <dl className="space-y-2">
           {STANDINGS_HELP_ABBREVIATIONS.map((row) => (
             <div key={row.abbrev} className="flex gap-3 text-sm">
-              <dt className="w-12 shrink-0 font-bold text-padel-text">{row.abbrev}</dt>
+              <dt className="w-14 shrink-0 font-bold text-padel-text">{row.abbrev}</dt>
               <dd className="text-padel-text leading-5">{row.meaning}</dd>
             </div>
           ))}

@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import {
   advanceMexicanoRoundSchema,
+  deleteTournamentQuerySchema,
   endMexicanoNightSchema,
   isKingOfTheCourtMode
 } from "@padel/shared";
@@ -77,8 +78,14 @@ export function registerTournamentLifecycleRoutes(
       if (!meta || meta.organizerId !== request.user.id) {
         throw notFound("Tournament not found.");
       }
+      const query = deleteTournamentQuerySchema.safeParse(request.query ?? {});
+      if (!query.success) {
+        reply.status(400);
+        return { message: "removeFromCareerLeaderboard must be true or false." };
+      }
+      const stripCareer = query.data.removeFromCareerLeaderboard;
       if (isKingOfTheCourtMode(meta.mode)) {
-        await deleteKohTournament(params.id, request.user.id);
+        await deleteKohTournament(params.id, request.user.id, { stripCareer });
         await deps.events.publish({
           type: "TOURNAMENT_DELETED",
           tournamentId: params.id,
@@ -88,7 +95,8 @@ export function registerTournamentLifecycleRoutes(
       }
       await deleteTournament(deps, {
         tournamentId: params.id,
-        organizerId: request.user.id
+        organizerId: request.user.id,
+        stripCareer
       });
       return { ok: true };
     } catch (error) {

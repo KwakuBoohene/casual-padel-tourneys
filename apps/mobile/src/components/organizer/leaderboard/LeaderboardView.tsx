@@ -77,7 +77,9 @@ export function LeaderboardView(props: LeaderboardViewProps) {
               losses: item.row.losses,
               draws: item.row.draws,
               gamesWon: item.row.gamesWon ?? 0,
-              gamesLost: item.row.gamesLost ?? 0
+              gamesLost: item.row.gamesLost ?? 0,
+              americanoPointsWon: item.row.americanoPointsWon ?? 0,
+              americanoPointsLost: item.row.americanoPointsLost ?? 0
             })
           }))}
           onSelect={props.onOpenPlayer}

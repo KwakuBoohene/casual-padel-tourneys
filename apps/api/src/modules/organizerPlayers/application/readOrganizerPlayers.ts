@@ -13,7 +13,7 @@ export async function getOrganizerPlayerLeaderboard(
   organizerId: string,
   range: OrganizerPlayerRange
 ): Promise<OrganizerPlayerLeaderboard> {
-  const deltas = await deps.repo.listDeltas({ organizerId, since: rangeStart(range) });
+  const deltas = await deps.repo.listDeltas({ organizerId, since: rangeStart(range), activeOnly: true });
   return buildLeaderboard(range, deltas);
 }
 

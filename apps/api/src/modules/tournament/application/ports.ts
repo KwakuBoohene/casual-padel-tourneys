@@ -12,7 +12,7 @@ export interface TournamentRepository {
    * (clients send this). Fails with conflict if row.version !== expectedVersion.
    */
   save(state: TournamentState, expectedVersion: number): Promise<void>;
-  delete(id: string): Promise<void>;
+  delete(id: string, options?: { stripCareer?: boolean }): Promise<void>;
 }
 
 export interface TournamentEvents {

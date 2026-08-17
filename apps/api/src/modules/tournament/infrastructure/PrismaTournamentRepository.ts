@@ -14,6 +14,7 @@ import {
   nestedRounds,
   scalarTournamentData
 } from "./mappers/tournamentWriteMapper.js";
+import { hardDeleteTournament } from "./hardDeleteTournament.js";
 
 export class PrismaTournamentRepository implements TournamentRepository {
   async getById(id: string): Promise<TournamentState | null> {
@@ -108,9 +109,9 @@ export class PrismaTournamentRepository implements TournamentRepository {
     });
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, options?: { stripCareer?: boolean }): Promise<void> {
     try {
-      await prisma.tournament.delete({ where: { id } });
+      await hardDeleteTournament(id, options?.stripCareer === true);
     } catch {
       throw notFound("Tournament not found.");
     }

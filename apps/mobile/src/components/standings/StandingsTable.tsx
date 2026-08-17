@@ -38,7 +38,7 @@ export function StandingsTable(props: StandingsTableProps) {
       >
         <View
           style={{
-            minWidth: 372,
+            minWidth: 456,
             flexGrow: 1,
             borderRadius: 14,
             borderWidth: 1,

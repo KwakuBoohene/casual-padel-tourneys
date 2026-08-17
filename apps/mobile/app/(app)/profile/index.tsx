@@ -21,6 +21,7 @@ export default function ProfileRoute() {
           router.replace("/sign-in");
         }}
         onAttachAccount={() => router.push("/profile/attach")}
+        onOpenPlayers={() => router.push("/profile/players")}
       />
     </PageShell>
   );

@@ -1,13 +1,27 @@
 import { prisma } from "../../../lib/prisma.js";
-import type { CareerDeltaQuery, OrganizerPlayerRepository } from "../application/ports.js";
+import type {
+  CareerDeltaQuery,
+  OrganizerManagedPlayerRow,
+  OrganizerPlayerRepository
+} from "../application/ports.js";
 import type { CareerDelta } from "../domain/careerStats.js";
+import {
+  archiveOrganizerPlayerRow,
+  listManagedOrganizerPlayers,
+  mergeOrganizerPlayerRows,
+  unarchiveOrganizerPlayerRow
+} from "./organizerPlayerManagement.js";
 
 export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepository {
   async listDeltas(query: CareerDeltaQuery): Promise<CareerDelta[]> {
     const rows = await prisma.organizerPlayerStatDelta.findMany({
       where: {
         organizerId: query.organizerId,
-        ...(query.organizerPlayerId ? { organizerPlayerId: query.organizerPlayerId } : {}),
+        ...(query.organizerPlayerId
+          ? { organizerPlayerId: query.organizerPlayerId }
+          : query.activeOnly === false
+            ? {}
+            : { organizerPlayer: { archivedAt: null } }),
         ...(query.since ? { occurredAt: { gte: query.since } } : {})
       },
       orderBy: { occurredAt: "desc" },
@@ -54,5 +68,32 @@ export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepositor
       select: { id: true, name: true }
     });
     return player ?? null;
+  }
+
+  listManaged(
+    organizerId: string,
+    status: "active" | "archived"
+  ): Promise<OrganizerManagedPlayerRow[]> {
+    return listManagedOrganizerPlayers(organizerId, status);
+  }
+
+  archivePlayer(organizerId: string, organizerPlayerId: string): Promise<{ id: string; name: string }> {
+    return archiveOrganizerPlayerRow(organizerId, organizerPlayerId);
+  }
+
+  unarchivePlayer(
+    organizerId: string,
+    organizerPlayerId: string
+  ): Promise<{ id: string; name: string }> {
+    return unarchiveOrganizerPlayerRow(organizerId, organizerPlayerId);
+  }
+
+  mergePlayers(input: {
+    organizerId: string;
+    playerIdA: string;
+    playerIdB: string;
+    survivingName: string;
+  }): Promise<{ id: string; name: string }> {
+    return mergeOrganizerPlayerRows(input);
   }
 }

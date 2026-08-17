@@ -27,6 +27,7 @@ export default function TournamentsListRoute() {
         refreshing={org.listRefreshing}
         showTournamentOptionsModal={org.showTournamentOptionsModal}
         showTournamentActionConfirmModal={org.showTournamentActionConfirmModal}
+        showCareerDeleteModal={org.showCareerDeleteModal}
         pendingTournamentAction={org.pendingTournamentAction}
         onRefresh={() => void org.loadTournaments()}
         onCreateAmericano={() => org.beginCreate({ kind: "mode", mode: "AMERICANO" })}
@@ -63,6 +64,9 @@ export default function TournamentsListRoute() {
             router.push(tournamentLivePath(result.tournamentId, true));
           })();
         }}
+        onCancelCareerDelete={org.cancelCareerDelete}
+        onRemoveFromLeaderboard={() => void org.confirmCareerDelete(true)}
+        onKeepOnLeaderboard={() => void org.confirmCareerDelete(false)}
       />
     </PageShell>
   );

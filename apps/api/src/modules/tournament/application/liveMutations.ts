@@ -100,10 +100,10 @@ export async function endMexicanoNight(
 
 export async function deleteTournament(
   deps: Deps,
-  input: { tournamentId: string; organizerId: string }
+  input: { tournamentId: string; organizerId: string; stripCareer?: boolean }
 ): Promise<void> {
   await requireOrganizerTournament(deps.repo, input.tournamentId, input.organizerId);
-  await deps.repo.delete(input.tournamentId);
+  await deps.repo.delete(input.tournamentId, { stripCareer: input.stripCareer === true });
   await deps.events.publish({
     type: "TOURNAMENT_DELETED",
     tournamentId: input.tournamentId,

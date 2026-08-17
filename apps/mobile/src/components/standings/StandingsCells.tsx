@@ -7,8 +7,10 @@ import { useTheme } from "../../theme/ThemeProvider";
 const RANK_W = 22;
 const COL_W = 28;
 const GD_W = 34;
+const AM_W = 42;
 
 function widthFor(key: string): number {
+  if (key === "pwa" || key === "pla") return AM_W;
   if (key === "gd" || key === "pts") return GD_W;
   return COL_W;
 }

@@ -102,7 +102,9 @@ export function AccountPlayersPanel(props: AccountPlayersPanelProps) {
                 losses: row.matchesLost,
                 draws: row.matchesDrawn,
                 gamesWon: row.gamesWon,
-                gamesLost: row.gamesLost
+                gamesLost: row.gamesLost,
+                americanoPointsWon: row.americanoPointsWon,
+                americanoPointsLost: row.americanoPointsLost
               })
             }))}
             onSelect={props.onSelect}

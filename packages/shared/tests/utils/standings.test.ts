@@ -32,12 +32,29 @@ test("standingsLineFromRecord uses W+L+D as matches played", () => {
     gw: "48",
     gl: "32",
     gd: "+16",
+    pwa: "0",
+    pla: "0",
     pts: "8"
   });
 });
 
-test("standings help lists table columns then Americano rally abbreviations", () => {
+test("standingsLineFromRecord maps Americano rally points", () => {
+  const line = standingsLineFromRecord({
+    wins: 1,
+    losses: 0,
+    gamesWon: 1,
+    gamesLost: 0,
+    americanoPointsWon: 24,
+    americanoPointsLost: 18
+  });
+  assert.equal(standingsCells(line).pwa, "24");
+  assert.equal(standingsCells(line).pla, "18");
+});
+
+test("standings help lists table columns including Americano rally abbreviations", () => {
   assert.equal(STANDINGS_HELP_ABBREVIATIONS[0]?.abbrev, "MP");
-  assert.equal(STANDINGS_HELP_ABBREVIATIONS.at(-1)?.abbrev, "PL(A)");
+  assert.equal(STANDINGS_HELP_ABBREVIATIONS.at(-3)?.abbrev, "PW(A)");
+  assert.equal(STANDINGS_HELP_ABBREVIATIONS.at(-2)?.abbrev, "PL(A)");
+  assert.equal(STANDINGS_HELP_ABBREVIATIONS.at(-1)?.abbrev, "PTS");
   assert.ok(STANDINGS_RANKING_STEPS[0]?.startsWith("PTS"));
 });

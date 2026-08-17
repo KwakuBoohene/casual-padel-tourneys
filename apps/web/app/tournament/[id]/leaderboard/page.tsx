@@ -82,7 +82,9 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
               losses: entry.losses,
               draws: entry.draws,
               gamesWon: entry.gamesWon ?? 0,
-              gamesLost: entry.gamesLost ?? 0
+              gamesLost: entry.gamesLost ?? 0,
+              americanoPointsWon: entry.americanoPointsWon ?? 0,
+              americanoPointsLost: entry.americanoPointsLost ?? 0
             })
           }))}
         />

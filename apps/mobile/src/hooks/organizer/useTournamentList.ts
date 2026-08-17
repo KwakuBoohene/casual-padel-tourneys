@@ -1,14 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
-import { apiDelete } from "../../api/client";
 import { isEmailVerifyRequired } from "../../api/errors";
 import type { OpenOrganizerResult } from "../../utilities/organizer/openOrganizerTournament";
-import { removeTournamentCaches } from "../../utilities/organizer/tournamentQueryCache";
 import { tournamentQueryKeys } from "../../utilities/organizer/tournamentQueryKeys";
 import { fetchTournamentList } from "../../utilities/organizer/tournamentQueries";
 
 import { usePlayerNameSuggestions } from "./usePlayerNameSuggestions";
+import { useTournamentDelete } from "./useTournamentDelete";
 import {
   useTournamentListModals,
   type ConfirmTournamentActionResult
@@ -35,23 +34,13 @@ export function useTournamentList({
   openTournament,
   onTournamentDeleted
 }: UseTournamentListParams) {
-  const queryClient = useQueryClient();
   const modals = useTournamentListModals();
   const suggestedPlayerNames = usePlayerNameSuggestions(authReady && Boolean(authToken));
-
+  const deleteMutation = useTournamentDelete(onTournamentDeleted);
   const listQuery = useQuery({
     queryKey: tournamentQueryKeys.list(),
     queryFn: fetchTournamentList,
     enabled: authReady && Boolean(authToken)
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (tournamentId: string) =>
-      apiDelete<{ ok: boolean }>(`/tournaments/${tournamentId}`),
-    onSuccess: (_data, tournamentId) => {
-      removeTournamentCaches(queryClient, tournamentId);
-      onTournamentDeleted(tournamentId);
-    }
   });
 
   useEffect(() => {
@@ -75,10 +64,17 @@ export function useTournamentList({
       modals.clearActionSelection();
       return null;
     }
+    let holdSelection = false;
     try {
       setErrorText("");
       if (action === "DELETE") {
-        await deleteMutation.mutateAsync(tournamentId);
+        const row = (listQuery.data ?? []).find((item) => item.id === tournamentId);
+        if (row?.config.contributeToCareerLeaderboard !== false) {
+          modals.openCareerDelete();
+          holdSelection = true;
+          return null;
+        }
+        await deleteMutation.mutateAsync({ tournamentId, stripCareer: false });
         return { action: "DELETE", tournamentId };
       }
       return { action: "EDIT", tournamentId, openResult: await openTournament(tournamentId, true) };
@@ -86,8 +82,19 @@ export function useTournamentList({
       setErrorText((error as Error).message);
       return null;
     } finally {
-      modals.clearActionSelection();
+      if (!holdSelection) modals.clearActionSelection();
     }
+  };
+
+  const confirmCareerDelete = async (stripCareer: boolean) => {
+    const tournamentId = modals.selectedTournamentId;
+    if (!tournamentId) return;
+    try {
+      setErrorText("");
+      await deleteMutation.mutateAsync({ tournamentId, stripCareer });
+    } catch (error) {
+      setErrorText((error as Error).message);
+    } finally { modals.clearActionSelection(); }
   };
 
   return {
@@ -101,10 +108,13 @@ export function useTournamentList({
     openTournamentOptions: modals.openTournamentOptions,
     requestTournamentAction: modals.requestTournamentAction,
     confirmTournamentAction,
+    confirmCareerDelete,
+    cancelCareerDelete: modals.clearActionSelection,
     showTournamentOptionsModal: modals.showTournamentOptionsModal,
     setShowTournamentOptionsModal: modals.setShowTournamentOptionsModal,
     showTournamentActionConfirmModal: modals.showTournamentActionConfirmModal,
     setShowTournamentActionConfirmModal: modals.setShowTournamentActionConfirmModal,
+    showCareerDeleteModal: modals.showCareerDeleteModal,
     pendingTournamentAction: modals.pendingTournamentAction
   };
 }

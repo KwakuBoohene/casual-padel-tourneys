@@ -18,6 +18,8 @@ export type OutstandingPlayerRow = {
   setsWon?: number;
   gamesWon?: number;
   gamesLost?: number;
+  americanoPointsWon?: number;
+  americanoPointsLost?: number;
   isRegular?: boolean;
 };
 
@@ -38,12 +40,19 @@ export function buildOutstandingPlayerRows(tournament: TournamentWithLeaderboard
       setsWon: regular ? entry.setsWon ?? 0 : 0,
       gamesWon: regular ? entry.gamesWon ?? 0 : 0,
       gamesLost: regular ? entry.gamesLost ?? 0 : 0,
+      americanoPointsWon: 0,
+      americanoPointsLost: 0,
       isRegular: regular
     });
   }
 
   if (!regular) {
-    const bump = (playerId: string, result: "WIN" | "LOSS" | "DRAW") => {
+    const bump = (
+      playerId: string,
+      result: "WIN" | "LOSS" | "DRAW",
+      pointsFor: number,
+      pointsAgainst: number
+    ) => {
       const row = stats.get(playerId);
       if (!row) return;
       if (result === "WIN") {
@@ -55,6 +64,8 @@ export function buildOutstandingPlayerRows(tournament: TournamentWithLeaderboard
       } else {
         row.draws += 1;
       }
+      row.americanoPointsWon = (row.americanoPointsWon ?? 0) + pointsFor;
+      row.americanoPointsLost = (row.americanoPointsLost ?? 0) + pointsAgainst;
     };
 
     for (const round of tournament.rounds) {
@@ -76,10 +87,10 @@ export function buildOutstandingPlayerRows(tournament: TournamentWithLeaderboard
         }
 
         for (const playerId of match.teamA) {
-          bump(playerId, resultA);
+          bump(playerId, resultA, scoreA, scoreB);
         }
         for (const playerId of match.teamB) {
-          bump(playerId, resultB);
+          bump(playerId, resultB, scoreB, scoreA);
         }
       }
     }

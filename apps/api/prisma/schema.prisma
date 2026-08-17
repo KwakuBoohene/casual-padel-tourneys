@@ -180,18 +180,20 @@ model Player {
  * v1 identity = organizerId + normalized display name.
  */
 model OrganizerPlayer {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   organizerId    String
   name           String
   nameNormalized String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  organizer      User     @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  archivedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  organizer      User      @relation(fields: [organizerId], references: [id], onDelete: Cascade)
   players        Player[]
   deltas         OrganizerPlayerStatDelta[]
 
   @@unique([organizerId, nameNormalized])
   @@index([organizerId])
+  @@index([organizerId, archivedAt])
 }
 
 /** Per-match career credit so month/year ranges can be summed. */

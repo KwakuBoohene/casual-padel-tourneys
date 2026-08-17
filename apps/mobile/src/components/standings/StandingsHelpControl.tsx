@@ -20,9 +20,6 @@ function StandingsHelpSheet(props: { visible: boolean; onDismiss: () => void }) 
         contentContainerStyle={{ gap: spacing.md, paddingBottom: spacing.sm }}
       >
         <Text style={{ color: colors.muted, fontSize: 14, lineHeight: 20 }}>{STANDINGS_HELP_BLURB}</Text>
-        <Text style={{ color: colors.muted, fontSize: 14, lineHeight: 20 }}>
-          Tap a player's name to see PW(A) and PL(A).
-        </Text>
         <Text style={{ color: colors.text, fontWeight: "700", fontSize: 15 }}>Abbreviations</Text>
         {STANDINGS_HELP_ABBREVIATIONS.map((row) => (
           <View key={row.abbrev} style={{ flexDirection: "row", gap: spacing.md }}>

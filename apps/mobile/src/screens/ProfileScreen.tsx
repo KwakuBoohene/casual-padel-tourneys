@@ -1,7 +1,7 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { useBreakpoint } from "../layout";
-import { radius, spacing, typography } from "../theme";
+import { radius, spacing, touch, typography } from "../theme";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { useTheme } from "../theme/ThemeProvider";
 
@@ -17,6 +17,7 @@ interface ProfileScreenProps {
   onBack: () => void;
   onSignOut: () => void;
   onAttachAccount?: () => void;
+  onOpenPlayers: () => void;
 }
 
 export function ProfileScreen(props: ProfileScreenProps) {
@@ -106,6 +107,23 @@ export function ProfileScreen(props: ProfileScreenProps) {
           </View>
         </View>
       </View>
+
+      <Pressable
+        onPress={props.onOpenPlayers}
+        style={{
+          marginBottom: spacing.lg,
+          paddingVertical: spacing.sm,
+          minHeight: touch.minSecondary,
+          borderRadius: radius.md,
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.border,
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+      >
+        <Text style={{ color: colors.text, fontWeight: "700" }}>Players</Text>
+      </Pressable>
 
       {isGuest && props.onAttachAccount ? (
         <Pressable

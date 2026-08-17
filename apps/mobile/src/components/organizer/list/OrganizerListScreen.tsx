@@ -5,6 +5,7 @@ import { spacing } from "../../../theme";
 
 import type { LiveTournamentState } from "../../../types/organizer/tournament";
 
+import { CareerDeleteSheet } from "./CareerDeleteSheet";
 import { TournamentListView } from "./TournamentListView";
 
 interface OrganizerListScreenProps {
@@ -27,6 +28,10 @@ interface OrganizerListScreenProps {
   onRequestDelete: () => void;
   onCancelActionConfirm: () => void;
   onConfirmAction: () => void;
+  showCareerDeleteModal: boolean;
+  onCancelCareerDelete: () => void;
+  onRemoveFromLeaderboard: () => void;
+  onKeepOnLeaderboard: () => void;
 }
 
 export function OrganizerListScreen(props: OrganizerListScreenProps) {
@@ -76,6 +81,13 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
         }}
         secondaryAction={{ label: "Cancel", onPress: props.onCancelActionConfirm }}
         onDismiss={props.onCancelActionConfirm}
+      />
+
+      <CareerDeleteSheet
+        visible={props.showCareerDeleteModal}
+        onRemove={props.onRemoveFromLeaderboard}
+        onKeep={props.onKeepOnLeaderboard}
+        onCancel={props.onCancelCareerDelete}
       />
     </>
   );

@@ -13,6 +13,7 @@ export function useTournamentListModals() {
   );
   const [showTournamentOptionsModal, setShowTournamentOptionsModal] = useState(false);
   const [showTournamentActionConfirmModal, setShowTournamentActionConfirmModal] = useState(false);
+  const [showCareerDeleteModal, setShowCareerDeleteModal] = useState(false);
 
   const openTournamentOptions = (tournamentId: string) => {
     setSelectedTournamentId(tournamentId);
@@ -26,8 +27,14 @@ export function useTournamentListModals() {
     setShowTournamentActionConfirmModal(true);
   };
 
+  const openCareerDelete = () => {
+    setShowTournamentActionConfirmModal(false);
+    setShowCareerDeleteModal(true);
+  };
+
   const clearActionSelection = () => {
     setShowTournamentActionConfirmModal(false);
+    setShowCareerDeleteModal(false);
     setPendingTournamentAction(null);
     setSelectedTournamentId(null);
   };
@@ -39,8 +46,10 @@ export function useTournamentListModals() {
     setShowTournamentOptionsModal,
     showTournamentActionConfirmModal,
     setShowTournamentActionConfirmModal,
+    showCareerDeleteModal,
     openTournamentOptions,
     requestTournamentAction,
+    openCareerDelete,
     clearActionSelection
   };
 }

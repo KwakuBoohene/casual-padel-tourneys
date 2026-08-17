@@ -36,7 +36,7 @@ export function WebStandingsTable(props: { rows: WebStandingsRow[] }) {
   return (
     <div className="space-y-3">
       <div className="overflow-x-auto rounded-2xl border border-padel-border bg-padel-surface">
-        <table className="w-full min-w-[372px] text-sm">
+        <table className="w-full min-w-[456px] text-sm">
           <thead>
             <tr className="border-b border-padel-border text-[10px] font-semibold tracking-wide text-padel-muted">
               <th className="px-3 py-2 text-left font-semibold w-8">#</th>

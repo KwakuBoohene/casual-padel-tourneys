@@ -255,3 +255,11 @@ export const endMexicanoNightSchema = z.object({
   tournamentId: z.string().min(1),
   expectedVersion: z.number().int().min(0)
 });
+
+/** DELETE /tournaments/:id query. Omitted flag keeps career credits. */
+export const deleteTournamentQuerySchema = z.object({
+  removeFromCareerLeaderboard: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((value) => value === "true")
+});

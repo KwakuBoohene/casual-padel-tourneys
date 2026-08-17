@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 
 import type { OrganizerPlayersDeps } from "../application/ports.js";
 import { PrismaOrganizerPlayerRepository } from "../infrastructure/PrismaOrganizerPlayerRepository.js";
+import { registerOrganizerPlayerManagementRoutes } from "./managementRoutes.js";
 import { registerOrganizerPlayerRoutes } from "./playerRoutes.js";
 
 export function createOrganizerPlayersDeps(): OrganizerPlayersDeps {
@@ -9,5 +10,7 @@ export function createOrganizerPlayersDeps(): OrganizerPlayersDeps {
 }
 
 export function registerOrganizerPlayersModule(server: FastifyInstance): void {
-  registerOrganizerPlayerRoutes(server, createOrganizerPlayersDeps());
+  const deps = createOrganizerPlayersDeps();
+  registerOrganizerPlayerManagementRoutes(server, deps);
+  registerOrganizerPlayerRoutes(server, deps);
 }

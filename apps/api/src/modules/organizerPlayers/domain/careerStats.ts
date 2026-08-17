@@ -12,63 +12,88 @@ export interface CareerDelta {
   tournamentName: string;
   gamesWon: number;
   gamesLost: number;
+  setsWon: number;
+  setsLost: number;
   matchesWon: number;
   matchesLost: number;
 }
 
 const MAX_RECENT_EVENTS = 12;
 
+interface AggregatedCareer {
+  id: string;
+  name: string;
+  matchesWon: number;
+  matchesLost: number;
+  setsWon: number;
+  setsLost: number;
+  gamesWon: number;
+  gamesLost: number;
+  events: Set<string>;
+}
+
+function emptyCareer(id: string, name: string): AggregatedCareer {
+  return {
+    id,
+    name,
+    matchesWon: 0,
+    matchesLost: 0,
+    setsWon: 0,
+    setsLost: 0,
+    gamesWon: 0,
+    gamesLost: 0,
+    events: new Set<string>()
+  };
+}
+
+function addDelta(current: AggregatedCareer, delta: CareerDelta): void {
+  current.matchesWon += delta.matchesWon;
+  current.matchesLost += delta.matchesLost;
+  current.setsWon += delta.setsWon;
+  current.setsLost += delta.setsLost;
+  current.gamesWon += delta.gamesWon;
+  current.gamesLost += delta.gamesLost;
+  current.events.add(delta.tournamentId);
+}
+
+/** Matches won, then sets won, then games won, then name. */
+export function compareCareerRows(
+  a: { matchesWon: number; setsWon: number; gamesWon: number; name: string },
+  b: { matchesWon: number; setsWon: number; gamesWon: number; name: string }
+): number {
+  if (b.matchesWon !== a.matchesWon) return b.matchesWon - a.matchesWon;
+  if (b.setsWon !== a.setsWon) return b.setsWon - a.setsWon;
+  if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
+  return a.name.localeCompare(b.name);
+}
+
 export function buildLeaderboard(
   range: OrganizerPlayerRange,
   deltas: CareerDelta[]
 ): OrganizerPlayerLeaderboard {
-  const byPlayer = new Map<
-    string,
-    {
-      id: string;
-      name: string;
-      gamesWon: number;
-      matchesWon: number;
-      gamesLost: number;
-      matchesLost: number;
-      events: Set<string>;
-    }
-  >();
+  const byPlayer = new Map<string, AggregatedCareer>();
 
   for (const delta of deltas) {
-    const current = byPlayer.get(delta.organizerPlayerId) ?? {
-      id: delta.organizerPlayerId,
-      name: delta.organizerPlayerName,
-      gamesWon: 0,
-      matchesWon: 0,
-      gamesLost: 0,
-      matchesLost: 0,
-      events: new Set<string>()
-    };
-    current.gamesWon += delta.gamesWon;
-    current.matchesWon += delta.matchesWon;
-    current.gamesLost += delta.gamesLost;
-    current.matchesLost += delta.matchesLost;
-    current.events.add(delta.tournamentId);
+    const current = byPlayer.get(delta.organizerPlayerId) ?? emptyCareer(
+      delta.organizerPlayerId,
+      delta.organizerPlayerName
+    );
+    addDelta(current, delta);
     byPlayer.set(delta.organizerPlayerId, current);
   }
 
-  const rows = [...byPlayer.values()]
-    .sort((a, b) => {
-      if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
-      if (b.matchesWon !== a.matchesWon) return b.matchesWon - a.matchesWon;
-      return a.name.localeCompare(b.name);
-    })
-    .map((row, index) => ({
-      rank: index + 1,
-      id: row.id,
-      name: row.name,
-      gamesWon: row.gamesWon,
-      matchesWon: row.matchesWon,
-      gamesLost: row.gamesLost,
-      matchesLost: row.matchesLost,
-      eventsPlayed: row.events.size
-    }));
+  const rows = [...byPlayer.values()].sort(compareCareerRows).map((row, index) => ({
+    rank: index + 1,
+    id: row.id,
+    name: row.name,
+    matchesWon: row.matchesWon,
+    matchesLost: row.matchesLost,
+    setsWon: row.setsWon,
+    setsLost: row.setsLost,
+    gamesWon: row.gamesWon,
+    gamesLost: row.gamesLost,
+    eventsPlayed: row.events.size
+  }));
 
   return { range, rows };
 }
@@ -79,28 +104,49 @@ export function buildDetail(
   range: OrganizerPlayerRange,
   deltas: CareerDelta[]
 ): OrganizerPlayerDetail {
-  let gamesWon = 0;
   let matchesWon = 0;
-  let gamesLost = 0;
   let matchesLost = 0;
+  let setsWon = 0;
+  let setsLost = 0;
+  let gamesWon = 0;
+  let gamesLost = 0;
   const byEvent = new Map<
     string,
-    { tournamentId: string; tournamentName: string; gamesWon: number; matchesWon: number }
+    {
+      tournamentId: string;
+      tournamentName: string;
+      matchesWon: number;
+      matchesLost: number;
+      setsWon: number;
+      setsLost: number;
+      gamesWon: number;
+      gamesLost: number;
+    }
   >();
 
   for (const delta of deltas) {
-    gamesWon += delta.gamesWon;
     matchesWon += delta.matchesWon;
-    gamesLost += delta.gamesLost;
     matchesLost += delta.matchesLost;
+    setsWon += delta.setsWon;
+    setsLost += delta.setsLost;
+    gamesWon += delta.gamesWon;
+    gamesLost += delta.gamesLost;
     const event = byEvent.get(delta.tournamentId) ?? {
       tournamentId: delta.tournamentId,
       tournamentName: delta.tournamentName,
+      matchesWon: 0,
+      matchesLost: 0,
+      setsWon: 0,
+      setsLost: 0,
       gamesWon: 0,
-      matchesWon: 0
+      gamesLost: 0
     };
-    event.gamesWon += delta.gamesWon;
     event.matchesWon += delta.matchesWon;
+    event.matchesLost += delta.matchesLost;
+    event.setsWon += delta.setsWon;
+    event.setsLost += delta.setsLost;
+    event.gamesWon += delta.gamesWon;
+    event.gamesLost += delta.gamesLost;
     byEvent.set(delta.tournamentId, event);
   }
 
@@ -108,10 +154,12 @@ export function buildDetail(
     id: player.id,
     name: player.name,
     range,
-    gamesWon,
     matchesWon,
-    gamesLost,
     matchesLost,
+    setsWon,
+    setsLost,
+    gamesWon,
+    gamesLost,
     eventsPlayed: byEvent.size,
     recentEvents: [...byEvent.values()].slice(0, MAX_RECENT_EVENTS)
   };

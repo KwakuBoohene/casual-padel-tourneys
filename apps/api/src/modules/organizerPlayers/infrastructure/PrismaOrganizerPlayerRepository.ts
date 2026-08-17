@@ -17,6 +17,8 @@ export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepositor
         tournamentName: true,
         gamesWon: true,
         gamesLost: true,
+        setsWon: true,
+        setsLost: true,
         matchesWon: true,
         matchesLost: true,
         organizerPlayer: { select: { name: true } }
@@ -30,6 +32,8 @@ export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepositor
       tournamentName: row.tournamentName,
       gamesWon: row.gamesWon,
       gamesLost: row.gamesLost,
+      setsWon: row.setsWon,
+      setsLost: row.setsLost,
       matchesWon: row.matchesWon,
       matchesLost: row.matchesLost
     }));

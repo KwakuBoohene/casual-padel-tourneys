@@ -206,6 +206,8 @@ model OrganizerPlayerStatDelta {
   tournamentMode    TournamentMode
   gamesWon          Int      @default(0)
   gamesLost         Int      @default(0)
+  setsWon           Int      @default(0)
+  setsLost          Int      @default(0)
   matchesWon        Int      @default(0)
   matchesLost       Int      @default(0)
   occurredAt        DateTime @default(now())

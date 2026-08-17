@@ -7,10 +7,12 @@ export interface OrganizerPlayerLeaderboardRow {
   rank: number;
   id: string;
   name: string;
-  gamesWon: number;
   matchesWon: number;
-  gamesLost: number;
   matchesLost: number;
+  setsWon: number;
+  setsLost: number;
+  gamesWon: number;
+  gamesLost: number;
   eventsPlayed: number;
 }
 
@@ -22,18 +24,24 @@ export interface OrganizerPlayerLeaderboard {
 export interface OrganizerPlayerEventSummary {
   tournamentId: string;
   tournamentName: string;
-  gamesWon: number;
   matchesWon: number;
+  matchesLost: number;
+  setsWon: number;
+  setsLost: number;
+  gamesWon: number;
+  gamesLost: number;
 }
 
 export interface OrganizerPlayerDetail {
   id: string;
   name: string;
   range: OrganizerPlayerRange;
-  gamesWon: number;
   matchesWon: number;
-  gamesLost: number;
   matchesLost: number;
+  setsWon: number;
+  setsLost: number;
+  gamesWon: number;
+  gamesLost: number;
   eventsPlayed: number;
   recentEvents: OrganizerPlayerEventSummary[];
 }

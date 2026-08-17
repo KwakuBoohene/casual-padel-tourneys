@@ -3,11 +3,7 @@ import type { Prisma, TournamentMode } from "@prisma/client";
 
 import { normalizeOrganizerPlayerName } from "../domain/careerRange.js";
 
-/**
- * Write side of career tracking. These run inside the caller's transaction (KOH scoring,
- * assignment and partner swaps), so they take a `TransactionClient` rather than owning one.
- * This is the module's stable entry point for other bounded contexts.
- */
+/** Write side of career tracking. Runs inside the caller's Prisma transaction. */
 
 /** Upsert a career identity for the organizer and return its id. */
 export async function ensureOrganizerPlayer(
@@ -49,6 +45,8 @@ export interface KohMatchCredit {
   winnerSide: "A" | "B";
   gamesA: number;
   gamesB: number;
+  setsA: number;
+  setsB: number;
   occurredAt?: Date;
   /** Defaults to King of the Court (KOH credit path). */
   tournamentMode?: TournamentMode;
@@ -60,6 +58,8 @@ interface CreditSide {
   playerIds: [string, string];
   gamesWon: number;
   gamesLost: number;
+  setsWon: number;
+  setsLost: number;
   matchesWon: number;
   matchesLost: number;
 }
@@ -90,6 +90,8 @@ export async function creditKohMatchToOrganizerPlayers(input: KohMatchCredit): P
       playerIds: input.unitAPlayerIds,
       gamesWon: input.gamesA,
       gamesLost: input.gamesB,
+      setsWon: input.setsA,
+      setsLost: input.setsB,
       matchesWon: input.winnerSide === "A" ? 1 : 0,
       matchesLost: input.winnerSide === "A" ? 0 : 1
     },
@@ -97,6 +99,8 @@ export async function creditKohMatchToOrganizerPlayers(input: KohMatchCredit): P
       playerIds: input.unitBPlayerIds,
       gamesWon: input.gamesB,
       gamesLost: input.gamesA,
+      setsWon: input.setsB,
+      setsLost: input.setsA,
       matchesWon: input.winnerSide === "B" ? 1 : 0,
       matchesLost: input.winnerSide === "B" ? 0 : 1
     }
@@ -122,6 +126,8 @@ export async function creditKohMatchToOrganizerPlayers(input: KohMatchCredit): P
           matchId: input.matchId,
           gamesWon: side.gamesWon,
           gamesLost: side.gamesLost,
+          setsWon: side.setsWon,
+          setsLost: side.setsLost,
           matchesWon: side.matchesWon,
           matchesLost: side.matchesLost,
           occurredAt
@@ -129,6 +135,8 @@ export async function creditKohMatchToOrganizerPlayers(input: KohMatchCredit): P
         update: {
           gamesWon: side.gamesWon,
           gamesLost: side.gamesLost,
+          setsWon: side.setsWon,
+          setsLost: side.setsLost,
           matchesWon: side.matchesWon,
           matchesLost: side.matchesLost,
           tournamentMode,

@@ -97,6 +97,8 @@ export async function persistCompletedKohMatch(write: CompletedKohMatchWrite): P
           winnerSide: write.winnerSide,
           gamesA: setStats.gamesA,
           gamesB: setStats.gamesB,
+          setsA: setStats.setsA,
+          setsB: setStats.setsB,
           contributeToCareerLeaderboard: write.contributeToCareerLeaderboard
         });
       }

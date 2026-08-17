@@ -1,4 +1,5 @@
 import type { Estimate } from "../../types/organizer/tournament";
+import { countNoun } from "@padel/shared";
 
 export function formatSettingsEstimateLine(estimate: Estimate | null, approximate: boolean): string {
   if (approximate) {
@@ -6,5 +7,5 @@ export function formatSettingsEstimateLine(estimate: Estimate | null, approximat
   }
   if (!estimate) return "Enter valid settings to see an estimate.";
   const hours = Math.max(1, Math.round(estimate.durationMinutes / 60));
-  return `~${estimate.rounds} rounds · ~${estimate.gamesPerPlayer} matches/player · ~${hours}h`;
+  return `~${estimate.rounds} rounds · ~${countNoun(estimate.gamesPerPlayer, "match", "matches")}/player · ~${hours}h`;
 }

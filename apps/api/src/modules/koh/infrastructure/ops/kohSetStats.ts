@@ -7,24 +7,30 @@ function isSpecialMethod(method: "REGULAR" | "GOLDEN" | "STAR"): boolean {
   return method === "GOLDEN" || method === "STAR";
 }
 
-/** Games + golden/star losses for side A / B from submitted sets. */
+/** Games, set wins, and golden/star losses for side A / B from submitted sets. */
 export function tallyKohSetStats(sets: SubmitKohScoreInput["sets"]): {
   gamesA: number;
   gamesB: number;
+  setsA: number;
+  setsB: number;
   specialLossA: number;
   specialLossB: number;
 } {
   let gamesA = 0;
   let gamesB = 0;
+  let setsA = 0;
+  let setsB = 0;
   let specialLossA = 0;
   let specialLossB = 0;
   for (const set of sets) {
     gamesA += set.gamesA;
     gamesB += set.gamesB;
+    if (set.gamesA > set.gamesB) setsA += 1;
+    else if (set.gamesB > set.gamesA) setsB += 1;
     specialLossA += (set.winMethodsB ?? []).filter(isSpecialMethod).length;
     specialLossB += (set.winMethodsA ?? []).filter(isSpecialMethod).length;
   }
-  return { gamesA, gamesB, specialLossA, specialLossB };
+  return { gamesA, gamesB, setsA, setsB, specialLossA, specialLossB };
 }
 
 export function kohSetRows(matchId: string, sets: SubmitKohScoreInput["sets"]) {

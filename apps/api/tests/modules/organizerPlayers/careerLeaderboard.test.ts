@@ -129,15 +129,22 @@ test("KOH complete credits organizer player career; replace keeps past on leaver
       headers: { authorization: `Bearer ${token}` }
     });
     assert.equal(board.statusCode, 200);
-    const rows = board.json().data.rows as Array<{ name: string; gamesWon: number; matchesWon: number }>;
+    const rows = board.json().data.rows as Array<{
+      name: string;
+      gamesWon: number;
+      setsWon: number;
+      matchesWon: number;
+    }>;
     assert.equal(rows.length, 4);
     const paul = rows.find((row) => row.name === "Paul");
     const george = rows.find((row) => row.name === "George");
     assert.ok(paul);
     assert.ok(george);
     assert.equal(paul.gamesWon, 6);
+    assert.equal(paul.setsWon, 1);
     assert.equal(paul.matchesWon, 1);
     assert.equal(george.gamesWon, 6);
+    assert.equal(george.setsWon, 1);
     assert.equal(george.matchesWon, 1);
 
     const afterScore = score.json().data;
@@ -174,6 +181,8 @@ test("KOH complete credits organizer player career; replace keeps past on leaver
     });
     assert.equal(detail.statusCode, 200);
     assert.equal(detail.json().data.gamesWon, 6);
+    assert.equal(detail.json().data.setsWon, 1);
+    assert.equal(detail.json().data.matchesWon, 1);
     assert.ok(detail.json().data.recentEvents.some((e: { tournamentName: string }) => e.tournamentName === "Career KOH"));
   });
 });

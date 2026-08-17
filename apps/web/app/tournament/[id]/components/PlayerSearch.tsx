@@ -1,3 +1,5 @@
+import { countNoun } from "@padel/shared";
+
 interface PlayerSearchProps {
   value: string;
   onChange: (value: string) => void;
@@ -53,7 +55,7 @@ export function PlayerSearch({ value, onChange, matchCount, totalMatches }: Play
         <p className="text-xs text-padel-muted px-1">
           {matchCount === 0
             ? "No matches found"
-            : `Showing ${matchCount} of ${totalMatches} matches`}
+            : `Showing ${matchCount} of ${countNoun(totalMatches, "match", "matches")}`}
         </p>
       ) : null}
     </div>

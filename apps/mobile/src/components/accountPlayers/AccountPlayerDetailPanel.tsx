@@ -1,5 +1,11 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
-import type { OrganizerPlayerDetail, OrganizerPlayerRange } from "@padel/shared";
+import {
+  formatCareerStandings,
+  formatWonLost,
+  noun,
+  type OrganizerPlayerDetail,
+  type OrganizerPlayerRange
+} from "@padel/shared";
 
 import { radius, spacing, touch, typography } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
@@ -10,7 +16,7 @@ function rangeLabel(range: OrganizerPlayerRange): string {
   return "All time";
 }
 
-function StatRow(props: { label: string; value: number }) {
+function StatRow(props: { label: string; value: string | number }) {
   const { colors } = useTheme();
   return (
     <View
@@ -44,12 +50,22 @@ export function AccountPlayerDetailPanel(props: AccountPlayerDetailPanelProps) {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView contentContainerStyle={{ padding: spacing.xl, gap: spacing.md }}>
         <Pressable onPress={props.onBack} style={{ minHeight: touch.minSecondary, justifyContent: "center" }}>
-          <Text style={{ color: colors.primary, fontWeight: "700" }}>← Players</Text>
+          <Text style={{ color: colors.primary, fontWeight: "700" }}>← Account Leaderboard</Text>
         </Pressable>
         <Text style={[typography.title, { color: colors.text }]}>{detail.name}</Text>
         <Text style={{ color: colors.muted }}>{rangeLabel(detail.range)}</Text>
-        <StatRow label="Games won" value={detail.gamesWon} />
-        <StatRow label="Matches won" value={detail.matchesWon} />
+        <StatRow
+          label={noun(detail.matchesWon + detail.matchesLost, "Match", "Matches")}
+          value={formatWonLost(detail.matchesWon, detail.matchesLost)}
+        />
+        <StatRow
+          label={noun(detail.setsWon + detail.setsLost, "Set", "Sets")}
+          value={formatWonLost(detail.setsWon, detail.setsLost)}
+        />
+        <StatRow
+          label={noun(detail.gamesWon + detail.gamesLost, "Game", "Games")}
+          value={formatWonLost(detail.gamesWon, detail.gamesLost)}
+        />
         <StatRow label="Events played" value={detail.eventsPlayed} />
         <Text style={[typography.sectionTitle, { color: colors.text, marginTop: spacing.sm }]}>
           Recent events
@@ -59,7 +75,7 @@ export function AccountPlayerDetailPanel(props: AccountPlayerDetailPanelProps) {
         ) : (
           detail.recentEvents.map((event) => (
             <Text key={event.tournamentId} style={{ color: colors.text, lineHeight: 22 }}>
-              {event.tournamentName} · {event.gamesWon} games won
+              {event.tournamentName} · {formatCareerStandings(event)}
             </Text>
           ))
         )}

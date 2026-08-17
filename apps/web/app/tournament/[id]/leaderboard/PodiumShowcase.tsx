@@ -1,3 +1,5 @@
+import { countNoun } from "@padel/shared";
+
 type PodiumPlayer = {
   playerId: string;
   name: string;
@@ -188,14 +190,14 @@ export default function PodiumShowcase({
         </div>
         <div className="whitespace-nowrap rounded-full px-4 py-2 text-center text-xl font-bold bg-[#dce6fd] text-[#3d67db]">
           {isRegular
-            ? `Sets ${champion?.setsWon ?? 0}`
+            ? countNoun(champion?.setsWon ?? 0, "set", "sets")
             : `Points ${champion?.totalPoints ?? 0}`}
         </div>
         <div
           className={`whitespace-nowrap rounded-full px-4 py-2 text-center text-xl font-bold ${podiumStyles[1].badgeClass}`}
         >
           {isRegular
-            ? `Games ${champion?.gamesWon ?? 0}`
+            ? countNoun(champion?.gamesWon ?? 0, "game", "games")
             : `Diff ${(champion?.wins ?? 0) - (champion?.losses ?? 0) >= 0 ? "+" : ""}${(champion?.wins ?? 0) - (champion?.losses ?? 0)}`}
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { Pressable, Text } from "react-native";
+import { formatRegularStandings } from "@padel/shared";
 
 import { spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
@@ -13,9 +14,12 @@ interface LeaderboardRowCardProps {
 
 function formatStandings(row: LeaderboardRow): string {
   if (row.isRegular) {
-    const sets = row.setsWon ?? 0;
-    const games = row.gamesWon ?? 0;
-    return `${row.wins}–${row.losses} · ${sets} sets · ${games} games`;
+    return formatRegularStandings({
+      wins: row.wins,
+      losses: row.losses,
+      setsWon: row.setsWon,
+      gamesWon: row.gamesWon
+    });
   }
   return `${row.totalPoints} pts`;
 }

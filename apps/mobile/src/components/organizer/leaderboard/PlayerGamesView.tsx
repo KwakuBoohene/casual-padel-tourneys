@@ -1,5 +1,6 @@
 import { FlashList } from "@shopify/flash-list";
 import { Pressable, Text, View } from "react-native";
+import { countNoun, formatRegularStandings } from "@padel/shared";
 
 import { useBreakpoint } from "../../../layout";
 import { spacing, touch, typography } from "../../../theme";
@@ -15,12 +16,17 @@ interface PlayerGamesViewProps {
 }
 
 function formatSummary(row: LeaderboardRow | undefined, matchCount: number): string {
-  const matchLabel = `${matchCount} match${matchCount === 1 ? "" : "es"}`;
+  const matchLabel = countNoun(matchCount, "match", "matches");
   if (!row) {
     return matchLabel;
   }
   if (row.isRegular) {
-    return `${row.wins}–${row.losses} · ${row.setsWon ?? 0} sets · ${row.gamesWon ?? 0} games · ${matchLabel}`;
+    return formatRegularStandings({
+      wins: row.wins,
+      losses: row.losses,
+      setsWon: row.setsWon,
+      gamesWon: row.gamesWon
+    });
   }
   return `${row.totalPoints} pts · ${matchLabel}`;
 }

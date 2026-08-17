@@ -1,4 +1,5 @@
 import { LeaderboardHeaderActions } from "../../../../components/LeaderboardHeaderActions";
+import { formatRegularStandings } from "@padel/shared";
 import Link from "next/link";
 import PodiumShowcase from "./PodiumShowcase";
 
@@ -26,7 +27,12 @@ function formatStandings(row: {
   totalPoints: number;
 }): string {
   if (row.isRegular) {
-    return `${row.wins}–${row.losses} · ${row.setsWon ?? 0} sets · ${row.gamesWon ?? 0} games`;
+    return formatRegularStandings({
+      wins: row.wins,
+      losses: row.losses,
+      setsWon: row.setsWon,
+      gamesWon: row.gamesWon
+    });
   }
   return `${row.totalPoints} pts`;
 }

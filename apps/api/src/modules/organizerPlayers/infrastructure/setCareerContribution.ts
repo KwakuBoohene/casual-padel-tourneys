@@ -21,6 +21,8 @@ async function backfillKohMatches(input: {
     if (!match.winnerUnitId) continue;
     const gamesA = match.sets.reduce((sum, set) => sum + set.gamesA, 0);
     const gamesB = match.sets.reduce((sum, set) => sum + set.gamesB, 0);
+    const setsA = match.sets.filter((set) => set.gamesA > set.gamesB).length;
+    const setsB = match.sets.filter((set) => set.gamesB > set.gamesA).length;
     await prisma.$transaction(async (tx) => {
       await creditKohMatchToOrganizerPlayers({
         tx,
@@ -33,6 +35,8 @@ async function backfillKohMatches(input: {
         winnerSide: match.winnerUnitId === match.unitAId ? "A" : "B",
         gamesA,
         gamesB,
+        setsA,
+        setsB,
         tournamentMode: input.mode
       });
     });

@@ -1,5 +1,5 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
-import type { OrganizerPlayerLeaderboardRow, OrganizerPlayerRange } from "@padel/shared";
+import { formatCareerStandings, type OrganizerPlayerLeaderboardRow, type OrganizerPlayerRange } from "@padel/shared";
 
 import { radius, spacing, touch, typography } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
@@ -26,10 +26,7 @@ export function AccountPlayersPanel(props: AccountPlayersPanelProps) {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView contentContainerStyle={{ padding: spacing.xl, gap: spacing.md, paddingBottom: spacing.xxl }}>
-        <Text style={[typography.title, { color: colors.text }]}>Players</Text>
-        <Text style={{ color: colors.muted, fontSize: 13 }}>
-          Your account · KOH games across events
-        </Text>
+        <Text style={[typography.title, { color: colors.text }]}>Account Leaderboard</Text>
         <View style={{ flexDirection: "row", gap: spacing.sm }}>
           {RANGES.map((entry) => {
             const active = props.range === entry.id;
@@ -83,7 +80,7 @@ export function AccountPlayersPanel(props: AccountPlayersPanelProps) {
         ) : null}
         {props.loading ? <Text style={{ color: colors.muted }}>Loading…</Text> : null}
         {!props.loading && !props.guestMessage && props.rows.length === 0 ? (
-          <Text style={{ color: colors.muted }}>No scored KOH games yet in this range.</Text>
+          <Text style={{ color: colors.muted }}>No scored matches yet in this range.</Text>
         ) : null}
         {props.rows.map((row) => (
           <Pressable
@@ -105,7 +102,7 @@ export function AccountPlayersPanel(props: AccountPlayersPanelProps) {
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={{ color: colors.text, fontWeight: "700", fontSize: 16 }}>{row.name}</Text>
               <Text style={{ color: colors.muted, fontSize: 13 }}>
-                {row.gamesWon} games won · {row.matchesWon} matches
+                {formatCareerStandings(row)}
               </Text>
             </View>
             <Text style={{ color: colors.muted, fontWeight: "700" }}>›</Text>

@@ -1,4 +1,5 @@
 import { Text, View } from "react-native";
+import { countNoun } from "@padel/shared";
 
 import type { Estimate } from "../../../types/organizer/tournament";
 import { spacing } from "../../../theme";
@@ -40,7 +41,7 @@ export function EstimatorResultCard(props: EstimatorResultCardProps) {
         <View style={{ gap: 2 }}>
           <Text style={{ color: colors.muted, fontSize: 15 }}>{props.estimate.rounds} rounds</Text>
           <Text style={{ color: colors.muted, fontSize: 15 }}>
-            ~{props.estimate.gamesPerPlayer} matches per player
+            ~{countNoun(props.estimate.gamesPerPlayer, "match", "matches")} per player
           </Text>
           <Text style={{ color: colors.muted, fontSize: 15 }}>
             {formatDuration(props.estimate.durationMinutes)}

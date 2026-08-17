@@ -19,6 +19,8 @@ function creditSides(match: Match, tournament: TournamentState): {
   winnerSide: "A" | "B";
   gamesA: number;
   gamesB: number;
+  setsA: number;
+  setsB: number;
 } | null {
   if ((tournament.config.scoringMode ?? "AMERICANO_POINTS") === "REGULAR") {
     const regular = tournament.config.regularScoring;
@@ -31,16 +33,21 @@ function creditSides(match: Match, tournament: TournamentState): {
     return {
       winnerSide: evaluation.winner,
       gamesA: evaluation.gamesWonA,
-      gamesB: evaluation.gamesWonB
+      gamesB: evaluation.gamesWonB,
+      setsA: evaluation.setsWonA,
+      setsB: evaluation.setsWonB
     };
   }
   if (match.scoreA === undefined || match.scoreB === undefined || match.scoreA === match.scoreB) {
     return null;
   }
+  const winnerA = match.scoreA > match.scoreB;
   return {
-    winnerSide: match.scoreA > match.scoreB ? "A" : "B",
+    winnerSide: winnerA ? "A" : "B",
     gamesA: match.scoreA,
-    gamesB: match.scoreB
+    gamesB: match.scoreB,
+    setsA: winnerA ? 1 : 0,
+    setsB: winnerA ? 0 : 1
   };
 }
 
@@ -74,6 +81,8 @@ export async function creditAmericanoMatchIfComplete(input: {
         winnerSide: sides.winnerSide,
         gamesA: sides.gamesA,
         gamesB: sides.gamesB,
+        setsA: sides.setsA,
+        setsB: sides.setsB,
         tournamentMode: tournament.config.mode
       });
     });

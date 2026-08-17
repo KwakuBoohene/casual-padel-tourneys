@@ -39,7 +39,7 @@ export function TournamentListCreateActions(props: TournamentListCreateActionsPr
         <Pressable
           onPress={props.onOpenAccountPlayers}
           accessibilityRole="button"
-          accessibilityLabel="Players leaderboard"
+          accessibilityLabel="Account leaderboard"
           style={{
             ...secondary,
             borderColor: colors.primary,
@@ -47,9 +47,9 @@ export function TournamentListCreateActions(props: TournamentListCreateActionsPr
             paddingVertical: spacing.md
           }}
         >
-          <Text style={{ color: colors.text, fontWeight: "700", fontSize: 17 }}>Players</Text>
+          <Text style={{ color: colors.text, fontWeight: "700", fontSize: 17 }}>Account Leaderboard</Text>
           <Text style={{ color: colors.muted, fontSize: 13, marginTop: 2 }}>
-            Month / year leaderboard · who is best
+            Month / year / all time
           </Text>
         </Pressable>
       ) : null}

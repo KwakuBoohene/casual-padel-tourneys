@@ -29,3 +29,21 @@ test("win-by-1 blocks plus after 6–5", () => {
   assert.equal(canIncrementRegularSide(sets, fullWinBy1, "A"), false);
   assert.equal(canIncrementRegularSide(sets, fullWinBy1, "B"), false);
 });
+
+test("completing a set does not start the next set automatically", () => {
+  const bestOfThree: RegularScoringConfig = {
+    setFormat: "BO3_GAMES",
+    gameWinBy: 1,
+    deuceMode: "GOLDEN",
+    setsToWin: 2
+  };
+  const snap = applyRegularSideChange(
+    { sets: [{ setNumber: 1, gamesA: 1, gamesB: 0 }] },
+    bestOfThree,
+    "A",
+    2
+  );
+  assert.equal(snap.sets.length, 1);
+  assert.deepEqual(regularDisplayScores(snap.sets, bestOfThree), { scoreA: 2, scoreB: 0 });
+  assert.equal(canIncrementRegularSide(snap.sets, bestOfThree, "A"), false);
+});

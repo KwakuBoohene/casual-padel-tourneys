@@ -7,6 +7,8 @@ import type {
 import { useRegularWinMethodPrompt } from "../../../hooks/organizer/score/useRegularWinMethodPrompt";
 import { formatTournamentMode } from "../../../utilities/organizer/formatLabels";
 import { isRegularTournament } from "../../../utilities/organizer/regularScoreEntry";
+import { needsWinMethodPrompt } from "../../../utilities/organizer/regularWinMethods";
+import { regularScorePrimaryLabel } from "../../../utilities/organizer/regularSetFlow";
 import { RegularWinMethodSheet } from "./RegularWinMethodSheet";
 
 interface LiveScoreEntrySheetsProps {
@@ -26,16 +28,24 @@ export function LiveScoreEntrySheets({ session, score, actions }: LiveScoreEntry
   const modeLabel = formatTournamentMode(session.tournament.config.mode);
   const points = session.tournament.config.pointsPerMatch;
   const regular = isRegularTournament(session.tournament);
+  const regularConfig = session.tournament.config.regularScoring ?? null;
+  const needsMethods = needsWinMethodPrompt(regularConfig);
   const contextLine =
     score.scoreEntryContextLine ??
     (regular ? "Regular scoring · Set 1 · games" : `${modeLabel} scoring · to ${points} points`);
-  const canComplete = Boolean(score.scoreEntryCanComplete);
+  const saveLabel = regular
+    ? regularScorePrimaryLabel(score.scoreEntryPrimaryAction, needsMethods)
+    : "Save";
   const winMethods = useRegularWinMethodPrompt({
-    regularConfig: session.tournament.config.regularScoring ?? null,
+    regularConfig,
     sets: score.scoreEntry?.sets ?? [],
-    canComplete,
+    setComplete: Boolean(score.scoreEntrySetComplete),
+    matchComplete: Boolean(score.scoreEntryCanComplete),
     onComplete: (sets) => actions.onSaveScoreEntry(sets),
-    onSaveWithoutPrompt: () => actions.onSaveScoreEntry()
+    onNextSet: (sets) => actions.onAdvanceRegularSet?.(sets),
+    onSaveDraft: () => {
+      void actions.onSaveScoreDraft?.();
+    }
   });
 
   return (
@@ -50,15 +60,15 @@ export function LiveScoreEntrySheets({ session, score, actions }: LiveScoreEntry
         scoreB={score.scoreEntry?.scoreB ?? null}
         canUndo={Boolean(score.scoreEntry && score.scoreEntry.undoStack.length > 0)}
         saveDisabled={score.savingScore}
-        saveLabel={regular ? (canComplete ? "Complete match" : "Save draft") : "Save"}
-        secondarySaveLabel={regular && canComplete ? "Save draft" : undefined}
+        saveLabel={saveLabel}
+        secondarySaveLabel={regular && score.scoreEntryPrimaryAction !== "DRAFT" ? "Save draft" : undefined}
         plusDisabledA={score.scoreEntryPlusDisabledA}
         plusDisabledB={score.scoreEntryPlusDisabledB}
         max={regular ? 99 : points}
         onChangeScoreA={actions.onChangeScoreA}
         onChangeScoreB={actions.onChangeScoreB}
         onUndo={actions.onUndoScoreEntry}
-        onSave={winMethods.requestSave}
+        onSave={regular ? winMethods.requestPrimary : () => actions.onSaveScoreEntry()}
         onSecondarySave={
           actions.onSaveScoreDraft
             ? () => {
@@ -73,6 +83,8 @@ export function LiveScoreEntrySheets({ session, score, actions }: LiveScoreEntry
         teamALabel={teamALabel}
         teamBLabel={teamBLabel}
         sets={winMethods.draftSets}
+        setIndex={winMethods.setIndex}
+        confirmLabel={winMethods.confirmLabel}
         saving={score.savingScore}
         onChangeMethod={winMethods.changeMethod}
         onConfirm={winMethods.confirm}
@@ -95,7 +107,7 @@ export function LiveScoreEntrySheets({ session, score, actions }: LiveScoreEntry
         primaryAction={{
           label: score.scoreEntry ? "Retry" : "OK",
           onPress: () => {
-            if (score.scoreEntry) winMethods.requestSave();
+            if (score.scoreEntry) winMethods.requestPrimary();
             else actions.onClearScoreSheetError();
           }
         }}

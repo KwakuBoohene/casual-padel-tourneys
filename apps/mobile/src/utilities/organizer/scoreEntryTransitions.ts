@@ -1,3 +1,5 @@
+import type { MatchSet } from "@padel/shared";
+
 import type { LiveTournamentState } from "../../types/organizer/tournament";
 import {
   applyRegularSideChange,
@@ -5,6 +7,7 @@ import {
   regularConfigOf,
   regularDisplayScores
 } from "./regularScoreEntry";
+import { beginNextRegularSet } from "./regularSetFlow";
 import type { ScoreEntryState, ScorePair } from "./scoreEntryHelpers";
 
 export function buildScoreEntryFromPair(
@@ -115,4 +118,23 @@ export function changeScoreEntrySide(
   const scoreA = side === "A" ? clamp(next) : clamp(points - clamp(next));
   const scoreB = side === "B" ? clamp(next) : clamp(points - clamp(next));
   return nextScoreEntryAfterChange(entry, tournament, { scoreA, scoreB, sets: [] });
+}
+
+export function advanceToNextRegularSet(
+  entry: ScoreEntryState,
+  tournament: LiveTournamentState,
+  sets: MatchSet[] = entry.sets
+): ScoreEntryState | null {
+  const config = regularConfigOf(tournament);
+  if (!config) return null;
+  const advanced = beginNextRegularSet(
+    { sets, matchTbA: entry.matchTbA, matchTbB: entry.matchTbB },
+    config
+  );
+  if (!advanced) return null;
+  return nextScoreEntryAfterChange(entry, tournament, {
+    ...advanced,
+    scoreA: 0,
+    scoreB: 0
+  });
 }

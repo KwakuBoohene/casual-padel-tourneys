@@ -39,6 +39,8 @@ export interface LiveTournamentScoreState {
   } | null;
   scoreEntryContextLine: string | null;
   scoreEntryCanComplete: boolean;
+  scoreEntrySetComplete: boolean;
+  scoreEntryPrimaryAction: "DRAFT" | "NEXT_SET" | "COMPLETE" | null;
   scoreEntryPlusDisabledA: boolean;
   scoreEntryPlusDisabledB: boolean;
   savingScore: boolean;
@@ -95,6 +97,7 @@ export interface LiveTournamentActions {
   onChangeScoreB: (value: number) => void;
   onUndoScoreEntry: () => void;
   onSaveScoreEntry: (sets?: MatchSet[]) => void;
+  onAdvanceRegularSet?: (sets?: MatchSet[]) => void;
   onSaveScoreDraft?: () => void;
   onConfirmEditCompletedScore: () => void;
   onCancelEditCompletedScore: () => void;

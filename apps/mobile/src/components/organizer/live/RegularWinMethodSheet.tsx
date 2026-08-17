@@ -10,6 +10,8 @@ interface RegularWinMethodSheetProps {
   teamALabel: string;
   teamBLabel: string;
   sets: MatchSet[];
+  setIndex: number;
+  confirmLabel: string;
   saving: boolean;
   onChangeMethod: (setIndex: number, side: "A" | "B", gameIndex: number, method: KohGameWinMethod) => void;
   onConfirm: () => void;
@@ -26,34 +28,39 @@ function methodLabel(method: KohGameWinMethod): string {
 
 export function RegularWinMethodSheet(props: RegularWinMethodSheetProps) {
   const { colors } = useTheme();
+  const set = props.sets[props.setIndex];
 
   return (
-    <BottomSheet visible={props.visible} title="Win methods" onDismiss={props.onDismiss}>
+    <BottomSheet
+      visible={props.visible}
+      title={`Set ${set?.setNumber ?? props.setIndex + 1} win methods`}
+      onDismiss={props.onDismiss}
+    >
       <Text style={{ color: colors.muted, fontSize: 13 }}>
         How each game was won (default Regular).
       </Text>
-      {props.sets.map((set, setIndex) => (
-        <View key={set.setNumber} style={{ gap: spacing.sm }}>
+      {set ? (
+        <View style={{ gap: spacing.sm }}>
           {set.winMethodsA?.map((method, index) => (
             <MethodRow
               key={`A-${set.setNumber}-${index}`}
-              label={`${props.teamALabel} · Set ${set.setNumber} · Game ${index + 1}`}
+              label={`${props.teamALabel} · Game ${index + 1}`}
               method={method}
-              onChange={(next) => props.onChangeMethod(setIndex, "A", index, next)}
+              onChange={(next) => props.onChangeMethod(props.setIndex, "A", index, next)}
             />
           ))}
           {set.winMethodsB?.map((method, index) => (
             <MethodRow
               key={`B-${set.setNumber}-${index}`}
-              label={`${props.teamBLabel} · Set ${set.setNumber} · Game ${index + 1}`}
+              label={`${props.teamBLabel} · Game ${index + 1}`}
               method={method}
-              onChange={(next) => props.onChangeMethod(setIndex, "B", index, next)}
+              onChange={(next) => props.onChangeMethod(props.setIndex, "B", index, next)}
             />
           ))}
         </View>
-      ))}
+      ) : null}
       <SheetButton
-        label={props.saving ? "Saving…" : "Confirm result"}
+        label={props.saving ? "Saving…" : props.confirmLabel}
         variant="primary"
         disabled={props.saving}
         onPress={props.onConfirm}

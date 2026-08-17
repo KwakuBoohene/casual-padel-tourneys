@@ -5,6 +5,7 @@ import type { LiveTournamentState } from "../../../types/organizer/tournament";
 import { findMatchInTournament } from "../../../utilities/organizer/scoreDraftActions";
 import { initialScorePair, type ScoreEntryState } from "../../../utilities/organizer/scoreEntryHelpers";
 import {
+  advanceToNextRegularSet,
   buildScoreEntryFromPair,
   changeScoreEntrySide,
   restoreScoreEntryUndo
@@ -66,6 +67,8 @@ export function useScoreEntry(params: {
     scoreEntry,
     scoreEntryContextLine: meta.contextLine,
     scoreEntryCanComplete: meta.canComplete,
+    scoreEntrySetComplete: meta.setComplete,
+    scoreEntryPrimaryAction: meta.primaryAction,
     scoreEntryPlusDisabledA: meta.plusDisabledA,
     scoreEntryPlusDisabledB: meta.plusDisabledB,
     requestOpenScoreEntry: (matchId: string) => {
@@ -94,6 +97,11 @@ export function useScoreEntry(params: {
       ),
     saveScoreEntry: (sets?: MatchSet[]) => void runSave(meta.regular ? meta.canComplete : true, sets),
     saveScoreDraft: () => void runSave(false),
+    advanceRegularSet: (sets?: MatchSet[]) => {
+      if (!scoreEntry || !liveTournament) return;
+      const next = advanceToNextRegularSet(scoreEntry, liveTournament, sets);
+      if (next) setScoreEntry(next);
+    },
     savingScore,
     pendingCompletedEditMatchId,
     confirmEditCompletedScore: () => {

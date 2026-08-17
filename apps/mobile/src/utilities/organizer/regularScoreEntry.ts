@@ -96,6 +96,9 @@ export function canIncrementRegularSide(
   if (!set || isSetTiebreakMode(set, config)) {
     return true;
   }
+  if (evaluateSet(set, config).complete) {
+    return false;
+  }
   if (config.setFormat === "FULL_SET" && config.gameWinBy === 1) {
     if (evaluateSet(set, config).complete) {
       return false;
@@ -134,17 +137,6 @@ export function applyRegularSideChange(
     set.gamesB = value;
   }
   sets[index] = set;
-
-  const setEval = evaluateSet(set, config);
-  const matchEval = evaluateMatch(sets, config);
-  if (
-    setEval.complete &&
-    !matchEval.complete &&
-    matchEval.setsWonA < config.setsToWin &&
-    matchEval.setsWonB < config.setsToWin
-  ) {
-    sets.push({ setNumber: sets.length + 1, gamesA: 0, gamesB: 0 });
-  }
 
   return { sets, matchTbA: snapshot.matchTbA, matchTbB: snapshot.matchTbB };
 }

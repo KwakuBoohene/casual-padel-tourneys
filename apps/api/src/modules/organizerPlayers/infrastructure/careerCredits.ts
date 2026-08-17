@@ -42,11 +42,13 @@ export interface KohMatchCredit {
   matchId: string;
   unitAPlayerIds: [string, string];
   unitBPlayerIds: [string, string];
-  winnerSide: "A" | "B";
+  winnerSide: "A" | "B" | "DRAW";
   gamesA: number;
   gamesB: number;
   setsA: number;
   setsB: number;
+  americanoPointsA?: number;
+  americanoPointsB?: number;
   occurredAt?: Date;
   /** Defaults to King of the Court (KOH credit path). */
   tournamentMode?: TournamentMode;
@@ -62,6 +64,23 @@ interface CreditSide {
   setsLost: number;
   matchesWon: number;
   matchesLost: number;
+  matchesDrawn: number;
+  americanoPointsWon: number;
+  americanoPointsLost: number;
+}
+
+function deltaStats(side: CreditSide) {
+  return {
+    gamesWon: side.gamesWon,
+    gamesLost: side.gamesLost,
+    setsWon: side.setsWon,
+    setsLost: side.setsLost,
+    matchesWon: side.matchesWon,
+    matchesLost: side.matchesLost,
+    matchesDrawn: side.matchesDrawn,
+    americanoPointsWon: side.americanoPointsWon,
+    americanoPointsLost: side.americanoPointsLost
+  };
 }
 
 /** Idempotent per (match, career player): re-submitting a score overwrites the delta. */
@@ -85,6 +104,9 @@ export async function creditKohMatchToOrganizerPlayers(input: KohMatchCredit): P
     return careerId;
   }
 
+  const americanoA = input.americanoPointsA ?? 0;
+  const americanoB = input.americanoPointsB ?? 0;
+  const drawn = input.winnerSide === "DRAW";
   const sides: CreditSide[] = [
     {
       playerIds: input.unitAPlayerIds,
@@ -92,8 +114,11 @@ export async function creditKohMatchToOrganizerPlayers(input: KohMatchCredit): P
       gamesLost: input.gamesB,
       setsWon: input.setsA,
       setsLost: input.setsB,
-      matchesWon: input.winnerSide === "A" ? 1 : 0,
-      matchesLost: input.winnerSide === "A" ? 0 : 1
+      matchesWon: drawn ? 0 : input.winnerSide === "A" ? 1 : 0,
+      matchesLost: drawn ? 0 : input.winnerSide === "A" ? 0 : 1,
+      matchesDrawn: drawn ? 1 : 0,
+      americanoPointsWon: americanoA,
+      americanoPointsLost: americanoB
     },
     {
       playerIds: input.unitBPlayerIds,
@@ -101,8 +126,11 @@ export async function creditKohMatchToOrganizerPlayers(input: KohMatchCredit): P
       gamesLost: input.gamesA,
       setsWon: input.setsB,
       setsLost: input.setsA,
-      matchesWon: input.winnerSide === "B" ? 1 : 0,
-      matchesLost: input.winnerSide === "B" ? 0 : 1
+      matchesWon: drawn ? 0 : input.winnerSide === "B" ? 1 : 0,
+      matchesLost: drawn ? 0 : input.winnerSide === "B" ? 0 : 1,
+      matchesDrawn: drawn ? 1 : 0,
+      americanoPointsWon: americanoB,
+      americanoPointsLost: americanoA
     }
   ];
 
@@ -124,21 +152,11 @@ export async function creditKohMatchToOrganizerPlayers(input: KohMatchCredit): P
           tournamentName: input.tournamentName,
           tournamentMode,
           matchId: input.matchId,
-          gamesWon: side.gamesWon,
-          gamesLost: side.gamesLost,
-          setsWon: side.setsWon,
-          setsLost: side.setsLost,
-          matchesWon: side.matchesWon,
-          matchesLost: side.matchesLost,
-          occurredAt
+          occurredAt,
+          ...deltaStats(side)
         },
         update: {
-          gamesWon: side.gamesWon,
-          gamesLost: side.gamesLost,
-          setsWon: side.setsWon,
-          setsLost: side.setsLost,
-          matchesWon: side.matchesWon,
-          matchesLost: side.matchesLost,
+          ...deltaStats(side),
           tournamentMode,
           tournamentName: input.tournamentName,
           occurredAt

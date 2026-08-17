@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 
 import {
   formatGameDiff,
+  STANDINGS_HELP_ABBREVIATIONS,
+  STANDINGS_RANKING_STEPS,
   standingsCells,
   standingsLineFromRecord
 } from "../../src/utils/standings.js";
@@ -29,6 +31,13 @@ test("standingsLineFromRecord uses W+L+D as matches played", () => {
     d: "1",
     gw: "48",
     gl: "32",
-    gd: "+16"
+    gd: "+16",
+    pts: "8"
   });
+});
+
+test("standings help lists table columns then Americano rally abbreviations", () => {
+  assert.equal(STANDINGS_HELP_ABBREVIATIONS[0]?.abbrev, "MP");
+  assert.equal(STANDINGS_HELP_ABBREVIATIONS.at(-1)?.abbrev, "PL(A)");
+  assert.ok(STANDINGS_RANKING_STEPS[0]?.startsWith("PTS"));
 });

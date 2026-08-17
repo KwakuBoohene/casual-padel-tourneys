@@ -74,26 +74,28 @@ test("compareLeaderboardRows ranks Regular by matches then sets then games", () 
   assert.ok(compareLeaderboardRows(a, c) < 0);
 });
 
-test("compareLeaderboardRows ranks Americano by total points", () => {
-  const a: LeaderboardRow = {
+test("compareLeaderboardRows ranks Americano by match wins then rally points", () => {
+  const fewerWins: LeaderboardRow = {
     playerId: "a",
     name: "A",
-    wins: 0,
+    wins: 1,
     losses: 0,
     draws: 0,
     gamesPlayed: 1,
-    totalPoints: 18
+    totalPoints: 40,
+    americanoPointsWon: 40
   };
-  const b: LeaderboardRow = {
+  const moreWins: LeaderboardRow = {
     playerId: "b",
     name: "B",
-    wins: 0,
+    wins: 2,
     losses: 0,
     draws: 0,
-    gamesPlayed: 1,
-    totalPoints: 24
+    gamesPlayed: 2,
+    totalPoints: 10,
+    americanoPointsWon: 10
   };
-  assert.ok(compareLeaderboardRows(b, a) < 0);
+  assert.ok(compareLeaderboardRows(moreWins, fewerWins) < 0);
 });
 
 test("buildLeaderboardRows uses stored Regular standings without points W–L", () => {
@@ -167,7 +169,7 @@ test("buildLeaderboardRows uses stored Regular standings without points W–L", 
   assert.equal(rows[1]?.wins, 0);
 });
 
-test("buildLeaderboardRows still sorts Americano by points", () => {
+test("buildLeaderboardRows sorts Americano by wins then rally points", () => {
   const tournament = baseTournament({
     players: [
       { id: "p1", name: "Ada" },
@@ -199,7 +201,48 @@ test("buildLeaderboardRows still sorts Americano by points", () => {
 
   const rows = buildLeaderboardRows(tournament);
   assert.equal(rows[0]?.playerId, "p2");
-  assert.equal(rows[0]?.totalPoints, 24);
   assert.equal(rows[0]?.wins, 1);
+  assert.equal(rows[0]?.gamesWon, 1);
+  assert.equal(rows[0]?.americanoPointsWon, 24);
+  assert.equal(rows[0]?.americanoPointsLost, 10);
   assert.equal(rows[1]?.wins, 0);
+  assert.equal(rows[1]?.gamesLost, 1);
+  assert.equal(rows[1]?.americanoPointsWon, 10);
+});
+
+test("buildLeaderboardRows counts an Americano tie as a draw", () => {
+  const tournament = baseTournament({
+    players: [
+      { id: "p1", name: "Ada" },
+      { id: "p2", name: "Bea" }
+    ],
+    leaderboard: [
+      { playerId: "p1", name: "Ada", totalPoints: 12, gamesPlayed: 1, rank: 1 },
+      { playerId: "p2", name: "Bea", totalPoints: 12, gamesPlayed: 1, rank: 2 }
+    ],
+    rounds: [
+      {
+        id: "r1",
+        roundNumber: 1,
+        isLocked: false,
+        matches: [
+          {
+            id: "m1",
+            court: 1,
+            teamA: ["p1", "x"],
+            teamB: ["p2", "y"],
+            scoreA: 12,
+            scoreB: 12,
+            completed: true
+          }
+        ]
+      }
+    ]
+  });
+
+  const rows = buildLeaderboardRows(tournament);
+  assert.equal(rows[0]?.draws, 1);
+  assert.equal(rows[0]?.wins, 0);
+  assert.equal(rows[0]?.losses, 0);
+  assert.equal(rows[1]?.draws, 1);
 });

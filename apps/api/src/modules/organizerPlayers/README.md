@@ -25,7 +25,9 @@ infrastructure/  → Prisma repository (reads) + careerCredits (writes)
   the delta instead of double counting, and a player who leaves a unit keeps past results.
 - Identity is `organizerId` + normalized display name (`domain/careerRange.ts`), so renames
   within one organizer merge into the same career.
-- Leaderboard rank is matches won, then sets won, then games won (name as last tiebreak).
-  Points Americano credits a match win as one set so it can tie-break with Regular / KOH.
+- Leaderboard rank is match-win points, then sets, then regular games, then
+  Americano rally points (name as last tiebreak). Points Americano stores rally
+  totals as PW(A)/PL(A); each such match still counts as one match win (1 PTS)
+  if won, or one draw (0 PTS) if tied. That game does not outrank regular games.
 - Guests have no career: the leaderboard answers 200 with an upsell payload and the detail route
   answers 403. Keep that messaging when changing the routes.

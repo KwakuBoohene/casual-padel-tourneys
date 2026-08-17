@@ -88,6 +88,8 @@ export interface LeaderboardRow {
   setsWon?: number;
   gamesWon?: number;
   gamesLost?: number;
+  americanoPointsWon?: number;
+  americanoPointsLost?: number;
   isRegular?: boolean;
 }
 

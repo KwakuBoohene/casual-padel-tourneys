@@ -20,7 +20,8 @@ export interface StandingsTableRow {
 }
 
 function widthFor(key: string): number {
-  return key === "gd" ? GD_W : COL_W;
+  if (key === "gd" || key === "pts") return GD_W;
+  return COL_W;
 }
 
 function StatCells(props: { line?: StandingsLine; header?: boolean }) {
@@ -37,9 +38,9 @@ function StatCells(props: { line?: StandingsLine; header?: boolean }) {
             textAlign: "right",
             fontVariant: ["tabular-nums"],
             fontSize: props.header ? 10 : 12,
-            fontWeight: col.key === "gd" && !props.header ? "700" : "600",
+            fontWeight: (col.key === "gd" || col.key === "pts") && !props.header ? "700" : "600",
             letterSpacing: props.header ? 0.3 : 0,
-            color: props.header || col.key === "gd" ? colors.text : colors.muted
+            color: props.header || col.key === "gd" || col.key === "pts" ? colors.text : colors.muted
           }}
         >
           {props.header ? col.header : values?.[col.key]}
@@ -82,7 +83,7 @@ export function StandingsTable(props: StandingsTableProps) {
     <ScrollView horizontal bounces={false} showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
     <View
       style={{
-        minWidth: 340,
+        minWidth: 372,
         flexGrow: 1,
         borderRadius: 14,
         borderWidth: 1,

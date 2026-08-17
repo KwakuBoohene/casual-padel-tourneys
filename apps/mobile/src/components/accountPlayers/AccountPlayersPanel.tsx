@@ -1,6 +1,5 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 import {
-  STANDINGS_LEGEND,
   standingsLineFromRecord,
   type OrganizerPlayerLeaderboardRow,
   type OrganizerPlayerRange
@@ -8,6 +7,7 @@ import {
 
 import { radius, spacing, touch, typography } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
+import { StandingsHelpControl } from "../standings/StandingsHelpControl";
 import { StandingsTable } from "../standings/StandingsTable";
 
 const RANGES: { id: OrganizerPlayerRange; label: string }[] = [
@@ -32,8 +32,10 @@ export function AccountPlayersPanel(props: AccountPlayersPanelProps) {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView contentContainerStyle={{ padding: spacing.xl, gap: spacing.md, paddingBottom: spacing.xxl }}>
-        <Text style={[typography.title, { color: colors.text }]}>Account Leaderboard</Text>
-        <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18 }}>{STANDINGS_LEGEND}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+          <Text style={[typography.title, { color: colors.text, flex: 1 }]}>Account Leaderboard</Text>
+          <StandingsHelpControl />
+        </View>
         <View style={{ flexDirection: "row", gap: spacing.sm }}>
           {RANGES.map((entry) => {
             const active = props.range === entry.id;
@@ -98,6 +100,7 @@ export function AccountPlayersPanel(props: AccountPlayersPanelProps) {
               line: standingsLineFromRecord({
                 wins: row.matchesWon,
                 losses: row.matchesLost,
+                draws: row.matchesDrawn,
                 gamesWon: row.gamesWon,
                 gamesLost: row.gamesLost
               })

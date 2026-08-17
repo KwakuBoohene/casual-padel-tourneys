@@ -210,6 +210,9 @@ model OrganizerPlayerStatDelta {
   setsLost          Int      @default(0)
   matchesWon        Int      @default(0)
   matchesLost       Int      @default(0)
+  matchesDrawn      Int      @default(0)
+  americanoPointsWon  Int    @default(0)
+  americanoPointsLost Int    @default(0)
   occurredAt        DateTime @default(now())
   organizerPlayer   OrganizerPlayer @relation(fields: [organizerPlayerId], references: [id], onDelete: Cascade)
 

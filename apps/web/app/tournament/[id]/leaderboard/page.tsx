@@ -3,6 +3,7 @@ import { standingsLineFromRecord } from "@padel/shared";
 import Link from "next/link";
 import PodiumShowcase from "./PodiumShowcase";
 import { WebStandingsTable } from "./StandingsTable";
+import { WebStandingsHelp } from "./StandingsHelp";
 
 import { buildOutstandingPlayerRows } from "../components/outstandingPlayers";
 import { formatScoringLabel, type TournamentViewModel } from "../types";
@@ -17,10 +18,6 @@ async function getTournament(token: string) {
   }
   const payload = (await response.json()) as { data: TournamentViewModel };
   return payload.data;
-}
-
-function formatPoints(totalPoints: number): string {
-  return `${totalPoints} pts`;
 }
 
 export default async function LeaderboardPage({ params }: { params: Promise<{ id: string }> }) {
@@ -62,7 +59,10 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
             {tournament.config.name} · {scoringLabel}
           </p>
         </div>
-        <LeaderboardHeaderActions tournamentId={route.id} />
+        <div className="flex items-center gap-3 self-start">
+          <WebStandingsHelp />
+          <LeaderboardHeaderActions tournamentId={route.id} />
+        </div>
       </header>
 
       <div className="max-w-3xl mx-auto w-full space-y-6">
@@ -72,44 +72,20 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
           isRegular={isRegular}
         />
 
-        {isRegular ? (
-          <WebStandingsTable
-            rows={rows.map((entry) => ({
-              id: entry.playerId,
-              rank: entry.rank,
-              name: entry.name,
-              line: standingsLineFromRecord({
-                wins: entry.wins,
-                losses: entry.losses,
-                draws: entry.draws,
-                gamesWon: entry.gamesWon ?? 0,
-                gamesLost: entry.gamesLost ?? 0
-              })
-            }))}
-          />
-        ) : (
-        <section className="space-y-2">
-          {rows.map((entry) => {
-            const isLeader = entry.rank === 1;
-            return (
-              <div
-                key={entry.playerId}
-                className={[
-                  "min-h-12 flex items-center justify-between gap-3 rounded-2xl border bg-padel-surface px-4 py-3.5",
-                  isLeader ? "border-2 border-padel-primary" : "border-padel-border"
-                ].join(" ")}
-              >
-                <p className="text-base font-semibold text-padel-text truncate">
-                  {entry.rank}  {entry.name}
-                </p>
-                <p className="text-sm font-medium text-padel-muted shrink-0 text-right">
-                  {formatPoints(entry.totalPoints)}
-                </p>
-              </div>
-            );
-          })}
-        </section>
-        )}
+        <WebStandingsTable
+          rows={rows.map((entry) => ({
+            id: entry.playerId,
+            rank: entry.rank,
+            name: entry.name,
+            line: standingsLineFromRecord({
+              wins: entry.wins,
+              losses: entry.losses,
+              draws: entry.draws,
+              gamesWon: entry.gamesWon ?? 0,
+              gamesLost: entry.gamesLost ?? 0
+            })
+          }))}
+        />
       </div>
     </main>
   );

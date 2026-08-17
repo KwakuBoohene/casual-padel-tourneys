@@ -35,9 +35,9 @@ export function buildOutstandingPlayerRows(tournament: TournamentWithLeaderboard
       wins: regular ? entry.matchesWon ?? 0 : 0,
       losses: regular ? entry.matchesLost ?? 0 : 0,
       draws: 0,
-      setsWon: entry.setsWon ?? 0,
-      gamesWon: entry.gamesWon ?? 0,
-      gamesLost: entry.gamesLost ?? 0,
+      setsWon: regular ? entry.setsWon ?? 0 : 0,
+      gamesWon: regular ? entry.gamesWon ?? 0 : 0,
+      gamesLost: regular ? entry.gamesLost ?? 0 : 0,
       isRegular: regular
     });
   }
@@ -46,9 +46,15 @@ export function buildOutstandingPlayerRows(tournament: TournamentWithLeaderboard
     const bump = (playerId: string, result: "WIN" | "LOSS" | "DRAW") => {
       const row = stats.get(playerId);
       if (!row) return;
-      if (result === "WIN") row.wins += 1;
-      else if (result === "LOSS") row.losses += 1;
-      else row.draws += 1;
+      if (result === "WIN") {
+        row.wins += 1;
+        row.gamesWon = (row.gamesWon ?? 0) + 1;
+      } else if (result === "LOSS") {
+        row.losses += 1;
+        row.gamesLost = (row.gamesLost ?? 0) + 1;
+      } else {
+        row.draws += 1;
+      }
     };
 
     for (const round of tournament.rounds) {
@@ -80,14 +86,15 @@ export function buildOutstandingPlayerRows(tournament: TournamentWithLeaderboard
   }
 
   return [...stats.values()].sort((a, b) => {
+    const byWins = b.wins - a.wins;
+    if (byWins !== 0) return byWins;
     if (regular) {
-      const byMatches = b.wins - a.wins;
-      if (byMatches !== 0) return byMatches;
       const bySets = (b.setsWon ?? 0) - (a.setsWon ?? 0);
       if (bySets !== 0) return bySets;
-      return (b.gamesWon ?? 0) - (a.gamesWon ?? 0);
+      const byGames = (b.gamesWon ?? 0) - (a.gamesWon ?? 0);
+      if (byGames !== 0) return byGames;
     }
-    return a.rank - b.rank;
+    return b.totalPoints - a.totalPoints;
   });
 }
 

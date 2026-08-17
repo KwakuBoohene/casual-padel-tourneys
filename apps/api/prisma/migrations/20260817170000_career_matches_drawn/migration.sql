@@ -1,0 +1,1 @@
+ALTER TABLE "OrganizerPlayerStatDelta" ADD COLUMN IF NOT EXISTS "matchesDrawn" INTEGER NOT NULL DEFAULT 0;

@@ -28,7 +28,7 @@ function formatSummary(row: LeaderboardRow | undefined, matchCount: number): str
       gamesWon: row.gamesWon
     });
   }
-  return `${row.totalPoints} pts · ${matchLabel}`;
+  return `PW(A) ${row.americanoPointsWon ?? row.totalPoints} · PL(A) ${row.americanoPointsLost ?? 0} · ${matchLabel}`;
 }
 
 function formatGameLine(game: PlayerGameRow): string {

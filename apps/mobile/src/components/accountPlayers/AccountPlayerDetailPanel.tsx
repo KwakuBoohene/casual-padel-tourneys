@@ -41,12 +41,29 @@ export function AccountPlayerDetailPanel(props: AccountPlayerDetailPanelProps) {
               line: standingsLineFromRecord({
                 wins: detail.matchesWon,
                 losses: detail.matchesLost,
+                draws: detail.matchesDrawn,
                 gamesWon: detail.gamesWon,
                 gamesLost: detail.gamesLost
               })
             }
           ]}
         />
+        <View
+          style={{
+            flexDirection: "row",
+            gap: spacing.md
+          }}
+        >
+          <Text style={{ color: colors.text, fontWeight: "700", fontSize: 16 }}>
+            PW(A) {detail.americanoPointsWon}
+          </Text>
+          <Text style={{ color: colors.text, fontWeight: "700", fontSize: 16 }}>
+            PL(A) {detail.americanoPointsLost}
+          </Text>
+        </View>
+        <Text style={{ color: colors.muted, fontSize: 12 }}>
+          PW(A) / PL(A) are Americano rally points, not regular games.
+        </Text>
         <Text style={{ color: colors.muted }}>
           {detail.eventsPlayed} {detail.eventsPlayed === 1 ? "event" : "events"} played
         </Text>
@@ -58,8 +75,10 @@ export function AccountPlayerDetailPanel(props: AccountPlayerDetailPanelProps) {
         ) : (
           detail.recentEvents.map((event) => (
             <Text key={event.tournamentId} style={{ color: colors.text, lineHeight: 22 }}>
-              {event.tournamentName} · {event.matchesWon}–{event.matchesLost} · GD{" "}
-              {formatGameDiff(event.gamesWon - event.gamesLost)}
+              {event.tournamentName} · {event.matchesWon}–{event.matchesLost}
+              {event.americanoPointsWon + event.americanoPointsLost > 0
+                ? ` · PW(A) ${event.americanoPointsWon} PL(A) ${event.americanoPointsLost}`
+                : ` · GD ${formatGameDiff(event.gamesWon - event.gamesLost)}`}
             </Text>
           ))
         )}

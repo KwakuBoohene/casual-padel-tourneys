@@ -9,10 +9,13 @@ export interface OrganizerPlayerLeaderboardRow {
   name: string;
   matchesWon: number;
   matchesLost: number;
+  matchesDrawn: number;
   setsWon: number;
   setsLost: number;
   gamesWon: number;
   gamesLost: number;
+  americanoPointsWon: number;
+  americanoPointsLost: number;
   eventsPlayed: number;
 }
 
@@ -26,10 +29,13 @@ export interface OrganizerPlayerEventSummary {
   tournamentName: string;
   matchesWon: number;
   matchesLost: number;
+  matchesDrawn: number;
   setsWon: number;
   setsLost: number;
   gamesWon: number;
   gamesLost: number;
+  americanoPointsWon: number;
+  americanoPointsLost: number;
 }
 
 export interface OrganizerPlayerDetail {
@@ -38,10 +44,13 @@ export interface OrganizerPlayerDetail {
   range: OrganizerPlayerRange;
   matchesWon: number;
   matchesLost: number;
+  matchesDrawn: number;
   setsWon: number;
   setsLost: number;
   gamesWon: number;
   gamesLost: number;
+  americanoPointsWon: number;
+  americanoPointsLost: number;
   eventsPlayed: number;
   recentEvents: OrganizerPlayerEventSummary[];
 }

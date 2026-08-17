@@ -1,6 +1,5 @@
 import {
   STANDINGS_COLUMNS,
-  STANDINGS_LEGEND,
   standingsCells,
   type StandingsLine
 } from "@padel/shared";
@@ -15,9 +14,8 @@ export type WebStandingsRow = {
 export function WebStandingsTable(props: { rows: WebStandingsRow[] }) {
   return (
     <div className="space-y-3">
-      <p className="text-xs text-padel-muted leading-5">{STANDINGS_LEGEND}</p>
       <div className="overflow-x-auto rounded-2xl border border-padel-border bg-padel-surface">
-        <table className="w-full min-w-[340px] text-sm">
+        <table className="w-full min-w-[372px] text-sm">
           <thead>
             <tr className="border-b border-padel-border text-[10px] font-semibold tracking-wide text-padel-muted">
               <th className="px-3 py-2 text-left font-semibold w-8">#</th>
@@ -41,7 +39,7 @@ export function WebStandingsTable(props: { rows: WebStandingsRow[] }) {
                       key={col.key}
                       className={[
                         "px-1.5 py-3 text-right tabular-nums",
-                        col.key === "gd" ? "font-bold text-padel-text" : "text-padel-muted"
+                        col.key === "gd" || col.key === "pts" ? "font-bold text-padel-text" : "text-padel-muted"
                       ].join(" ")}
                     >
                       {cells[col.key]}

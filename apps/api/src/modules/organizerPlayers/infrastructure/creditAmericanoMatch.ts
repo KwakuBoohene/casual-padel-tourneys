@@ -16,11 +16,13 @@ function findMatch(tournament: TournamentState, matchId: string): Match | undefi
 }
 
 function creditSides(match: Match, tournament: TournamentState): {
-  winnerSide: "A" | "B";
+  winnerSide: "A" | "B" | "DRAW";
   gamesA: number;
   gamesB: number;
   setsA: number;
   setsB: number;
+  americanoPointsA: number;
+  americanoPointsB: number;
 } | null {
   if ((tournament.config.scoringMode ?? "AMERICANO_POINTS") === "REGULAR") {
     const regular = tournament.config.regularScoring;
@@ -35,19 +37,34 @@ function creditSides(match: Match, tournament: TournamentState): {
       gamesA: evaluation.gamesWonA,
       gamesB: evaluation.gamesWonB,
       setsA: evaluation.setsWonA,
-      setsB: evaluation.setsWonB
+      setsB: evaluation.setsWonB,
+      americanoPointsA: 0,
+      americanoPointsB: 0
     };
   }
-  if (match.scoreA === undefined || match.scoreB === undefined || match.scoreA === match.scoreB) {
+  if (match.scoreA === undefined || match.scoreB === undefined) {
     return null;
+  }
+  if (match.scoreA === match.scoreB) {
+    return {
+      winnerSide: "DRAW",
+      gamesA: 0,
+      gamesB: 0,
+      setsA: 0,
+      setsB: 0,
+      americanoPointsA: match.scoreA,
+      americanoPointsB: match.scoreB
+    };
   }
   const winnerA = match.scoreA > match.scoreB;
   return {
     winnerSide: winnerA ? "A" : "B",
-    gamesA: match.scoreA,
-    gamesB: match.scoreB,
-    setsA: winnerA ? 1 : 0,
-    setsB: winnerA ? 0 : 1
+    gamesA: winnerA ? 1 : 0,
+    gamesB: winnerA ? 0 : 1,
+    setsA: 0,
+    setsB: 0,
+    americanoPointsA: match.scoreA,
+    americanoPointsB: match.scoreB
   };
 }
 
@@ -83,6 +100,8 @@ export async function creditAmericanoMatchIfComplete(input: {
         gamesB: sides.gamesB,
         setsA: sides.setsA,
         setsB: sides.setsB,
+        americanoPointsA: sides.americanoPointsA,
+        americanoPointsB: sides.americanoPointsB,
         tournamentMode: tournament.config.mode
       });
     });

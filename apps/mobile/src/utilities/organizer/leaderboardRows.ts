@@ -1,4 +1,4 @@
-import type { LeaderboardRow, LiveTournamentState , PlayerGameRow } from "../../types/organizer/tournament";
+import type { LeaderboardRow, LiveTournamentState, PlayerGameRow } from "../../types/organizer/tournament";
 import { evaluateMatch } from "@padel/shared";
 
 import { formatRegularMatchScore } from "./regularMatchDisplay";
@@ -14,10 +14,28 @@ function bumpResult(stats: Map<string, LeaderboardRow>, playerId: string, result
   }
   if (result === "WIN") {
     row.wins += 1;
+    row.gamesWon = (row.gamesWon ?? 0) + 1;
   } else if (result === "LOSS") {
     row.losses += 1;
+    row.gamesLost = (row.gamesLost ?? 0) + 1;
   } else {
     row.draws += 1;
+  }
+}
+
+function creditAmericanoMatch(
+  stats: Map<string, LeaderboardRow>,
+  playerIds: string[],
+  result: "WIN" | "LOSS" | "DRAW",
+  scored: number,
+  conceded: number
+): void {
+  for (const playerId of playerIds) {
+    bumpResult(stats, playerId, result);
+    const row = stats.get(playerId);
+    if (!row) continue;
+    row.americanoPointsWon = (row.americanoPointsWon ?? 0) + scored;
+    row.americanoPointsLost = (row.americanoPointsLost ?? 0) + conceded;
   }
 }
 
@@ -42,6 +60,8 @@ function ensureRow(
     setsWon: seed?.setsWon ?? 0,
     gamesWon: seed?.gamesWon ?? 0,
     gamesLost: seed?.gamesLost ?? 0,
+    americanoPointsWon: seed?.americanoPointsWon ?? 0,
+    americanoPointsLost: seed?.americanoPointsLost ?? 0,
     isRegular: seed?.isRegular
   };
   stats.set(playerId, row);
@@ -49,14 +69,17 @@ function ensureRow(
 }
 
 export function compareLeaderboardRows(a: LeaderboardRow, b: LeaderboardRow): number {
+  const byWins = b.wins - a.wins;
+  if (byWins !== 0) return byWins;
   if (a.isRegular || b.isRegular) {
-    const byMatches = b.wins - a.wins;
-    if (byMatches !== 0) return byMatches;
     const bySets = (b.setsWon ?? 0) - (a.setsWon ?? 0);
     if (bySets !== 0) return bySets;
-    return (b.gamesWon ?? 0) - (a.gamesWon ?? 0);
+    const byGames = (b.gamesWon ?? 0) - (a.gamesWon ?? 0);
+    if (byGames !== 0) return byGames;
   }
-  return b.totalPoints - a.totalPoints;
+  const byAmericano = (b.americanoPointsWon ?? b.totalPoints) - (a.americanoPointsWon ?? a.totalPoints);
+  if (byAmericano !== 0) return byAmericano;
+  return a.name.localeCompare(b.name);
 }
 
 export function buildLeaderboardRows(tournament: LiveTournamentState): LeaderboardRow[] {
@@ -69,9 +92,9 @@ export function buildLeaderboardRows(tournament: LiveTournamentState): Leaderboa
       losses: regular ? entry.matchesLost ?? 0 : 0,
       gamesPlayed: entry.gamesPlayed,
       totalPoints: entry.totalPoints,
-      setsWon: entry.setsWon ?? 0,
-      gamesWon: entry.gamesWon ?? 0,
-      gamesLost: entry.gamesLost ?? 0,
+      setsWon: regular ? entry.setsWon ?? 0 : 0,
+      gamesWon: regular ? entry.gamesWon ?? 0 : 0,
+      gamesLost: regular ? entry.gamesLost ?? 0 : 0,
       isRegular: regular
     });
   }
@@ -82,9 +105,9 @@ export function buildLeaderboardRows(tournament: LiveTournamentState): Leaderboa
       losses: regular ? player.matchesLost ?? 0 : 0,
       gamesPlayed: 0,
       totalPoints: player.totalPoints ?? 0,
-      setsWon: player.setsWon ?? 0,
-      gamesWon: player.gamesWon ?? 0,
-      gamesLost: player.gamesLost ?? 0,
+      setsWon: regular ? player.setsWon ?? 0 : 0,
+      gamesWon: regular ? player.gamesWon ?? 0 : 0,
+      gamesLost: regular ? player.gamesLost ?? 0 : 0,
       isRegular: regular
     });
   }
@@ -99,12 +122,8 @@ export function buildLeaderboardRows(tournament: LiveTournamentState): Leaderboa
           match.scoreA === match.scoreB ? "DRAW" : match.scoreA > match.scoreB ? "WIN" : "LOSS";
         const teamBResult =
           match.scoreA === match.scoreB ? "DRAW" : match.scoreB > match.scoreA ? "WIN" : "LOSS";
-        for (const playerId of match.teamA) {
-          bumpResult(stats, playerId, teamAResult);
-        }
-        for (const playerId of match.teamB) {
-          bumpResult(stats, playerId, teamBResult);
-        }
+        creditAmericanoMatch(stats, match.teamA, teamAResult, match.scoreA, match.scoreB);
+        creditAmericanoMatch(stats, match.teamB, teamBResult, match.scoreB, match.scoreA);
       }
     }
   }

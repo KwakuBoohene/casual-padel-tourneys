@@ -53,11 +53,21 @@ export async function archiveAccountPlayer(playerId: string): Promise<{ id: stri
   return response.data;
 }
 
+export async function archiveAccountPlayers(playerIds: string[]): Promise<{ count: number }> {
+  const response = await apiPost<{ data: { count: number } }>("/me/players/archive", { playerIds });
+  return response.data;
+}
+
 export async function unarchiveAccountPlayer(playerId: string): Promise<{ id: string; name: string }> {
   const response = await apiPost<{ data: { id: string; name: string } }>(
     `/me/players/${playerId}/unarchive`,
     {}
   );
+  return response.data;
+}
+
+export async function unarchiveAccountPlayers(playerIds: string[]): Promise<{ count: number }> {
+  const response = await apiPost<{ data: { count: number } }>("/me/players/unarchive", { playerIds });
   return response.data;
 }
 

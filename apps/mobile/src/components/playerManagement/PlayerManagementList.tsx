@@ -14,6 +14,9 @@ export function PlayerManagementList(props: {
   players: OrganizerManagedPlayer[];
   status: OrganizerPlayerStatus;
   loading: boolean;
+  selecting: boolean;
+  selectedIds: string[];
+  onToggleSelect: (id: string) => void;
   onRename: (player: OrganizerManagedPlayer) => void;
   onAction: (player: OrganizerManagedPlayer) => void;
 }) {
@@ -39,6 +42,9 @@ export function PlayerManagementList(props: {
           key={player.id}
           player={player}
           status={props.status}
+          selecting={props.selecting}
+          selected={props.selectedIds.includes(player.id)}
+          onToggleSelect={() => props.onToggleSelect(player.id)}
           onRename={() => props.onRename(player)}
           onAction={() => props.onAction(player)}
         />

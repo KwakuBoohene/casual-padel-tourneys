@@ -18,12 +18,28 @@ export async function archiveOrganizerPlayer(
   return deps.repo.archivePlayer(organizerId, organizerPlayerId);
 }
 
+export async function archiveOrganizerPlayers(
+  deps: OrganizerPlayersDeps,
+  organizerId: string,
+  playerIds: string[]
+): Promise<{ count: number }> {
+  return deps.repo.archivePlayers(organizerId, playerIds);
+}
+
 export async function unarchiveOrganizerPlayer(
   deps: OrganizerPlayersDeps,
   organizerId: string,
   organizerPlayerId: string
 ): Promise<{ id: string; name: string }> {
   return deps.repo.unarchivePlayer(organizerId, organizerPlayerId);
+}
+
+export async function unarchiveOrganizerPlayers(
+  deps: OrganizerPlayersDeps,
+  organizerId: string,
+  playerIds: string[]
+): Promise<{ count: number }> {
+  return deps.repo.unarchivePlayers(organizerId, playerIds);
 }
 
 export async function mergeOrganizerPlayers(

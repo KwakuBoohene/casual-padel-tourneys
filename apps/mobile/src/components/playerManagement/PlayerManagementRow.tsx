@@ -40,31 +40,46 @@ export function PlayerStatusTabs(props: {
 export function PlayerManagementRow(props: {
   player: OrganizerManagedPlayer;
   status: OrganizerPlayerStatus;
+  selecting: boolean;
+  selected: boolean;
+  onToggleSelect: () => void;
   onRename: () => void;
   onAction: () => void;
 }) {
   const { colors } = useTheme();
   const record = `${props.player.matchesWon}–${props.player.matchesLost}`;
-  return (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        gap: spacing.md,
-        minHeight: touch.minSecondary,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: radius.lg,
-        paddingHorizontal: spacing.md,
-        backgroundColor: colors.surface
-      }}
-    >
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={{ color: colors.text, fontWeight: "700" }} numberOfLines={1}>
-          {props.player.name}
+  const rowStyle = {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: spacing.md,
+    minHeight: touch.minSecondary,
+    borderWidth: props.selected ? 2 : 1,
+    borderColor: props.selected ? colors.primary : colors.border,
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.surface
+  };
+  const identity = (
+    <View style={{ flex: 1, minWidth: 0 }}>
+      <Text style={{ color: colors.text, fontWeight: "700" }} numberOfLines={1}>
+        {props.player.name}
+      </Text>
+      <Text style={{ color: colors.muted, fontSize: 12 }}>{record}</Text>
+    </View>
+  );
+  if (props.selecting) {
+    return (
+      <Pressable onPress={props.onToggleSelect} style={rowStyle}>
+        <Text style={{ color: colors.primary, fontWeight: "700", width: 20 }}>
+          {props.selected ? "✓" : "○"}
         </Text>
-        <Text style={{ color: colors.muted, fontSize: 12 }}>{record}</Text>
-      </View>
+        {identity}
+      </Pressable>
+    );
+  }
+  return (
+    <View style={rowStyle}>
+      {identity}
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
         <Pressable onPress={props.onRename} hitSlop={8}>
           <Text style={{ color: colors.primary, fontWeight: "700" }}>Rename</Text>

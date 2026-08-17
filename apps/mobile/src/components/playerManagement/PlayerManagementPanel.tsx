@@ -5,6 +5,7 @@ import { spacing, touch, typography } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
 
 import { MergeConfirmSheet } from "./MergeConfirmSheet";
+import { PlayerManagementActions } from "./PlayerManagementActions";
 import { PlayerManagementList } from "./PlayerManagementList";
 import { ArchiveConfirmSheet, MergePickSheet, UnarchiveConfirmSheet } from "./PlayerManagementSheets";
 import { PlayerStatusTabs } from "./PlayerManagementRow";
@@ -16,8 +17,8 @@ interface PlayerManagementPanelProps {
   players: OrganizerManagedPlayer[];
   loading: boolean;
   guestMessage: string | null;
-  pending: OrganizerManagedPlayer | null;
-  onPending: (player: OrganizerManagedPlayer | null) => void;
+  pending: OrganizerManagedPlayer[];
+  onPending: (players: OrganizerManagedPlayer[]) => void;
   onConfirmArchive: () => void;
   onConfirmUnarchive: () => void;
   renaming: OrganizerManagedPlayer | null;
@@ -25,6 +26,14 @@ interface PlayerManagementPanelProps {
   onConfirmRename: (name: string) => void;
   onBack: () => void;
   onAttach?: () => void;
+  selection: {
+    selecting: boolean;
+    selectedIds: string[];
+    start: () => void;
+    cancel: () => void;
+    toggle: (id: string) => void;
+    selectAll: (ids: string[]) => void;
+  };
   merge: {
     picking: boolean;
     setPicking: (value: boolean) => void;
@@ -60,21 +69,35 @@ export function PlayerManagementPanel(props: PlayerManagementPanelProps) {
         ) : (
           <>
             <PlayerStatusTabs status={props.status} onStatus={props.onStatus} />
-            {canMerge ? (
-              <Pressable
-                onPress={() => props.merge.setPicking(true)}
-                style={{ minHeight: touch.minSecondary, justifyContent: "center" }}
-              >
-                <Text style={{ color: colors.primary, fontWeight: "700" }}>Merge two players</Text>
-              </Pressable>
-            ) : null}
+            <PlayerManagementActions
+              status={props.status}
+              canMerge={canMerge}
+              selecting={props.selection.selecting}
+              selectedCount={props.selection.selectedIds.length}
+              playerCount={props.players.length}
+              onMerge={() => props.merge.setPicking(true)}
+              onStartSelect={props.selection.start}
+              onCancelSelect={props.selection.cancel}
+              onSelectAll={() => {
+                const ids = props.players.map((player) => player.id);
+                const allOn = props.selection.selectedIds.length === ids.length;
+                props.selection.selectAll(allOn ? [] : ids);
+              }}
+              onApplySelected={() => {
+                const chosen = new Set(props.selection.selectedIds);
+                props.onPending(props.players.filter((player) => chosen.has(player.id)));
+              }}
+            />
             <PlayerManagementList
               key={props.status}
               players={props.players}
               status={props.status}
               loading={props.loading}
+              selecting={props.selection.selecting}
+              selectedIds={props.selection.selectedIds}
+              onToggleSelect={props.selection.toggle}
               onRename={props.onRenaming}
-              onAction={props.onPending}
+              onAction={(player) => props.onPending([player])}
             />
           </>
         )}
@@ -84,14 +107,14 @@ export function PlayerManagementPanel(props: PlayerManagementPanelProps) {
       </Pressable>
       {props.status === "active" ? (
         <ArchiveConfirmSheet
-          player={props.pending}
-          onCancel={() => props.onPending(null)}
+          players={props.pending}
+          onCancel={() => props.onPending([])}
           onConfirm={props.onConfirmArchive}
         />
       ) : (
         <UnarchiveConfirmSheet
-          player={props.pending}
-          onCancel={() => props.onPending(null)}
+          players={props.pending}
+          onCancel={() => props.onPending([])}
           onConfirm={props.onConfirmUnarchive}
         />
       )}

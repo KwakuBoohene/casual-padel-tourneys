@@ -241,3 +241,67 @@ test("rename updates an active career name and rejects collisions", async () => 
     assert.equal(names.includes("Paul"), false);
   });
 });
+
+test("bulk archive hides several careers and rejects unknown ids", async () => {
+  await withApp(async (app, organizerId) => {
+    const token = signUser(organizerId);
+    const paulId = await seedPlayer(organizerId, "Paul", 1, "m-bulk-a");
+    const samId = await seedPlayer(organizerId, "Sam", 1, "m-bulk-b");
+
+    const archived = await app.inject({
+      method: "POST",
+      url: "/me/players/archive",
+      headers: { authorization: `Bearer ${token}` },
+      payload: { playerIds: [paulId, samId] }
+    });
+    assert.equal(archived.statusCode, 200);
+    assert.equal(archived.json().data.count, 2);
+
+    const board = await app.inject({
+      method: "GET",
+      url: "/me/players/leaderboard?range=all",
+      headers: { authorization: `Bearer ${token}` }
+    });
+    assert.equal((board.json().data.rows as unknown[]).length, 0);
+
+    const missing = await app.inject({
+      method: "POST",
+      url: "/me/players/archive",
+      headers: { authorization: `Bearer ${token}` },
+      payload: { playerIds: [paulId, "missing-player"] }
+    });
+    assert.equal(missing.statusCode, 404);
+  });
+});
+
+test("bulk unarchive restores several careers with unique names", async () => {
+  await withApp(async (app, organizerId) => {
+    const token = signUser(organizerId);
+    const adaId = await seedPlayer(organizerId, "Ada", 1, "m-bulk-u-a");
+    const beaId = await seedPlayer(organizerId, "Bea", 1, "m-bulk-u-b");
+    await app.inject({
+      method: "POST",
+      url: "/me/players/archive",
+      headers: { authorization: `Bearer ${token}` },
+      payload: { playerIds: [adaId, beaId] }
+    });
+
+    const restored = await app.inject({
+      method: "POST",
+      url: "/me/players/unarchive",
+      headers: { authorization: `Bearer ${token}` },
+      payload: { playerIds: [adaId, beaId] }
+    });
+    assert.equal(restored.statusCode, 200);
+    assert.equal(restored.json().data.count, 2);
+
+    const managed = await app.inject({
+      method: "GET",
+      url: "/me/players?status=active",
+      headers: { authorization: `Bearer ${token}` }
+    });
+    const names = (managed.json().data.players as Array<{ name: string }>).map((row) => row.name);
+    assert.ok(names.includes("Ada (unarchived)"));
+    assert.ok(names.includes("Bea (unarchived)"));
+  });
+});

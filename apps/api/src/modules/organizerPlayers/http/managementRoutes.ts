@@ -1,5 +1,6 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import {
+  bulkOrganizerPlayerIdsSchema,
   mergeOrganizerPlayersSchema,
   organizerPlayerStatusSchema,
   renameOrganizerPlayerSchema
@@ -10,10 +11,12 @@ import { mapAppError } from "../../../shared/http/mapAppError.js";
 import type { OrganizerPlayersDeps } from "../application/ports.js";
 import {
   archiveOrganizerPlayer,
+  archiveOrganizerPlayers,
   listManagedOrganizerPlayers,
   mergeOrganizerPlayers,
   renameOrganizerPlayer,
-  unarchiveOrganizerPlayer
+  unarchiveOrganizerPlayer,
+  unarchiveOrganizerPlayers
 } from "../application/manageOrganizerPlayers.js";
 
 const GUEST_MESSAGE = "Attach an account to manage player careers.";
@@ -31,6 +34,20 @@ function requireSignedIn(
     return null;
   }
   return request.user;
+}
+
+async function withSigned(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  run: (userId: string) => Promise<unknown>
+) {
+  const user = requireSignedIn(request, reply);
+  if (!user) return { message: request.user ? GUEST_MESSAGE : "Unauthorized" };
+  try {
+    return { data: await run(user.id) };
+  } catch (error) {
+    return mapAppError(reply, error);
+  }
 }
 
 export function registerOrganizerPlayerManagementRoutes(
@@ -57,34 +74,42 @@ export function registerOrganizerPlayerManagementRoutes(
   });
 
   server.post("/me/players/merge", { preHandler: requireOrganizerAccess }, async (request, reply) => {
-    const user = requireSignedIn(request, reply);
-    if (!user) return { message: request.user ? GUEST_MESSAGE : "Unauthorized" };
     const parsed = mergeOrganizerPlayersSchema.safeParse(request.body);
     if (!parsed.success) {
       reply.status(400);
       return { errors: parsed.error.flatten() };
     }
-    try {
-      const data = await mergeOrganizerPlayers(deps, user.id, parsed.data);
-      return { data };
-    } catch (error) {
-      return mapAppError(reply, error);
+    return withSigned(request, reply, (id) => mergeOrganizerPlayers(deps, id, parsed.data));
+  });
+
+  server.post("/me/players/archive", { preHandler: requireOrganizerAccess }, async (request, reply) => {
+    const parsed = bulkOrganizerPlayerIdsSchema.safeParse(request.body);
+    if (!parsed.success) {
+      reply.status(400);
+      return { errors: parsed.error.flatten() };
     }
+    return withSigned(request, reply, (id) =>
+      archiveOrganizerPlayers(deps, id, parsed.data.playerIds)
+    );
+  });
+
+  server.post("/me/players/unarchive", { preHandler: requireOrganizerAccess }, async (request, reply) => {
+    const parsed = bulkOrganizerPlayerIdsSchema.safeParse(request.body);
+    if (!parsed.success) {
+      reply.status(400);
+      return { errors: parsed.error.flatten() };
+    }
+    return withSigned(request, reply, (id) =>
+      unarchiveOrganizerPlayers(deps, id, parsed.data.playerIds)
+    );
   });
 
   server.post(
     "/me/players/:id/archive",
     { preHandler: requireOrganizerAccess },
     async (request, reply) => {
-      const user = requireSignedIn(request, reply);
-      if (!user) return { message: request.user ? GUEST_MESSAGE : "Unauthorized" };
-      try {
-        const params = request.params as { id: string };
-        const data = await archiveOrganizerPlayer(deps, user.id, params.id);
-        return { data };
-      } catch (error) {
-        return mapAppError(reply, error);
-      }
+      const params = request.params as { id: string };
+      return withSigned(request, reply, (id) => archiveOrganizerPlayer(deps, id, params.id));
     }
   );
 
@@ -92,15 +117,8 @@ export function registerOrganizerPlayerManagementRoutes(
     "/me/players/:id/unarchive",
     { preHandler: requireOrganizerAccess },
     async (request, reply) => {
-      const user = requireSignedIn(request, reply);
-      if (!user) return { message: request.user ? GUEST_MESSAGE : "Unauthorized" };
-      try {
-        const params = request.params as { id: string };
-        const data = await unarchiveOrganizerPlayer(deps, user.id, params.id);
-        return { data };
-      } catch (error) {
-        return mapAppError(reply, error);
-      }
+      const params = request.params as { id: string };
+      return withSigned(request, reply, (id) => unarchiveOrganizerPlayer(deps, id, params.id));
     }
   );
 
@@ -108,20 +126,15 @@ export function registerOrganizerPlayerManagementRoutes(
     "/me/players/:id/rename",
     { preHandler: requireOrganizerAccess },
     async (request, reply) => {
-      const user = requireSignedIn(request, reply);
-      if (!user) return { message: request.user ? GUEST_MESSAGE : "Unauthorized" };
       const parsed = renameOrganizerPlayerSchema.safeParse(request.body);
       if (!parsed.success) {
         reply.status(400);
         return { errors: parsed.error.flatten() };
       }
-      try {
-        const params = request.params as { id: string };
-        const data = await renameOrganizerPlayer(deps, user.id, params.id, parsed.data.name);
-        return { data };
-      } catch (error) {
-        return mapAppError(reply, error);
-      }
+      const params = request.params as { id: string };
+      return withSigned(request, reply, (id) =>
+        renameOrganizerPlayer(deps, id, params.id, parsed.data.name)
+      );
     }
   );
 }

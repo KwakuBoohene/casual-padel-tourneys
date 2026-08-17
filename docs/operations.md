@@ -64,9 +64,10 @@ npm run dev
 
 ## Production Deployment (Single VPS)
 
+The deploy script lives on the server at `/home/circleci/deployment-scripts/` (not in this repo). It pulls `main`, rebuilds Compose images, runs `prisma migrate deploy` **inside the API container** against the Docker Postgres service, then recreates app containers.
+
 ```bash
-git pull
-docker compose -f infra/docker-compose.yml up -d --build
+/home/circleci/deployment-scripts/deploy-casual-padel.sh
 ```
 
 ## Database Migration

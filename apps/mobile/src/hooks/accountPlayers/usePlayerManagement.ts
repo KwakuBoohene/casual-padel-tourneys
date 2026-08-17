@@ -3,10 +3,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { OrganizerManagedPlayer, OrganizerPlayerStatus } from "@padel/shared";
 
 import {
-  archiveAccountPlayer,
+  archiveAccountPlayers,
   listManagedPlayers,
   renameAccountPlayer,
-  unarchiveAccountPlayer
+  unarchiveAccountPlayers
 } from "../../api/accountPlayers";
 import { isEmailVerifyRequired } from "../../api/errors";
 import { tournamentQueryKeys } from "../../utilities/organizer/tournamentQueryKeys";
@@ -21,7 +21,7 @@ export function usePlayerManagement(params: {
   const [players, setPlayers] = useState<OrganizerManagedPlayer[]>([]);
   const [guestMessage, setGuestMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [pending, setPending] = useState<OrganizerManagedPlayer | null>(null);
+  const [pending, setPending] = useState<OrganizerManagedPlayer[]>([]);
   const [renaming, setRenaming] = useState<OrganizerManagedPlayer | null>(null);
 
   const reload = useCallback(async () => {
@@ -54,26 +54,30 @@ export function usePlayerManagement(params: {
   };
 
   const confirmArchive = async () => {
-    if (!pending) return;
+    if (pending.length === 0) return false;
     try {
-      await archiveAccountPlayer(pending.id);
-      setPending(null);
+      await archiveAccountPlayers(pending.map((player) => player.id));
+      setPending([]);
       await afterChange();
+      return true;
     } catch (error) {
       if (isEmailVerifyRequired(error)) markEmailVerifyRequired(error.verifyBy);
       else setErrorText((error as Error).message);
+      return false;
     }
   };
 
   const confirmUnarchive = async () => {
-    if (!pending) return;
+    if (pending.length === 0) return false;
     try {
-      await unarchiveAccountPlayer(pending.id);
-      setPending(null);
+      await unarchiveAccountPlayers(pending.map((player) => player.id));
+      setPending([]);
       await afterChange();
+      return true;
     } catch (error) {
       if (isEmailVerifyRequired(error)) markEmailVerifyRequired(error.verifyBy);
       else setErrorText((error as Error).message);
+      return false;
     }
   };
 

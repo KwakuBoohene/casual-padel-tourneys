@@ -6,18 +6,24 @@ import { useTheme } from "../../theme/ThemeProvider";
 import { spacing } from "../../theme";
 
 export function ArchiveConfirmSheet(props: {
-  player: OrganizerManagedPlayer | null;
+  players: OrganizerManagedPlayer[];
   onCancel: () => void;
   onConfirm: () => void;
 }) {
-  const name = props.player?.name ?? "";
+  const count = props.players.length;
+  const name = props.players[0]?.name ?? "";
+  const title = count === 1 ? `Archive ${name}?` : `Archive ${count} players?`;
+  const message =
+    count === 1
+      ? `${name} will leave the account leaderboard and name suggestions. You can add a new ${name} to events.`
+      : `${count} players will leave the account leaderboard and name suggestions. You can reuse those names in events.`;
   return (
     <AlertSheet
-      visible={Boolean(props.player)}
+      visible={count > 0}
       variant="warning"
-      title={`Archive ${name}?`}
-      message={`${name} will leave the account leaderboard and name suggestions. You can add a new ${name} to events.`}
-      primaryAction={{ label: "Archive", onPress: props.onConfirm, destructive: true }}
+      title={title}
+      message={message}
+      primaryAction={{ label: count === 1 ? "Archive" : `Archive ${count}`, onPress: props.onConfirm, destructive: true }}
       secondaryAction={{ label: "Cancel", onPress: props.onCancel }}
       onDismiss={props.onCancel}
     />
@@ -25,18 +31,27 @@ export function ArchiveConfirmSheet(props: {
 }
 
 export function UnarchiveConfirmSheet(props: {
-  player: OrganizerManagedPlayer | null;
+  players: OrganizerManagedPlayer[];
   onCancel: () => void;
   onConfirm: () => void;
 }) {
-  const name = props.player?.suggestedRestoreName ?? props.player?.name ?? "";
+  const count = props.players.length;
+  const name = props.players[0]?.suggestedRestoreName ?? props.players[0]?.name ?? "";
+  const title = count === 1 ? "Unarchive player?" : `Unarchive ${count} players?`;
+  const message =
+    count === 1
+      ? `Restored as ${name}.`
+      : "Each player is restored with a unique name if the original is already in use.";
   return (
     <AlertSheet
-      visible={Boolean(props.player)}
+      visible={count > 0}
       variant="info"
-      title="Unarchive player?"
-      message={`Restored as ${name}.`}
-      primaryAction={{ label: "Unarchive", onPress: props.onConfirm }}
+      title={title}
+      message={message}
+      primaryAction={{
+        label: count === 1 ? "Unarchive" : `Unarchive ${count}`,
+        onPress: props.onConfirm
+      }}
       secondaryAction={{ label: "Cancel", onPress: props.onCancel }}
       onDismiss={props.onCancel}
     />

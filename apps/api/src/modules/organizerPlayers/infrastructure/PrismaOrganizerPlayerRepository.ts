@@ -6,6 +6,10 @@ import type {
 } from "../application/ports.js";
 import type { CareerDelta } from "../domain/careerStats.js";
 import {
+  archiveOrganizerPlayerRows,
+  unarchiveOrganizerPlayerRows
+} from "./bulkOrganizerPlayerManagement.js";
+import {
   archiveOrganizerPlayerRow,
   listManagedOrganizerPlayers,
   mergeOrganizerPlayerRows,
@@ -82,11 +86,19 @@ export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepositor
     return archiveOrganizerPlayerRow(organizerId, organizerPlayerId);
   }
 
+  archivePlayers(organizerId: string, playerIds: string[]): Promise<{ count: number }> {
+    return archiveOrganizerPlayerRows(organizerId, playerIds);
+  }
+
   unarchivePlayer(
     organizerId: string,
     organizerPlayerId: string
   ): Promise<{ id: string; name: string }> {
     return unarchiveOrganizerPlayerRow(organizerId, organizerPlayerId);
+  }
+
+  unarchivePlayers(organizerId: string, playerIds: string[]): Promise<{ count: number }> {
+    return unarchiveOrganizerPlayerRows(organizerId, playerIds);
   }
 
   mergePlayers(input: {

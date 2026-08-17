@@ -30,10 +30,12 @@ export interface OrganizerPlayerRepository {
     organizerId: string,
     organizerPlayerId: string
   ): Promise<{ id: string; name: string }>;
+  archivePlayers(organizerId: string, playerIds: string[]): Promise<{ count: number }>;
   unarchivePlayer(
     organizerId: string,
     organizerPlayerId: string
   ): Promise<{ id: string; name: string }>;
+  unarchivePlayers(organizerId: string, playerIds: string[]): Promise<{ count: number }>;
   mergePlayers(input: {
     organizerId: string;
     playerIdA: string;

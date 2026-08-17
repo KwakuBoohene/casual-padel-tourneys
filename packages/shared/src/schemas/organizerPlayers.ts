@@ -78,3 +78,8 @@ export const renameOrganizerPlayerSchema = z.object({
   name: z.string().trim().min(1).max(80)
 });
 export type RenameOrganizerPlayerInput = z.infer<typeof renameOrganizerPlayerSchema>;
+
+export const bulkOrganizerPlayerIdsSchema = z.object({
+  playerIds: z.array(z.string().min(1)).min(1).max(200)
+});
+export type BulkOrganizerPlayerIdsInput = z.infer<typeof bulkOrganizerPlayerIdsSchema>;

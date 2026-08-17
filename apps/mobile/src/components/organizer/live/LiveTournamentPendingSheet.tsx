@@ -1,8 +1,10 @@
 import type { PlayerGender } from "@padel/shared";
-import { Text, TextInput, View } from "react-native";
+import { Text, View } from "react-native";
 
+import { usePlayerNameSuggestions } from "../../../hooks/organizer/usePlayerNameSuggestions";
+import { NameSuggestField } from "../../players/NameSuggestField";
 import { AlertSheet, BottomSheet, SheetButton } from "../../sheets";
-import { radius, spacing, touch } from "../../../theme";
+import { spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
 import type { LiveTournamentState } from "../../../types/organizer/tournament";
@@ -20,26 +22,23 @@ interface LiveTournamentPendingSheetProps {
 
 export function LiveTournamentPendingSheet(props: LiveTournamentPendingSheetProps) {
   const { colors } = useTheme();
+  const knownNames = usePlayerNameSuggestions();
+  const usedNames = [
+    ...props.tournament.players.map((player) => player.name),
+    ...props.tournament.pendingPlayers.map((player) => player.name)
+  ];
 
   return (
     <BottomSheet visible={props.visible} title="Add pending player" onDismiss={props.onClose}>
       <Text style={{ color: colors.muted, fontSize: 14 }}>
-        Joins when you integrate · may page if many
+        Joins when you integrate · pick a saved name if they already play with you
       </Text>
-      <TextInput
-        placeholder="Player name"
+      <NameSuggestField
         value={props.nameDraft}
-        onChangeText={props.onChangeName}
-        placeholderTextColor={colors.muted}
-        style={{
-          borderWidth: 1,
-          borderColor: colors.border,
-          padding: spacing.sm,
-          minHeight: touch.minSecondary,
-          borderRadius: radius.md,
-          backgroundColor: colors.surface,
-          color: colors.text
-        }}
+        onChange={props.onChangeName}
+        names={knownNames}
+        usedNames={usedNames}
+        placeholder="Player name"
       />
       {props.tournament.config.variant === "MIXED" ? (
         <View style={{ flexDirection: "row", gap: spacing.sm }}>

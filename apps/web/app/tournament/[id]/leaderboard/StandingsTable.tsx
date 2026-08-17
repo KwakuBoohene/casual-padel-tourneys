@@ -1,6 +1,12 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import {
   STANDINGS_COLUMNS,
   standingsCells,
+  standingsPageCount,
+  standingsPageRange,
+  standingsPageSize,
   type StandingsLine
 } from "@padel/shared";
 
@@ -12,6 +18,21 @@ export type WebStandingsRow = {
 };
 
 export function WebStandingsTable(props: { rows: WebStandingsRow[] }) {
+  const [pageSize, setPageSize] = useState(8);
+  const [pageIndex, setPageIndex] = useState(0);
+
+  useEffect(() => {
+    const read = () => setPageSize(standingsPageSize(window.innerWidth, window.innerHeight));
+    read();
+    window.addEventListener("resize", read);
+    return () => window.removeEventListener("resize", read);
+  }, []);
+  const pageCount = standingsPageCount(props.rows.length, pageSize);
+  const safeIndex = Math.min(pageIndex, pageCount - 1);
+  const range = standingsPageRange(props.rows.length, safeIndex, pageSize);
+  const visible = props.rows.slice(range.start, range.end);
+  const from = props.rows.length === 0 ? 0 : range.start + 1;
+
   return (
     <div className="space-y-3">
       <div className="overflow-x-auto rounded-2xl border border-padel-border bg-padel-surface">
@@ -28,7 +49,7 @@ export function WebStandingsTable(props: { rows: WebStandingsRow[] }) {
             </tr>
           </thead>
           <tbody>
-            {props.rows.map((row) => {
+            {visible.map((row) => {
               const cells = standingsCells(row.line);
               return (
                 <tr key={row.id} className="border-t border-padel-border">
@@ -51,6 +72,31 @@ export function WebStandingsTable(props: { rows: WebStandingsRow[] }) {
           </tbody>
         </table>
       </div>
+      {pageCount > 1 ? (
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs text-padel-muted">
+            {from}–{range.end} of {props.rows.length}
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={safeIndex === 0}
+              onClick={() => setPageIndex((value) => Math.max(0, value - 1))}
+              className="min-h-12 min-w-[4.5rem] rounded-xl border border-padel-border bg-padel-surface px-3 text-sm font-semibold text-padel-text disabled:opacity-40"
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              disabled={safeIndex >= pageCount - 1}
+              onClick={() => setPageIndex((value) => Math.min(pageCount - 1, value + 1))}
+              className="min-h-12 min-w-[4.5rem] rounded-xl border border-padel-border bg-padel-surface px-3 text-sm font-semibold text-padel-text disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

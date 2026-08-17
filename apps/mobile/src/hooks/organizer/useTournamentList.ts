@@ -1,13 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
-import { apiDelete, apiGet } from "../../api/client";
+import { apiDelete } from "../../api/client";
 import { isEmailVerifyRequired } from "../../api/errors";
 import type { OpenOrganizerResult } from "../../utilities/organizer/openOrganizerTournament";
 import { removeTournamentCaches } from "../../utilities/organizer/tournamentQueryCache";
 import { tournamentQueryKeys } from "../../utilities/organizer/tournamentQueryKeys";
 import { fetchTournamentList } from "../../utilities/organizer/tournamentQueries";
 
+import { usePlayerNameSuggestions } from "./usePlayerNameSuggestions";
 import {
   useTournamentListModals,
   type ConfirmTournamentActionResult
@@ -36,7 +37,7 @@ export function useTournamentList({
 }: UseTournamentListParams) {
   const queryClient = useQueryClient();
   const modals = useTournamentListModals();
-  const [suggestedPlayerNames, setSuggestedPlayerNames] = useState<string[]>([]);
+  const suggestedPlayerNames = usePlayerNameSuggestions(authReady && Boolean(authToken));
 
   const listQuery = useQuery({
     queryKey: tournamentQueryKeys.list(),
@@ -56,9 +57,6 @@ export function useTournamentList({
   useEffect(() => {
     if (!listQuery.isSuccess) return;
     clearEmailVerifyRequired();
-    void apiGet<{ names: string[] }>("/players/suggestions")
-      .then((response) => setSuggestedPlayerNames(response.names ?? []))
-      .catch(() => undefined);
   }, [listQuery.isSuccess, listQuery.dataUpdatedAt, clearEmailVerifyRequired]);
 
   useEffect(() => {

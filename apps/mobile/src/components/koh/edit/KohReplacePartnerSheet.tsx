@@ -1,5 +1,7 @@
-import { Pressable, ScrollView, Text, TextInput } from "react-native";
+import { Pressable, ScrollView, Text } from "react-native";
 
+import { usePlayerNameSuggestions } from "../../../hooks/organizer/usePlayerNameSuggestions";
+import { NameSuggestField } from "../../players/NameSuggestField";
 import { BottomSheet, SheetButton } from "../../sheets";
 import { radius, spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
@@ -29,6 +31,7 @@ interface KohReplacePartnerSheetProps {
 
 export function KohReplacePartnerSheet(props: KohReplacePartnerSheetProps) {
   const { colors } = useTheme();
+  const knownNames = usePlayerNameSuggestions();
   const sameCourt = props.partners.filter((row) => row.sameCourt);
   const otherCourts = props.partners.filter((row) => !row.sameCourt);
   const canContinue = props.addingNew
@@ -77,19 +80,12 @@ export function KohReplacePartnerSheet(props: KohReplacePartnerSheetProps) {
           </Text>
         </Pressable>
         {props.addingNew ? (
-          <TextInput
+          <NameSuggestField
             value={props.replaceName}
-            onChangeText={props.onReplaceName}
+            onChange={props.onReplaceName}
             placeholder="New partner name"
-            placeholderTextColor={colors.muted}
-            style={{
-              borderWidth: 1,
-              borderColor: colors.border,
-              borderRadius: radius.lg,
-              padding: spacing.md,
-              color: colors.text,
-              minHeight: touch.minSecondary
-            }}
+            names={knownNames}
+            usedNames={[props.leaveName, props.stayName]}
           />
         ) : null}
         <SheetButton label="Continue" disabled={!canContinue} onPress={props.onContinue} />

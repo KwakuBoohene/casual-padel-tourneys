@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import type { PlayerGender, TournamentVariant } from "@padel/shared";
 
+import { NameSuggestField } from "../../players/NameSuggestField";
 import { BottomSheet, SheetButton } from "../../sheets";
 import { radius, spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
@@ -14,6 +15,8 @@ interface AddPlayerSheetProps {
   title?: string;
   onDismiss: () => void;
   onSubmit: (name: string, gender: PlayerGender | undefined) => void;
+  knownNames: string[];
+  usedNames: string[];
 }
 
 export function AddPlayerSheet(props: AddPlayerSheetProps) {
@@ -32,26 +35,15 @@ export function AddPlayerSheet(props: AddPlayerSheetProps) {
   return (
     <BottomSheet visible={props.visible} title={props.title ?? "Add player"} onDismiss={props.onDismiss}>
       <View style={{ gap: spacing.md }}>
-        <View
-          style={{
-            borderRadius: radius.lg,
-            borderWidth: 1,
-            borderColor: colors.border,
-            backgroundColor: colors.surface,
-            paddingHorizontal: spacing.md,
-            paddingVertical: spacing.sm
-          }}
-        >
-          <Text style={{ fontSize: 12, color: colors.muted }}>Name</Text>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="Player name"
-            placeholderTextColor={colors.muted}
-            style={{ color: colors.text, fontSize: 18, fontWeight: "600", paddingVertical: spacing.xs }}
-            autoFocus
-          />
-        </View>
+        <NameSuggestField
+          label="Name"
+          value={name}
+          onChange={setName}
+          placeholder="Player name"
+          names={props.knownNames}
+          usedNames={props.usedNames}
+          autoFocus
+        />
         {isMixed ? (
           <View style={{ gap: spacing.sm }}>
             <Text style={{ color: colors.muted, fontSize: 13 }}>Gender (Mixed only)</Text>

@@ -108,6 +108,12 @@ export function PlayersStepView(props: PlayersStepViewProps) {
         title={sheetMode === "edit" ? "Edit player" : "Add player"}
         initialName={editIndex !== null ? props.players[editIndex] : ""}
         initialGender={editIndex !== null ? props.genders[editIndex] : undefined}
+        knownNames={props.allSuggestions}
+        usedNames={
+          editIndex === null
+            ? props.players
+            : props.players.filter((_, index) => index !== editIndex)
+        }
         onDismiss={() => setSheetMode(null)}
         onSubmit={(name, gender) => {
           if (sheetMode === "edit" && editIndex !== null) {

@@ -1,7 +1,9 @@
-import { Text, TextInput, View } from "react-native";
+import { Text, View } from "react-native";
 
+import { usePlayerNameSuggestions } from "../../hooks/organizer/usePlayerNameSuggestions";
+import { NameSuggestField } from "../players/NameSuggestField";
 import { BottomSheet, SheetButton } from "../sheets";
-import { radius, spacing } from "../../theme";
+import { spacing } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
 
 interface KohAddPairSheetProps {
@@ -17,43 +19,30 @@ interface KohAddPairSheetProps {
 
 export function KohAddPairSheet(props: KohAddPairSheetProps) {
   const { colors } = useTheme();
-
-  const field = (label: string, value: string, onChange: (value: string) => void) => (
-    <View
-      style={{
-        borderRadius: radius.lg,
-        borderWidth: 1,
-        borderColor: colors.border,
-        backgroundColor: colors.surface,
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm
-      }}
-    >
-      <Text style={{ fontSize: 11, color: colors.muted, fontWeight: "600" }}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChange}
-        placeholder="Player name"
-        placeholderTextColor={colors.muted}
-        style={{ color: colors.text, fontSize: 17, fontWeight: "600", paddingVertical: spacing.xs }}
-      />
-    </View>
-  );
+  const knownNames = usePlayerNameSuggestions();
 
   return (
-    <BottomSheet
-      visible={props.visible}
-      title="Add doubles"
-      onDismiss={props.onDismiss}
-    >
+    <BottomSheet visible={props.visible} title="Add doubles" onDismiss={props.onDismiss}>
       <View style={{ gap: spacing.md }}>
         <Text style={{ color: colors.muted, fontSize: 13 }}>
           Court {props.courtNumber} — two players
         </Text>
-        {field("PLAYER 1", props.playerA, props.onChangePlayerA)}
-        {field("PLAYER 2", props.playerB, props.onChangePlayerB)}
+        <NameSuggestField
+          label="PLAYER 1"
+          value={props.playerA}
+          onChange={props.onChangePlayerA}
+          names={knownNames}
+          usedNames={[props.playerB]}
+        />
+        <NameSuggestField
+          label="PLAYER 2"
+          value={props.playerB}
+          onChange={props.onChangePlayerB}
+          names={knownNames}
+          usedNames={[props.playerA]}
+        />
         <Text style={{ color: colors.muted, fontSize: 12 }}>
-          Players are tracked individually for performance over time.
+          Pick a saved name if this player already has a career on your account.
         </Text>
         <SheetButton label="Save pair" onPress={props.onSave} />
         <SheetButton label="Cancel" onPress={props.onDismiss} />

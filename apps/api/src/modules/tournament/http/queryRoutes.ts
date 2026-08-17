@@ -11,6 +11,7 @@ import {
 } from "../../koh/application/readKohHub.js";
 import { PrismaKohRepository } from "../../koh/infrastructure/PrismaKohRepository.js";
 import type { TournamentModuleDeps } from "../application/ports.js";
+import { listPlayerSuggestionNames } from "../infrastructure/listPlayerSuggestions.js";
 
 export function registerTournamentQueryRoutes(
   server: FastifyInstance,
@@ -124,12 +125,7 @@ export function registerTournamentQueryRoutes(
       reply.status(401);
       return { names: [] };
     }
-    const rows = await prisma.player.findMany({
-      where: { tournament: { organizerId: request.user.id } },
-      select: { name: true },
-      distinct: ["name"],
-      orderBy: { name: "asc" }
-    });
-    return { names: rows.map((row: { name: string }) => row.name) };
+    const names = await listPlayerSuggestionNames(request.user.id);
+    return { names };
   });
 }

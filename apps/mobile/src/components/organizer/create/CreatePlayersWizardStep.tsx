@@ -18,6 +18,7 @@ export function CreatePlayersWizardStep({ create }: { create: Create }) {
         minTeams={create.minTeams}
         canContinue={create.canContinueFromPlayers}
         hasDuplicateNames={create.hasDuplicatePlayerNames}
+        knownNames={create.allKnownPlayerNames}
         hint={
           create.mode === "MEXICANO"
             ? "Fixed pairs stay together. Ranked teams face each other (1 vs 2, 3 vs 4)."

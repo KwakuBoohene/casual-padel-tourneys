@@ -16,6 +16,7 @@ interface TeamPlayersStepViewProps {
   minTeams: number;
   canContinue: boolean;
   hasDuplicateNames: boolean;
+  knownNames: string[];
   hint: string;
   onAddTeam: (playerA: string, playerB: string) => void;
   onUpdateTeam: (index: number, playerA: string, playerB: string) => void;
@@ -147,6 +148,10 @@ export function TeamPlayersStepView(props: TeamPlayersStepViewProps) {
         title={editIndex !== null ? "Edit pair" : "Add pair"}
         playerA={playerA}
         playerB={playerB}
+        knownNames={props.knownNames}
+        usedNames={props.teams.flatMap((team, index) =>
+          index === editIndex ? [] : [team.playerA, team.playerB]
+        )}
         onChangePlayerA={setPlayerA}
         onChangePlayerB={setPlayerB}
         onSave={savePair}

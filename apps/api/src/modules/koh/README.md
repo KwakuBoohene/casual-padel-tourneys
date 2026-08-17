@@ -1,6 +1,6 @@
 # KOH module (Modular Hexagonal)
 
-King of the Hill nights: courts hold a queue of doubles units, the king stays while
+King of the Court nights: courts hold a queue of doubles units, the king stays while
 challengers rotate, and promotion rules move units between courts.
 
 ```text

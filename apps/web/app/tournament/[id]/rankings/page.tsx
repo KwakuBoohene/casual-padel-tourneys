@@ -20,7 +20,7 @@ export default async function KohRankingsPage({ params }: { params: Promise<{ id
     return (
       <main className="min-h-screen flex items-center justify-center bg-padel-background text-padel-text px-5">
         <div className="text-center space-y-2">
-          <p className="font-semibold">Rankings are for King of the Hill events.</p>
+          <p className="font-semibold">Rankings are for King of the Court events.</p>
           <a href={`/tournament/${route.id}`} className="text-sm text-padel-muted underline">
             Back to live
           </a>

@@ -35,7 +35,7 @@ async function ensureVerifiedUser(id: string, email = `${id}@example.com`): Prom
 
 const kohCreatePayload = {
   name: "KOH Friday",
-  mode: "KING_OF_THE_HILL" as const,
+  mode: "KING_OF_THE_COURT" as const,
   courts: 2,
   regularScoring: {
     setFormat: "FULL_SET" as const,
@@ -82,7 +82,7 @@ test("POST /tournaments creates KOH without AM rounds", async () => {
     });
     assert.equal(createResponse.statusCode, 200);
     const created = createResponse.json().data;
-    assert.equal(created.config.mode, "KING_OF_THE_HILL");
+    assert.equal(created.config.mode, "KING_OF_THE_COURT");
     assert.equal(created.config.pairingMode, "WINNER_STAYS");
     assert.equal(created.courts.length, 2);
     assert.equal(created.ready, false);
@@ -91,7 +91,7 @@ test("POST /tournaments creates KOH without AM rounds", async () => {
     assert.ok(created.publicToken);
 
     const row = await prisma.tournament.findUnique({ where: { id: created.id } });
-    assert.equal(row?.mode, "KING_OF_THE_HILL");
+    assert.equal(row?.mode, "KING_OF_THE_COURT");
     assert.equal(row?.pairingMode, "WINNER_STAYS");
   });
 });
@@ -193,7 +193,7 @@ test("assign pairs then GET hub shows king / next / waiting", async () => {
       headers: { authorization: `Bearer ${token}` }
     });
     assert.equal(viaTournaments.statusCode, 200);
-    assert.equal(viaTournaments.json().data.config.mode, "KING_OF_THE_HILL");
+    assert.equal(viaTournaments.json().data.config.mode, "KING_OF_THE_COURT");
   });
 });
 
@@ -206,7 +206,7 @@ test("randomize and reorder queue; reject single-unit court", async () => {
       headers: { authorization: `Bearer ${token}` },
       payload: {
         name: "KOH One Court",
-        mode: "KING_OF_THE_HILL",
+        mode: "KING_OF_THE_COURT",
         courts: 1,
         regularScoring: kohCreatePayload.regularScoring
       }

@@ -11,7 +11,7 @@ const INTRUDER = "koh-repo-intruder";
 
 const kohConfig = {
   name: "KOH Repo Night",
-  mode: "KING_OF_THE_HILL" as const,
+  mode: "KING_OF_THE_COURT" as const,
   pairingMode: "WINNER_STAYS" as const,
   courts: 2,
   regularScoring: {
@@ -48,7 +48,7 @@ test("repo.create then getHub returns the hub projection for the owner", async (
   const loaded = await repo.getHub(hub.id, OWNER);
 
   assert.equal(loaded.id, hub.id);
-  assert.equal(loaded.config.mode, "KING_OF_THE_HILL");
+  assert.equal(loaded.config.mode, "KING_OF_THE_COURT");
   assert.equal(loaded.config.pairingMode, "WINNER_STAYS");
   assert.equal(loaded.courts.length, 2);
   assert.equal(loaded.ready, false, "empty courts are not ready");

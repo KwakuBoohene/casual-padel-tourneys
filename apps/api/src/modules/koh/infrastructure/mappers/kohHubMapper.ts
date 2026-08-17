@@ -54,7 +54,7 @@ export function toHub(row: KohDbTournament): KohTournamentHub {
     organizerId: row.organizerId ?? undefined,
     config: {
       name: row.name,
-      mode: "KING_OF_THE_HILL",
+      mode: "KING_OF_THE_COURT",
       pairingMode: row.pairingMode === "ROUND_ROBIN_PAIRS" ? "ROUND_ROBIN_PAIRS" : "WINNER_STAYS",
       courts: row.courts,
       scoringMode: "REGULAR",

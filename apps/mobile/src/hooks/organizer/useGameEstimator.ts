@@ -22,7 +22,7 @@ export function useGameEstimator() {
   const estimatorUsers = Number(estimatorUsersText);
   const estimator = useMemo(
     () =>
-      estimatorMode === "KING_OF_THE_HILL"
+      estimatorMode === "KING_OF_THE_COURT"
         ? null
         : computeEstimate({
             courtsText: estimatorCourtsText,

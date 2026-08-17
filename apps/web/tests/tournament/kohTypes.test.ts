@@ -9,7 +9,7 @@ test("isKohPublicHub detects KOH mode", () => {
       id: "t1",
       publicToken: "p1",
       updatedAt: new Date().toISOString(),
-      config: { name: "KOH", mode: "KING_OF_THE_HILL" },
+      config: { name: "KOH", mode: "KING_OF_THE_COURT" },
       courts: []
     }),
     true

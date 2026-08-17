@@ -12,7 +12,8 @@ describe("formatLabels", () => {
   it("formats modes", () => {
     assert.equal(formatTournamentMode("AMERICANO"), "Americano");
     assert.equal(formatTournamentMode("MEXICANO"), "Mexicano");
-    assert.equal(formatTournamentMode("KING_OF_THE_HILL"), "King of the Hill");
+    assert.equal(formatTournamentMode("KING_OF_THE_COURT"), "King of the Court");
+    assert.equal(formatTournamentMode("KING_OF_THE_HILL"), "King of the Court");
   });
 
   it("formats variants and combined labels", () => {

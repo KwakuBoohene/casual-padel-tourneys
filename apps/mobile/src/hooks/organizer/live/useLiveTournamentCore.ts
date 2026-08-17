@@ -72,7 +72,7 @@ export function useLiveTournamentCore({
         queryKey: tournamentQueryKeys.detail(tournamentId),
         queryFn: () => fetchTournamentDetail(tournamentId)
       });
-      if (data.config.mode === "KING_OF_THE_HILL") return "needs_koh";
+      if (data.config.mode === "KING_OF_THE_COURT") return "needs_koh";
       adoptTournament(data, editMode);
       if (data.config.mode === "MEXICANO" && data.endedAt) return "leaderboard";
       return "live";

@@ -66,7 +66,7 @@ async function createAssignedKoh(app: Awaited<ReturnType<typeof createApp>>, tok
     headers: { authorization: `Bearer ${token}` },
     payload: {
       name: "KOH Rank Test",
-      mode: "KING_OF_THE_HILL",
+      mode: "KING_OF_THE_COURT",
       courts: 2,
       regularScoring: {
         setFormat: "FULL_SET",

@@ -1,5 +1,5 @@
-import { createId } from "@padel/shared";
-import type { Prisma } from "@prisma/client";
+import { createId, KING_OF_THE_COURT } from "@padel/shared";
+import type { Prisma, TournamentMode } from "@prisma/client";
 
 import { normalizeOrganizerPlayerName } from "../domain/careerRange.js";
 
@@ -50,6 +50,8 @@ export interface KohMatchCredit {
   gamesA: number;
   gamesB: number;
   occurredAt?: Date;
+  /** Defaults to King of the Court (KOH credit path). */
+  tournamentMode?: TournamentMode;
 }
 
 interface CreditSide {
@@ -98,6 +100,7 @@ export async function creditKohMatchToOrganizerPlayers(input: KohMatchCredit): P
   ];
 
   const occurredAt = input.occurredAt ?? new Date();
+  const tournamentMode = input.tournamentMode ?? KING_OF_THE_COURT;
   for (const side of sides) {
     for (const playerId of side.playerIds) {
       const careerId = await resolveCareerId(playerId);
@@ -112,6 +115,7 @@ export async function creditKohMatchToOrganizerPlayers(input: KohMatchCredit): P
           organizerPlayerId: careerId,
           tournamentId: input.tournamentId,
           tournamentName: input.tournamentName,
+          tournamentMode,
           matchId: input.matchId,
           gamesWon: side.gamesWon,
           gamesLost: side.gamesLost,
@@ -124,6 +128,7 @@ export async function creditKohMatchToOrganizerPlayers(input: KohMatchCredit): P
           gamesLost: side.gamesLost,
           matchesWon: side.matchesWon,
           matchesLost: side.matchesLost,
+          tournamentMode,
           tournamentName: input.tournamentName,
           occurredAt
         }

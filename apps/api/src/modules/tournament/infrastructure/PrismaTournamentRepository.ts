@@ -1,3 +1,4 @@
+import { isKingOfTheCourtMode } from "@padel/shared";
 import { prisma } from "../../../lib/prisma.js";
 import { conflict, notFound } from "../../../shared/kernel/appError.js";
 import type { TournamentState } from "../../../types/state.js";
@@ -19,7 +20,7 @@ export class PrismaTournamentRepository implements TournamentRepository {
       where: { id },
       include: tournamentInclude
     });
-    if (!row || row.mode === "KING_OF_THE_HILL") {
+    if (!row || isKingOfTheCourtMode(row.mode)) {
       return null;
     }
     return mapDbTournamentToState(row as DbTournamentGraph);
@@ -30,7 +31,7 @@ export class PrismaTournamentRepository implements TournamentRepository {
       where: { publicToken: token },
       include: tournamentInclude
     });
-    if (!row || row.mode === "KING_OF_THE_HILL") {
+    if (!row || isKingOfTheCourtMode(row.mode)) {
       return null;
     }
     return mapDbTournamentToState(row as DbTournamentGraph);

@@ -57,7 +57,7 @@ export default function HomePage() {
                   onChange={handleTokenChange}
                   onKeyPress={handleKeyPress}
                   placeholder="Enter share token..."
-                  className="flex-1 px-4 py-3 rounded-xl bg-padel-surface border border-padel-border text-padel-text placeholder:text-padel-muted focus:border-padel-primary transition-colors"
+                  className="flex-1 px-4 py-3 rounded-xl bg-padel-surface border border-padel-border text-padel-text placeholder:text-padel-muted"
                 />
                 <button
                   onClick={handleJoin}

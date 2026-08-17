@@ -22,8 +22,6 @@ export function PlayerSearch({ value, onChange, matchCount, totalMatches }: Play
             rounded-2xl
             text-sm text-padel-text
             placeholder:text-padel-muted
-            focus:border-padel-primary
-            transition-all
           "
         />
         <svg

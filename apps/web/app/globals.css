@@ -29,6 +29,15 @@
 
 :root,
 [data-theme="dark"] {
+  --padel-background: #0f172a;
+  --padel-surface: #1e293b;
+  --padel-surface-alt: #020617;
+  --padel-text: #e5e7eb;
+  --padel-muted: #9ca3af;
+  --padel-primary: #adff2f;
+  --padel-on-primary: #0f172a;
+  --padel-danger: #f97373;
+  --padel-border: rgba(148, 163, 184, 0.4);
   --color-padel-background: #0f172a;
   --color-padel-surface: #1e293b;
   --color-padel-surface-alt: #020617;
@@ -55,6 +64,15 @@
 }
 
 [data-theme="light"] {
+  --padel-background: #ffffff;
+  --padel-surface: #ffffff;
+  --padel-surface-alt: #f8fafc;
+  --padel-text: #0f172a;
+  --padel-muted: #516178;
+  --padel-primary: #0f766e;
+  --padel-on-primary: #ffffff;
+  --padel-danger: #dc2626;
+  --padel-border: rgba(15, 23, 42, 0.16);
   --color-padel-background: #ffffff;
   --color-padel-surface: #ffffff;
   --color-padel-surface-alt: #f8fafc;
@@ -145,16 +163,13 @@ body {
 input:focus,
 textarea:focus,
 select:focus,
-button:focus {
-  outline: none;
-}
-
+button:focus,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
 button:focus-visible {
-  outline: 2px solid var(--color-padel-primary);
-  outline-offset: 2px;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .home-hero-surface {

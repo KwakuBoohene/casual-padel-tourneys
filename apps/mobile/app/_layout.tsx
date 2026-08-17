@@ -7,11 +7,13 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AuthSessionProvider } from "../src/providers/AuthSessionProvider";
 import { QueryProvider } from "../src/providers/QueryProvider";
 import { useWebDocumentBackground } from "../src/layout/useWebDocumentBackground";
+import { useWebFocusRing } from "../src/layout/useWebFocusRing";
 import { ThemeProvider, useTheme } from "../src/theme/ThemeProvider";
 
 function RootChrome({ children }: { children: ReactNode }) {
   const { mode, colors } = useTheme();
   useWebDocumentBackground(colors.background);
+  useWebFocusRing();
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top", "left", "right"]}>

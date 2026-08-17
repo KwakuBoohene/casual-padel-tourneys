@@ -62,3 +62,29 @@ export async function runRegularScoreSave(input: {
   });
   return null;
 }
+
+export async function runOpenScoreSave(input: {
+  tournament: LiveTournamentState;
+  entry: ScoreEntryState;
+  complete: boolean;
+  points: number;
+  regular: boolean;
+  onTournamentUpdated: (data: LiveTournamentState) => void;
+  setScoreInputs: Dispatch<SetStateAction<ScoreDraftMap>>;
+}): Promise<string | null> {
+  if (input.regular) {
+    return runRegularScoreSave({
+      tournament: input.tournament,
+      entry: input.entry,
+      complete: input.complete,
+      onTournamentUpdated: input.onTournamentUpdated
+    });
+  }
+  return runAmericanoScoreSave({
+    tournament: input.tournament,
+    entry: input.entry,
+    points: input.points,
+    onTournamentUpdated: input.onTournamentUpdated,
+    setScoreInputs: input.setScoreInputs
+  });
+}

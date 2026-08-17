@@ -1,4 +1,5 @@
 import type { MatchSet, ScoringMode } from "@padel/shared";
+import { specialPointLabelForSet } from "@padel/shared";
 
 import { spectatorRegularStatusLine } from "../lib/regularMatchDisplay";
 
@@ -57,6 +58,7 @@ export function MatchCard({
     scoringMode === "REGULAR"
       ? spectatorRegularStatusLine({ sets, completed, status })
       : americanoStatusText(scoreA, scoreB, status);
+  const special = scoringMode === "REGULAR" && sets?.some((set) => specialPointLabelForSet(set));
 
   return (
     <article
@@ -72,7 +74,9 @@ export function MatchCard({
       <p className="text-base font-semibold text-padel-text leading-snug">
         {formatTeam(teamA)} vs {formatTeam(teamB)}
       </p>
-      <p className="text-sm font-medium text-padel-muted">{statusText}</p>
+      <p className={`text-sm font-medium ${special ? "text-padel-primary" : "text-padel-muted"}`}>
+        {statusText}
+      </p>
     </article>
   );
 }

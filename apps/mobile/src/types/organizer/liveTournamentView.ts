@@ -1,4 +1,4 @@
-import type { PlayerGender } from "@padel/shared";
+import type { MatchSet, PlayerGender } from "@padel/shared";
 
 import type { LiveTournamentState } from "./tournament";
 
@@ -34,6 +34,7 @@ export interface LiveTournamentScoreState {
     matchId: string;
     scoreA: number | null;
     scoreB: number | null;
+    sets: MatchSet[];
     undoStack: { scoreA: number | null; scoreB: number | null }[];
   } | null;
   scoreEntryContextLine: string | null;
@@ -93,7 +94,7 @@ export interface LiveTournamentActions {
   onChangeScoreA: (value: number) => void;
   onChangeScoreB: (value: number) => void;
   onUndoScoreEntry: () => void;
-  onSaveScoreEntry: () => void;
+  onSaveScoreEntry: (sets?: MatchSet[]) => void;
   onSaveScoreDraft?: () => void;
   onConfirmEditCompletedScore: () => void;
   onCancelEditCompletedScore: () => void;

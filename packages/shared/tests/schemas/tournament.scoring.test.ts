@@ -252,3 +252,86 @@ test("submitScoreSchema rejects incomplete Regular body", () => {
   });
   assert.equal(result.success, false);
 });
+
+test("regularScoringSchema accepts GOLDEN + gameWinBy 1", () => {
+  const parsed = createTournamentSchema.parse({
+    ...americanoBase,
+    scoringMode: "REGULAR",
+    pointsPerMatch: undefined,
+    regularScoring: {
+      setFormat: "BO3_GAMES",
+      gameWinBy: 1,
+      deuceMode: "GOLDEN",
+      setsToWin: 1
+    }
+  });
+  assert.equal(parsed.regularScoring?.deuceMode, "GOLDEN");
+  assert.equal(parsed.regularScoring?.gameWinBy, 1);
+});
+
+test("regularScoringSchema rejects GOLDEN + gameWinBy 2", () => {
+  const result = createTournamentSchema.safeParse({
+    ...americanoBase,
+    scoringMode: "REGULAR",
+    pointsPerMatch: undefined,
+    regularScoring: {
+      setFormat: "BO3_GAMES",
+      gameWinBy: 2,
+      deuceMode: "GOLDEN",
+      setsToWin: 1
+    }
+  });
+  assert.equal(result.success, false);
+});
+
+test("regularScoringSchema rejects ADVANTAGE + gameWinBy 1", () => {
+  const result = createTournamentSchema.safeParse({
+    ...americanoBase,
+    scoringMode: "REGULAR",
+    pointsPerMatch: undefined,
+    regularScoring: {
+      setFormat: "BO3_GAMES",
+      gameWinBy: 1,
+      deuceMode: "ADVANTAGE",
+      setsToWin: 1
+    }
+  });
+  assert.equal(result.success, false);
+});
+
+test("regularScoringSchema omits deuceMode when client does not send it", () => {
+  const parsed = createTournamentSchema.parse({
+    ...americanoBase,
+    scoringMode: "REGULAR",
+    pointsPerMatch: undefined,
+    regularScoring: {
+      setFormat: "FULL_SET",
+      gameWinBy: 2,
+      setsToWin: 1,
+      setTiebreakTo: 7
+    }
+  });
+  assert.equal(parsed.regularScoring?.deuceMode, undefined);
+});
+
+test("submitScoreSchema accepts Regular COMPLETE with win methods", () => {
+  const parsed = submitScoreSchema.parse({
+    tournamentId: "t1",
+    matchId: "m1",
+    sets: [
+      {
+        setNumber: 1,
+        gamesA: 6,
+        gamesB: 4,
+        winMethodsA: ["REGULAR", "GOLDEN", "REGULAR", "STAR", "REGULAR", "REGULAR"],
+        winMethodsB: ["REGULAR", "REGULAR", "REGULAR", "REGULAR"]
+      }
+    ],
+    status: "COMPLETE",
+    expectedVersion: 0
+  });
+  assert.equal(isRegularScoreBody(parsed), true);
+  if (isRegularScoreBody(parsed)) {
+    assert.equal(parsed.sets[0].winMethodsA?.[1], "GOLDEN");
+  }
+});

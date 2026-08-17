@@ -119,6 +119,121 @@ test("POST /tournaments/score draft then complete awards once", async () => {
   });
 });
 
+test("POST /tournaments create Regular STAR round-trips deuceMode", async () => {
+  await withApp(async (app) => {
+    const token = signUser("owner-deuce-star");
+    const createResponse = await app.inject({
+      method: "POST",
+      url: "/tournaments",
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        ...regularCreatePayload,
+        regularScoring: {
+          setFormat: "BO3_GAMES",
+          gameWinBy: 1,
+          deuceMode: "STAR",
+          setsToWin: 1
+        }
+      }
+    });
+    assert.equal(createResponse.statusCode, 200);
+    const created = createResponse.json().data;
+    assert.equal(created.config.regularScoring.deuceMode, "STAR");
+    assert.equal(created.config.regularScoring.gameWinBy, 1);
+
+    const get = await app.inject({
+      method: "GET",
+      url: `/tournaments/${created.id}`,
+      headers: { authorization: `Bearer ${token}` }
+    });
+    assert.equal(get.statusCode, 200);
+    assert.equal(get.json().data.config.regularScoring.deuceMode, "STAR");
+  });
+});
+
+test("POST /tournaments/score rejects win methods on Advantage Regular", async () => {
+  await withApp(async (app) => {
+    const token = signUser("owner-deuce-adv");
+    const createResponse = await app.inject({
+      method: "POST",
+      url: "/tournaments",
+      headers: { authorization: `Bearer ${token}` },
+      payload: regularCreatePayload
+    });
+    const created = createResponse.json().data;
+    const matchId = created.rounds[0].matches[0].id;
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/tournaments/score",
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        tournamentId: created.id,
+        matchId,
+        sets: [
+          {
+            setNumber: 1,
+            gamesA: 7,
+            gamesB: 5,
+            winMethodsA: ["GOLDEN"]
+          }
+        ],
+        status: "COMPLETE",
+        expectedVersion: created.version
+      }
+    });
+    assert.equal(response.statusCode, 400);
+    assert.match(response.json().message ?? "", /Advantage/i);
+  });
+});
+
+test("POST /tournaments/score stores Golden win methods on Regular complete", async () => {
+  await withApp(async (app) => {
+    const token = signUser("owner-deuce-gold");
+    const createResponse = await app.inject({
+      method: "POST",
+      url: "/tournaments",
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        ...regularCreatePayload,
+        regularScoring: {
+          setFormat: "BO3_GAMES",
+          gameWinBy: 1,
+          deuceMode: "GOLDEN",
+          setsToWin: 1
+        }
+      }
+    });
+    assert.equal(createResponse.statusCode, 200);
+    const created = createResponse.json().data;
+    const matchId = created.rounds[0].matches[0].id;
+
+    const complete = await app.inject({
+      method: "POST",
+      url: "/tournaments/score",
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        tournamentId: created.id,
+        matchId,
+        sets: [
+          {
+            setNumber: 1,
+            gamesA: 2,
+            gamesB: 0,
+            winMethodsA: ["GOLDEN", "REGULAR"]
+          }
+        ],
+        status: "COMPLETE",
+        expectedVersion: created.version
+      }
+    });
+    assert.equal(complete.statusCode, 200);
+    const match = complete.json().data.rounds[0].matches[0];
+    assert.equal(match.completed, true);
+    assert.deepEqual(match.sets[0].winMethodsA, ["GOLDEN", "REGULAR"]);
+  });
+});
+
 test("POST /tournaments/score rejects 6–6 COMPLETE without set TB", async () => {
   await withApp(async (app) => {
     const token = signUser("owner-score-2");

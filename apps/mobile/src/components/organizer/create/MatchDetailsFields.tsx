@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
 import type {
-  GameWinBy,
+  DeuceMode,
   RegularSetFormat,
   SchedulingMode,
   ScoringMode,
@@ -20,7 +20,7 @@ interface MatchDetailsFieldsProps {
   scoringMode: ScoringMode;
   schedulingMode: SchedulingMode;
   setFormat: RegularSetFormat;
-  gameWinBy: GameWinBy;
+  deuceMode: DeuceMode;
   setsToWin: number;
   setTiebreakTo: TiebreakPoints;
   matchTiebreak: boolean;
@@ -34,7 +34,7 @@ interface MatchDetailsFieldsProps {
   estimateLine: string;
   responseText: string;
   onChangeSetFormat: (value: RegularSetFormat) => void;
-  onChangeGameWinBy: (value: GameWinBy) => void;
+  onChangeDeuceMode: (value: DeuceMode) => void;
   onChangeSetsToWin: (value: number) => void;
   onChangeSetTiebreakTo: (value: TiebreakPoints) => void;
   onChangeMatchTiebreak: (value: boolean) => void;
@@ -59,12 +59,12 @@ export function MatchDetailsFields(props: MatchDetailsFieldsProps) {
       {isRegular ? (
         <RegularSettingsFields
           setFormat={props.setFormat}
-          gameWinBy={props.gameWinBy}
+          deuceMode={props.deuceMode}
           setsToWin={props.setsToWin}
           setTiebreakTo={props.setTiebreakTo}
           matchTiebreak={props.matchTiebreak}
           onChangeSetFormat={props.onChangeSetFormat}
-          onChangeGameWinBy={props.onChangeGameWinBy}
+          onChangeDeuceMode={props.onChangeDeuceMode}
           onChangeSetsToWin={props.onChangeSetsToWin}
           onChangeSetTiebreakTo={props.onChangeSetTiebreakTo}
           onChangeMatchTiebreak={props.onChangeMatchTiebreak}

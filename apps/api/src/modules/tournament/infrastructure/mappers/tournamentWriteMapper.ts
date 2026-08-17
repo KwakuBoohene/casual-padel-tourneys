@@ -42,7 +42,9 @@ export function nestedRounds(state: TournamentState) {
             gamesA: set.gamesA,
             gamesB: set.gamesB,
             tbA: set.tbA ?? null,
-            tbB: set.tbB ?? null
+            tbB: set.tbB ?? null,
+            winMethodsA: set.winMethodsA ?? [],
+            winMethodsB: set.winMethodsB ?? []
           }))
         }
       }))
@@ -61,6 +63,7 @@ export function scalarTournamentData(state: TournamentState) {
     scoringMode: state.config.scoringMode ?? "AMERICANO_POINTS",
     regularSetFormat: state.config.regularScoring?.setFormat ?? null,
     regularGameWinBy: state.config.regularScoring?.gameWinBy ?? null,
+    regularDeuceMode: state.config.regularScoring?.deuceMode ?? null,
     regularSetsToWin: state.config.regularScoring?.setsToWin ?? null,
     regularSetTiebreakTo: state.config.regularScoring?.setTiebreakTo ?? null,
     regularMatchTiebreak: state.config.regularScoring?.matchTiebreak ?? null,

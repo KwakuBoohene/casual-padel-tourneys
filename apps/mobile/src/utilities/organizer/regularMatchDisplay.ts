@@ -1,11 +1,14 @@
+import { specialPointLabelForSet } from "@padel/shared";
 import type { MatchSet } from "@padel/shared";
 
-/** Format one set line: `6–4` or `6–6 TB 7–5`. */
+/** Format one set line: `6–4` or `6–6 TB 7–5`, plus Golden/Star when stored. */
 export function formatRegularSetScore(set: MatchSet): string {
-  if (set.gamesA === 6 && set.gamesB === 6 && (set.tbA !== undefined || set.tbB !== undefined)) {
-    return `6–6 TB ${set.tbA ?? 0}–${set.tbB ?? 0}`;
-  }
-  return `${set.gamesA}–${set.gamesB}`;
+  const base =
+    set.gamesA === 6 && set.gamesB === 6 && (set.tbA !== undefined || set.tbB !== undefined)
+      ? `6–6 TB ${set.tbA ?? 0}–${set.tbB ?? 0}`
+      : `${set.gamesA}–${set.gamesB}`;
+  const special = specialPointLabelForSet(set);
+  return special ? `${base} · ${special}` : base;
 }
 
 /** Join set lines for a match card / player history. */

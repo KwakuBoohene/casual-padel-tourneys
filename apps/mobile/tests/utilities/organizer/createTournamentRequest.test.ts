@@ -36,6 +36,23 @@ test("prepareCreateTournamentRequest includes Regular scoring fields without poi
   assert.equal(prepared.payload.pointsPerMatch, undefined);
 });
 
+test("prepareCreateTournamentRequest sends deuceMode STAR with gameWinBy 1", () => {
+  const prepared = prepareCreateTournamentRequest({
+    ...baseDraft,
+    scoringMode: "REGULAR",
+    regularScoring: {
+      setFormat: "BO3_GAMES",
+      gameWinBy: 1,
+      deuceMode: "STAR",
+      setsToWin: 1
+    }
+  });
+  assert.equal(prepared.ok, true);
+  if (!prepared.ok) return;
+  assert.equal(prepared.payload.regularScoring?.deuceMode, "STAR");
+  assert.equal(prepared.payload.regularScoring?.gameWinBy, 1);
+});
+
 test("prepareCreateTournamentRequest keeps Americano points and omits regularScoring", () => {
   const prepared = prepareCreateTournamentRequest({
     ...baseDraft,

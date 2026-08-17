@@ -96,7 +96,7 @@ export function OrganizerLiveHost() {
       onChangeScoreA: org.changeScoreA,
       onChangeScoreB: org.changeScoreB,
       onUndoScoreEntry: org.undoScoreEntry,
-      onSaveScoreEntry: () => void org.saveScoreEntry(),
+      onSaveScoreEntry: (sets) => void org.saveScoreEntry(sets),
       onSaveScoreDraft: () => void org.saveScoreDraft(),
       onConfirmEditCompletedScore: org.confirmEditCompletedScore,
       onCancelEditCompletedScore: org.cancelEditCompletedScore,

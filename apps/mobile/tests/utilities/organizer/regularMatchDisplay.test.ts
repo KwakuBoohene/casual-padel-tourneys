@@ -56,3 +56,24 @@ test("regularMatchStatusLine labels drafts and completed matches", () => {
     "6–4 · Done"
   );
 });
+
+test("formatRegularSetScore appends Golden or Star when methods are stored", () => {
+  assert.equal(
+    formatRegularSetScore({
+      setNumber: 1,
+      gamesA: 6,
+      gamesB: 4,
+      winMethodsA: ["REGULAR", "GOLDEN"]
+    }),
+    "6–4 · Golden"
+  );
+  assert.equal(
+    formatRegularSetScore({
+      setNumber: 1,
+      gamesA: 6,
+      gamesB: 4,
+      winMethodsA: ["STAR"]
+    }),
+    "6–4 · Star"
+  );
+});

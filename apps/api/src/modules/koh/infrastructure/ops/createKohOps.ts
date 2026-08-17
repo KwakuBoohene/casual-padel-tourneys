@@ -27,6 +27,7 @@ export async function createKohTournament(
       scoringMode: "REGULAR",
       regularSetFormat: input.regularScoring.setFormat,
       regularGameWinBy: input.regularScoring.gameWinBy,
+      regularDeuceMode: input.regularScoring.deuceMode ?? null,
       regularSetsToWin: input.regularScoring.setsToWin,
       regularSetTiebreakTo: input.regularScoring.setTiebreakTo ?? null,
       regularMatchTiebreak: input.regularScoring.matchTiebreak ?? null,

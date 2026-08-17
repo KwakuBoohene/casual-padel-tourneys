@@ -1,20 +1,22 @@
 import { Pressable, Text, View } from "react-native";
-import type { GameWinBy, RegularSetFormat, TiebreakPoints } from "@padel/shared";
+import type { DeuceMode, RegularSetFormat, TiebreakPoints } from "@padel/shared";
+import { gameWinByForDeuceMode } from "@padel/shared";
 
 import { radius, spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
+import { DeuceModeFields } from "./DeuceModeFields";
 import { ScoringModeOptionCard } from "./ScoringModeOptionCard";
 import { SettingsStepper } from "./SettingsStepper";
 
 interface RegularSettingsFieldsProps {
   setFormat: RegularSetFormat;
-  gameWinBy: GameWinBy;
+  deuceMode: DeuceMode;
   setsToWin: number;
   setTiebreakTo: TiebreakPoints;
   matchTiebreak: boolean;
   onChangeSetFormat: (value: RegularSetFormat) => void;
-  onChangeGameWinBy: (value: GameWinBy) => void;
+  onChangeDeuceMode: (value: DeuceMode) => void;
   onChangeSetsToWin: (value: number) => void;
   onChangeSetTiebreakTo: (value: TiebreakPoints) => void;
   onChangeMatchTiebreak: (value: boolean) => void;
@@ -28,16 +30,20 @@ const SET_FORMATS: { value: RegularSetFormat; title: string; detail: string }[] 
 
 export function RegularSettingsFields(props: RegularSettingsFieldsProps) {
   const { colors } = useTheme();
-  const fullWinBy2 = props.setFormat === "FULL_SET" && props.gameWinBy === 2;
+  const gameWinBy = gameWinByForDeuceMode(props.deuceMode);
+  const fullWinBy2 = props.setFormat === "FULL_SET" && gameWinBy === 2;
   const helper =
     props.setFormat === "FULL_SET"
-      ? props.gameWinBy === 1
-        ? "Full set + win by 1 ends 6–5 max — never 7 games or 6–6."
-        : "Win by 2: set can end 7–5. At 6–6 play a set tiebreak (not 7–6 in games)."
+      ? gameWinBy === 1
+        ? "Full set + Golden/Star ends 6–5 max — never 7 games or 6–6."
+        : "Advantage: set can end 7–5. At 6–6 play a set tiebreak (not 7–6 in games)."
       : undefined;
 
   return (
     <View style={{ gap: spacing.md }}>
+      <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Deuce</Text>
+      <DeuceModeFields value={props.deuceMode} onChange={props.onChangeDeuceMode} />
+
       <Text style={{ fontSize: 12, fontWeight: "600", color: colors.muted }}>Set format</Text>
       {SET_FORMATS.map((format) => (
         <ScoringModeOptionCard
@@ -45,8 +51,8 @@ export function RegularSettingsFields(props: RegularSettingsFieldsProps) {
           title={format.title}
           lines={[
             format.detail,
-            format.value === "FULL_SET" && props.gameWinBy === 2
-              ? "Win by 2 games · 6–6 is a tiebreak"
+            format.value === "FULL_SET" && gameWinBy === 2
+              ? "Advantage · 6–6 is a tiebreak"
               : format.value === "FULL_SET"
                 ? "Win by 1 ends at 6–5"
                 : ""
@@ -56,14 +62,6 @@ export function RegularSettingsFields(props: RegularSettingsFieldsProps) {
         />
       ))}
 
-      <SettingsStepper
-        label="Win set by"
-        value={props.gameWinBy}
-        min={1}
-        max={2}
-        displayValue={`${props.gameWinBy} game${props.gameWinBy === 1 ? "" : "s"}`}
-        onChange={(value) => props.onChangeGameWinBy(value === 2 ? 2 : 1)}
-      />
       <SettingsStepper
         label="Number of sets"
         value={props.setsToWin}

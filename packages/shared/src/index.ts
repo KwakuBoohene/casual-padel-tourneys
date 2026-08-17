@@ -8,6 +8,7 @@ export * from "./utils/ids.js";
 export * from "./theme/tokens.js";
 export * from "./scoring/regularScoring.js";
 export * from "./scoring/regularMatchLength.js";
+export * from "./scoring/deuceMode.js";
 export * from "./mexicano/ladder.js";
 export * from "./americano/teams.js";
 

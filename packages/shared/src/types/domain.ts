@@ -14,13 +14,15 @@ export type ScoringMode = "AMERICANO_POINTS" | "REGULAR";
 export type RegularSetFormat = "BO3_GAMES" | "BO5_GAMES" | "FULL_SET";
 export type GameWinBy = 1 | 2;
 export type TiebreakPoints = 7 | 10;
+/** Tournament Regular deuce policy (how games are decided at 40-40). */
+export type DeuceMode = "ADVANTAGE" | "GOLDEN" | "STAR";
 
 /** KOH pairing strategy. ROUND_ROBIN_PAIRS reserved for the next epic. */
 export type KohPairingMode = "WINNER_STAYS" | "ROUND_ROBIN_PAIRS";
 
 /**
- * How a single KOH game was won (per game, not per match).
- * Used by live score API later — defined here for shared contracts.
+ * How a single Regular game was won (per game, not per match).
+ * Used by King of the Court and Americano/Mexicano Regular score APIs.
  */
 export type KohGameWinMethod = "REGULAR" | "GOLDEN" | "STAR";
 
@@ -79,6 +81,10 @@ export interface MatchSet {
   gamesB: number;
   tbA?: number;
   tbB?: number;
+  /** Per-game win methods parallel to games won by side A (GOLDEN/STAR tournaments). */
+  winMethodsA?: KohGameWinMethod[];
+  /** Per-game win methods parallel to games won by side B. */
+  winMethodsB?: KohGameWinMethod[];
 }
 
 export interface Match {
@@ -111,6 +117,8 @@ export interface Round {
 export interface RegularScoringConfig {
   setFormat: RegularSetFormat;
   gameWinBy: GameWinBy;
+  /** Advantage / Golden / Star. Omit on old payloads — infer from `gameWinBy`. */
+  deuceMode?: DeuceMode;
   /** First to this many sets wins; max 4 (best of 7). */
   setsToWin: number;
   /** Set tiebreak target when full set + win-by-2 (typically 7 or 10). */

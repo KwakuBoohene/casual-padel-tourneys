@@ -6,7 +6,8 @@ import type {
   KohTempSwap,
   KohUnit,
   MatchSet,
-  RegularScoringConfig
+  RegularScoringConfig,
+  DeuceMode
 } from "@padel/shared";
 
 export type KohCreateStep =
@@ -19,7 +20,7 @@ export type KohCreateStep =
   | "ASSIGN"
   | "REVIEW";
 
-export type KohDeuceMode = "ADVANTAGE" | "GOLDEN" | "STAR";
+export type KohDeuceMode = DeuceMode;
 
 export type KohMatchFormatChoice = "FULL_SET" | "BO3_GAMES" | "BO5_GAMES";
 

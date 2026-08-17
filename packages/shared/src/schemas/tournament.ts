@@ -21,11 +21,14 @@ export const scoringModeSchema = z.enum(["AMERICANO_POINTS", "REGULAR"]);
 export const regularSetFormatSchema = z.enum(["BO3_GAMES", "BO5_GAMES", "FULL_SET"]);
 export const gameWinBySchema = z.union([z.literal(1), z.literal(2)]);
 export const tiebreakPointsSchema = z.union([z.literal(7), z.literal(10)]);
+export const deuceModeSchema = z.enum(["ADVANTAGE", "GOLDEN", "STAR"]);
+export const gameWinMethodSchema = z.enum(["REGULAR", "GOLDEN", "STAR"]);
 
 export const regularScoringSchema = z
   .object({
     setFormat: regularSetFormatSchema,
     gameWinBy: gameWinBySchema,
+    deuceMode: deuceModeSchema.optional(),
     setsToWin: z.number().int().min(1).max(REGULAR_SETS_TO_WIN_MAX),
     setTiebreakTo: tiebreakPointsSchema.optional(),
     matchTiebreak: z.boolean().optional()
@@ -43,6 +46,20 @@ export const regularScoringSchema = z
         code: z.ZodIssueCode.custom,
         path: ["matchTiebreak"],
         message: "Match tiebreak is only valid with setsToWin: 2 (two sets + match tiebreak)."
+      });
+    }
+    if (value.deuceMode === "ADVANTAGE" && value.gameWinBy !== 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["gameWinBy"],
+        message: "Advantage deuce requires gameWinBy: 2."
+      });
+    }
+    if ((value.deuceMode === "GOLDEN" || value.deuceMode === "STAR") && value.gameWinBy !== 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["gameWinBy"],
+        message: "Golden and Star deuce require gameWinBy: 1."
       });
     }
   });
@@ -154,7 +171,9 @@ export const matchSetSchema = z.object({
   gamesA: z.number().int().min(0),
   gamesB: z.number().int().min(0),
   tbA: z.number().int().min(0).optional(),
-  tbB: z.number().int().min(0).optional()
+  tbB: z.number().int().min(0).optional(),
+  winMethodsA: z.array(gameWinMethodSchema).optional(),
+  winMethodsB: z.array(gameWinMethodSchema).optional()
 });
 
 export const submitAmericanoScoreSchema = z.object({

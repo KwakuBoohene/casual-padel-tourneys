@@ -99,3 +99,20 @@ export function restoreScoreEntryUndo(
     undoStack
   };
 }
+
+export function changeScoreEntrySide(
+  entry: ScoreEntryState,
+  tournament: LiveTournamentState,
+  side: "A" | "B",
+  next: number,
+  points: number
+): ScoreEntryState {
+  const regularNext = changeRegularSide(entry, tournament, side, next);
+  if (regularNext) {
+    return nextScoreEntryAfterChange(entry, tournament, regularNext);
+  }
+  const clamp = (value: number) => Math.max(0, Math.min(points, value));
+  const scoreA = side === "A" ? clamp(next) : clamp(points - clamp(next));
+  const scoreB = side === "B" ? clamp(next) : clamp(points - clamp(next));
+  return nextScoreEntryAfterChange(entry, tournament, { scoreA, scoreB, sets: [] });
+}

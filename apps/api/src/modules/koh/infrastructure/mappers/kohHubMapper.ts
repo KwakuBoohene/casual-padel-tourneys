@@ -1,4 +1,5 @@
 import type { KohPendingPromote } from "@padel/shared";
+import { resolveDeuceMode } from "@padel/shared";
 
 import { computeBalanceHint } from "../../domain/balanceHint.js";
 import type { KohTournamentHub } from "../../domain/types.js";
@@ -28,9 +29,17 @@ export function parsePendingPromote(value: unknown): KohPendingPromote | null {
 }
 
 export function regularConfigFromRow(row: KohDbTournament) {
+  const gameWinBy = (row.regularGameWinBy === 1 ? 1 : 2) as 1 | 2;
+  const stored =
+    row.regularDeuceMode === "ADVANTAGE" ||
+    row.regularDeuceMode === "GOLDEN" ||
+    row.regularDeuceMode === "STAR"
+      ? row.regularDeuceMode
+      : undefined;
   return {
     setFormat: row.regularSetFormat ?? ("FULL_SET" as const),
-    gameWinBy: (row.regularGameWinBy === 1 ? 1 : 2) as 1 | 2,
+    gameWinBy,
+    deuceMode: resolveDeuceMode({ gameWinBy, deuceMode: stored }),
     setsToWin: row.regularSetsToWin ?? 1,
     setTiebreakTo:
       row.regularSetTiebreakTo === 7 || row.regularSetTiebreakTo === 10

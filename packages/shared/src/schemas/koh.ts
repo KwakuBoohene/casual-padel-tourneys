@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 import { KING_OF_THE_COURT, LEGACY_KING_OF_THE_HILL } from "../tournamentMode.js";
-import { matchSetSchema, regularScoringSchema } from "./tournament.js";
+import { gameWinMethodSchema, matchSetSchema, regularScoringSchema } from "./tournament.js";
 
 export const kohPairingModeSchema = z.enum(["WINNER_STAYS", "ROUND_ROBIN_PAIRS"]);
-export const kohGameWinMethodSchema = z.enum(["REGULAR", "GOLDEN", "STAR"]);
+export const kohGameWinMethodSchema = gameWinMethodSchema;
 
 const kohPlayerInputSchema = z.object({
   name: z.string().min(1),
@@ -144,10 +144,7 @@ export const reorderKohQueueSchema = z.object({
 export type AssignKohCourtsInput = z.infer<typeof assignKohCourtsSchema>;
 export type ReorderKohQueueInput = z.infer<typeof reorderKohQueueSchema>;
 
-export const kohMatchSetSchema = matchSetSchema.extend({
-  winMethodsA: z.array(kohGameWinMethodSchema).optional(),
-  winMethodsB: z.array(kohGameWinMethodSchema).optional()
-});
+export const kohMatchSetSchema = matchSetSchema;
 
 /**
  * Score a KOH court match (king = side A, challenger = side B at submit time).

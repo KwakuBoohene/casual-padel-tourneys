@@ -1,21 +1,16 @@
-import type { KohDeuceMode } from "../../types/koh/create";
-import { ScoringModeOptionCard } from "../organizer/create/ScoringModeOptionCard";
+import type { DeuceMode } from "@padel/shared";
+
 import { WizardChrome } from "../organizer/create/WizardChrome";
+import { DeuceModeFields } from "../organizer/create/DeuceModeFields";
 
 interface KohDeuceStepProps {
   stepIndex: number;
   stepCount: number;
-  deuceMode: KohDeuceMode;
-  onChangeDeuce: (value: KohDeuceMode) => void;
+  deuceMode: DeuceMode;
+  onChangeDeuce: (value: DeuceMode) => void;
   onBack: () => void;
   onNext: () => void;
 }
-
-const OPTIONS: { value: KohDeuceMode; title: string; detail: string }[] = [
-  { value: "ADVANTAGE", title: "Advantage", detail: "Play until win by 2 points" },
-  { value: "GOLDEN", title: "Golden point", detail: "No-ad · deciding point at deuce" },
-  { value: "STAR", title: "Star point", detail: "Two deuces, then a final deciding point" }
-];
 
 export function KohDeuceStep(props: KohDeuceStepProps) {
   return (
@@ -29,15 +24,7 @@ export function KohDeuceStep(props: KohDeuceStepProps) {
       onPrimary={props.onNext}
       onBack={props.onBack}
     >
-      {OPTIONS.map((option) => (
-        <ScoringModeOptionCard
-          key={option.value}
-          title={option.title}
-          lines={[option.detail]}
-          selected={props.deuceMode === option.value}
-          onPress={() => props.onChangeDeuce(option.value)}
-        />
-      ))}
+      <DeuceModeFields value={props.deuceMode} onChange={props.onChangeDeuce} />
     </WizardChrome>
   );
 }

@@ -4,8 +4,10 @@ import type {
   LiveTournamentScoreState,
   LiveTournamentSessionState
 } from "../../../types/organizer/liveTournamentView";
+import { useRegularWinMethodPrompt } from "../../../hooks/organizer/score/useRegularWinMethodPrompt";
 import { formatTournamentMode } from "../../../utilities/organizer/formatLabels";
 import { isRegularTournament } from "../../../utilities/organizer/regularScoreEntry";
+import { RegularWinMethodSheet } from "./RegularWinMethodSheet";
 
 interface LiveScoreEntrySheetsProps {
   session: LiveTournamentSessionState;
@@ -28,6 +30,13 @@ export function LiveScoreEntrySheets({ session, score, actions }: LiveScoreEntry
     score.scoreEntryContextLine ??
     (regular ? "Regular scoring · Set 1 · games" : `${modeLabel} scoring · to ${points} points`);
   const canComplete = Boolean(score.scoreEntryCanComplete);
+  const winMethods = useRegularWinMethodPrompt({
+    regularConfig: session.tournament.config.regularScoring ?? null,
+    sets: score.scoreEntry?.sets ?? [],
+    canComplete,
+    onComplete: (sets) => actions.onSaveScoreEntry(sets),
+    onSaveWithoutPrompt: () => actions.onSaveScoreEntry()
+  });
 
   return (
     <>
@@ -49,7 +58,7 @@ export function LiveScoreEntrySheets({ session, score, actions }: LiveScoreEntry
         onChangeScoreA={actions.onChangeScoreA}
         onChangeScoreB={actions.onChangeScoreB}
         onUndo={actions.onUndoScoreEntry}
-        onSave={() => void actions.onSaveScoreEntry()}
+        onSave={winMethods.requestSave}
         onSecondarySave={
           actions.onSaveScoreDraft
             ? () => {
@@ -58,6 +67,16 @@ export function LiveScoreEntrySheets({ session, score, actions }: LiveScoreEntry
             : undefined
         }
         onDismiss={actions.onCloseScoreEntry}
+      />
+      <RegularWinMethodSheet
+        visible={winMethods.visible && Boolean(score.scoreEntry)}
+        teamALabel={teamALabel}
+        teamBLabel={teamBLabel}
+        sets={winMethods.draftSets}
+        saving={score.savingScore}
+        onChangeMethod={winMethods.changeMethod}
+        onConfirm={winMethods.confirm}
+        onDismiss={winMethods.dismiss}
       />
       <AlertSheet
         visible={Boolean(score.pendingCompletedEditMatchId)}
@@ -76,7 +95,7 @@ export function LiveScoreEntrySheets({ session, score, actions }: LiveScoreEntry
         primaryAction={{
           label: score.scoreEntry ? "Retry" : "OK",
           onPress: () => {
-            if (score.scoreEntry) void actions.onSaveScoreEntry();
+            if (score.scoreEntry) winMethods.requestSave();
             else actions.onClearScoreSheetError();
           }
         }}

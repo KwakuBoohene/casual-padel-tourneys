@@ -29,7 +29,9 @@ export function mapRoundsFromDb(tournament: DbTournamentGraph): DomainRound[] {
             gamesA: set.gamesA,
             gamesB: set.gamesB,
             tbA: set.tbA ?? undefined,
-            tbB: set.tbB ?? undefined
+            tbB: set.tbB ?? undefined,
+            winMethodsA: set.winMethodsA.length > 0 ? set.winMethodsA : undefined,
+            winMethodsB: set.winMethodsB.length > 0 ? set.winMethodsB : undefined
           }))
       }))
     }));

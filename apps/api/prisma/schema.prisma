@@ -37,6 +37,13 @@ enum RegularSetFormat {
   FULL_SET
 }
 
+/** Tournament Regular deuce policy. Null on Americano-points rows and legacy Regular rows. */
+enum RegularDeuceMode {
+  ADVANTAGE
+  GOLDEN
+  STAR
+}
+
 /** KOH pairing strategy. ROUND_ROBIN_PAIRS reserved for a later epic. */
 enum KohPairingMode {
   WINNER_STAYS
@@ -107,6 +114,7 @@ model Tournament {
   scoringMode           ScoringMode       @default(AMERICANO_POINTS)
   regularSetFormat      RegularSetFormat?
   regularGameWinBy      Int?
+  regularDeuceMode      RegularDeuceMode?
   regularSetsToWin      Int?
   regularSetTiebreakTo  Int?
   regularMatchTiebreak  Boolean?
@@ -245,14 +253,16 @@ model Match {
 }
 
 model MatchSet {
-  id        String @id @default(cuid())
-  matchId   String
-  setNumber Int
-  gamesA    Int
-  gamesB    Int
-  tbA       Int?
-  tbB       Int?
-  match     Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  id           String             @id @default(cuid())
+  matchId      String
+  setNumber    Int
+  gamesA       Int
+  gamesB       Int
+  tbA          Int?
+  tbB          Int?
+  winMethodsA  KohGameWinMethod[] @default([])
+  winMethodsB  KohGameWinMethod[] @default([])
+  match        Match              @relation(fields: [matchId], references: [id], onDelete: Cascade)
 
   @@unique([matchId, setNumber])
   @@index([matchId])

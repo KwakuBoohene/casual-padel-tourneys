@@ -16,6 +16,7 @@ interface TeamPlayersStepViewProps {
   minTeams: number;
   canContinue: boolean;
   hasDuplicateNames: boolean;
+  hint: string;
   onAddTeam: (playerA: string, playerB: string) => void;
   onUpdateTeam: (index: number, playerA: string, playerB: string) => void;
   onRemoveTeam: (index: number) => void;
@@ -98,9 +99,7 @@ export function TeamPlayersStepView(props: TeamPlayersStepViewProps) {
         }
       >
         <View style={{ gap: spacing.sm }}>
-          <Text style={{ color: colors.muted, fontSize: 13 }}>
-            Fixed pairs stay together. Ranked teams face each other (1 vs 2, 3 vs 4).
-          </Text>
+          <Text style={{ color: colors.muted, fontSize: 13 }}>{props.hint}</Text>
           {props.teams.length === 0 ? (
             <Text style={{ color: colors.muted }}>No pairs yet. Add at least {props.minTeams}.</Text>
           ) : (

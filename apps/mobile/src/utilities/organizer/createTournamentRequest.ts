@@ -6,9 +6,10 @@ import type {
   TournamentMode,
   TournamentVariant
 } from "@padel/shared";
-import { MEXICANO_MIN_PLAYERS, MEXICANO_MIN_TEAMS } from "@padel/shared";
+import { MEXICANO_MIN_PLAYERS } from "@padel/shared";
 
 import type { TeamPairDraft } from "../../hooks/organizer/usePlayerRoster";
+import { isFixedTeamMode, minTeamsForMode, teamModeLabel } from "./fixedTeamMode";
 
 export interface CreateTournamentDraft {
   name: string;
@@ -58,7 +59,7 @@ export function prepareCreateTournamentRequest(
   const targetGames = Number(draft.targetGamesText);
   const tournamentTime = Number(draft.tournamentTimeText);
   const scoringMode = draft.scoringMode;
-  const isTeamMexicano = draft.mode === "MEXICANO" && draft.variant === "TEAM";
+  const teamMode = isFixedTeamMode(draft.mode, draft.variant);
 
   if (!Number.isInteger(courts) || courts < 1) {
     return { ok: false, error: "Courts must be a whole number greater than 0." };
@@ -78,21 +79,23 @@ export function prepareCreateTournamentRequest(
   ) {
     return { ok: false, error: "Tournament time must be a whole number of at least 10 minutes." };
   }
+  if (teamMode) {
+    const teamCount = draft.teams?.length ?? 0;
+    const minTeams = minTeamsForMode(draft.mode);
+    if (teamCount < minTeams) {
+      return {
+        ok: false,
+        error: `${teamModeLabel(draft.mode)} needs at least ${minTeams} fixed pairs.`
+      };
+    }
+  }
   if (draft.sanitizedPlayersCount < courts * 4) {
     return {
       ok: false,
       error: `${courts} court${courts === 1 ? "" : "s"} require at least ${courts * 4} players.`
     };
   }
-  if (isTeamMexicano) {
-    const teamCount = draft.teams?.length ?? 0;
-    if (teamCount < MEXICANO_MIN_TEAMS) {
-      return {
-        ok: false,
-        error: `Team Mexicano needs at least ${MEXICANO_MIN_TEAMS} fixed pairs.`
-      };
-    }
-  } else if (draft.mode === "MEXICANO" && draft.sanitizedPlayersCount < MEXICANO_MIN_PLAYERS) {
+  if (!teamMode && draft.mode === "MEXICANO" && draft.sanitizedPlayersCount < MEXICANO_MIN_PLAYERS) {
     return {
       ok: false,
       error: `Mexicano needs at least ${MEXICANO_MIN_PLAYERS} players. Next rounds are built from the leaderboard.`
@@ -109,14 +112,14 @@ export function prepareCreateTournamentRequest(
     }
   }
 
-  const teams = isTeamMexicano
+  const teams = teamMode
     ? (draft.teams ?? []).map((team) => ({
         playerA: { name: team.playerA.trim(), gender: undefined as PlayerGender | undefined },
         playerB: { name: team.playerB.trim(), gender: undefined as PlayerGender | undefined }
       }))
     : undefined;
 
-  const players = isTeamMexicano
+  const players = teamMode
     ? (teams ?? []).flatMap((team) => [team.playerA, team.playerB])
     : draft.players
         .map((playerName, index) => ({

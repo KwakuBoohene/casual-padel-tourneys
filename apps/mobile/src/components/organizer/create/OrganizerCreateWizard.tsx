@@ -40,7 +40,6 @@ export function OrganizerCreateWizard({
         onChangeMode={(value) => {
           create.setMode(value);
           if (value === "MEXICANO") create.setSchedulingMode("TOTAL_TIME");
-          if (value !== "MEXICANO" && create.variant === "TEAM") create.setVariant("CLASSIC");
           create.prepareSettingsForMode(value);
         }}
         onChangeVariant={create.setVariant}

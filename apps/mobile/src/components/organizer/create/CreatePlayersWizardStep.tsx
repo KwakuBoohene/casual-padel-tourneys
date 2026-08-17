@@ -10,7 +10,7 @@ type Create = ReturnType<typeof useCreateTournament>;
 export function CreatePlayersWizardStep({ create }: { create: Create }) {
   const modeLabel = formatTournamentMode(create.mode);
 
-  if (create.isTeamMexicano) {
+  if (create.isFixedTeamMode) {
     return (
       <TeamPlayersStepView
         modeLabel={modeLabel}
@@ -18,6 +18,11 @@ export function CreatePlayersWizardStep({ create }: { create: Create }) {
         minTeams={create.minTeams}
         canContinue={create.canContinueFromPlayers}
         hasDuplicateNames={create.hasDuplicatePlayerNames}
+        hint={
+          create.mode === "MEXICANO"
+            ? "Fixed pairs stay together. Ranked teams face each other (1 vs 2, 3 vs 4)."
+            : "Fixed pairs stay together. Opponents rotate each round."
+        }
         onAddTeam={create.addTeam}
         onUpdateTeam={create.updateTeam}
         onRemoveTeam={create.removeTeam}
@@ -25,7 +30,7 @@ export function CreatePlayersWizardStep({ create }: { create: Create }) {
         onNext={() => {
           const suggestedCourts = Math.max(1, Math.floor(create.sanitizedPlayers.length / 4) || 1);
           create.onChangeCourtsValue(String(suggestedCourts));
-          create.prepareSettingsForMode("MEXICANO");
+          create.prepareSettingsForMode(create.mode);
           create.setWizardStep("SETTINGS");
         }}
       />

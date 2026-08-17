@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import type { PlayerGender, TournamentMode, TournamentVariant } from "@padel/shared";
-import { MEXICANO_MIN_PLAYERS, MEXICANO_MIN_TEAMS } from "@padel/shared";
+import { MEXICANO_MIN_PLAYERS } from "@padel/shared";
 
 import type { TournamentListResponse } from "../../types/organizer/tournament";
+import { isFixedTeamMode, minTeamsForMode } from "../../utilities/organizer/fixedTeamMode";
 
 export interface TeamPairDraft {
   playerA: string;
@@ -25,16 +26,16 @@ export function usePlayerRoster({
   const [players, setPlayers] = useState<string[]>([]);
   const [playerGenders, setPlayerGenders] = useState<(PlayerGender | undefined)[]>([]);
   const [teams, setTeams] = useState<TeamPairDraft[]>([]);
-  const isTeamMexicano = mode === "MEXICANO" && variant === "TEAM";
+  const teamMode = isFixedTeamMode(mode, variant);
   const minPlayers = mode === "MEXICANO" ? MEXICANO_MIN_PLAYERS : 4;
-  const minTeams = MEXICANO_MIN_TEAMS;
+  const minTeams = minTeamsForMode(mode);
 
   const sanitizedPlayers = useMemo(() => {
-    if (isTeamMexicano) {
+    if (teamMode) {
       return teams.flatMap((team) => [team.playerA.trim(), team.playerB.trim()]).filter(Boolean);
     }
     return players.map((value) => value.trim()).filter(Boolean);
-  }, [isTeamMexicano, players, teams]);
+  }, [teamMode, players, teams]);
 
   const hasDuplicatePlayerNames = useMemo(() => {
     const filled = sanitizedPlayers;
@@ -43,7 +44,7 @@ export function usePlayerRoster({
 
   const canContinueFromPlayers = useMemo(() => {
     if (hasDuplicatePlayerNames) return false;
-    if (isTeamMexicano) {
+    if (teamMode) {
       return (
         teams.length >= minTeams &&
         teams.every((team) => team.playerA.trim().length > 0 && team.playerB.trim().length > 0)
@@ -54,7 +55,7 @@ export function usePlayerRoster({
     return players.every((value, index) => value.trim().length === 0 || Boolean(playerGenders[index]));
   }, [
     hasDuplicatePlayerNames,
-    isTeamMexicano,
+    teamMode,
     minPlayers,
     minTeams,
     playerGenders,
@@ -125,10 +126,10 @@ export function usePlayerRoster({
   };
 
   return {
-    players: isTeamMexicano ? sanitizedPlayers : players,
+    players: teamMode ? sanitizedPlayers : players,
     playerGenders,
     teams,
-    isTeamMexicano,
+    isFixedTeamMode: teamMode,
     sanitizedPlayers,
     minPlayers,
     minTeams,

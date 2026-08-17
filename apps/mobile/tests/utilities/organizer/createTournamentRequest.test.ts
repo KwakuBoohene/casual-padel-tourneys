@@ -53,6 +53,78 @@ test("prepareCreateTournamentRequest keeps Americano points and omits regularSco
   assert.equal(prepared.payload.regularScoring, undefined);
 });
 
+test("prepareCreateTournamentRequest accepts Team Americano with two pairs", () => {
+  const prepared = prepareCreateTournamentRequest({
+    ...baseDraft,
+    variant: "TEAM",
+    teams: [
+      { playerA: "Ana", playerB: "Ben" },
+      { playerA: "Cam", playerB: "Dee" }
+    ],
+    sanitizedPlayersCount: 4,
+    courtsText: "1",
+    scoringMode: "AMERICANO_POINTS",
+    regularScoring: {
+      setFormat: "FULL_SET",
+      gameWinBy: 2,
+      setsToWin: 1,
+      setTiebreakTo: 7
+    }
+  });
+  assert.equal(prepared.ok, true);
+  if (!prepared.ok) return;
+  assert.equal(prepared.payload.variant, "TEAM");
+  assert.equal(prepared.payload.teams?.length, 2);
+  assert.equal(prepared.payload.players.length, 4);
+  assert.equal(prepared.payload.teams?.[0].playerA.name, "Ana");
+});
+
+test("prepareCreateTournamentRequest rejects Team Americano with one pair", () => {
+  const prepared = prepareCreateTournamentRequest({
+    ...baseDraft,
+    variant: "TEAM",
+    teams: [{ playerA: "Ana", playerB: "Ben" }],
+    sanitizedPlayersCount: 2,
+    courtsText: "1",
+    scoringMode: "AMERICANO_POINTS",
+    regularScoring: {
+      setFormat: "FULL_SET",
+      gameWinBy: 2,
+      setsToWin: 1,
+      setTiebreakTo: 7
+    }
+  });
+  assert.equal(prepared.ok, false);
+  if (prepared.ok) return;
+  assert.match(prepared.error, /Team Americano/);
+  assert.match(prepared.error, /2/);
+});
+
+test("prepareCreateTournamentRequest still requires four Team Mexicano pairs", () => {
+  const prepared = prepareCreateTournamentRequest({
+    ...baseDraft,
+    mode: "MEXICANO",
+    variant: "TEAM",
+    schedulingMode: "TOTAL_TIME",
+    teams: [
+      { playerA: "A", playerB: "B" },
+      { playerA: "C", playerB: "D" }
+    ],
+    sanitizedPlayersCount: 4,
+    courtsText: "1",
+    scoringMode: "AMERICANO_POINTS",
+    regularScoring: {
+      setFormat: "FULL_SET",
+      gameWinBy: 2,
+      setsToWin: 1,
+      setTiebreakTo: 7
+    }
+  });
+  assert.equal(prepared.ok, false);
+  if (prepared.ok) return;
+  assert.match(prepared.error, /Team Mexicano/);
+});
+
 test("prepareCreateTournamentRequest rejects Mexicano with fewer than 8 players", () => {
   const prepared = prepareCreateTournamentRequest({
     ...baseDraft,

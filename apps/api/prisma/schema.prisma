@@ -126,6 +126,8 @@ model Tournament {
   kohPendingPromote     Json?
   /** Set when organizer ends a live event (KOH and future modes). */
   endedAt               DateTime?
+  /** Opt-in (default on) for writing completed matches to the organizer career board. */
+  contributeToCareerLeaderboard Boolean @default(true)
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
   organizerId           String?
@@ -192,6 +194,8 @@ model OrganizerPlayerStatDelta {
   tournamentId      String
   tournamentName    String
   matchId           String
+  /** Mode of the source tournament — drives the per-mode leaderboard filter. */
+  tournamentMode    TournamentMode
   gamesWon          Int      @default(0)
   gamesLost         Int      @default(0)
   matchesWon        Int      @default(0)
@@ -202,6 +206,7 @@ model OrganizerPlayerStatDelta {
   @@unique([matchId, organizerPlayerId])
   @@index([organizerId, occurredAt])
   @@index([organizerPlayerId, occurredAt])
+  @@index([organizerId, tournamentMode, occurredAt], map: "OrganizerPlayerStatDelta_org_mode_occurredAt_idx")
 }
 
 model PendingPlayer {

@@ -1,8 +1,9 @@
 import type { ScoringMode, TournamentMode, TournamentVariant } from "@padel/shared";
+import { isKingOfTheCourtMode } from "@padel/shared";
 
-export function formatTournamentMode(mode: TournamentMode): string {
+export function formatTournamentMode(mode: TournamentMode | string): string {
   if (mode === "MEXICANO") return "Mexicano";
-  if (mode === "KING_OF_THE_COURT") return "King of the Court";
+  if (isKingOfTheCourtMode(mode)) return "King of the Court";
   return "Americano";
 }
 

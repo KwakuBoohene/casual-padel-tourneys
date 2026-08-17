@@ -3,17 +3,14 @@ import { z } from "zod";
 import { AMERICANO_MIN_TEAMS } from "../americano/teams.js";
 import { MEXICANO_MIN_PLAYERS, MEXICANO_MIN_TEAMS } from "../mexicano/ladder.js";
 import { REGULAR_SETS_TO_WIN_MAX } from "../scoring/regularMatchLength.js";
+import { KING_OF_THE_COURT, LEGACY_KING_OF_THE_HILL } from "../tournamentMode.js";
+import type { TournamentMode } from "../types/domain.js";
 
-export const tournamentModeSchema = z.enum(["AMERICANO", "MEXICANO", "KING_OF_THE_COURT"]);
-
-/**
- * Input-only: accepts legacy `KING_OF_THE_HILL` and normalizes to `KING_OF_THE_COURT`.
- * API responses and persisted values use `tournamentModeSchema` (Court only).
- */
-export const tournamentModeInputSchema = z
-  .enum(["AMERICANO", "MEXICANO", "KING_OF_THE_COURT", "KING_OF_THE_HILL"])
-  .transform((mode) => (mode === "KING_OF_THE_HILL" ? "KING_OF_THE_COURT" : mode));
-
+export const tournamentModeSchema = z
+  .enum(["AMERICANO", "MEXICANO", KING_OF_THE_COURT, LEGACY_KING_OF_THE_HILL])
+  .transform((value): TournamentMode =>
+    value === LEGACY_KING_OF_THE_HILL ? KING_OF_THE_COURT : value
+  );
 /** @deprecated Prefer tournamentModeSchema — kept for existing imports. */
 export const modeSchema = tournamentModeSchema;
 export const americanoMexicanoModeSchema = z.enum(["AMERICANO", "MEXICANO"]);

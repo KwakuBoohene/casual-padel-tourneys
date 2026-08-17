@@ -1,4 +1,5 @@
 import type { KohRankingsBoard } from "@padel/shared";
+import { isKingOfTheCourtMode } from "@padel/shared";
 
 import { prisma } from "../../../../lib/prisma.js";
 import { notFound, validation } from "../../../../shared/kernel/appError.js";
@@ -20,7 +21,7 @@ export async function requireKohTournament(
   organizerId: string
 ): Promise<KohDbTournament> {
   const row = await loadKohRow(tournamentId);
-  if (!row || row.mode !== "KING_OF_THE_COURT") {
+  if (!row || !isKingOfTheCourtMode(row.mode)) {
     throw notFound("KOH tournament not found.");
   }
   if (row.organizerId !== organizerId) {
@@ -40,7 +41,7 @@ export async function getKohHub(
   organizerId?: string
 ): Promise<KohTournamentHub> {
   const row = await loadKohRow(tournamentId);
-  if (!row || row.mode !== "KING_OF_THE_COURT") {
+  if (!row || !isKingOfTheCourtMode(row.mode)) {
     throw notFound("KOH tournament not found.");
   }
   if (organizerId !== undefined && row.organizerId !== organizerId) {
@@ -63,7 +64,7 @@ async function findKohIdByPublicToken(publicToken: string): Promise<string | nul
     where: { publicToken },
     select: { id: true, mode: true }
   });
-  if (!meta || meta.mode !== "KING_OF_THE_COURT") {
+  if (!meta || !isKingOfTheCourtMode(meta.mode)) {
     return null;
   }
   return meta.id;

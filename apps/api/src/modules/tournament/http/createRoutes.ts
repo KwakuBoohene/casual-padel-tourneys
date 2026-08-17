@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { createTournamentSchema } from "@padel/shared";
+import { createTournamentSchema, isKingOfTheCourtMode } from "@padel/shared";
 
 import { requireOrganizerAccess } from "../../../lib/auth.js";
 import { mapAppError } from "../../../shared/http/mapAppError.js";
@@ -19,7 +19,7 @@ export function registerTournamentCreateRoutes(
     }
 
     const body = request.body as { mode?: string } | undefined;
-    if (body?.mode === "KING_OF_THE_COURT" || body?.mode === "KING_OF_THE_HILL") {
+    if (isKingOfTheCourtMode(body?.mode)) {
       const result = await handleCreateKohTournament(server, request.body, request.user.id);
       reply.status(result.status);
       return result.payload;

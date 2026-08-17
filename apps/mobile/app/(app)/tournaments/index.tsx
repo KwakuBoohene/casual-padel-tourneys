@@ -32,7 +32,7 @@ export default function TournamentsListRoute() {
         onRefresh={() => void org.loadTournaments()}
         onCreateAmericano={() => org.beginCreate({ kind: "mode", mode: "AMERICANO" })}
         onCreateMexicano={() => org.beginCreate({ kind: "mode", mode: "MEXICANO" })}
-        onCreateKingOfTheHill={() => {
+        onCreateKingOfTheCourt={() => {
           org.setErrorText("");
           org.clearKohHub();
           router.push("/koh");

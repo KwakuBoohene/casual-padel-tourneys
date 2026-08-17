@@ -1,4 +1,5 @@
 export * from "./types/domain.js";
+export * from "./tournamentMode.js";
 export * from "./schemas/tournament.js";
 export * from "./schemas/koh.js";
 export * from "./schemas/organizerPlayers.js";

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { KING_OF_THE_COURT, LEGACY_KING_OF_THE_HILL } from "../tournamentMode.js";
 import { matchSetSchema, regularScoringSchema } from "./tournament.js";
 
 export const kohPairingModeSchema = z.enum(["WINNER_STAYS", "ROUND_ROBIN_PAIRS"]);
@@ -33,16 +34,15 @@ export const kohPromotionRuleSchema = z.object({
 });
 
 /**
- * Create payload for King of the Court (winner-stays KOC).
- * Unit assignment / queue order is a later assign step (epic ticket 04).
+ * Create payload for King of the Court (winner-stays).
+ * Accepts legacy `KING_OF_THE_HILL` on input and normalizes to `KING_OF_THE_COURT`.
  */
 export const createKohTournamentSchema = z
   .object({
     name: z.string().min(2),
-    /** Input-only: legacy `KING_OF_THE_HILL` normalizes to `KING_OF_THE_COURT`. */
     mode: z
-      .union([z.literal("KING_OF_THE_COURT"), z.literal("KING_OF_THE_HILL")])
-      .transform((mode) => (mode === "KING_OF_THE_HILL" ? "KING_OF_THE_COURT" : mode)),
+      .enum([KING_OF_THE_COURT, LEGACY_KING_OF_THE_HILL])
+      .transform((value) => (value === LEGACY_KING_OF_THE_HILL ? KING_OF_THE_COURT : value)),
     pairingMode: kohPairingModeSchema.default("WINNER_STAYS"),
     courts: z.number().int().min(1),
     regularScoring: regularScoringSchema,

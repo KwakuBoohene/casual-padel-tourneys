@@ -3,7 +3,7 @@
  * - AMERICANO: fairness / partner-rotation pre-schedule (`TARGET_GAMES`, etc.).
  * - MEXICANO: result-driven ladder (round 1 lottery, then 1+3 vs 2+4 from the table).
  *   Does **not** use Americano target-games rotation semantics.
- * - KING_OF_THE_COURT: winner-stays courts (KOC engine).
+ * - KING_OF_THE_COURT: winner-stays courts (separate engine; product name KOC).
  */
 export type TournamentMode = "AMERICANO" | "MEXICANO" | "KING_OF_THE_COURT";
 export type TournamentVariant = "CLASSIC" | "MIXED" | "TEAM";

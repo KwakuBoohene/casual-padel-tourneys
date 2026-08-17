@@ -16,7 +16,7 @@ export function KohPairingStep(props: KohPairingStepProps) {
       stepIndex={props.stepIndex}
       stepCount={props.stepCount}
       title="How we pair"
-      subtitle="How the Hill plays out. You still use Regular scoring on court."
+      subtitle="Winner-stays Court nights. You still use Regular scoring on court."
       primaryLabel="Next"
       onPrimary={props.onNext}
       onBack={props.onBack}

@@ -1,4 +1,5 @@
 import type { KohLastResult, KohTempSwap, KohUnit } from "@padel/shared";
+import { isKingOfTheCourtMode } from "@padel/shared";
 
 export type KohPublicCourt = {
   id: string;
@@ -26,7 +27,7 @@ export function isKohPublicHub(value: unknown): value is KohPublicHub {
   if (!value || typeof value !== "object") return false;
   const row = value as Record<string, unknown>;
   const config = row.config as Record<string, unknown> | undefined;
-  return config?.mode === "KING_OF_THE_COURT" && Array.isArray(row.courts);
+  return isKingOfTheCourtMode(String(config?.mode ?? "")) && Array.isArray(row.courts);
 }
 
 export function formatKohPair(unit: KohUnit | null | undefined): string {

@@ -6,7 +6,7 @@ import { useTheme } from "../../../theme/ThemeProvider";
 interface TournamentListCreateActionsProps {
   onCreateAmericano: () => void;
   onCreateMexicano: () => void;
-  onCreateKingOfTheHill: () => void;
+  onCreateKingOfTheCourt: () => void;
   onOpenEstimator: () => void;
   onOpenAccountPlayers?: () => void;
 }
@@ -70,7 +70,7 @@ export function TournamentListCreateActions(props: TournamentListCreateActionsPr
         <Text style={{ color: colors.text, fontWeight: "600", fontSize: 17 }}>New Mexicano</Text>
       </Pressable>
       <Pressable
-        onPress={props.onCreateKingOfTheHill}
+        onPress={props.onCreateKingOfTheCourt}
         style={secondary}
         accessibilityRole="button"
         accessibilityLabel="New King of the Court tournament"

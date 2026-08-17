@@ -18,7 +18,7 @@ interface TournamentListViewProps {
   onRefresh: () => void;
   onCreateAmericano: () => void;
   onCreateMexicano: () => void;
-  onCreateKingOfTheHill: () => void;
+  onCreateKingOfTheCourt: () => void;
   onOpenEstimator: () => void;
   onOpenTournament: (id: string) => void;
   onOpenOptions: (id: string) => void;
@@ -76,7 +76,7 @@ export function TournamentListView(props: TournamentListViewProps) {
           <TournamentListCreateActions
             onCreateAmericano={props.onCreateAmericano}
             onCreateMexicano={props.onCreateMexicano}
-            onCreateKingOfTheHill={props.onCreateKingOfTheHill}
+            onCreateKingOfTheCourt={props.onCreateKingOfTheCourt}
             onOpenEstimator={props.onOpenEstimator}
             onOpenAccountPlayers={props.onOpenAccountPlayers}
           />

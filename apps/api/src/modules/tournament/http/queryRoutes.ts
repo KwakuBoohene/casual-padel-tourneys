@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { isKingOfTheCourtMode } from "@padel/shared";
 import { prisma } from "../../../lib/prisma.js";
 import { requireOrganizerAccess } from "../../../lib/auth.js";
 import { mapAppError } from "../../../shared/http/mapAppError.js";
@@ -38,7 +39,7 @@ export function registerTournamentQueryRoutes(
         where: { id: params.id },
         select: { mode: true }
       });
-      if (row?.mode === "KING_OF_THE_COURT") {
+      if (isKingOfTheCourtMode(row?.mode)) {
         const data = await getKohHub(koh, {
           tournamentId: params.id,
           organizerId: request.user.id
@@ -70,7 +71,7 @@ export function registerTournamentQueryRoutes(
       return { message: "Public tournament not found." };
     }
 
-    if (meta.mode === "KING_OF_THE_COURT") {
+    if (isKingOfTheCourtMode(meta.mode)) {
       const hub = await getKohHubByPublicToken(koh, params.token);
       if (!hub) {
         reply.status(404);

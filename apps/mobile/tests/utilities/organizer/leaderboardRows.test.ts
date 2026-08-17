@@ -107,8 +107,8 @@ test("buildLeaderboardRows uses stored Regular standings without points W–L", 
       }
     },
     players: [
-      { id: "p1", name: "Ada", matchesWon: 1, matchesLost: 0, setsWon: 1, gamesWon: 6 },
-      { id: "p2", name: "Bea", matchesWon: 0, matchesLost: 1, setsWon: 0, gamesWon: 4 }
+      { id: "p1", name: "Ada", matchesWon: 1, matchesLost: 0, setsWon: 1, gamesWon: 6, gamesLost: 4 },
+      { id: "p2", name: "Bea", matchesWon: 0, matchesLost: 1, setsWon: 0, gamesWon: 4, gamesLost: 6 }
     ],
     leaderboard: [
       {
@@ -120,7 +120,8 @@ test("buildLeaderboardRows uses stored Regular standings without points W–L", 
         matchesWon: 1,
         matchesLost: 0,
         setsWon: 1,
-        gamesWon: 6
+        gamesWon: 6,
+        gamesLost: 4
       },
       {
         playerId: "p2",
@@ -131,7 +132,8 @@ test("buildLeaderboardRows uses stored Regular standings without points W–L", 
         matchesWon: 0,
         matchesLost: 1,
         setsWon: 0,
-        gamesWon: 4
+        gamesWon: 4,
+        gamesLost: 6
       }
     ],
     rounds: [
@@ -160,6 +162,7 @@ test("buildLeaderboardRows uses stored Regular standings without points W–L", 
   assert.equal(rows[0]?.wins, 1);
   assert.equal(rows[0]?.setsWon, 1);
   assert.equal(rows[0]?.gamesWon, 6);
+  assert.equal(rows[0]?.gamesLost, 4);
   assert.equal(rows[0]?.isRegular, true);
   assert.equal(rows[1]?.wins, 0);
 });

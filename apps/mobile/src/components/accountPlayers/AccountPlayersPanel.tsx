@@ -1,8 +1,14 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { formatCareerStandings, type OrganizerPlayerLeaderboardRow, type OrganizerPlayerRange } from "@padel/shared";
+import {
+  STANDINGS_LEGEND,
+  standingsLineFromRecord,
+  type OrganizerPlayerLeaderboardRow,
+  type OrganizerPlayerRange
+} from "@padel/shared";
 
 import { radius, spacing, touch, typography } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
+import { StandingsTable } from "../standings/StandingsTable";
 
 const RANGES: { id: OrganizerPlayerRange; label: string }[] = [
   { id: "month", label: "Month" },
@@ -27,6 +33,7 @@ export function AccountPlayersPanel(props: AccountPlayersPanelProps) {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView contentContainerStyle={{ padding: spacing.xl, gap: spacing.md, paddingBottom: spacing.xxl }}>
         <Text style={[typography.title, { color: colors.text }]}>Account Leaderboard</Text>
+        <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18 }}>{STANDINGS_LEGEND}</Text>
         <View style={{ flexDirection: "row", gap: spacing.sm }}>
           {RANGES.map((entry) => {
             const active = props.range === entry.id;
@@ -82,32 +89,22 @@ export function AccountPlayersPanel(props: AccountPlayersPanelProps) {
         {!props.loading && !props.guestMessage && props.rows.length === 0 ? (
           <Text style={{ color: colors.muted }}>No scored matches yet in this range.</Text>
         ) : null}
-        {props.rows.map((row) => (
-          <Pressable
-            key={row.id}
-            onPress={() => props.onSelect(row.id)}
-            style={{
-              minHeight: touch.minPrimary,
-              borderRadius: radius.lg,
-              borderWidth: 1,
-              borderColor: colors.border,
-              backgroundColor: colors.surface,
-              padding: spacing.lg,
-              flexDirection: "row",
-              alignItems: "center",
-              gap: spacing.md
-            }}
-          >
-            <Text style={{ color: colors.muted, fontWeight: "700", width: 28 }}>{row.rank}</Text>
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text style={{ color: colors.text, fontWeight: "700", fontSize: 16 }}>{row.name}</Text>
-              <Text style={{ color: colors.muted, fontSize: 13 }}>
-                {formatCareerStandings(row)}
-              </Text>
-            </View>
-            <Text style={{ color: colors.muted, fontWeight: "700" }}>›</Text>
-          </Pressable>
-        ))}
+        {props.rows.length > 0 ? (
+          <StandingsTable
+            rows={props.rows.map((row) => ({
+              id: row.id,
+              rank: row.rank,
+              name: row.name,
+              line: standingsLineFromRecord({
+                wins: row.matchesWon,
+                losses: row.matchesLost,
+                gamesWon: row.gamesWon,
+                gamesLost: row.gamesLost
+              })
+            }))}
+            onSelect={props.onSelect}
+          />
+        ) : null}
       </ScrollView>
       <Pressable
         onPress={props.onBack}

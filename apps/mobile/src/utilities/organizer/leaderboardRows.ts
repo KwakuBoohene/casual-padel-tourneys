@@ -41,6 +41,7 @@ function ensureRow(
     totalPoints: seed?.totalPoints ?? 0,
     setsWon: seed?.setsWon ?? 0,
     gamesWon: seed?.gamesWon ?? 0,
+    gamesLost: seed?.gamesLost ?? 0,
     isRegular: seed?.isRegular
   };
   stats.set(playerId, row);
@@ -70,6 +71,7 @@ export function buildLeaderboardRows(tournament: LiveTournamentState): Leaderboa
       totalPoints: entry.totalPoints,
       setsWon: entry.setsWon ?? 0,
       gamesWon: entry.gamesWon ?? 0,
+      gamesLost: entry.gamesLost ?? 0,
       isRegular: regular
     });
   }
@@ -82,6 +84,7 @@ export function buildLeaderboardRows(tournament: LiveTournamentState): Leaderboa
       totalPoints: player.totalPoints ?? 0,
       setsWon: player.setsWon ?? 0,
       gamesWon: player.gamesWon ?? 0,
+      gamesLost: player.gamesLost ?? 0,
       isRegular: regular
     });
   }

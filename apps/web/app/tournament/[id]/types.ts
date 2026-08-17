@@ -33,6 +33,7 @@ export type TournamentViewModel = {
     matchesLost?: number;
     setsWon?: number;
     gamesWon?: number;
+    gamesLost?: number;
   }>;
   rounds: Array<{
     id: string;

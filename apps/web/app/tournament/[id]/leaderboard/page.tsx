@@ -1,7 +1,8 @@
 import { LeaderboardHeaderActions } from "../../../../components/LeaderboardHeaderActions";
-import { formatRegularStandings } from "@padel/shared";
+import { standingsLineFromRecord } from "@padel/shared";
 import Link from "next/link";
 import PodiumShowcase from "./PodiumShowcase";
+import { WebStandingsTable } from "./StandingsTable";
 
 import { buildOutstandingPlayerRows } from "../components/outstandingPlayers";
 import { formatScoringLabel, type TournamentViewModel } from "../types";
@@ -18,23 +19,8 @@ async function getTournament(token: string) {
   return payload.data;
 }
 
-function formatStandings(row: {
-  isRegular?: boolean;
-  wins: number;
-  losses: number;
-  setsWon?: number;
-  gamesWon?: number;
-  totalPoints: number;
-}): string {
-  if (row.isRegular) {
-    return formatRegularStandings({
-      wins: row.wins,
-      losses: row.losses,
-      setsWon: row.setsWon,
-      gamesWon: row.gamesWon
-    });
-  }
-  return `${row.totalPoints} pts`;
+function formatPoints(totalPoints: number): string {
+  return `${totalPoints} pts`;
 }
 
 export default async function LeaderboardPage({ params }: { params: Promise<{ id: string }> }) {
@@ -86,6 +72,22 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
           isRegular={isRegular}
         />
 
+        {isRegular ? (
+          <WebStandingsTable
+            rows={rows.map((entry) => ({
+              id: entry.playerId,
+              rank: entry.rank,
+              name: entry.name,
+              line: standingsLineFromRecord({
+                wins: entry.wins,
+                losses: entry.losses,
+                draws: entry.draws,
+                gamesWon: entry.gamesWon ?? 0,
+                gamesLost: entry.gamesLost ?? 0
+              })
+            }))}
+          />
+        ) : (
         <section className="space-y-2">
           {rows.map((entry) => {
             const isLeader = entry.rank === 1;
@@ -101,12 +103,13 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
                   {entry.rank}  {entry.name}
                 </p>
                 <p className="text-sm font-medium text-padel-muted shrink-0 text-right">
-                  {formatStandings(entry)}
+                  {formatPoints(entry.totalPoints)}
                 </p>
               </div>
             );
           })}
         </section>
+        )}
       </div>
     </main>
   );

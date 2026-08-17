@@ -28,7 +28,7 @@ export interface LiveTournamentState {
     tournamentTimeMinutes?: number;
     contributeToCareerLeaderboard?: boolean;
   };
-  players: { id: string; name: string; totalPoints?: number; matchesWon?: number; matchesLost?: number; setsWon?: number; gamesWon?: number }[];
+  players: { id: string; name: string; totalPoints?: number; matchesWon?: number; matchesLost?: number; setsWon?: number; gamesWon?: number; gamesLost?: number }[];
   pendingPlayers: PendingPlayer[];
   /** Present when organizer ended the event (KOH / Mexicano). */
   endedAt?: string | null;
@@ -87,6 +87,7 @@ export interface LeaderboardRow {
   /** Regular standings extras. */
   setsWon?: number;
   gamesWon?: number;
+  gamesLost?: number;
   isRegular?: boolean;
 }
 

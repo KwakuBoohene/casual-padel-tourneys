@@ -17,6 +17,7 @@ export type OutstandingPlayerRow = {
   draws: number;
   setsWon?: number;
   gamesWon?: number;
+  gamesLost?: number;
   isRegular?: boolean;
 };
 
@@ -36,6 +37,7 @@ export function buildOutstandingPlayerRows(tournament: TournamentWithLeaderboard
       draws: 0,
       setsWon: entry.setsWon ?? 0,
       gamesWon: entry.gamesWon ?? 0,
+      gamesLost: entry.gamesLost ?? 0,
       isRegular: regular
     });
   }

@@ -1,41 +1,19 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 import {
-  formatCareerStandings,
-  formatWonLost,
-  noun,
+  formatGameDiff,
+  standingsLineFromRecord,
   type OrganizerPlayerDetail,
   type OrganizerPlayerRange
 } from "@padel/shared";
 
-import { radius, spacing, touch, typography } from "../../theme";
+import { spacing, touch, typography } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
+import { StandingsTable } from "../standings/StandingsTable";
 
 function rangeLabel(range: OrganizerPlayerRange): string {
   if (range === "month") return "This month";
   if (range === "year") return `This year · ${new Date().getUTCFullYear()}`;
   return "All time";
-}
-
-function StatRow(props: { label: string; value: string | number }) {
-  const { colors } = useTheme();
-  return (
-    <View
-      style={{
-        borderRadius: radius.lg,
-        borderWidth: 1,
-        borderColor: colors.border,
-        backgroundColor: colors.surface,
-        padding: spacing.lg,
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        minHeight: touch.minSecondary
-      }}
-    >
-      <Text style={{ color: colors.text, fontWeight: "600" }}>{props.label}</Text>
-      <Text style={{ color: colors.text, fontWeight: "700", fontSize: 22 }}>{props.value}</Text>
-    </View>
-  );
 }
 
 interface AccountPlayerDetailPanelProps {
@@ -54,19 +32,24 @@ export function AccountPlayerDetailPanel(props: AccountPlayerDetailPanelProps) {
         </Pressable>
         <Text style={[typography.title, { color: colors.text }]}>{detail.name}</Text>
         <Text style={{ color: colors.muted }}>{rangeLabel(detail.range)}</Text>
-        <StatRow
-          label={noun(detail.matchesWon + detail.matchesLost, "Match", "Matches")}
-          value={formatWonLost(detail.matchesWon, detail.matchesLost)}
+        <StandingsTable
+          rows={[
+            {
+              id: detail.id,
+              rank: 1,
+              name: detail.name,
+              line: standingsLineFromRecord({
+                wins: detail.matchesWon,
+                losses: detail.matchesLost,
+                gamesWon: detail.gamesWon,
+                gamesLost: detail.gamesLost
+              })
+            }
+          ]}
         />
-        <StatRow
-          label={noun(detail.setsWon + detail.setsLost, "Set", "Sets")}
-          value={formatWonLost(detail.setsWon, detail.setsLost)}
-        />
-        <StatRow
-          label={noun(detail.gamesWon + detail.gamesLost, "Game", "Games")}
-          value={formatWonLost(detail.gamesWon, detail.gamesLost)}
-        />
-        <StatRow label="Events played" value={detail.eventsPlayed} />
+        <Text style={{ color: colors.muted }}>
+          {detail.eventsPlayed} {detail.eventsPlayed === 1 ? "event" : "events"} played
+        </Text>
         <Text style={[typography.sectionTitle, { color: colors.text, marginTop: spacing.sm }]}>
           Recent events
         </Text>
@@ -75,7 +58,8 @@ export function AccountPlayerDetailPanel(props: AccountPlayerDetailPanelProps) {
         ) : (
           detail.recentEvents.map((event) => (
             <Text key={event.tournamentId} style={{ color: colors.text, lineHeight: 22 }}>
-              {event.tournamentName} · {formatCareerStandings(event)}
+              {event.tournamentName} · {event.matchesWon}–{event.matchesLost} · GD{" "}
+              {formatGameDiff(event.gamesWon - event.gamesLost)}
             </Text>
           ))
         )}

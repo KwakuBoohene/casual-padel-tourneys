@@ -8,10 +8,14 @@ interface KohLiveUnitCardProps {
   label: "KING" | "CHALLENGER" | "WAIT";
   unit: KohUnit;
   emphasized?: boolean;
+  quiet?: boolean;
 }
 
 export function KohLiveUnitCard(props: KohLiveUnitCardProps) {
   const { colors } = useTheme();
+  const quiet = props.quiet || props.label === "WAIT";
+  const labelColor =
+    props.label === "KING" ? colors.primary : quiet ? colors.muted : colors.text;
   return (
     <View
       style={{
@@ -19,21 +23,27 @@ export function KohLiveUnitCard(props: KohLiveUnitCardProps) {
         borderRadius: radius.lg,
         borderWidth: props.emphasized ? 2 : 1,
         borderColor: props.emphasized ? colors.primary : colors.border,
-        backgroundColor: colors.surface,
+        backgroundColor: quiet ? colors.surfaceAlt : colors.surface,
         padding: spacing.md,
         gap: spacing.xs
       }}
     >
       <Text
         style={{
-          color: props.label === "KING" ? colors.primary : colors.muted,
+          color: labelColor,
           fontWeight: "700",
           fontSize: 12
         }}
       >
         {props.label}
       </Text>
-      <Text style={{ color: colors.text, fontWeight: "700", fontSize: 16 }}>
+      <Text
+        style={{
+          color: quiet ? colors.muted : colors.text,
+          fontWeight: quiet ? "600" : "700",
+          fontSize: quiet ? 15 : 16
+        }}
+      >
         {props.unit.playerAName} / {props.unit.playerBName}
       </Text>
     </View>

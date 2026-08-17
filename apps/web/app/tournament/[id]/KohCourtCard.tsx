@@ -20,12 +20,12 @@ export function KohCourtCard({ court }: { court: KohPublicCourt }) {
           <p className="text-lg font-bold text-padel-text">{formatKohPair(court.king)}</p>
         </div>
         <div>
-          <p className="text-[10px] font-semibold tracking-widest text-padel-muted">NEXT</p>
+          <p className="text-[10px] font-semibold tracking-widest text-padel-muted">CHALLENGER</p>
           <p className="text-base font-semibold text-padel-text">{formatKohPair(court.challenger)}</p>
         </div>
         {court.waiting.length > 0 ? (
-          <div className="space-y-1">
-            <p className="text-[10px] font-semibold tracking-widest text-padel-muted">WAITING</p>
+          <div className="space-y-1 pt-3 mt-1 border-t border-padel-border">
+            <p className="text-[10px] font-semibold tracking-widest text-padel-muted">Waiting queue</p>
             {court.waiting.map((unit) => (
               <p key={unit.id} className="text-sm text-padel-muted">
                 {formatKohPair(unit)}

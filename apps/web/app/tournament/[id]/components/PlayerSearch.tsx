@@ -22,7 +22,7 @@ export function PlayerSearch({ value, onChange, matchCount, totalMatches }: Play
             rounded-2xl
             text-sm text-padel-text
             placeholder:text-padel-muted
-            focus:outline-none focus:ring-2 focus:ring-padel-primary/50 focus:border-padel-primary
+            focus:border-padel-primary
             transition-all
           "
         />

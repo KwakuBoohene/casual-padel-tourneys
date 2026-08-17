@@ -6,6 +6,7 @@ import { useTheme } from "../../../theme/ThemeProvider";
 
 import { KohLiveActions } from "./KohLiveActions";
 import { KohLiveCourtPager, KohLiveUnitCard } from "./KohLiveCourtBits";
+import { KohLiveWaitingQueue } from "./KohLiveWaitingQueue";
 
 type LiveCourt = KohTournamentHub["courts"][number];
 
@@ -41,7 +42,7 @@ export function KohLiveCourtBody(props: KohLiveCourtBodyProps) {
         </Pressable>
         <Text style={[typography.title, { color: colors.text }]}>{props.name}</Text>
         <Text style={{ color: colors.primary, fontWeight: "600" }}>
-          KOH · Winner-stays{props.ended ? " · Ended" : ""}
+          King of the Court · Winner-stays{props.ended ? " · Ended" : ""}
         </Text>
         <KohLiveCourtPager
           courtCount={props.courtCount}
@@ -53,9 +54,7 @@ export function KohLiveCourtBody(props: KohLiveCourtBodyProps) {
           <Text style={{ color: colors.muted, textAlign: "center", fontWeight: "600" }}>vs</Text>
         ) : null}
         {court?.challenger ? <KohLiveUnitCard label="CHALLENGER" unit={court.challenger} /> : null}
-        {(court?.waiting ?? []).map((unit) => (
-          <KohLiveUnitCard key={unit.id} label="WAIT" unit={unit} />
-        ))}
+        <KohLiveWaitingQueue units={court?.waiting ?? []} />
         {props.errorText ? <Text style={{ color: colors.danger }}>{props.errorText}</Text> : null}
       </ScrollView>
       <View style={{ paddingHorizontal: spacing.xl }}>

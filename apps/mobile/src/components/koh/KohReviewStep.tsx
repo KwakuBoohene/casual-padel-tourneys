@@ -70,6 +70,11 @@ export function KohReviewStep(props: KohReviewStepProps) {
         );
       })}
       {balance ? <Text style={{ color: colors.muted, fontSize: 13 }}>{balance}</Text> : null}
+      <Text style={{ color: colors.muted, fontSize: 13 }}>
+        {props.draft.contributeToCareerLeaderboard
+          ? "Counts toward career leaderboard"
+          : "This event only — not on the career leaderboard"}
+      </Text>
       <Text style={{ color: colors.muted, fontSize: 12 }}>
         Doubles only. Each court needs at least 2 pairs. Max 12 per court.
       </Text>

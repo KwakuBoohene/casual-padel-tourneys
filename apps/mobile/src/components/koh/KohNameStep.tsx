@@ -1,6 +1,7 @@
 import { Text, TextInput, View } from "react-native";
 
 import { WizardChrome } from "../organizer/create/WizardChrome";
+import { CareerOptInRow } from "../organizer/create/CareerOptInRow";
 import { radius, spacing } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
 import { tournamentNamePlaceholder } from "../../utilities/organizer/tournamentNamePlaceholder";
@@ -10,7 +11,9 @@ interface KohNameStepProps {
   stepCount: number;
   name: string;
   canContinue: boolean;
+  contributeToCareerLeaderboard: boolean;
   onChangeName: (value: string) => void;
+  onChangeContributeToCareerLeaderboard: (value: boolean) => void;
   onBack: () => void;
   onNext: () => void;
 }
@@ -49,6 +52,10 @@ export function KohNameStep(props: KohNameStepProps) {
           style={{ color: colors.text, fontSize: 18, fontWeight: "600", paddingVertical: spacing.xs }}
         />
       </View>
+      <CareerOptInRow
+        value={props.contributeToCareerLeaderboard}
+        onChange={props.onChangeContributeToCareerLeaderboard}
+      />
     </WizardChrome>
   );
 }

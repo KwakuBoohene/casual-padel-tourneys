@@ -88,7 +88,8 @@ export const createTournamentSchema = z
     scoringMode: scoringModeSchema.default("AMERICANO_POINTS"),
     regularScoring: regularScoringSchema.optional(),
     targetGamesPerPlayer: z.number().int().min(1).optional(),
-    tournamentTimeMinutes: z.number().int().min(10).optional()
+    tournamentTimeMinutes: z.number().int().min(10).optional(),
+    contributeToCareerLeaderboard: z.boolean().default(true)
   })
   .superRefine((value, ctx) => {
     const isMexicano = value.mode === "MEXICANO";

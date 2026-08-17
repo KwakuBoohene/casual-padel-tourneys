@@ -20,7 +20,8 @@ const kohConfig = {
     setsToWin: 1,
     setTiebreakTo: 7 as const
   },
-  promotionRules: [{ courtNumber: 2, winsRequired: 3 }]
+  promotionRules: [{ courtNumber: 2, winsRequired: 3 }],
+  contributeToCareerLeaderboard: true
 };
 
 async function ensureUser(id: string): Promise<void> {

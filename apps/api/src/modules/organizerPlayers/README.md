@@ -15,8 +15,10 @@ infrastructure/  → Prisma repository (reads) + careerCredits (writes)
 
 - **Write side lives in `infrastructure/careerCredits.ts`.** `ensureOrganizerPlayer` and
   `creditKohMatchToOrganizerPlayers` run inside the caller's Prisma transaction, so KOH scoring
-  and roster changes credit careers atomically with the score. That file is the stable entry
-  point for other modules — do not reach into the repository from outside.
+  and roster changes credit careers atomically with the score. Americano/Mexicano credits run
+  after score persist (`creditAmericanoMatchIfComplete`) and are skipped when
+  `contributeToCareerLeaderboard` is false. That file is the stable entry point for other
+  modules — do not reach into the repository from outside.
 - Crediting is idempotent per `(matchId, organizerPlayerId)`: re-submitting a score overwrites
   the delta instead of double counting, and a player who leaves a unit keeps past results.
 - Identity is `organizerId` + normalized display name (`domain/careerRange.ts`), so renames

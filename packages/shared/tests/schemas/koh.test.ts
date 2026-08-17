@@ -48,6 +48,7 @@ test("createKohTournamentSchema accepts 1-court KOH without promo", () => {
   assert.equal(parsed.pairingMode, "WINNER_STAYS");
   assert.equal(parsed.courts, 1);
   assert.equal(parsed.promotionRules, undefined);
+  assert.equal(parsed.contributeToCareerLeaderboard, true);
 });
 
 test("createKohTournamentSchema requires promo rules when courts ≥ 2", () => {
@@ -88,6 +89,17 @@ test("createKohTournamentSchema rejects promo rules on a single court", () => {
     promotionRules: [{ courtNumber: 2, winsRequired: 2 }]
   });
   assert.equal(result.success, false);
+});
+
+test("createKohTournamentSchema accepts contributeToCareerLeaderboard false", () => {
+  const parsed = createKohTournamentSchema.parse({
+    name: "Court 1 Clash",
+    mode: "KING_OF_THE_COURT",
+    courts: 1,
+    regularScoring,
+    contributeToCareerLeaderboard: false
+  });
+  assert.equal(parsed.contributeToCareerLeaderboard, false);
 });
 
 test("replaceKohPartnerSchema accepts replacementPlayerId xor replacement.name", () => {

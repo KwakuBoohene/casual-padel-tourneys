@@ -52,6 +52,8 @@ export interface KohMatchCredit {
   occurredAt?: Date;
   /** Defaults to King of the Court (KOH credit path). */
   tournamentMode?: TournamentMode;
+  /** When false, skip writing deltas. Default true. */
+  contributeToCareerLeaderboard?: boolean;
 }
 
 interface CreditSide {
@@ -64,6 +66,7 @@ interface CreditSide {
 
 /** Idempotent per (match, career player): re-submitting a score overwrites the delta. */
 export async function creditKohMatchToOrganizerPlayers(input: KohMatchCredit): Promise<void> {
+  if (input.contributeToCareerLeaderboard === false) return;
   const players = await input.tx.player.findMany({
     where: { id: { in: [...input.unitAPlayerIds, ...input.unitBPlayerIds] } },
     select: { id: true, organizerPlayerId: true, name: true }

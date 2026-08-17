@@ -12,7 +12,8 @@ export function createEmptyDraft(): KohCreateDraft {
     promoRules: [],
     courtUnits: [{ courtNumber: 1, units: [] }],
     assignCourtIndex: 0,
-    selectedUnitId: null
+    selectedUnitId: null,
+    contributeToCareerLeaderboard: true
   };
 }
 

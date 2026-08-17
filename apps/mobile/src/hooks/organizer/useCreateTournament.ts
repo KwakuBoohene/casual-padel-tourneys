@@ -12,7 +12,6 @@ import { submitCreateTournament } from "../../utilities/organizer/submitCreateTo
 import { useMatchSettings } from "./useMatchSettings";
 import { usePlayerRoster } from "./usePlayerRoster";
 
-export type { EstimatorCreateDraft };
 export type CreateWizardStep = "NAME" | "OPTIONS" | "PLAYERS" | "SETTINGS";
 
 type Params = {
@@ -86,6 +85,7 @@ export function useCreateTournament({
       tournamentTimeText: settings.tournamentTimeText,
       scoringMode: settings.scoringMode,
       regularScoring: settings.regularScoring,
+      contributeToCareerLeaderboard: settings.contributeToCareerLeaderboard,
       setErrorText,
       setResponseText,
       markEmailVerifyRequired,

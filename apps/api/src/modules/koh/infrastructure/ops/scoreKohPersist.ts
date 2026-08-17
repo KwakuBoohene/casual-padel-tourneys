@@ -11,6 +11,7 @@ export type CompletedKohMatchWrite = {
   tournamentId: string;
   tournamentName: string;
   organizerId: string | null;
+  contributeToCareerLeaderboard: boolean;
   courtId: string;
   matchId: string;
   unitAId: string;
@@ -95,7 +96,8 @@ export async function persistCompletedKohMatch(write: CompletedKohMatchWrite): P
           unitBPlayerIds: [unitB.playerAId, unitB.playerBId],
           winnerSide: write.winnerSide,
           gamesA: setStats.gamesA,
-          gamesB: setStats.gamesB
+          gamesB: setStats.gamesB,
+          contributeToCareerLeaderboard: write.contributeToCareerLeaderboard
         });
       }
     }

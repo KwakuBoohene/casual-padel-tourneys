@@ -51,6 +51,7 @@ export interface KohCreateDraft {
   courtUnits: KohDraftCourt[];
   assignCourtIndex: number;
   selectedUnitId: string | null;
+  contributeToCareerLeaderboard: boolean;
 }
 
 /** Organizer hub returned by KOH create/assign/get/score. */
@@ -69,6 +70,7 @@ export interface KohTournamentHub {
     scoringMode: "REGULAR";
     regularScoring: RegularScoringConfig;
     promotionRules?: KohPromotionRule[];
+    contributeToCareerLeaderboard?: boolean;
   };
   players: { id: string; name: string; gender?: "MALE" | "FEMALE" }[];
   courts: (KohCourt & {

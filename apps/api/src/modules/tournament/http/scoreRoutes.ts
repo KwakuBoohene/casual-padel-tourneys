@@ -3,6 +3,7 @@ import { isRegularScoreBody, submitScoreSchema } from "@padel/shared";
 
 import { requireOrganizerAccess } from "../../../lib/auth.js";
 import { mapAppError } from "../../../shared/http/mapAppError.js";
+import { creditAmericanoMatchIfComplete } from "../../organizerPlayers/infrastructure/creditAmericanoMatch.js";
 import type { TournamentModuleDeps } from "../application/ports.js";
 import { submitPointsScore, submitRegularScore } from "../application/submitScore.js";
 
@@ -56,6 +57,8 @@ export function registerTournamentScoreRoutes(
           scoreB: body.scoreB
         });
       }
+
+      await creditAmericanoMatchIfComplete({ tournament, matchId: body.matchId });
 
       request.log.info(
         {

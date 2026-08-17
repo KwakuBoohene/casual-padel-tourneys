@@ -26,6 +26,7 @@ export interface LiveTournamentState {
     regularScoring?: RegularScoringConfig;
     targetGamesPerPlayer?: number;
     tournamentTimeMinutes?: number;
+    contributeToCareerLeaderboard?: boolean;
   };
   players: { id: string; name: string; totalPoints?: number; matchesWon?: number; matchesLost?: number; setsWon?: number; gamesWon?: number }[];
   pendingPlayers: PendingPlayer[];

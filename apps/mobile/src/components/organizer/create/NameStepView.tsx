@@ -6,6 +6,7 @@ import { radius, spacing } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 import { tournamentNamePlaceholder } from "../../../utilities/organizer/tournamentNamePlaceholder";
 
+import { CareerOptInRow } from "./CareerOptInRow";
 import { WizardChrome } from "./WizardChrome";
 
 interface NameStepViewProps {
@@ -13,7 +14,9 @@ interface NameStepViewProps {
   mode?: TournamentMode | null;
   name: string;
   canContinue: boolean;
+  contributeToCareerLeaderboard: boolean;
   onChangeName: (value: string) => void;
+  onChangeContributeToCareerLeaderboard: (value: boolean) => void;
   onBack: () => void;
   onNext: () => void;
 }
@@ -57,6 +60,10 @@ export function NameStepView(props: NameStepViewProps) {
           }}
         />
       </View>
+      <CareerOptInRow
+        value={props.contributeToCareerLeaderboard}
+        onChange={props.onChangeContributeToCareerLeaderboard}
+      />
     </WizardChrome>
   );
 }

@@ -72,7 +72,8 @@ export function toHub(row: KohDbTournament): KohTournamentHub {
         courtNumber: rule.courtNumber,
         winsRequired: rule.winsRequired,
         promoteToCourtNumber: rule.promoteToCourtNumber ?? undefined
-      }))
+      })),
+      contributeToCareerLeaderboard: row.contributeToCareerLeaderboard
     },
     players: row.players.map((player) => ({
       id: player.id,

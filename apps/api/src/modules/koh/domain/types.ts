@@ -40,6 +40,7 @@ export type KohTournamentHub = {
     scoringMode: "REGULAR";
     regularScoring: NonNullable<CreateKohTournamentInput["regularScoring"]>;
     promotionRules?: KohPromotionRule[];
+    contributeToCareerLeaderboard: boolean;
   };
   players: Array<{ id: string; name: string; gender?: "MALE" | "FEMALE" }>;
   courts: KohHubCourt[];

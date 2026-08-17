@@ -18,6 +18,7 @@ export function useMatchSettings({ mode, effectiveSchedulingMode, playersCount }
   const [targetGamesText, setTargetGamesText] = useState("4");
   const [tournamentTimeText, setTournamentTimeText] = useState("90");
   const scoring = useScoringModeSettings();
+  const [contributeToCareerLeaderboard, setContributeToCareerLeaderboard] = useState(true);
 
   const estimate = useMemo(
     () =>
@@ -64,9 +65,11 @@ export function useMatchSettings({ mode, effectiveSchedulingMode, playersCount }
     } else {
       scoring.adoptAmericanoFromEstimator();
     }
+    setContributeToCareerLeaderboard(true);
   };
 
   const prepareSettingsForMode = (nextMode: TournamentMode) => {
+    setContributeToCareerLeaderboard(true);
     if (nextMode === "MEXICANO") {
       scoring.adoptAmericanoFromEstimator();
       return;
@@ -82,6 +85,8 @@ export function useMatchSettings({ mode, effectiveSchedulingMode, playersCount }
     estimate,
     applySettings,
     prepareSettingsForMode,
+    contributeToCareerLeaderboard,
+    setContributeToCareerLeaderboard,
     onChangeCourtsValue: (value: string) => setCourtsText(sanitizeWholeNumberInput(value)),
     onChangePointsValue: (value: string) => setPointsText(sanitizeWholeNumberInput(value)),
     onChangeTargetGamesValue: (value: string) => setTargetGamesText(sanitizeWholeNumberInput(value)),

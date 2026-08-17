@@ -76,4 +76,11 @@ test("regularScoringFromDraft and create payload", () => {
   assert.equal(payload.mode, "KING_OF_THE_COURT");
   assert.equal(payload.courts, 2);
   assert.ok(payload.promotionRules && payload.promotionRules.length >= 1);
+  assert.equal(payload.contributeToCareerLeaderboard, true);
+});
+
+test("buildCreatePayload sends contributeToCareerLeaderboard false", () => {
+  const draft = { ...createEmptyDraft(), name: "Club night", contributeToCareerLeaderboard: false };
+  const payload = buildCreatePayload(draft);
+  assert.equal(payload.contributeToCareerLeaderboard, false);
 });

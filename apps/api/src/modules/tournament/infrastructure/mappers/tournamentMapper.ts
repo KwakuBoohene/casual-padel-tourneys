@@ -72,7 +72,8 @@ export function mapDbTournamentToState(tournament: DbTournamentGraph): Tournamen
     targetGamesPerPlayer: tournament.targetGamesPerPlayer ?? undefined,
     tournamentTimeMinutes: tournament.tournamentTimeMinutes ?? undefined,
     enableAutoIntegration: tournament.enableAutoIntegration,
-    integrationThreshold: tournament.integrationThreshold
+    integrationThreshold: tournament.integrationThreshold,
+    contributeToCareerLeaderboard: tournament.contributeToCareerLeaderboard
   };
 
   const players: DomainPlayer[] = tournament.players.map((player) => ({

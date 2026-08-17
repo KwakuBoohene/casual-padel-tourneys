@@ -25,10 +25,17 @@ const americanoBase = {
   targetGamesPerPlayer: 4
 };
 
-test("createTournamentSchema defaults scoringMode to AMERICANO_POINTS", () => {
+test("createTournamentSchema defaults contributeToCareerLeaderboard to true", () => {
   const parsed = createTournamentSchema.parse(americanoBase);
-  assert.equal(parsed.scoringMode, "AMERICANO_POINTS");
-  assert.equal(parsed.pointsPerMatch, 24);
+  assert.equal(parsed.contributeToCareerLeaderboard, true);
+});
+
+test("createTournamentSchema accepts contributeToCareerLeaderboard false", () => {
+  const parsed = createTournamentSchema.parse({
+    ...americanoBase,
+    contributeToCareerLeaderboard: false
+  });
+  assert.equal(parsed.contributeToCareerLeaderboard, false);
 });
 
 test("createTournamentSchema accepts Regular full-set win-by-2 + TB 7", () => {

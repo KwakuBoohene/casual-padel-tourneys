@@ -145,6 +145,8 @@ export interface TournamentConfig {
   tournamentTimeMinutes?: number;
   enableAutoIntegration?: boolean;
   integrationThreshold?: number;
+  /** When false, completed matches are not written to the organizer career board. Default true. Immutable after create. */
+  contributeToCareerLeaderboard?: boolean;
 }
 
 export interface Tournament {
@@ -284,5 +286,7 @@ export interface KohTournamentConfig {
   regularScoring: RegularScoringConfig;
   /** Present when courts ≥ 2; one rule per promote-capable court (typically 2..N). */
   promotionRules?: KohPromotionRule[];
+  /** When false, completed matches are not written to the organizer career board. Default true. Immutable after create. */
+  contributeToCareerLeaderboard?: boolean;
 }
 

@@ -22,7 +22,9 @@ export function OrganizerCreateWizard({
         mode={create.mode}
         name={create.name}
         canContinue={create.canContinueFromName}
+        contributeToCareerLeaderboard={create.contributeToCareerLeaderboard}
         onChangeName={create.setName}
+        onChangeContributeToCareerLeaderboard={create.setContributeToCareerLeaderboard}
         onBack={create.cancelCreateToList}
         onNext={() => create.setWizardStep("OPTIONS")}
       />

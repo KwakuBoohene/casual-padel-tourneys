@@ -162,3 +162,34 @@ test("prepareCreateTournamentRequest rejects Mexicano with fewer than 8 players"
   if (prepared.ok) return;
   assert.match(prepared.error, /at least 8/i);
 });
+
+test("prepareCreateTournamentRequest defaults contributeToCareerLeaderboard on", () => {
+  const prepared = prepareCreateTournamentRequest({
+    ...baseDraft,
+    scoringMode: "AMERICANO_POINTS",
+    regularScoring: {
+      setFormat: "BO3_GAMES",
+      gameWinBy: 1,
+      setsToWin: 1
+    }
+  });
+  assert.equal(prepared.ok, true);
+  if (!prepared.ok) return;
+  assert.equal(prepared.payload.contributeToCareerLeaderboard, true);
+});
+
+test("prepareCreateTournamentRequest sends contributeToCareerLeaderboard false", () => {
+  const prepared = prepareCreateTournamentRequest({
+    ...baseDraft,
+    scoringMode: "AMERICANO_POINTS",
+    regularScoring: {
+      setFormat: "BO3_GAMES",
+      gameWinBy: 1,
+      setsToWin: 1
+    },
+    contributeToCareerLeaderboard: false
+  });
+  assert.equal(prepared.ok, true);
+  if (!prepared.ok) return;
+  assert.equal(prepared.payload.contributeToCareerLeaderboard, false);
+});

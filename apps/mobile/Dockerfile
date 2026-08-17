@@ -20,4 +20,5 @@ WORKDIR /app
 RUN npm install -g serve
 COPY --from=build /app/apps/mobile/dist ./dist
 EXPOSE 8081
-CMD ["serve", "dist", "-l", "8081"]
+# -s rewrites unknown paths (e.g. /auth/magic?token=) to index.html so Expo Router can redeem email links.
+CMD ["serve", "dist", "-s", "-l", "8081"]

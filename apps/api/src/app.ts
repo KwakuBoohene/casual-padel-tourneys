@@ -9,7 +9,7 @@ import { registerKohModule } from "./modules/koh/http/register.js";
 import { registerOrganizerPlayersModule } from "./modules/organizerPlayers/http/register.js";
 import { registerTournamentModule } from "./modules/tournament/http/register.js";
 import { mountSocketHub } from "./realtime/socketHub.js";
-import { logger } from "./lib/logger.js";
+import { logger, resolveApiLogLevel } from "./lib/logger.js";
 import { registerAppErrorHandler } from "./shared/http/errorHandler.js";
 import { registerOpsRoutes } from "./shared/http/opsRoutes.js";
 import {
@@ -20,7 +20,7 @@ import {
 } from "./shared/http/requestContext.js";
 
 export async function createApp() {
-  const loggerLevel = process.env.API_LOG_LEVEL ?? "info";
+  const loggerLevel = resolveApiLogLevel();
   const server = Fastify({
     logger: {
       level: loggerLevel,

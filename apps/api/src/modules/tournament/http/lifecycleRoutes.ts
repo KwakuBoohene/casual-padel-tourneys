@@ -1,11 +1,16 @@
 import type { FastifyInstance } from "fastify";
 import {
   advanceMexicanoRoundSchema,
-  endMexicanoNightSchema
+  endMexicanoNightSchema,
+  isKingOfTheCourtMode
 } from "@padel/shared";
 
 import { requireOrganizerAccess } from "../../../lib/auth.js";
+import { logger } from "../../../lib/logger.js";
+import { prisma } from "../../../lib/prisma.js";
+import { notFound } from "../../../shared/kernel/appError.js";
 import { mapAppError } from "../../../shared/http/mapAppError.js";
+import { deleteKohTournament } from "../../koh/infrastructure/ops/deleteKohOps.js";
 import {
   advanceMexicanoRound,
   deleteTournament,
@@ -56,9 +61,34 @@ export function registerTournamentLifecycleRoutes(
   server.delete("/tournaments/:id", { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const params = request.params as { id: string };
     try {
+      if (!request.user) {
+        reply.status(401);
+        return { message: "Unauthorized" };
+      }
+      const meta = await prisma.tournament.findUnique({
+        where: { id: params.id },
+        select: { mode: true, organizerId: true }
+      });
+      logger.debug("DELETE /tournaments/:id", {
+        id: params.id,
+        mode: meta?.mode,
+        organizerMatch: meta?.organizerId === request.user.id
+      });
+      if (!meta || meta.organizerId !== request.user.id) {
+        throw notFound("Tournament not found.");
+      }
+      if (isKingOfTheCourtMode(meta.mode)) {
+        await deleteKohTournament(params.id, request.user.id);
+        await deps.events.publish({
+          type: "TOURNAMENT_DELETED",
+          tournamentId: params.id,
+          payload: { id: params.id }
+        });
+        return { ok: true };
+      }
       await deleteTournament(deps, {
         tournamentId: params.id,
-        organizerId: request.user!.id
+        organizerId: request.user.id
       });
       return { ok: true };
     } catch (error) {

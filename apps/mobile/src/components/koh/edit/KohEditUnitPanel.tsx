@@ -5,29 +5,13 @@ import { radius, spacing, touch, typography } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 import { formatKohUnitLabel } from "../../../utilities/koh/rankingFormat";
 
-import { KohEditUnitSheets } from "./KohEditUnitSheets";
-
 interface KohEditUnitPanelProps {
   unit: KohUnit;
   role: string;
   midMatch: boolean;
-  renamePlayerId: string | null;
-  renameValue: string;
-  onRenameValue: (value: string) => void;
-  replacePlayerId: string | null;
-  replaceName: string;
-  onReplaceName: (value: string) => void;
-  confirmReplace: boolean;
-  leaveName: string;
-  stayName: string;
-  saving: boolean;
   errorText: string;
   onOpenRename: (playerId: string, name: string) => void;
   onOpenReplace: (playerId: string) => void;
-  onDismissSubflow: () => void;
-  onSubmitRename: () => void;
-  onContinueReplace: () => void;
-  onConfirmReplace: () => void;
   onBack: () => void;
 }
 
@@ -117,24 +101,6 @@ export function KohEditUnitPanel(props: KohEditUnitPanelProps) {
       <Pressable onPress={props.onBack} style={{ alignItems: "center", paddingVertical: spacing.md }}>
         <Text style={{ color: colors.muted, fontWeight: "600" }}>Back</Text>
       </Pressable>
-      <KohEditUnitSheets
-        renamePlayerId={props.renamePlayerId}
-        renameValue={props.renameValue}
-        onRenameValue={props.onRenameValue}
-        replacePlayerId={props.replacePlayerId}
-        replaceName={props.replaceName}
-        onReplaceName={props.onReplaceName}
-        confirmReplace={props.confirmReplace}
-        leaveName={props.leaveName}
-        stayName={props.stayName}
-        role={props.role}
-        record={wl}
-        saving={props.saving}
-        onDismissSubflow={props.onDismissSubflow}
-        onSubmitRename={props.onSubmitRename}
-        onContinueReplace={props.onContinueReplace}
-        onConfirmReplace={props.onConfirmReplace}
-      />
     </View>
   );
 }

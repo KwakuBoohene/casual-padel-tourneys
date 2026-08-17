@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 
-import { renameKohPlayer, replaceKohPartner } from "../../api/koh";
-import { isEmailVerifyRequired } from "../../api/errors";
+import { renameKohPlayer } from "../../api/koh";
 import type { KohTournamentHub } from "../../types/koh/create";
 import { listKohEditUnits, type KohEditUnitRow } from "../../utilities/koh/editPlayersList";
+import { reportKohEditError } from "../../utilities/koh/reportKohEditError";
+
+import { useKohReplacePartner } from "./useKohReplacePartner";
 
 export function useKohEditPlayers(params: {
   hub: KohTournamentHub;
@@ -14,26 +16,22 @@ export function useKohEditPlayers(params: {
   const [selected, setSelected] = useState<KohEditUnitRow | null>(null);
   const [renamePlayerId, setRenamePlayerId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
-  const [replacePlayerId, setReplacePlayerId] = useState<string | null>(null);
-  const [replaceName, setReplaceName] = useState("");
-  const [confirmReplace, setConfirmReplace] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [renameSaving, setRenameSaving] = useState(false);
 
   const units = useMemo(() => listKohEditUnits(params.hub), [params.hub]);
-
   const selectedFresh = useMemo(() => {
     if (!selected) return null;
     return units.find((row) => row.unit.id === selected.unit.id) ?? selected;
   }, [selected, units]);
 
-  const leaveName =
-    selectedFresh && replacePlayerId === selectedFresh.unit.playerAId
-      ? selectedFresh.unit.playerAName
-      : selectedFresh?.unit.playerBName ?? "";
-  const stayName =
-    selectedFresh && replacePlayerId === selectedFresh.unit.playerAId
-      ? selectedFresh.unit.playerBName
-      : selectedFresh?.unit.playerAName ?? "";
+  const replace = useKohReplacePartner({
+    hub: params.hub,
+    setHub: params.setHub,
+    selectedFresh,
+    setErrorText: params.setErrorText,
+    markEmailVerifyRequired: params.markEmailVerifyRequired,
+    setSelected
+  });
 
   return {
     units,
@@ -42,39 +40,36 @@ export function useKohEditPlayers(params: {
     renamePlayerId,
     renameValue,
     setRenameValue,
-    replacePlayerId,
-    replaceName,
-    setReplaceName,
-    confirmReplace,
-    setConfirmReplace,
-    saving,
-    leaveName,
-    stayName,
+    replacePlayerId: replace.replacePlayerId,
+    replaceName: replace.replaceName,
+    setReplaceName: replace.setReplaceName,
+    selectedReplacementId: replace.selectedReplacementId,
+    addingNew: replace.addingNew,
+    confirmReplace: replace.confirmReplace,
+    setConfirmReplace: replace.setConfirmReplace,
+    saving: renameSaving || replace.saving,
+    leaveName: replace.leaveName,
+    stayName: replace.stayName,
+    joinName: replace.joinName,
+    replacePartners: replace.partners,
     openRename: (playerId: string, currentName: string) => {
-      setReplacePlayerId(null);
-      setConfirmReplace(false);
+      replace.resetReplace();
       setRenamePlayerId(playerId);
       setRenameValue(currentName);
     },
     openReplace: (playerId: string) => {
-      if (selectedFresh?.midMatch) {
-        params.setErrorText("Blocked mid-match. Finish or abandon the score first.");
-        return;
-      }
       setRenamePlayerId(null);
-      setReplacePlayerId(playerId);
-      setReplaceName("");
-      setConfirmReplace(false);
+      replace.openReplace(playerId);
     },
+    selectReplacement: replace.selectReplacement,
+    toggleAddingNew: replace.toggleAddingNew,
     dismissSubflow: () => {
       setRenamePlayerId(null);
-      setReplacePlayerId(null);
-      setConfirmReplace(false);
-      setReplaceName("");
+      replace.resetReplace();
     },
     submitRename: async () => {
       if (!renamePlayerId) return;
-      setSaving(true);
+      setRenameSaving(true);
       try {
         params.setErrorText("");
         const hub = await renameKohPlayer(params.hub.id, renamePlayerId, {
@@ -84,33 +79,11 @@ export function useKohEditPlayers(params: {
         params.setHub(hub);
         setRenamePlayerId(null);
       } catch (error) {
-        if (isEmailVerifyRequired(error)) params.markEmailVerifyRequired(error.verifyBy);
-        else params.setErrorText((error as Error).message);
+        reportKohEditError(error, params.markEmailVerifyRequired, params.setErrorText);
       } finally {
-        setSaving(false);
+        setRenameSaving(false);
       }
     },
-    submitReplace: async () => {
-      if (!selectedFresh || !replacePlayerId) return;
-      setSaving(true);
-      try {
-        params.setErrorText("");
-        const hub = await replaceKohPartner(params.hub.id, selectedFresh.unit.id, {
-          leavePlayerId: replacePlayerId,
-          replacement: { name: replaceName.trim() },
-          expectedVersion: params.hub.version
-        });
-        params.setHub(hub);
-        setReplacePlayerId(null);
-        setConfirmReplace(false);
-        setReplaceName("");
-        setSelected(null);
-      } catch (error) {
-        if (isEmailVerifyRequired(error)) params.markEmailVerifyRequired(error.verifyBy);
-        else params.setErrorText((error as Error).message);
-      } finally {
-        setSaving(false);
-      }
-    }
+    submitReplace: replace.submitReplace
   };
 }

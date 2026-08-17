@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { isKingOfTheCourtMode } from "@padel/shared";
+import { logger } from "../../../lib/logger.js";
 import { prisma } from "../../../lib/prisma.js";
 import { requireOrganizerAccess } from "../../../lib/auth.js";
 import { mapAppError } from "../../../shared/http/mapAppError.js";
@@ -24,6 +25,7 @@ export function registerTournamentQueryRoutes(
     }
     const data = await deps.repo.listByOrganizer(request.user.id);
     request.log.info({ count: data.length }, "GET /tournaments");
+    logger.debug("GET /tournaments", { organizerId: request.user.id, count: data.length });
     return { data };
   });
 
@@ -40,6 +42,7 @@ export function registerTournamentQueryRoutes(
         select: { mode: true }
       });
       if (isKingOfTheCourtMode(row?.mode)) {
+        logger.debug("GET /tournaments/:id King of the Court hub", { id: params.id });
         const data = await getKohHub(koh, {
           tournamentId: params.id,
           organizerId: request.user.id
@@ -47,6 +50,7 @@ export function registerTournamentQueryRoutes(
         request.log.info({ id: params.id }, "GET /tournaments/:id KOH hub");
         return { data };
       }
+      logger.debug("GET /tournaments/:id americano/mexicano", { id: params.id, mode: row?.mode });
       const data = await deps.repo.getById(params.id);
       if (!data || data.organizerId !== request.user.id) {
         reply.status(404);

@@ -37,6 +37,7 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply):
   if (!bearerToken(request)) {
     reply.status(401);
     logger.warn("requireAuth: missing or invalid Authorization header", {
+      status: 401,
       path: request.url,
       method: request.method
     });
@@ -47,6 +48,7 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply):
   if (!user) {
     reply.status(401);
     logger.warn("requireAuth: token verification failed", {
+      status: 401,
       path: request.url,
       method: request.method
     });

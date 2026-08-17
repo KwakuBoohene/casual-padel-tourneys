@@ -1,3 +1,4 @@
+import { logger } from "../../../lib/logger.js";
 import { conflict, forbidden, notFound } from "../../../shared/kernel/appError.js";
 import type { TournamentState } from "../../../types/state.js";
 import { assertTournamentVersion } from "../domain/helpers.js";
@@ -9,6 +10,7 @@ export async function requireTournament(
 ): Promise<TournamentState> {
   const tournament = await repo.getById(tournamentId);
   if (!tournament) {
+    logger.debug("requireTournament: missing or King of the Court filtered", { tournamentId });
     throw notFound("Tournament not found.");
   }
   return tournament;
@@ -21,6 +23,7 @@ export async function requireOrganizerTournament(
 ): Promise<TournamentState> {
   const tournament = await requireTournament(repo, tournamentId);
   if (!tournament.organizerId || tournament.organizerId !== organizerId) {
+    logger.debug("requireOrganizerTournament: organizer mismatch", { tournamentId, organizerId });
     // Match legacy organizerAccess: do not leak existence to non-owners.
     throw notFound("Tournament not found.");
   }

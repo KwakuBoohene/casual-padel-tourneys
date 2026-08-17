@@ -3,7 +3,8 @@ import test from "node:test";
 
 import {
   createKohTournamentSchema,
-  kohUnitInputSchema
+  kohUnitInputSchema,
+  replaceKohPartnerSchema
 } from "../../src/schemas/koh.ts";
 
 const regularScoring = {
@@ -87,4 +88,39 @@ test("createKohTournamentSchema rejects promo rules on a single court", () => {
     promotionRules: [{ courtNumber: 2, winsRequired: 2 }]
   });
   assert.equal(result.success, false);
+});
+
+test("replaceKohPartnerSchema accepts replacementPlayerId xor replacement.name", () => {
+  assert.equal(
+    replaceKohPartnerSchema.safeParse({
+      leavePlayerId: "p1",
+      replacementPlayerId: "p2",
+      expectedVersion: 0
+    }).success,
+    true
+  );
+  assert.equal(
+    replaceKohPartnerSchema.safeParse({
+      leavePlayerId: "p1",
+      replacement: { name: "Eve" },
+      expectedVersion: 0
+    }).success,
+    true
+  );
+  assert.equal(
+    replaceKohPartnerSchema.safeParse({
+      leavePlayerId: "p1",
+      expectedVersion: 0
+    }).success,
+    false
+  );
+  assert.equal(
+    replaceKohPartnerSchema.safeParse({
+      leavePlayerId: "p1",
+      replacementPlayerId: "p2",
+      replacement: { name: "Eve" },
+      expectedVersion: 0
+    }).success,
+    false
+  );
 });

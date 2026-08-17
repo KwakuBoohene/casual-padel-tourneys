@@ -7,7 +7,24 @@ const levelOrder: Record<LogLevel, number> = {
   error: 3
 };
 
-const configuredLevel = (process.env.API_LOG_LEVEL as LogLevel | undefined) ?? "info";
+const LOG_LEVELS = new Set<LogLevel>(["debug", "info", "warn", "error"]);
+
+export function resolveApiLogLevel(): LogLevel {
+  const raw = process.env.API_LOG_LEVEL;
+  if (raw && LOG_LEVELS.has(raw as LogLevel)) {
+    return raw as LogLevel;
+  }
+  if (
+    process.env.NODE_ENV === "production" ||
+    process.env.NODE_ENV === "test" ||
+    Boolean(process.env.NODE_TEST_CONTEXT)
+  ) {
+    return "info";
+  }
+  return "debug";
+}
+
+const configuredLevel = resolveApiLogLevel();
 
 function shouldLog(level: LogLevel): boolean {
   return levelOrder[level] >= levelOrder[configuredLevel];
@@ -53,4 +70,3 @@ export const logger = {
     }
   }
 };
-

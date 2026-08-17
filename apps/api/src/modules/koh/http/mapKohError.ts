@@ -11,7 +11,11 @@ export type KohErrorBody = {
 
 /** Only the aggregate itself missing yields 404; everything else stays a 400 for KOH clients. */
 function isNotFoundMessage(message: string): boolean {
-  return message === "KOH tournament not found." || message === "Tournament not found.";
+  return (
+    message === "King of the Court tournament not found." ||
+    message === "KOH tournament not found." ||
+    message === "Tournament not found."
+  );
 }
 
 function versionConflictDetails(

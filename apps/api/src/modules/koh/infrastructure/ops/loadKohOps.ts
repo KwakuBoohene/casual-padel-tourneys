@@ -1,6 +1,7 @@
 import type { KohRankingsBoard } from "@padel/shared";
 import { isKingOfTheCourtMode } from "@padel/shared";
 
+import { logger } from "../../../../lib/logger.js";
 import { prisma } from "../../../../lib/prisma.js";
 import { notFound, validation } from "../../../../shared/kernel/appError.js";
 import type { KohTournamentHub } from "../../domain/types.js";
@@ -15,16 +16,21 @@ export async function loadKohRow(tournamentId: string): Promise<KohDbTournament 
   });
 }
 
-/** Load a KOH aggregate the organizer owns, or throw the 404-mapped messages clients expect. */
+/** Load a King of the Court aggregate the organizer owns, or throw the 404-mapped messages clients expect. */
 export async function requireKohTournament(
   tournamentId: string,
   organizerId: string
 ): Promise<KohDbTournament> {
   const row = await loadKohRow(tournamentId);
   if (!row || !isKingOfTheCourtMode(row.mode)) {
-    throw notFound("KOH tournament not found.");
+    logger.debug("requireKohTournament: missing or not King of the Court", {
+      tournamentId,
+      mode: row?.mode
+    });
+    throw notFound("King of the Court tournament not found.");
   }
   if (row.organizerId !== organizerId) {
+    logger.debug("requireKohTournament: organizer mismatch", { tournamentId });
     throw notFound("Tournament not found.");
   }
   return row;
@@ -32,7 +38,7 @@ export async function requireKohTournament(
 
 export function assertKohLive(row: KohDbTournament): void {
   if (row.endedAt) {
-    throw validation("This KOH night has ended.");
+    throw validation("This King of the Court night has ended.");
   }
 }
 
@@ -42,7 +48,7 @@ export async function getKohHub(
 ): Promise<KohTournamentHub> {
   const row = await loadKohRow(tournamentId);
   if (!row || !isKingOfTheCourtMode(row.mode)) {
-    throw notFound("KOH tournament not found.");
+    throw notFound("King of the Court tournament not found.");
   }
   if (organizerId !== undefined && row.organizerId !== organizerId) {
     throw notFound("Tournament not found.");

@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "API_LOG_LEVEL=debug tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/apps/api/src/server.js",
     "postinstall": "prisma generate",

@@ -22,7 +22,7 @@ export const kohUnitInputSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["playerB", "name"],
-        message: "A KOH unit needs two different players."
+        message: "A King of the Court unit needs two different players."
       });
     }
   });
@@ -198,14 +198,27 @@ export const renameKohPlayerSchema = z.object({
 export type RenameKohPlayerInput = z.infer<typeof renameKohPlayerSchema>;
 
 /**
- * Replace one partner on a doubles unit. Ladder slot + unit match W–L stay;
- * new Player row is created for the replacement name.
+ * Replace one partner on a doubles unit. Ladder slot + unit match W–L stay.
+ * Pass `replacementPlayerId` to swap with an existing player, or `replacement`
+ * to create a new player row.
  */
-export const replaceKohPartnerSchema = z.object({
-  leavePlayerId: z.string().min(1),
-  replacement: kohPlayerInputSchema,
-  expectedVersion: z.number().int().min(0)
-});
+export const replaceKohPartnerSchema = z
+  .object({
+    leavePlayerId: z.string().min(1),
+    replacementPlayerId: z.string().min(1).optional(),
+    replacement: kohPlayerInputSchema.optional(),
+    expectedVersion: z.number().int().min(0)
+  })
+  .superRefine((value, ctx) => {
+    const hasId = Boolean(value.replacementPlayerId?.trim());
+    const hasName = Boolean(value.replacement?.name.trim());
+    if (hasId === hasName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Provide either replacementPlayerId or replacement.name, not both."
+      });
+    }
+  });
 
 export type ReplaceKohPartnerInput = z.infer<typeof replaceKohPartnerSchema>;
 

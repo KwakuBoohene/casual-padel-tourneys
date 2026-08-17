@@ -85,7 +85,7 @@ test("getHub rejects unknown ids and non-KOH tournaments", async () => {
     () => repo.getHub("tournament_does_not_exist", OWNER),
     (error: unknown) => {
       assert.equal(appErrorCode(error), "NOT_FOUND");
-      assert.equal((error as Error).message, "KOH tournament not found.");
+      assert.equal((error as Error).message, "King of the Court tournament not found.");
       return true;
     }
   );

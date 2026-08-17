@@ -164,6 +164,8 @@ test("replace partner keeps slot and W–L; duplicate name rejected", async () =
       }
     });
     assert.equal(dup.statusCode, 400);
+    assert.match(String(dup.json().message), /King of the Court/);
+    assert.equal(String(dup.json().message).includes("KOH"), false);
 
     const replaced = await app.inject({
       method: "POST",
@@ -182,6 +184,33 @@ test("replace partner keeps slot and W–L; duplicate name rejected", async () =
     assert.equal(next.courts[0].king.playerBName, "Peter");
     assert.equal(next.courts[0].king.matchesWon, 2);
     assert.equal(next.courts[0].king.matchesLost, 1);
+  });
+});
+
+test("replace partner by id swaps with another unit", async () => {
+  await withApp(async (app) => {
+    const token = signUser("koh-rank-owner");
+    const hub = await createAssignedKoh(app, token);
+    const king = hub.courts[0].king;
+    const wait = hub.courts[0].waiting[0];
+
+    const swapped = await app.inject({
+      method: "POST",
+      url: `/koh/tournaments/${hub.id}/units/${king.id}/replace-partner`,
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        expectedVersion: hub.version,
+        leavePlayerId: king.playerBId,
+        replacementPlayerId: wait.playerAId
+      }
+    });
+    assert.equal(swapped.statusCode, 200);
+    const next = swapped.json().data;
+    assert.equal(next.courts[0].king.playerAName, "KingA");
+    assert.equal(next.courts[0].king.playerBName, "WaitA");
+    const waitingNames = next.courts[0].waiting[0];
+    assert.equal(waitingNames.playerAName, "KingB");
+    assert.equal(waitingNames.playerBName, "WaitB");
   });
 });
 

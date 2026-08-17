@@ -4,6 +4,8 @@ import { PageShell } from "../../../layout";
 
 import { KohEditPlayersPanel } from "./KohEditPlayersPanel";
 import { KohEditUnitPanel } from "./KohEditUnitPanel";
+import { KohEditUnitSheets } from "./KohEditUnitSheets";
+import { KohReplacePartnerSheet } from "./KohReplacePartnerSheet";
 
 interface KohEditPlayersFlowProps {
   hub: KohTournamentHub;
@@ -23,33 +25,49 @@ export function KohEditPlayersFlow(props: KohEditPlayersFlowProps) {
   });
 
   if (edit.selected) {
+    const unit = edit.selected.unit;
+    const record = `${unit.matchesWon ?? 0}-${unit.matchesLost ?? 0}`;
     return (
       <PageShell>
         <KohEditUnitPanel
-          unit={edit.selected.unit}
+          unit={unit}
           role={edit.selected.role}
           midMatch={edit.selected.midMatch}
-          renamePlayerId={edit.renamePlayerId}
-          renameValue={edit.renameValue}
-          onRenameValue={edit.setRenameValue}
-          replacePlayerId={edit.replacePlayerId}
-          replaceName={edit.replaceName}
-          onReplaceName={edit.setReplaceName}
-          confirmReplace={edit.confirmReplace}
-          leaveName={edit.leaveName}
-          stayName={edit.stayName}
-          saving={edit.saving}
           errorText={props.errorText}
           onOpenRename={edit.openRename}
           onOpenReplace={edit.openReplace}
-          onDismissSubflow={edit.dismissSubflow}
-          onSubmitRename={() => void edit.submitRename()}
-          onContinueReplace={() => edit.setConfirmReplace(true)}
-          onConfirmReplace={() => void edit.submitReplace()}
           onBack={() => {
             edit.dismissSubflow();
             edit.setSelected(null);
           }}
+        />
+        <KohEditUnitSheets
+          renamePlayerId={edit.renamePlayerId}
+          renameValue={edit.renameValue}
+          saving={edit.saving}
+          onRenameValue={edit.setRenameValue}
+          onDismiss={edit.dismissSubflow}
+          onSubmitRename={() => void edit.submitRename()}
+        />
+        <KohReplacePartnerSheet
+          visible={Boolean(edit.replacePlayerId)}
+          confirm={edit.confirmReplace}
+          leaveName={edit.leaveName}
+          stayName={edit.stayName}
+          joinName={edit.joinName}
+          role={edit.selected.role}
+          record={record}
+          saving={edit.saving}
+          addingNew={edit.addingNew}
+          replaceName={edit.replaceName}
+          selectedReplacementId={edit.selectedReplacementId}
+          partners={edit.replacePartners}
+          onReplaceName={edit.setReplaceName}
+          onSelectReplacement={edit.selectReplacement}
+          onToggleAddingNew={edit.toggleAddingNew}
+          onDismiss={edit.dismissSubflow}
+          onContinue={() => edit.setConfirmReplace(true)}
+          onConfirm={() => void edit.submitReplace()}
         />
       </PageShell>
     );

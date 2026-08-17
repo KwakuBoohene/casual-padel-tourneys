@@ -190,7 +190,7 @@ Common env vars (see also repo root / `infra` docs):
 | `DATABASE_URL` | Postgres (required for persist) |
 | `REDIS_URL` | Realtime pub/sub (optional but recommended) |
 | `API_PORT` | Listen port (default `3001`) |
-| `API_LOG_LEVEL` | Fastify / app log level |
+| `API_LOG_LEVEL` | Fastify / app log level (`debug` \| `info` \| `warn` \| `error`). `npm run dev` defaults to **debug** when unset and `NODE_ENV` is not `production` or `test`. Set `API_LOG_LEVEL=info` to quiet it. |
 | `JWT_SECRET` | Session tokens |
 | Mail / OAuth vars | Magic link + Google (see `lib/mail`, auth routes) |
 

@@ -40,7 +40,7 @@ test("kohUnitInputSchema rejects a one-player shaped payload", () => {
 test("createKohTournamentSchema accepts 1-court KOH without promo", () => {
   const parsed = createKohTournamentSchema.parse({
     name: "Court 1 Clash",
-    mode: "KING_OF_THE_HILL",
+    mode: "KING_OF_THE_COURT",
     courts: 1,
     regularScoring
   });
@@ -52,7 +52,7 @@ test("createKohTournamentSchema accepts 1-court KOH without promo", () => {
 test("createKohTournamentSchema requires promo rules when courts ≥ 2", () => {
   const missing = createKohTournamentSchema.safeParse({
     name: "Two Courts",
-    mode: "KING_OF_THE_HILL",
+    mode: "KING_OF_THE_COURT",
     courts: 2,
     regularScoring
   });
@@ -60,7 +60,7 @@ test("createKohTournamentSchema requires promo rules when courts ≥ 2", () => {
 
   const parsed = createKohTournamentSchema.parse({
     name: "Two Courts",
-    mode: "KING_OF_THE_HILL",
+    mode: "KING_OF_THE_COURT",
     courts: 2,
     regularScoring,
     promotionRules: [{ courtNumber: 2, winsRequired: 3 }]
@@ -68,10 +68,20 @@ test("createKohTournamentSchema requires promo rules when courts ≥ 2", () => {
   assert.equal(parsed.promotionRules?.length, 1);
 });
 
+test("createKohTournamentSchema accepts legacy KING_OF_THE_HILL mode input", () => {
+  const parsed = createKohTournamentSchema.parse({
+    name: "Legacy Court",
+    mode: "KING_OF_THE_HILL",
+    courts: 1,
+    regularScoring
+  });
+  assert.equal(parsed.mode, "KING_OF_THE_COURT");
+});
+
 test("createKohTournamentSchema rejects promo rules on a single court", () => {
   const result = createKohTournamentSchema.safeParse({
     name: "Solo Court",
-    mode: "KING_OF_THE_HILL",
+    mode: "KING_OF_THE_COURT",
     courts: 1,
     regularScoring,
     promotionRules: [{ courtNumber: 2, winsRequired: 2 }]

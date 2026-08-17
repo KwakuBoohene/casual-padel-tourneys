@@ -33,7 +33,7 @@ type TournamentListRow = {
 };
 
 function isActiveTournament(tournament: LiveTournamentState): boolean {
-  if (tournament.config.mode === "KING_OF_THE_HILL") return !tournament.endedAt;
+  if (tournament.config.mode === "KING_OF_THE_COURT") return !tournament.endedAt;
   if (tournament.config.mode === "MEXICANO") return !tournament.endedAt;
   return !tournament.rounds.every((round) => round.matches.every((match) => match.completed));
 }
@@ -86,7 +86,7 @@ export function TournamentListView(props: TournamentListViewProps) {
         <View style={{ gap: spacing.xs, marginTop: spacing.sm }}>
           <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>No tournaments yet</Text>
           <Text style={{ color: colors.muted, fontSize: 14 }}>
-            Start with Americano, Mexicano, or King of the Hill.
+            Start with Americano, Mexicano, or King of the Court.
           </Text>
         </View>
       }

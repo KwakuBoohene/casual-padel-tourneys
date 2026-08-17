@@ -2,7 +2,7 @@ import type { ScoringMode, TournamentMode, TournamentVariant } from "@padel/shar
 
 export function formatTournamentMode(mode: TournamentMode): string {
   if (mode === "MEXICANO") return "Mexicano";
-  if (mode === "KING_OF_THE_HILL") return "King of the Hill";
+  if (mode === "KING_OF_THE_COURT") return "King of the Court";
   return "Americano";
 }
 

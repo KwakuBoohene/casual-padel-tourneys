@@ -21,7 +21,7 @@ export function useMatchSettings({ mode, effectiveSchedulingMode, playersCount }
 
   const estimate = useMemo(
     () =>
-      mode === "KING_OF_THE_HILL"
+      mode === "KING_OF_THE_COURT"
         ? null
         : computeEstimate({
             courtsText,

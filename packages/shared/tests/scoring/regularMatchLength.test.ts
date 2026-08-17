@@ -112,7 +112,7 @@ test("createTournamentSchema rejects Regular with invalid matchTiebreak combo", 
 test("createKohTournamentSchema rejects matchTiebreak with single set", () => {
   const result = createKohTournamentSchema.safeParse({
     name: "Court Night",
-    mode: "KING_OF_THE_HILL",
+    mode: "KING_OF_THE_COURT",
     courts: 1,
     regularScoring: {
       setFormat: "FULL_SET",

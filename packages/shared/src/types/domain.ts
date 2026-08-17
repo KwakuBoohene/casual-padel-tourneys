@@ -3,9 +3,9 @@
  * - AMERICANO: fairness / partner-rotation pre-schedule (`TARGET_GAMES`, etc.).
  * - MEXICANO: result-driven ladder (round 1 lottery, then 1+3 vs 2+4 from the table).
  *   Does **not** use Americano target-games rotation semantics.
- * - KING_OF_THE_HILL: winner-stays courts (separate engine).
+ * - KING_OF_THE_COURT: winner-stays courts (KOC engine).
  */
-export type TournamentMode = "AMERICANO" | "MEXICANO" | "KING_OF_THE_HILL";
+export type TournamentMode = "AMERICANO" | "MEXICANO" | "KING_OF_THE_COURT";
 export type TournamentVariant = "CLASSIC" | "MIXED" | "TEAM";
 export type SchedulingMode = "TARGET_GAMES" | "TOTAL_TIME" | "ROUND_ROBIN";
 export type PlayerGender = "MALE" | "FEMALE";
@@ -270,7 +270,7 @@ export type KohCourtChange =
 
 export interface KohTournamentConfig {
   name: string;
-  mode: "KING_OF_THE_HILL";
+  mode: "KING_OF_THE_COURT";
   pairingMode: KohPairingMode;
   courts: number;
   regularScoring: RegularScoringConfig;

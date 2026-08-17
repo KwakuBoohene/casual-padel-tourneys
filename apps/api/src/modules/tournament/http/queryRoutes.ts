@@ -38,7 +38,7 @@ export function registerTournamentQueryRoutes(
         where: { id: params.id },
         select: { mode: true }
       });
-      if (row?.mode === "KING_OF_THE_HILL") {
+      if (row?.mode === "KING_OF_THE_COURT") {
         const data = await getKohHub(koh, {
           tournamentId: params.id,
           organizerId: request.user.id
@@ -70,7 +70,7 @@ export function registerTournamentQueryRoutes(
       return { message: "Public tournament not found." };
     }
 
-    if (meta.mode === "KING_OF_THE_HILL") {
+    if (meta.mode === "KING_OF_THE_COURT") {
       const hub = await getKohHubByPublicToken(koh, params.token);
       if (!hub) {
         reply.status(404);

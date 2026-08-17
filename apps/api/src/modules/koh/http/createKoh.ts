@@ -6,7 +6,7 @@ import { createKohDeps } from "./deps.js";
 
 /**
  * KOH branch of `POST /tournaments`. The tournament module owns the route and
- * delegates here when `mode === "KING_OF_THE_HILL"`.
+ * delegates here when `mode === "KING_OF_THE_COURT"`.
  */
 export async function handleCreateKohTournament(
   server: FastifyInstance,

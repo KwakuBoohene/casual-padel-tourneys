@@ -24,7 +24,7 @@ export function buildCreatePayload(draft: KohCreateDraft): CreateKohTournamentIn
 
   return {
     name: draft.name.trim(),
-    mode: "KING_OF_THE_HILL",
+    mode: "KING_OF_THE_COURT",
     pairingMode: "WINNER_STAYS",
     courts: draft.courts,
     regularScoring,

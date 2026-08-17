@@ -1,6 +1,6 @@
 # `@padel/api`
 
-Fastify + Prisma API for Casual Padel Tourneys. Owns tournament lifecycle (Americano / Mexicano / Regular), auth, King of the Hill (KOH), and realtime scoreboard updates.
+Fastify + Prisma API for Casual Padel Tourneys. Owns tournament lifecycle (Americano / Mexicano / Regular), auth, King of the Court (KOC), and realtime scoreboard updates.
 
 Package name: `@padel/api` · default port: `3001` (`API_PORT`)
 
@@ -79,7 +79,7 @@ apps/api/
 │   │   │   ├── application/# use-cases + ports
 │   │   │   ├── domain/     # aggregate mutations (pure)
 │   │   │   └── infrastructure/  # Prisma repo, realtime adapter, mappers
-│   │   ├── koh/            # King of the Hill bounded context (same four layers)
+│   │   ├── koh/            # King of the Court bounded context (same four layers)
 │   │   ├── auth/           # guest/Google/password/magic-link/reset (same four layers)
 │   │   └── organizerPlayers/  # cross-event player careers (`/me/players/*`)
 │   ├── shared/

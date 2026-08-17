@@ -19,7 +19,7 @@ export async function createKohTournament(
     data: {
       id,
       name: input.name,
-      mode: "KING_OF_THE_HILL",
+      mode: "KING_OF_THE_COURT",
       variant: "CLASSIC",
       schedulingMode: "TARGET_GAMES",
       courts: input.courts,

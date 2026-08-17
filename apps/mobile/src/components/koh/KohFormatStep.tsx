@@ -20,7 +20,7 @@ const OPTIONS: { value: KohMatchFormatChoice; title: string; detail: string }[] 
 export function KohFormatStep(props: KohFormatStepProps) {
   return (
     <WizardChrome
-      modeLabel="King of the Hill"
+      modeLabel="King of the Court"
       stepIndex={props.stepIndex}
       stepCount={props.stepCount}
       title="Match format"

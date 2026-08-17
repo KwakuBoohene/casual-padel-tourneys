@@ -21,6 +21,7 @@ export function OrganizerCreateWizard({
     return (
       <NameStepView
         modeLabel={modeLabel}
+        mode={create.mode}
         name={create.name}
         canContinue={create.canContinueFromName}
         onChangeName={create.setName}

@@ -16,7 +16,7 @@ export type KohPublicHub = {
   updatedAt: string;
   config: {
     name: string;
-    mode: "KING_OF_THE_HILL" | string;
+    mode: "KING_OF_THE_COURT" | string;
     pairingMode?: "WINNER_STAYS" | "ROUND_ROBIN_PAIRS";
   };
   courts: KohPublicCourt[];
@@ -26,7 +26,7 @@ export function isKohPublicHub(value: unknown): value is KohPublicHub {
   if (!value || typeof value !== "object") return false;
   const row = value as Record<string, unknown>;
   const config = row.config as Record<string, unknown> | undefined;
-  return config?.mode === "KING_OF_THE_HILL" && Array.isArray(row.courts);
+  return config?.mode === "KING_OF_THE_COURT" && Array.isArray(row.courts);
 }
 
 export function formatKohPair(unit: KohUnit | null | undefined): string {

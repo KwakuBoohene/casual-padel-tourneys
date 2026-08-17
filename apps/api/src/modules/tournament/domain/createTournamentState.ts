@@ -10,8 +10,8 @@ import { buildLeaderboard } from "./leaderboard.js";
 
 /** Build a new Americano/Mexicano aggregate (no I/O). */
 export function createTournamentState(config: TournamentConfig, organizerId: string): TournamentState {
-  if (config.mode === "KING_OF_THE_HILL") {
-    throw new Error("Use createKohTournament for King of the Hill.");
+  if (config.mode === "KING_OF_THE_COURT") {
+    throw new Error("Use createKohTournament for King of the Court.");
   }
   const id = createId("tournament");
   const createdAt = new Date().toISOString();

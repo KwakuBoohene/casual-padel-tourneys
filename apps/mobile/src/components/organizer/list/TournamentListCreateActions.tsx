@@ -73,9 +73,9 @@ export function TournamentListCreateActions(props: TournamentListCreateActionsPr
         onPress={props.onCreateKingOfTheHill}
         style={secondary}
         accessibilityRole="button"
-        accessibilityLabel="New King of the Hill tournament"
+        accessibilityLabel="New King of the Court tournament"
       >
-        <Text style={{ color: colors.text, fontWeight: "600", fontSize: 17 }}>New King of the Hill</Text>
+        <Text style={{ color: colors.text, fontWeight: "600", fontSize: 17 }}>New King of the Court</Text>
       </Pressable>
       <Pressable
         onPress={props.onOpenEstimator}

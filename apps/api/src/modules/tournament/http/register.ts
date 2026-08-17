@@ -1,7 +1,7 @@
 /**
  * Tournament HTTP module entry.
  * Dual-path note: `POST /tournaments` and the organizer / public token reads branch on
- * `mode === "KING_OF_THE_HILL"` and delegate to `modules/koh`. Americano/Mexicano live
+ * `mode === "KING_OF_THE_COURT"` and delegate to `modules/koh`. Americano/Mexicano live
  * behind this module's use-cases + Prisma repository.
  */
 import type { FastifyInstance } from "fastify";

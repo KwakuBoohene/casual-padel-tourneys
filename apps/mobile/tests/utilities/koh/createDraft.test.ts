@@ -73,7 +73,7 @@ test("regularScoringFromDraft and create payload", () => {
     2
   );
   const payload = buildCreatePayload(draft);
-  assert.equal(payload.mode, "KING_OF_THE_HILL");
+  assert.equal(payload.mode, "KING_OF_THE_COURT");
   assert.equal(payload.courts, 2);
   assert.ok(payload.promotionRules && payload.promotionRules.length >= 1);
 });

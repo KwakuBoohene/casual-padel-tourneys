@@ -23,7 +23,7 @@ export function KohCourtsStep(props: KohCourtsStepProps) {
 
   return (
     <WizardChrome
-      modeLabel="King of the Hill"
+      modeLabel="King of the Court"
       stepIndex={props.stepIndex}
       stepCount={props.stepCount}
       title="How many courts?"

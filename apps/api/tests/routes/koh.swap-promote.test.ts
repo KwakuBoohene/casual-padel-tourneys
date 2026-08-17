@@ -71,7 +71,7 @@ async function createSingleCourtKoh(app: Awaited<ReturnType<typeof createApp>>, 
     headers: { authorization: `Bearer ${token}` },
     payload: {
       name: "KOH Swap Test",
-      mode: "KING_OF_THE_HILL",
+      mode: "KING_OF_THE_COURT",
       courts: 1,
       regularScoring: {
         setFormat: "FULL_SET",
@@ -112,7 +112,7 @@ async function createTwoCourtKoh(app: Awaited<ReturnType<typeof createApp>>, tok
     headers: { authorization: `Bearer ${token}` },
     payload: {
       name: "KOH Promo Test",
-      mode: "KING_OF_THE_HILL",
+      mode: "KING_OF_THE_COURT",
       courts: 2,
       regularScoring: {
         setFormat: "FULL_SET",

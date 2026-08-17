@@ -18,7 +18,7 @@ export async function openOrganizerTournament(input: {
     return hub ? "koh" : "error";
   };
 
-  if (input.listed?.config.mode === "KING_OF_THE_HILL") {
+  if (input.listed?.config.mode === "KING_OF_THE_COURT") {
     return openKohFlow();
   }
 

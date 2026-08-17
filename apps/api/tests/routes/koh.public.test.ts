@@ -56,7 +56,7 @@ test("GET /public/:token returns KOH hub for spectator", async () => {
       headers: { authorization: `Bearer ${token}` },
       payload: {
         name: "Public KOH",
-        mode: "KING_OF_THE_HILL",
+        mode: "KING_OF_THE_COURT",
         courts: 1,
         regularScoring: {
           setFormat: "FULL_SET",
@@ -93,7 +93,7 @@ test("GET /public/:token returns KOH hub for spectator", async () => {
     });
     assert.equal(pub.statusCode, 200);
     const data = pub.json().data;
-    assert.equal(data.config.mode, "KING_OF_THE_HILL");
+    assert.equal(data.config.mode, "KING_OF_THE_COURT");
     assert.equal(data.courts[0].king.playerAName, "Alex");
     assert.equal(data.courts[0].challenger.playerAName, "Jordan");
     assert.equal(data.organizerId, undefined);

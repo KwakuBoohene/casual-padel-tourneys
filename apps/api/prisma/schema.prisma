@@ -11,7 +11,7 @@ datasource db {
 enum TournamentMode {
   AMERICANO
   MEXICANO
-  KING_OF_THE_HILL
+  KING_OF_THE_COURT
 }
 
 enum TournamentVariant {
@@ -254,7 +254,7 @@ model MatchSet {
 }
 
 // ---------------------------------------------------------------------------
-// King of the Hill (winner-stays) — dedicated models; do not overload Round/Match
+// King of the Court (KOC winner-stays) — dedicated models; do not overload Round/Match
 // ---------------------------------------------------------------------------
 
 /** One physical court on the KOH ladder (courtNumber 1 = top). */

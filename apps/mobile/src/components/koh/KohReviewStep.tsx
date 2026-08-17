@@ -25,7 +25,7 @@ export function KohReviewStep(props: KohReviewStepProps) {
 
   return (
     <WizardChrome
-      modeLabel="King of the Hill"
+      modeLabel="King of the Court"
       stepIndex={props.stepIndex}
       stepCount={props.stepCount}
       title="Review & start"

@@ -10,7 +10,7 @@ export default function TournamentsListRoute() {
 
   const openListedTournament = (id: string, edit = false) => {
     const listed = org.tournaments.find((item) => item.id === id);
-    if (listed?.config.mode === "KING_OF_THE_HILL") {
+    if (listed?.config.mode === "KING_OF_THE_COURT") {
       void (async () => {
         const result = await org.openTournament(id, edit);
         if (result === "koh") router.push("/koh/live");

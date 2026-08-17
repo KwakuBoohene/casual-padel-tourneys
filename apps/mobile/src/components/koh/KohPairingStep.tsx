@@ -12,7 +12,7 @@ interface KohPairingStepProps {
 export function KohPairingStep(props: KohPairingStepProps) {
   return (
     <WizardChrome
-      modeLabel="King of the Hill"
+      modeLabel="King of the Court"
       stepIndex={props.stepIndex}
       stepCount={props.stepCount}
       title="How we pair"

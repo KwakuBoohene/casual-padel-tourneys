@@ -77,7 +77,7 @@ test("KOH complete credits organizer player career; replace keeps past on leaver
       headers: { authorization: `Bearer ${token}` },
       payload: {
         name: "Career KOH",
-        mode: "KING_OF_THE_HILL",
+        mode: "KING_OF_THE_COURT",
         courts: 1,
         regularScoring: {
           setFormat: "FULL_SET",

@@ -62,7 +62,7 @@ export interface KohTournamentHub {
   organizerId?: string;
   config: {
     name: string;
-    mode: "KING_OF_THE_HILL";
+    mode: "KING_OF_THE_COURT";
     pairingMode: "WINNER_STAYS" | "ROUND_ROBIN_PAIRS";
     courts: number;
     scoringMode: "REGULAR";

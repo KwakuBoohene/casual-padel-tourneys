@@ -62,6 +62,7 @@ export class PrismaTournamentRepository implements TournamentRepository {
         publicToken: state.publicToken,
         organizerId: state.organizerId ?? null,
         createdAt: new Date(state.createdAt),
+        contributeToCareerLeaderboard: state.config.contributeToCareerLeaderboard ?? true,
         ...scalarTournamentData(state),
         players: { create: nestedPlayers(state) },
         rounds: { create: nestedRounds(state) }

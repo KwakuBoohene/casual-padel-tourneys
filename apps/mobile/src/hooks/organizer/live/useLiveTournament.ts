@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 
+import { useCareerLeaderboardToggle } from "../useCareerLeaderboardToggle";
 import { useLiveInsights } from "./useLiveInsights";
 import { useLiveRounds } from "./useLiveRounds";
 import { useLiveTournamentActions } from "./useLiveTournamentActions";
@@ -65,5 +66,11 @@ export function useLiveTournament({
     setErrorText
   });
 
-  return { ...core, ...rounds, ...insights, ...actions, ...pendingPlayers, ...renamePlayers };
+  const career = useCareerLeaderboardToggle({
+    tournamentId: core.liveTournament?.id,
+    setErrorText,
+    apply: core.applyTournamentUpdate
+  });
+
+  return { ...core, ...rounds, ...insights, ...actions, ...pendingPlayers, ...renamePlayers, ...career };
 }

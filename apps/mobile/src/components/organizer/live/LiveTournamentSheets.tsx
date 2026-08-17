@@ -63,6 +63,9 @@ export function LiveTournamentSheets({
         onOpenAddPendingPlayer={actions.onOpenAddPendingPlayer}
         onOpenFinishConfirm={() => setShowFinishConfirm(true)}
         onBackToList={actions.onBackToList}
+        contributeToCareerLeaderboard={session.tournament.config.contributeToCareerLeaderboard !== false}
+        careerSaving={sheets.careerSaving}
+        onSetContributeToCareerLeaderboard={actions.onSetContributeToCareerLeaderboard}
       />
       <LiveAdjustCourtsSheet
         visible={showAdjustCourtsSheet}

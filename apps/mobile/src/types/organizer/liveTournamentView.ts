@@ -60,6 +60,7 @@ export interface LiveTournamentSheetState {
   renamePlayersVisible: boolean;
   renameDrafts: Record<string, string>;
   renameSaving: boolean;
+  careerSaving: boolean;
 }
 
 export interface LiveTournamentActions {
@@ -90,6 +91,7 @@ export interface LiveTournamentActions {
   onOpenAdjustCourtsConfirm: () => void;
   onCloseAdjustCourtsConfirm: () => void;
   onConfirmAdjustCourts: () => void;
+  onSetContributeToCareerLeaderboard: (value: boolean) => void;
   onSaveGameEdits: () => void;
   onOpenScoreEntry: (matchId: string) => void;
   onCloseScoreEntry: () => void;

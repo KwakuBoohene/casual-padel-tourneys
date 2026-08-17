@@ -3,6 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import { BottomSheet } from "../../sheets";
 import { spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
+import { CareerOptInRow } from "../create/CareerOptInRow";
 
 interface LiveTournamentOptionsSheetProps {
   visible: boolean;
@@ -17,6 +18,9 @@ interface LiveTournamentOptionsSheetProps {
   onOpenAddPendingPlayer: () => void;
   onOpenFinishConfirm: () => void;
   onBackToList: () => void;
+  contributeToCareerLeaderboard: boolean;
+  careerSaving: boolean;
+  onSetContributeToCareerLeaderboard: (value: boolean) => void;
 }
 
 function OptionRow(props: {
@@ -53,6 +57,11 @@ export function LiveTournamentOptionsSheet(props: LiveTournamentOptionsSheetProp
   return (
     <BottomSheet visible={props.visible} title="Options" onDismiss={props.onClose}>
       <View style={{ gap: spacing.sm }}>
+        <CareerOptInRow
+          value={props.contributeToCareerLeaderboard}
+          disabled={props.careerSaving}
+          onChange={props.onSetContributeToCareerLeaderboard}
+        />
         <OptionRow
           label={props.linkCopied ? "Link copied" : "Copy viewer link"}
           detail="Spectators · read-only"

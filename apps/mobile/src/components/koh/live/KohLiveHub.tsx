@@ -85,6 +85,9 @@ export function KohLiveHub(props: KohLiveHubProps) {
         onShare={() => setShareOpen(true)}
         onRank={() => setPanel("rankings")}
         onEnd={() => setEndConfirm(true)}
+        contributeToCareerLeaderboard={props.hub.config.contributeToCareerLeaderboard !== false}
+        careerSaving={live.careerSaving}
+        onSetContributeToCareerLeaderboard={(value) => void live.setContributeToCareerLeaderboard(value)}
       />
       <KohLiveOverlaySheets
         court={court}

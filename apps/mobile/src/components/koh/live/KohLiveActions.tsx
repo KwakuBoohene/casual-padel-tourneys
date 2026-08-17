@@ -2,6 +2,7 @@ import { Pressable, Text, View } from "react-native";
 
 import { radius, spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
+import { CareerOptInRow } from "../../organizer/create/CareerOptInRow";
 
 interface KohLiveActionsProps {
   canEnterResult: boolean;
@@ -13,6 +14,9 @@ interface KohLiveActionsProps {
   onRank: () => void;
   onEnd: () => void;
   onHome: () => void;
+  contributeToCareerLeaderboard: boolean;
+  careerSaving: boolean;
+  onSetContributeToCareerLeaderboard: (value: boolean) => void;
 }
 
 export function KohLiveActions(props: KohLiveActionsProps) {
@@ -97,6 +101,11 @@ export function KohLiveActions(props: KohLiveActionsProps) {
           <Text style={{ color: colors.text, fontWeight: "600" }}>End night</Text>
         </Pressable>
       ) : null}
+      <CareerOptInRow
+        value={props.contributeToCareerLeaderboard}
+        disabled={props.careerSaving}
+        onChange={props.onSetContributeToCareerLeaderboard}
+      />
       <Pressable onPress={props.onHome} style={{ alignItems: "center", paddingVertical: spacing.sm }}>
         <Text style={{ color: colors.muted, fontWeight: "600" }}>Home</Text>
       </Pressable>

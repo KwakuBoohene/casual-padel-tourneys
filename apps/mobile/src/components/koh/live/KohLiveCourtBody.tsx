@@ -25,6 +25,9 @@ interface KohLiveCourtBodyProps {
   onShare: () => void;
   onRank: () => void;
   onEnd: () => void;
+  contributeToCareerLeaderboard: boolean;
+  careerSaving: boolean;
+  onSetContributeToCareerLeaderboard: (value: boolean) => void;
 }
 
 export function KohLiveCourtBody(props: KohLiveCourtBodyProps) {
@@ -66,6 +69,9 @@ export function KohLiveCourtBody(props: KohLiveCourtBodyProps) {
           onRank={props.onRank}
           onEnd={props.onEnd}
           onHome={props.onHome}
+          contributeToCareerLeaderboard={props.contributeToCareerLeaderboard}
+          careerSaving={props.careerSaving}
+          onSetContributeToCareerLeaderboard={props.onSetContributeToCareerLeaderboard}
         />
       </View>
     </View>

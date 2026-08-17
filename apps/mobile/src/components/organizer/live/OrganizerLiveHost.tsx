@@ -64,7 +64,8 @@ export function OrganizerLiveHost() {
       showIntegrateConfirmModal: org.showIntegrateConfirmModal,
       renamePlayersVisible: org.renamePlayersVisible,
       renameDrafts: org.renameDrafts,
-      renameSaving: org.renameSaving
+      renameSaving: org.renameSaving,
+      careerSaving: org.careerSaving
     },
     actions: {
       onBackToList: () => {
@@ -92,6 +93,7 @@ export function OrganizerLiveHost() {
       },
       onCloseAdjustCourtsConfirm: () => org.setShowAdjustCourtsConfirmModal(false),
       onConfirmAdjustCourts: () => void org.adjustTournamentCourts(),
+      onSetContributeToCareerLeaderboard: (value) => void org.setContributeToCareerLeaderboard(value),
       onSaveGameEdits: () => org.setIsEditingCompletedTournament(false),
       onOpenScoreEntry: org.requestOpenScoreEntry,
       onCloseScoreEntry: org.closeScoreEntry,

@@ -6,13 +6,14 @@ import { useTheme } from "../../../theme/ThemeProvider";
 interface CareerOptInRowProps {
   value: boolean;
   onChange: (value: boolean) => void;
+  disabled?: boolean;
 }
 
 export function CareerOptInRow(props: CareerOptInRowProps) {
   const { colors } = useTheme();
   const helper = props.value
-    ? "Completed matches are added to this organizer's career leaderboard."
-    : "Results stay in this event only.";
+    ? "Completed matches count on the career leaderboard. Turn off to remove this event."
+    : "This event is off the career board. Turn on to add completed matches.";
 
   return (
     <View
@@ -26,7 +27,8 @@ export function CareerOptInRow(props: CareerOptInRowProps) {
         borderRadius: radius.lg,
         borderWidth: 1,
         borderColor: colors.border,
-        backgroundColor: colors.surface
+        backgroundColor: colors.surface,
+        opacity: props.disabled ? 0.55 : 1
       }}
     >
       <View style={{ flex: 1, gap: 4 }}>
@@ -38,6 +40,7 @@ export function CareerOptInRow(props: CareerOptInRowProps) {
       <Switch
         value={props.value}
         onValueChange={props.onChange}
+        disabled={props.disabled}
         trackColor={{ false: colors.surfaceAlt, true: colors.primary }}
         thumbColor={colors.surface}
         accessibilityLabel="Count toward career leaderboard"

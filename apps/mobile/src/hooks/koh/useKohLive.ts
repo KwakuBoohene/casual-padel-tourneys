@@ -11,6 +11,7 @@ import {
 
 import { useKohLiveScore } from "./useKohLiveScore";
 import { useKohTournamentSocket } from "./useKohTournamentSocket";
+import { useCareerLeaderboardToggle } from "../organizer/useCareerLeaderboardToggle";
 
 export interface UseKohLiveParams {
   hub: KohTournamentHub;
@@ -52,6 +53,12 @@ export function useKohLive(params: UseKohLiveParams) {
     matchId: court?.activeMatch?.id,
     ...err,
     onSaved: (hub) => applyHub(hub, false)
+  });
+
+  const career = useCareerLeaderboardToggle({
+    tournamentId: params.hub.id,
+    setErrorText: params.setErrorText,
+    apply: params.setHub
   });
 
   useKohTournamentSocket({
@@ -103,6 +110,7 @@ export function useKohLive(params: UseKohLiveParams) {
     applyPromotePick: (demotedUnitId: string) =>
       runMut(() => runKohPromotePick({ hub: params.hub, demotedUnitId, ...err })),
     endNight: () => runMut(() => runKohEnd({ hub: params.hub, ...err })),
-    dismissCourtChange: () => setPendingCourtChange(null)
+    dismissCourtChange: () => setPendingCourtChange(null),
+    ...career
   };
 }

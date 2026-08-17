@@ -235,3 +235,113 @@ test("Americano complete with contribute true writes four career deltas", async 
     assert.equal(count, 4);
   });
 });
+
+test("Americano can opt in after scoring and backfills four deltas", async () => {
+  await withApp(async (app, organizerId) => {
+    const token = signUser(organizerId);
+    const create = await app.inject({
+      method: "POST",
+      url: "/tournaments",
+      headers: { authorization: `Bearer ${token}` },
+      payload: { ...amCreate, contributeToCareerLeaderboard: false }
+    });
+    assert.equal(create.statusCode, 200);
+    const created = create.json().data;
+    const match = created.rounds[0].matches[0];
+    const score = await app.inject({
+      method: "POST",
+      url: "/tournaments/score",
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        tournamentId: created.id,
+        matchId: match.id,
+        scoreA: 16,
+        scoreB: 8,
+        expectedVersion: created.version
+      }
+    });
+    assert.equal(score.statusCode, 200);
+    const optIn = await app.inject({
+      method: "POST",
+      url: "/tournaments/career-leaderboard",
+      headers: { authorization: `Bearer ${token}` },
+      payload: { tournamentId: created.id, contributeToCareerLeaderboard: true }
+    });
+    assert.equal(optIn.statusCode, 200);
+    assert.equal(optIn.json().data.config.contributeToCareerLeaderboard, true);
+    const count = await prisma.organizerPlayerStatDelta.count({ where: { organizerId } });
+    assert.equal(count, 4);
+  });
+});
+
+test("Americano can opt out after scoring and removes career deltas", async () => {
+  await withApp(async (app, organizerId) => {
+    const token = signUser(organizerId);
+    const create = await app.inject({
+      method: "POST",
+      url: "/tournaments",
+      headers: { authorization: `Bearer ${token}` },
+      payload: { ...amCreate, contributeToCareerLeaderboard: true }
+    });
+    assert.equal(create.statusCode, 200);
+    const created = create.json().data;
+    const match = created.rounds[0].matches[0];
+    const score = await app.inject({
+      method: "POST",
+      url: "/tournaments/score",
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        tournamentId: created.id,
+        matchId: match.id,
+        scoreA: 16,
+        scoreB: 8,
+        expectedVersion: created.version
+      }
+    });
+    assert.equal(score.statusCode, 200);
+    const optOut = await app.inject({
+      method: "POST",
+      url: "/tournaments/career-leaderboard",
+      headers: { authorization: `Bearer ${token}` },
+      payload: { tournamentId: created.id, contributeToCareerLeaderboard: false }
+    });
+    assert.equal(optOut.statusCode, 200);
+    assert.equal(optOut.json().data.config.contributeToCareerLeaderboard, false);
+    const count = await prisma.organizerPlayerStatDelta.count({ where: { organizerId } });
+    assert.equal(count, 0);
+  });
+});
+
+test("KOH can opt out after scoring and removes career deltas", async () => {
+  await withApp(async (app, organizerId) => {
+    const token = signUser(organizerId);
+    const tournamentId = await completeKohMatch(app, token, true);
+    const optOut = await app.inject({
+      method: "POST",
+      url: "/tournaments/career-leaderboard",
+      headers: { authorization: `Bearer ${token}` },
+      payload: { tournamentId, contributeToCareerLeaderboard: false }
+    });
+    assert.equal(optOut.statusCode, 200);
+    assert.equal(optOut.json().data.config.contributeToCareerLeaderboard, false);
+    const count = await prisma.organizerPlayerStatDelta.count({ where: { organizerId } });
+    assert.equal(count, 0);
+  });
+});
+
+test("KOH can opt in after scoring and backfills four deltas", async () => {
+  await withApp(async (app, organizerId) => {
+    const token = signUser(organizerId);
+    const tournamentId = await completeKohMatch(app, token, false);
+    const optIn = await app.inject({
+      method: "POST",
+      url: "/tournaments/career-leaderboard",
+      headers: { authorization: `Bearer ${token}` },
+      payload: { tournamentId, contributeToCareerLeaderboard: true }
+    });
+    assert.equal(optIn.statusCode, 200);
+    assert.equal(optIn.json().data.config.contributeToCareerLeaderboard, true);
+    const count = await prisma.organizerPlayerStatDelta.count({ where: { organizerId } });
+    assert.equal(count, 4);
+  });
+});

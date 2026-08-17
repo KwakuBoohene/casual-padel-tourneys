@@ -85,3 +85,18 @@ export async function creditAmericanoMatchIfComplete(input: {
     });
   }
 }
+
+/** Credit every completed match. Caller must already have set the tournament flag on. */
+export async function creditAllCompletedAmericanoMatches(tournament: TournamentState): Promise<void> {
+  const optedIn = {
+    ...tournament,
+    config: { ...tournament.config, contributeToCareerLeaderboard: true }
+  };
+  for (const round of optedIn.rounds) {
+    for (const match of round.matches) {
+      if (match.completed) {
+        await creditAmericanoMatchIfComplete({ tournament: optedIn, matchId: match.id });
+      }
+    }
+  }
+}

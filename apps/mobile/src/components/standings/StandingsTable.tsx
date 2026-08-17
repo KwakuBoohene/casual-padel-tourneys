@@ -5,9 +5,9 @@ import { usePagedSlice } from "../../hooks/standings/usePagedSlice";
 import { useBreakpoint } from "../../layout";
 import { spacing, touch } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
+import { ListPager } from "../lists/ListPager";
 
 import { StandingsNameSlot, StandingsStatCells } from "./StandingsCells";
-import { StandingsPager } from "./StandingsPager";
 
 export interface StandingsTableRow {
   id: string;
@@ -89,7 +89,7 @@ export function StandingsTable(props: StandingsTableProps) {
           })}
         </View>
       </ScrollView>
-      <StandingsPager
+      <ListPager
         total={props.rows.length}
         pageStart={pages.pageStart}
         pageEnd={pages.pageEnd}

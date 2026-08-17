@@ -34,6 +34,9 @@ export function PlayerManagementFlow(props: PlayerManagementFlowProps) {
         onPending={management.setPending}
         onConfirmArchive={() => void management.confirmArchive()}
         onConfirmUnarchive={() => void management.confirmUnarchive()}
+        renaming={management.renaming}
+        onRenaming={management.setRenaming}
+        onConfirmRename={(name) => void management.confirmRename(name)}
         onBack={props.onBack}
         onAttach={props.onAttach}
         merge={merge}

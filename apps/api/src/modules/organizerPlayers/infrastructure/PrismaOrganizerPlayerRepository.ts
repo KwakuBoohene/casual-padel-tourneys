@@ -9,6 +9,7 @@ import {
   archiveOrganizerPlayerRow,
   listManagedOrganizerPlayers,
   mergeOrganizerPlayerRows,
+  renameOrganizerPlayerRow,
   unarchiveOrganizerPlayerRow
 } from "./organizerPlayerManagement.js";
 
@@ -95,5 +96,13 @@ export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepositor
     survivingName: string;
   }): Promise<{ id: string; name: string }> {
     return mergeOrganizerPlayerRows(input);
+  }
+
+  renamePlayer(
+    organizerId: string,
+    organizerPlayerId: string,
+    name: string
+  ): Promise<{ id: string; name: string }> {
+    return renameOrganizerPlayerRow(organizerId, organizerPlayerId, name);
   }
 }

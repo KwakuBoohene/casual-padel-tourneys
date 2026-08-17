@@ -5,8 +5,10 @@ import { spacing, touch, typography } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
 
 import { MergeConfirmSheet } from "./MergeConfirmSheet";
+import { PlayerManagementList } from "./PlayerManagementList";
 import { ArchiveConfirmSheet, MergePickSheet, UnarchiveConfirmSheet } from "./PlayerManagementSheets";
-import { PlayerManagementRow, PlayerStatusTabs } from "./PlayerManagementRow";
+import { PlayerStatusTabs } from "./PlayerManagementRow";
+import { RenamePlayerSheet } from "./RenamePlayerSheet";
 
 interface PlayerManagementPanelProps {
   status: OrganizerPlayerStatus;
@@ -18,6 +20,9 @@ interface PlayerManagementPanelProps {
   onPending: (player: OrganizerManagedPlayer | null) => void;
   onConfirmArchive: () => void;
   onConfirmUnarchive: () => void;
+  renaming: OrganizerManagedPlayer | null;
+  onRenaming: (player: OrganizerManagedPlayer | null) => void;
+  onConfirmRename: (name: string) => void;
   onBack: () => void;
   onAttach?: () => void;
   merge: {
@@ -63,20 +68,14 @@ export function PlayerManagementPanel(props: PlayerManagementPanelProps) {
                 <Text style={{ color: colors.primary, fontWeight: "700" }}>Merge two players</Text>
               </Pressable>
             ) : null}
-            {props.loading ? <Text style={{ color: colors.muted }}>Loading…</Text> : null}
-            {!props.loading && props.players.length === 0 ? (
-              <Text style={{ color: colors.muted }}>
-                {props.status === "archived" ? "No archived players." : "No players yet."}
-              </Text>
-            ) : null}
-            {props.players.map((player) => (
-              <PlayerManagementRow
-                key={player.id}
-                player={player}
-                status={props.status}
-                onAction={() => props.onPending(player)}
-              />
-            ))}
+            <PlayerManagementList
+              key={props.status}
+              players={props.players}
+              status={props.status}
+              loading={props.loading}
+              onRename={props.onRenaming}
+              onAction={props.onPending}
+            />
           </>
         )}
       </ScrollView>
@@ -114,6 +113,11 @@ export function PlayerManagementPanel(props: PlayerManagementPanelProps) {
         busy={props.merge.busy}
         onConfirm={() => void props.merge.confirmMerge()}
         onDismiss={props.merge.reset}
+      />
+      <RenamePlayerSheet
+        player={props.renaming}
+        onCancel={() => props.onRenaming(null)}
+        onConfirm={props.onConfirmRename}
       />
     </View>
   );

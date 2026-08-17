@@ -207,3 +207,37 @@ test("merge rejects careers that share a match", async () => {
     assert.equal(res.statusCode, 400);
   });
 });
+
+test("rename updates an active career name and rejects collisions", async () => {
+  await withApp(async (app, organizerId) => {
+    const token = signUser(organizerId);
+    const paulId = await seedPlayer(organizerId, "Paul", 1, "m-rename-a");
+    await seedPlayer(organizerId, "Sam", 1, "m-rename-b");
+
+    const renamed = await app.inject({
+      method: "POST",
+      url: `/me/players/${paulId}/rename`,
+      headers: { authorization: `Bearer ${token}` },
+      payload: { name: "Paula" }
+    });
+    assert.equal(renamed.statusCode, 200);
+    assert.equal(renamed.json().data.name, "Paula");
+
+    const clash = await app.inject({
+      method: "POST",
+      url: `/me/players/${paulId}/rename`,
+      headers: { authorization: `Bearer ${token}` },
+      payload: { name: "Sam" }
+    });
+    assert.equal(clash.statusCode, 400);
+
+    const board = await app.inject({
+      method: "GET",
+      url: "/me/players/leaderboard?range=all",
+      headers: { authorization: `Bearer ${token}` }
+    });
+    const names = (board.json().data.rows as Array<{ name: string }>).map((row) => row.name);
+    assert.ok(names.includes("Paula"));
+    assert.equal(names.includes("Paul"), false);
+  });
+});

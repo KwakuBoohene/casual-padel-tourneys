@@ -5,6 +5,7 @@ import type { OrganizerManagedPlayer, OrganizerPlayerStatus } from "@padel/share
 import {
   archiveAccountPlayer,
   listManagedPlayers,
+  renameAccountPlayer,
   unarchiveAccountPlayer
 } from "../../api/accountPlayers";
 import { isEmailVerifyRequired } from "../../api/errors";
@@ -21,6 +22,7 @@ export function usePlayerManagement(params: {
   const [guestMessage, setGuestMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [pending, setPending] = useState<OrganizerManagedPlayer | null>(null);
+  const [renaming, setRenaming] = useState<OrganizerManagedPlayer | null>(null);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -75,6 +77,18 @@ export function usePlayerManagement(params: {
     }
   };
 
+  const confirmRename = async (name: string) => {
+    if (!renaming) return;
+    try {
+      await renameAccountPlayer(renaming.id, name);
+      setRenaming(null);
+      await afterChange();
+    } catch (error) {
+      if (isEmailVerifyRequired(error)) markEmailVerifyRequired(error.verifyBy);
+      else setErrorText((error as Error).message);
+    }
+  };
+
   return {
     status,
     setStatus,
@@ -83,8 +97,11 @@ export function usePlayerManagement(params: {
     loading,
     pending,
     setPending,
+    renaming,
+    setRenaming,
     reload,
     confirmArchive,
-    confirmUnarchive
+    confirmUnarchive,
+    confirmRename
   };
 }

@@ -69,3 +69,14 @@ export async function mergeAccountPlayers(input: {
   const response = await apiPost<{ data: { id: string; name: string } }>("/me/players/merge", input);
   return response.data;
 }
+
+export async function renameAccountPlayer(
+  playerId: string,
+  name: string
+): Promise<{ id: string; name: string }> {
+  const response = await apiPost<{ data: { id: string; name: string } }>(
+    `/me/players/${playerId}/rename`,
+    { name }
+  );
+  return response.data;
+}

@@ -1,7 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import {
   mergeOrganizerPlayersSchema,
-  organizerPlayerStatusSchema
+  organizerPlayerStatusSchema,
+  renameOrganizerPlayerSchema
 } from "@padel/shared";
 
 import { requireOrganizerAccess } from "../../../lib/auth.js";
@@ -11,6 +12,7 @@ import {
   archiveOrganizerPlayer,
   listManagedOrganizerPlayers,
   mergeOrganizerPlayers,
+  renameOrganizerPlayer,
   unarchiveOrganizerPlayer
 } from "../application/manageOrganizerPlayers.js";
 
@@ -95,6 +97,27 @@ export function registerOrganizerPlayerManagementRoutes(
       try {
         const params = request.params as { id: string };
         const data = await unarchiveOrganizerPlayer(deps, user.id, params.id);
+        return { data };
+      } catch (error) {
+        return mapAppError(reply, error);
+      }
+    }
+  );
+
+  server.post(
+    "/me/players/:id/rename",
+    { preHandler: requireOrganizerAccess },
+    async (request, reply) => {
+      const user = requireSignedIn(request, reply);
+      if (!user) return { message: request.user ? GUEST_MESSAGE : "Unauthorized" };
+      const parsed = renameOrganizerPlayerSchema.safeParse(request.body);
+      if (!parsed.success) {
+        reply.status(400);
+        return { errors: parsed.error.flatten() };
+      }
+      try {
+        const params = request.params as { id: string };
+        const data = await renameOrganizerPlayer(deps, user.id, params.id, parsed.data.name);
         return { data };
       } catch (error) {
         return mapAppError(reply, error);

@@ -5,7 +5,7 @@ Cross-event player careers for one organizer: every credited match adds an
 (`month` / `year` / `all`).
 
 ```text
-http/            → /me/players/leaderboard, /me/players/:id, archive/unarchive/merge
+http/            → /me/players/leaderboard, /me/players/:id, archive/unarchive/rename/merge
 application/     → read + manage use-cases + OrganizerPlayerRepository port
 domain/          → range boundaries, archive names, merge clash check, aggregation
 infrastructure/  → Prisma repository (reads) + careerCredits (writes) + management writes
@@ -33,4 +33,5 @@ infrastructure/  → Prisma repository (reads) + careerCredits (writes) + manage
   answers 403. Keep that messaging when changing the routes.
 - Archive releases `nameNormalized` (`archived:{id}`) so a new player can reuse the display name.
   Unarchive restores with a suffix (`Name (unarchived)`, then `Name unarchived-N`). Merge creates a
-  new identity, moves deltas onto it, and archives both sources.
+  new identity, moves deltas onto it, and archives both sources. `POST /me/players/:id/rename`
+  changes the career display name; active names stay unique per organizer.

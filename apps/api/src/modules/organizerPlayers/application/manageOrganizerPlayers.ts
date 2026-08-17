@@ -33,3 +33,12 @@ export async function mergeOrganizerPlayers(
 ): Promise<{ id: string; name: string }> {
   return deps.repo.mergePlayers({ organizerId, ...input });
 }
+
+export async function renameOrganizerPlayer(
+  deps: OrganizerPlayersDeps,
+  organizerId: string,
+  organizerPlayerId: string,
+  name: string
+): Promise<{ id: string; name: string }> {
+  return deps.repo.renamePlayer(organizerId, organizerPlayerId, name);
+}

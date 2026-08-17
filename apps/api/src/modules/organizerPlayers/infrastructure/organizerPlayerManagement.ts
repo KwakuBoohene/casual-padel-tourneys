@@ -104,3 +104,35 @@ export async function mergeOrganizerPlayerRows(input: {
 }): Promise<{ id: string; name: string }> {
   return mergeOrganizerPlayersInTx(input);
 }
+
+export async function renameOrganizerPlayerRow(
+  organizerId: string,
+  organizerPlayerId: string,
+  rawName: string
+): Promise<{ id: string; name: string }> {
+  const name = rawName.trim();
+  const nameNormalized = normalizeOrganizerPlayerName(name);
+  if (!nameNormalized) throw validation("Enter a player name.");
+  const player = await prisma.organizerPlayer.findFirst({
+    where: { id: organizerPlayerId, organizerId },
+    select: { id: true, archivedAt: true }
+  });
+  if (!player) throw notFound("Player not found.");
+  if (!player.archivedAt) {
+    const clash = await prisma.organizerPlayer.findFirst({
+      where: {
+        organizerId,
+        archivedAt: null,
+        nameNormalized,
+        NOT: { id: player.id }
+      },
+      select: { id: true }
+    });
+    if (clash) throw validation("That name is already used by another active player.");
+  }
+  await prisma.organizerPlayer.update({
+    where: { id: player.id },
+    data: player.archivedAt ? { name } : { name, nameNormalized }
+  });
+  return { id: player.id, name };
+}

@@ -3,7 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import { radius, spacing, touch } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
 
-interface StandingsPagerProps {
+interface ListPagerProps {
   total: number;
   pageStart: number;
   pageEnd: number;
@@ -15,7 +15,7 @@ interface StandingsPagerProps {
   onNext: () => void;
 }
 
-export function StandingsPager(props: StandingsPagerProps) {
+export function ListPager(props: ListPagerProps) {
   const { colors } = useTheme();
   if (props.pageCount <= 1) return null;
   const from = props.total === 0 ? 0 : props.pageStart + 1;

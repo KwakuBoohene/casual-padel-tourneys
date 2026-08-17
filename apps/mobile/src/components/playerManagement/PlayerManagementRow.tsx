@@ -40,6 +40,7 @@ export function PlayerStatusTabs(props: {
 export function PlayerManagementRow(props: {
   player: OrganizerManagedPlayer;
   status: OrganizerPlayerStatus;
+  onRename: () => void;
   onAction: () => void;
 }) {
   const { colors } = useTheme();
@@ -64,11 +65,16 @@ export function PlayerManagementRow(props: {
         </Text>
         <Text style={{ color: colors.muted, fontSize: 12 }}>{record}</Text>
       </View>
-      <Pressable onPress={props.onAction} hitSlop={8}>
-        <Text style={{ color: props.status === "active" ? colors.danger : colors.primary, fontWeight: "700" }}>
-          {props.status === "active" ? "Archive" : "Unarchive"}
-        </Text>
-      </Pressable>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+        <Pressable onPress={props.onRename} hitSlop={8}>
+          <Text style={{ color: colors.primary, fontWeight: "700" }}>Rename</Text>
+        </Pressable>
+        <Pressable onPress={props.onAction} hitSlop={8}>
+          <Text style={{ color: props.status === "active" ? colors.danger : colors.primary, fontWeight: "700" }}>
+            {props.status === "active" ? "Archive" : "Unarchive"}
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 }

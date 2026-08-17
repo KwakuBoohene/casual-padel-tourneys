@@ -73,3 +73,8 @@ export const mergeOrganizerPlayersSchema = z.object({
   survivingName: z.string().trim().min(1).max(80)
 });
 export type MergeOrganizerPlayersInput = z.infer<typeof mergeOrganizerPlayersSchema>;
+
+export const renameOrganizerPlayerSchema = z.object({
+  name: z.string().trim().min(1).max(80)
+});
+export type RenameOrganizerPlayerInput = z.infer<typeof renameOrganizerPlayerSchema>;

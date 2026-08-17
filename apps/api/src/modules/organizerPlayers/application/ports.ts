@@ -40,6 +40,11 @@ export interface OrganizerPlayerRepository {
     playerIdB: string;
     survivingName: string;
   }): Promise<{ id: string; name: string }>;
+  renamePlayer(
+    organizerId: string,
+    organizerPlayerId: string,
+    name: string
+  ): Promise<{ id: string; name: string }>;
 }
 
 export interface OrganizerPlayersDeps {

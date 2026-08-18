@@ -19,11 +19,12 @@ Secondary objective: reduce repeated teammates and opponents while balancing res
 - exactly four players assigned per court
 - player appears at most once per round
 - respect court count and game limits
+- **never repeat the same opponent team** (classic: the pair on the other side; team Americano: the same fixed pair) when any valid alternative exists
+- when recalculating remaining rounds, seed pairing matrices from locked rounds before generating new matchups
 
 ## Soft Constraints
 
 - minimize repeated teammate pairings
-- minimize repeated opponent pairings
 - balance sit-outs when players exceed `courts * 4`
 
 ## Round Generation Strategy
@@ -31,8 +32,8 @@ Secondary objective: reduce repeated teammates and opponents while balancing res
 1. Sort players by `effectiveGames` ascending where `effectiveGames = gamesPlayed + (handicap ?? 0)`.
 2. Select the active player pool for this round.
 3. Split into groups of 4.
-4. Evaluate team combinations and choose lowest repeat-cost pairing.
-5. Update teammate/opponent matrices.
+4. Evaluate team combinations; prefer splits with no prior opponent-team history, then lowest repeat cost.
+5. Update teammate/opponent/opponent-team matrices.
 6. Repeat for all rounds derived from estimate.
 
 ## Handicap System

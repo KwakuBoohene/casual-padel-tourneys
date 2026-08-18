@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 
 import { maxGamesDelta } from "../../src/engine/fairnessEvaluator.js";
 import { generateTournament, recalculateRemainingTournament } from "../../src/engine/americanoScheduler.js";
-import type { Player, TournamentConfig } from "@padel/shared";
+import type { Player, Round, TournamentConfig } from "@padel/shared";
 
 // ========== generateTournament Tests ==========
 
@@ -1038,4 +1038,73 @@ test("fairness with different handicap ratios", () => {
     // Higher handicap ratios (especially 1.0) can produce higher deltas
     assert.ok(delta <= 5, `Handicap ratio ${ratio} should maintain reasonable fairness, got delta ${delta}`);
   }
+});
+
+function opponentTeamRematches(rounds: Round[], players: Player[]): number {
+  const seen = new Map<string, Set<string>>();
+  let rematches = 0;
+  for (const round of rounds) {
+    for (const match of round.matches) {
+      const oppAKey = [...match.teamB].sort().join(":");
+      const oppBKey = [...match.teamA].sort().join(":");
+      for (const playerId of match.teamA) {
+        const key = `${playerId}|${oppAKey}`;
+        const prior = seen.get(playerId) ?? new Set<string>();
+        if (prior.has(oppAKey)) rematches += 1;
+        prior.add(oppAKey);
+        seen.set(playerId, prior);
+      }
+      for (const playerId of match.teamB) {
+        const prior = seen.get(playerId) ?? new Set<string>();
+        if (prior.has(oppBKey)) rematches += 1;
+        prior.add(oppBKey);
+        seen.set(playerId, prior);
+      }
+    }
+  }
+  return rematches;
+}
+
+test("generateTournament avoids opponent-team rematches when feasible", () => {
+  const config: TournamentConfig = {
+    name: "No rematch",
+    mode: "AMERICANO",
+    variant: "CLASSIC",
+    schedulingMode: "TARGET_GAMES",
+    players: Array.from({ length: 12 }, (_, index) => ({ name: `Player ${index + 1}` })),
+    courts: 2,
+    pointsPerMatch: 24,
+    targetGamesPerPlayer: 4
+  };
+
+  const { rounds } = generateTournament(config);
+  assert.equal(opponentTeamRematches(rounds, []), 0);
+});
+
+test("recalculateRemainingTournament seeds locked history before regenerating", () => {
+  const initialPlayers: Player[] = Array.from({ length: 8 }, (_, i) => ({
+    id: `p${i + 1}`,
+    name: `Player ${i + 1}`,
+    gamesPlayed: 0,
+    totalPoints: 0
+  }));
+
+  const config: TournamentConfig = {
+    name: "Recalc seed",
+    mode: "AMERICANO",
+    variant: "CLASSIC",
+    schedulingMode: "TARGET_GAMES",
+    players: initialPlayers.map((p) => ({ name: p.name })),
+    courts: 2,
+    pointsPerMatch: 24,
+    targetGamesPerPlayer: 4
+  };
+
+  const initial = generateTournament(config);
+  for (let i = 0; i < 2; i += 1) {
+    initial.rounds[i].isLocked = true;
+  }
+
+  const recalculated = recalculateRemainingTournament(config, initial.players, initial.rounds);
+  assert.equal(opponentTeamRematches(recalculated, initial.players), 0);
 });

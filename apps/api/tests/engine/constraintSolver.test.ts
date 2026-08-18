@@ -19,6 +19,7 @@ test("buildRound creates matches with correct number of courts", () => {
     players,
     teammateMatrix: new Map(),
     opponentMatrix: new Map(),
+    opponentTeamMatrix: new Map(),
     coPlayerMatrix: new Map()
   };
 
@@ -44,6 +45,7 @@ test("buildRound assigns correct court numbers", () => {
     players,
     teammateMatrix: new Map(),
     opponentMatrix: new Map(),
+    opponentTeamMatrix: new Map(),
     coPlayerMatrix: new Map()
   };
 
@@ -72,6 +74,7 @@ test("buildRound selects players based on gamesPlayed (fairness)", () => {
     players,
     teammateMatrix: new Map(),
     opponentMatrix: new Map(),
+    opponentTeamMatrix: new Map(),
     coPlayerMatrix: new Map()
   };
 
@@ -110,6 +113,7 @@ test("buildRound respects diversity penalty (co-player matrix)", () => {
     players,
     teammateMatrix: new Map(),
     opponentMatrix: new Map(),
+    opponentTeamMatrix: new Map(),
     coPlayerMatrix
   };
 
@@ -135,6 +139,7 @@ test("buildRound skips incomplete groups", () => {
     players,
     teammateMatrix: new Map(),
     opponentMatrix: new Map(),
+    opponentTeamMatrix: new Map(),
     coPlayerMatrix: new Map()
   };
 
@@ -152,6 +157,7 @@ test("buildRound with no players creates empty round", () => {
     players: [],
     teammateMatrix: new Map(),
     opponentMatrix: new Map(),
+    opponentTeamMatrix: new Map(),
     coPlayerMatrix: new Map()
   };
 
@@ -170,6 +176,7 @@ test("buildRound updates matrices after match creation", () => {
 
   const teammateMatrix = new Map<string, number>();
   const opponentMatrix = new Map<string, number>();
+  const opponentTeamMatrix = new Map<string, number>();
   const coPlayerMatrix = new Map<string, number>();
 
   const input: BuildRoundInput = {
@@ -179,6 +186,7 @@ test("buildRound updates matrices after match creation", () => {
     players,
     teammateMatrix,
     opponentMatrix,
+    opponentTeamMatrix,
     coPlayerMatrix
   };
 
@@ -223,6 +231,7 @@ test("buildRound MIXED variant validates gender balance", () => {
     players,
     teammateMatrix: new Map(),
     opponentMatrix: new Map(),
+    opponentTeamMatrix: new Map(),
     coPlayerMatrix: new Map()
   };
 
@@ -260,6 +269,7 @@ test("buildRound MIXED variant with invalid gender combinations still creates ma
     players,
     teammateMatrix: new Map(),
     opponentMatrix: new Map(),
+    opponentTeamMatrix: new Map(),
     coPlayerMatrix: new Map()
   };
 
@@ -285,6 +295,7 @@ test("buildRound MIXED variant without gender property still creates match", () 
     players,
     teammateMatrix: new Map(),
     opponentMatrix: new Map(),
+    opponentTeamMatrix: new Map(),
     coPlayerMatrix: new Map()
   };
 
@@ -315,6 +326,7 @@ test("buildRound minimizes repeated teammates", () => {
     players,
     teammateMatrix,
     opponentMatrix: new Map(),
+    opponentTeamMatrix: new Map(),
     coPlayerMatrix: new Map()
   };
 
@@ -343,11 +355,16 @@ test("buildRound minimizes repeated opponents", () => {
   }));
 
   const opponentMatrix = new Map<string, number>();
+  const opponentTeamMatrix = new Map<string, number>();
   // Set high opponent history for p1 vs p3, p1 vs p4, p2 vs p3, p2 vs p4
   opponentMatrix.set("p1:p3", 2);
   opponentMatrix.set("p1:p4", 2);
   opponentMatrix.set("p2:p3", 2);
   opponentMatrix.set("p2:p4", 2);
+  opponentTeamMatrix.set("p1|p3:p4", 1);
+  opponentTeamMatrix.set("p2|p3:p4", 1);
+  opponentTeamMatrix.set("p3|p1:p2", 1);
+  opponentTeamMatrix.set("p4|p1:p2", 1);
 
   const input: BuildRoundInput = {
     roundNumber: 2,
@@ -356,6 +373,7 @@ test("buildRound minimizes repeated opponents", () => {
     players,
     teammateMatrix: new Map(),
     opponentMatrix,
+    opponentTeamMatrix,
     coPlayerMatrix: new Map()
   };
 
@@ -389,6 +407,7 @@ test("buildRound with exactly 4 players creates 1 match", () => {
     players,
     teammateMatrix: new Map(),
     opponentMatrix: new Map(),
+    opponentTeamMatrix: new Map(),
     coPlayerMatrix: new Map()
   };
 
@@ -414,6 +433,7 @@ test("buildRound match structure is valid", () => {
     players,
     teammateMatrix: new Map(),
     opponentMatrix: new Map(),
+    opponentTeamMatrix: new Map(),
     coPlayerMatrix: new Map()
   };
 
@@ -431,4 +451,37 @@ test("buildRound match structure is valid", () => {
     const uniqueIds = new Set(allIds);
     assert.equal(uniqueIds.size, 4, "All players in match should be unique");
   }
+});
+
+test("buildRound avoids repeated opponent teams when another split exists", () => {
+  const players: Player[] = [
+    { id: "p1", name: "Player 1", gamesPlayed: 1, totalPoints: 20 },
+    { id: "p2", name: "Player 2", gamesPlayed: 1, totalPoints: 20 },
+    { id: "p3", name: "Player 3", gamesPlayed: 1, totalPoints: 20 },
+    { id: "p4", name: "Player 4", gamesPlayed: 1, totalPoints: 20 }
+  ];
+
+  const opponentTeamMatrix = new Map<string, number>();
+  opponentTeamMatrix.set("p1|p3:p4", 1);
+  opponentTeamMatrix.set("p2|p3:p4", 1);
+  opponentTeamMatrix.set("p3|p1:p2", 1);
+  opponentTeamMatrix.set("p4|p1:p2", 1);
+
+  const round = buildRound({
+    roundNumber: 2,
+    courts: 1,
+    variant: "CLASSIC",
+    players,
+    teammateMatrix: new Map(),
+    opponentMatrix: new Map(),
+    opponentTeamMatrix,
+    coPlayerMatrix: new Map()
+  });
+
+  const match = round.matches[0];
+  const teamA = match.teamA.sort().join(":");
+  const teamB = match.teamB.sort().join(":");
+  const isRepeated =
+    (teamA === "p1:p2" && teamB === "p3:p4") || (teamA === "p3:p4" && teamB === "p1:p2");
+  assert.ok(!isRepeated, "Should not repeat the same opponent team pairing");
 });

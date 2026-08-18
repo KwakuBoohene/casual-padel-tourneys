@@ -7,8 +7,10 @@ import { useTheme } from "../../../theme/ThemeProvider";
 
 import type { LeaderboardRow, LiveTournamentState } from "../../../types/organizer/tournament";
 import { formatScoringLabel } from "../../../utilities/organizer/formatLabels";
+import { buildLiveTournamentConfigRows } from "../../../utilities/organizer/tournamentConfigSummary";
 import { StandingsHelpControl } from "../../standings/StandingsHelpControl";
 import { StandingsTable } from "../../standings/StandingsTable";
+import { TournamentConfigSummaryPanel } from "../TournamentConfigSummaryPanel";
 
 interface LeaderboardViewProps {
   tournament: LiveTournamentState;
@@ -33,6 +35,7 @@ export function LeaderboardView(props: LeaderboardViewProps) {
     props.tournament.config.mode,
     props.tournament.config.scoringMode
   );
+  const configRows = buildLiveTournamentConfigRows(props.tournament.config);
 
   return (
     <ScrollView
@@ -64,6 +67,7 @@ export function LeaderboardView(props: LeaderboardViewProps) {
           {props.tournament.config.name} · {scoringLabel}
         </Text>
       </View>
+      <TournamentConfigSummaryPanel rows={configRows} />
       {rankedRows.length === 0 ? (
         <Text style={{ color: colors.muted }}>No standings yet.</Text>
       ) : (

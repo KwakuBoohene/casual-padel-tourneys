@@ -3,6 +3,8 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import type { KohTournamentHub } from "../../../types/koh/create";
 import { spacing, typography } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
+import { buildKohConfigRows } from "../../../utilities/organizer/tournamentConfigSummary";
+import { TournamentConfigSummaryPanel } from "../../organizer/TournamentConfigSummaryPanel";
 
 import { KohLiveActions } from "./KohLiveActions";
 import { KohLiveCourtPager, KohLiveUnitCard } from "./KohLiveCourtBits";
@@ -12,6 +14,7 @@ type LiveCourt = KohTournamentHub["courts"][number];
 
 interface KohLiveCourtBodyProps {
   name: string;
+  config: KohTournamentHub["config"];
   ended: boolean;
   court: LiveCourt | undefined;
   courtCount: number;
@@ -34,6 +37,9 @@ export function KohLiveCourtBody(props: KohLiveCourtBodyProps) {
   const { colors } = useTheme();
   const court = props.court;
 
+  const pairingLabel =
+    props.config.pairingMode === "ROUND_ROBIN_PAIRS" ? "Round-robin pairs" : "Winner stays";
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView
@@ -44,8 +50,10 @@ export function KohLiveCourtBody(props: KohLiveCourtBodyProps) {
         </Pressable>
         <Text style={[typography.title, { color: colors.text }]}>{props.name}</Text>
         <Text style={{ color: colors.primary, fontWeight: "600" }}>
-          King of the Court · Winner-stays{props.ended ? " · Ended" : ""}
+          King of the Court · {pairingLabel}
+          {props.ended ? " · Ended" : ""}
         </Text>
+        <TournamentConfigSummaryPanel rows={buildKohConfigRows(props.config)} />
         <KohLiveCourtPager
           courtCount={props.courtCount}
           courtIndex={props.courtIndex}

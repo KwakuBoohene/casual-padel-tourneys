@@ -21,6 +21,7 @@ export function useLiveTournamentActions(params: UseLiveTournamentActionsParams)
   const { liveTournament, setErrorText } = params;
   const queryClient = useQueryClient();
   const [showEditConfirmModal, setShowEditConfirmModal] = useState(false);
+  const [showFinishConfirmModal, setShowFinishConfirmModal] = useState(false);
   const [showLiveOptionsModal, setShowLiveOptionsModal] = useState(false);
   const [showAdjustCourtsConfirmModal, setShowAdjustCourtsConfirmModal] = useState(false);
   const [generatingNextRound, setGeneratingNextRound] = useState(false);
@@ -95,6 +96,8 @@ export function useLiveTournamentActions(params: UseLiveTournamentActionsParams)
   return {
     showEditConfirmModal,
     setShowEditConfirmModal,
+    showFinishConfirmModal,
+    setShowFinishConfirmModal,
     showLiveOptionsModal,
     setShowLiveOptionsModal,
     showAdjustCourtsConfirmModal,

@@ -1,4 +1,4 @@
-import type { ScoringMode, TournamentMode, TournamentVariant } from "@padel/shared";
+import type { ScoringMode, SchedulingMode, TournamentMode, TournamentVariant } from "@padel/shared";
 import { isKingOfTheCourtMode } from "@padel/shared";
 
 export function formatTournamentMode(mode: TournamentMode | string): string {
@@ -13,6 +13,12 @@ export function formatScoringLabel(mode: TournamentMode, scoringMode?: ScoringMo
     return "Regular scoring";
   }
   return `${formatTournamentMode(mode)} scoring`;
+}
+
+export function formatSchedulingMode(mode: SchedulingMode, isMexicano?: boolean): string {
+  if (isMexicano || mode === "TOTAL_TIME") return "Timed";
+  if (mode === "ROUND_ROBIN") return "Round robin";
+  return "Target games";
 }
 
 export function formatTournamentVariant(variant: TournamentVariant): string {

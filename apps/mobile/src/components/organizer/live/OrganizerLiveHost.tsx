@@ -56,6 +56,7 @@ export function OrganizerLiveHost() {
     },
     sheets: {
       showEditConfirmModal: org.showEditConfirmModal,
+      showFinishConfirmModal: org.showFinishConfirmModal,
       showLiveOptionsModal: org.showLiveOptionsModal,
       showAdjustCourtsConfirmModal: org.showAdjustCourtsConfirmModal,
       showAddPendingPlayerModal: org.showAddPendingPlayerModal,
@@ -75,6 +76,8 @@ export function OrganizerLiveHost() {
       onViewLeaderboard: () => router.push(tournamentLeaderboardPath(liveTournament.id)),
       onRefresh: () => void org.refreshTournament(),
       onFinishTournament: () => void org.finishTournament(),
+      onOpenFinishConfirm: () => org.setShowFinishConfirmModal(true),
+      onCloseFinishConfirm: () => org.setShowFinishConfirmModal(false),
       onGenerateNextRound: () => void org.generateNextMexicanoRound(),
       onChangeTournamentName: org.setLiveTournamentNameDraft,
       onChangeProposedCourts: org.setProposedCourts,

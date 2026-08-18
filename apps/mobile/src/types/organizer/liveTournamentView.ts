@@ -51,6 +51,7 @@ export interface LiveTournamentScoreState {
 
 export interface LiveTournamentSheetState {
   showEditConfirmModal: boolean;
+  showFinishConfirmModal: boolean;
   showLiveOptionsModal: boolean;
   showAdjustCourtsConfirmModal: boolean;
   showAddPendingPlayerModal: boolean;
@@ -83,6 +84,8 @@ export interface LiveTournamentActions {
   onViewLeaderboard: () => void;
   onRefresh: () => void;
   onFinishTournament: () => void;
+  onOpenFinishConfirm: () => void;
+  onCloseFinishConfirm: () => void;
   onOpenEditConfirm: () => void;
   onCloseEditConfirm: () => void;
   onConfirmEditGame: () => void;

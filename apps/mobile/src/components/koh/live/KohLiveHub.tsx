@@ -72,6 +72,7 @@ export function KohLiveHub(props: KohLiveHubProps) {
     <PageShell>
       <KohLiveCourtBody
         name={props.hub.config.name}
+        config={props.hub.config}
         ended={ended}
         court={court}
         courtCount={props.hub.courts.length}

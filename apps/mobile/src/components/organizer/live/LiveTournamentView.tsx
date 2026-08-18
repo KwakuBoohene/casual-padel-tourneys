@@ -1,11 +1,12 @@
 import * as Clipboard from "expo-clipboard";
-import { Fragment, useCallback, useEffect, useState, type ReactElement } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState, type ReactElement } from "react";
 import { ScrollView, View } from "react-native";
 
 import { layoutTokens, useBreakpoint } from "../../../layout";
 import { spacing } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 import type { LiveTournamentViewProps } from "../../../types/organizer/liveTournamentView";
+import { buildLiveTournamentConfigRows } from "../../../utilities/organizer/tournamentConfigSummary";
 
 import { LiveTournamentActions } from "./LiveTournamentActions";
 import { LiveTournamentHeader } from "./LiveTournamentHeader";
@@ -36,6 +37,11 @@ export function LiveTournamentView({ session, score, sheets, actions }: LiveTour
   const roundsCount = session.sortedRounds.length;
   const matches = session.displayedRound?.matches ?? [];
   const canSubmitScores = canEditScores && matches.length > 0;
+  const configRows = useMemo(
+    () => buildLiveTournamentConfigRows(session.tournament.config),
+    [session.tournament.config]
+  );
+  const allowEditAfterComplete = session.tournament.config.mode !== "MEXICANO";
 
   useEffect(() => {
     if (focusSubmitMatchId) onSubmitFocusHandled();
@@ -89,11 +95,12 @@ export function LiveTournamentView({ session, score, sheets, actions }: LiveTour
       generatingNextRound={Boolean(session.generatingNextRound)}
       isTournamentCompleted={session.isTournamentCompleted}
       isEditingCompletedTournament={session.isEditingCompletedTournament}
-      allowEditAfterComplete={session.tournament.config.mode !== "MEXICANO"}
+      allowEditAfterComplete={allowEditAfterComplete}
+      canFinish={Boolean(session.canFinishNight)}
       linkCopied={linkCopied}
       onSubmitRoundScores={() => void actions.onSubmitRoundScores()}
       onGenerateNextRound={() => void actions.onGenerateNextRound?.()}
-      onOpenEditConfirm={actions.onOpenEditConfirm}
+      onOpenFinishConfirm={actions.onOpenFinishConfirm}
       onSaveGameEdits={actions.onSaveGameEdits}
       onShare={() => void onCopyShareLink()}
       onViewLeaderboard={actions.onViewLeaderboard}
@@ -127,6 +134,8 @@ export function LiveTournamentView({ session, score, sheets, actions }: LiveTour
         score={score}
         sheets={sheets}
         actions={actions}
+        configRows={configRows}
+        allowEditAfterComplete={allowEditAfterComplete}
         onCopyShareLink={() => void onCopyShareLink()}
         linkCopied={linkCopied}
       />

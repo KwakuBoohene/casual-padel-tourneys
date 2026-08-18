@@ -9,12 +9,13 @@ interface LiveTournamentActionsProps {
   generatingNextRound: boolean;
   isTournamentCompleted: boolean;
   isEditingCompletedTournament: boolean;
+  canFinish: boolean;
   /** Americano can re-open edits after all rounds scored; Mexicano end-night is final. */
   allowEditAfterComplete?: boolean;
   linkCopied: boolean;
   onSubmitRoundScores: () => void;
   onGenerateNextRound: () => void;
-  onOpenEditConfirm: () => void;
+  onOpenFinishConfirm: () => void;
   onSaveGameEdits: () => void;
   onShare: () => void;
   onViewLeaderboard: () => void;
@@ -37,9 +38,9 @@ export function LiveTournamentActions(props: LiveTournamentActionsProps) {
     primaryLabel = "Save game edits";
     onPrimary = props.onSaveGameEdits;
     primaryDisabled = false;
-  } else if (props.isTournamentCompleted && allowEditAfterComplete) {
-    primaryLabel = "Edit game";
-    onPrimary = props.onOpenEditConfirm;
+  } else if (props.isTournamentCompleted && allowEditAfterComplete && props.canFinish) {
+    primaryLabel = "Finish tournament";
+    onPrimary = props.onOpenFinishConfirm;
     primaryDisabled = false;
   } else if (props.isTournamentCompleted) {
     primaryLabel = "View board";

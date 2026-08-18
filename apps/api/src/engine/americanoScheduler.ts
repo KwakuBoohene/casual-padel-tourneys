@@ -2,6 +2,7 @@ import { createId } from "@padel/shared";
 import type { FixedPair, Player, Round, TournamentConfig } from "@padel/shared";
 
 import { buildRound } from "./constraintSolver.js";
+import { createClassicPairingMatrices, seedClassicMatricesFromRounds } from "./pairingMatrices.js";
 import {
   generateTeamAmericano,
   recalculateTeamAmericanoRemaining
@@ -49,7 +50,7 @@ export function recalculateRemainingTournament(
   // Create working copies to avoid mutating originals during calculation
   const workingPlayers: Player[] = players.map((p) => ({ ...p }));
 
-  const regeneratedRounds = buildRounds(config, workingPlayers);
+  const regeneratedRounds = buildRounds(config, workingPlayers, lockedRounds);
 
   // Update original players with final gamesPlayed from working copies
   for (const player of players) {
@@ -87,10 +88,10 @@ function countGamesInRounds(playerId: string, rounds: Round[]): number {
   return count;
 }
 
-function buildRounds(config: TournamentConfig, players: Player[]): Round[] {
-  const teammateMatrix = new Map<string, number>();
-  const opponentMatrix = new Map<string, number>();
-  const coPlayerMatrix = new Map<string, number>();
+function buildRounds(config: TournamentConfig, players: Player[], seedRounds: Round[] = []): Round[] {
+  const matrices = createClassicPairingMatrices();
+  seedClassicMatricesFromRounds(seedRounds, matrices);
+  const { teammateMatrix, opponentMatrix, opponentTeamMatrix, coPlayerMatrix } = matrices;
   const rounds: Round[] = [];
 
   const totalRounds = getTotalRounds(config, players.length);
@@ -105,6 +106,7 @@ function buildRounds(config: TournamentConfig, players: Player[]): Round[] {
       players,
       teammateMatrix,
       opponentMatrix,
+      opponentTeamMatrix,
       coPlayerMatrix
     });
     for (const match of round.matches) {

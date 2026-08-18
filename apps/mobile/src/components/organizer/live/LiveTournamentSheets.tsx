@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import type { LiveTournamentViewProps } from "../../../types/organizer/liveTournamentView";
+import type { ConfigSummaryRow } from "../../../utilities/organizer/tournamentConfigSummary";
 
 import { LiveAdjustCourtsSheet } from "./LiveAdjustCourtsSheet";
 import { LiveRenamePlayersSheet } from "./LiveRenamePlayersSheet";
@@ -12,6 +13,8 @@ import {
 } from "./LiveTournamentPendingSheet";
 
 type LiveTournamentSheetsProps = LiveTournamentViewProps & {
+  configRows: ConfigSummaryRow[];
+  allowEditAfterComplete: boolean;
   onCopyShareLink: () => void;
   linkCopied: boolean;
 };
@@ -21,11 +24,12 @@ export function LiveTournamentSheets({
   score,
   sheets,
   actions,
+  configRows,
+  allowEditAfterComplete,
   onCopyShareLink,
   linkCopied
 }: LiveTournamentSheetsProps) {
   const [showAdjustCourtsSheet, setShowAdjustCourtsSheet] = useState(false);
-  const [showFinishConfirm, setShowFinishConfirm] = useState(false);
 
   return (
     <>
@@ -33,7 +37,7 @@ export function LiveTournamentSheets({
         showEditConfirmModal={sheets.showEditConfirmModal}
         showAdjustCourtsConfirmModal={sheets.showAdjustCourtsConfirmModal}
         showIntegrateConfirmModal={sheets.showIntegrateConfirmModal}
-        showFinishConfirmModal={showFinishConfirm}
+        showFinishConfirmModal={sheets.showFinishConfirmModal}
         isMexicano={session.tournament.config.mode === "MEXICANO"}
         currentCourts={session.currentCourts}
         proposedCourts={session.proposedCourts}
@@ -44,9 +48,9 @@ export function LiveTournamentSheets({
         onConfirmAdjustCourts={actions.onConfirmAdjustCourts}
         onCloseIntegrateConfirm={actions.onCloseIntegrateConfirm}
         onConfirmIntegratePendingPlayers={actions.onConfirmIntegratePendingPlayers}
-        onCloseFinishConfirm={() => setShowFinishConfirm(false)}
+        onCloseFinishConfirm={actions.onCloseFinishConfirm}
         onConfirmFinishTournament={() => {
-          setShowFinishConfirm(false);
+          actions.onCloseFinishConfirm();
           actions.onFinishTournament();
         }}
       />
@@ -55,13 +59,19 @@ export function LiveTournamentSheets({
         canAdjustCourts={session.canAdjustCourts}
         canFinish={session.canFinishNight ?? session.isTournamentCompleted}
         isMexicano={session.tournament.config.mode === "MEXICANO"}
+        isTournamentCompleted={session.isTournamentCompleted}
+        isEditingCompletedTournament={session.isEditingCompletedTournament}
+        allowEditAfterComplete={allowEditAfterComplete}
+        endedAt={session.tournament.endedAt}
+        configRows={configRows}
         linkCopied={linkCopied}
         onClose={actions.onCloseLiveOptions}
         onCopyShareLink={onCopyShareLink}
         onOpenRenamePlayers={actions.onOpenRenamePlayers}
         onOpenAdjustCourts={() => setShowAdjustCourtsSheet(true)}
         onOpenAddPendingPlayer={actions.onOpenAddPendingPlayer}
-        onOpenFinishConfirm={() => setShowFinishConfirm(true)}
+        onOpenEditGame={actions.onOpenEditConfirm}
+        onOpenFinishConfirm={actions.onOpenFinishConfirm}
         onBackToList={actions.onBackToList}
         contributeToCareerLeaderboard={session.tournament.config.contributeToCareerLeaderboard !== false}
         careerSaving={sheets.careerSaving}

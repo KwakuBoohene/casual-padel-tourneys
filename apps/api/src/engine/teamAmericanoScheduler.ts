@@ -2,6 +2,7 @@ import { createId } from "@padel/shared";
 import type { FixedPair, Match, Player, Round, TournamentConfig } from "@padel/shared";
 
 import { estimateTournament } from "./timeEstimator.js";
+import { seedTeamOpponentMatrixFromRounds, teamPairKey } from "./pairingMatrices.js";
 
 export interface TeamAmericanoScheduled {
   players: Player[];
@@ -38,7 +39,7 @@ export function recalculateTeamAmericanoRemaining(
   }
 
   const workingPlayers: Player[] = players.map((player) => ({ ...player }));
-  const regenerated = buildTeamAmericanoRounds(config, workingPlayers, pairs);
+  const regenerated = buildTeamAmericanoRounds(config, workingPlayers, pairs, lockedRounds);
 
   for (const player of players) {
     const working = workingPlayers.find((candidate) => candidate.id === player.id);
@@ -100,10 +101,18 @@ function materializeFixedPairs(config: TournamentConfig): {
 function buildTeamAmericanoRounds(
   config: TournamentConfig,
   players: Player[],
-  fixedPairs: FixedPair[]
+  fixedPairs: FixedPair[],
+  seedRounds: Round[] = []
 ): Round[] {
   const byId = new Map(players.map((player) => [player.id, player]));
-  const opponentMatrix = new Map<string, number>();
+  const pairIdByPlayerId = new Map<string, string>();
+  for (const pair of fixedPairs) {
+    pairIdByPlayerId.set(pair.playerAId, pair.id);
+    pairIdByPlayerId.set(pair.playerBId, pair.id);
+  }
+  const opponentMatrix = seedTeamOpponentMatrixFromRounds(seedRounds, (playerId) =>
+    pairIdByPlayerId.get(playerId)
+  );
   const rounds: Round[] = [];
   const totalRounds = getTotalRounds(config, players.length, fixedPairs.length);
   const courtsPerRound = getCourtsPerRound(config, totalRounds, players.length);
@@ -171,7 +180,7 @@ function selectPairsForRound(
   return selected;
 }
 
-/** Lowest total opponent-repeat cost among perfect matchings of an even pair list. */
+/** Prefer perfect matchings with no repeated pair-vs-pair opponents. */
 function bestPairMatchups(
   pairs: FixedPair[],
   opponentMatrix: Map<string, number>
@@ -181,13 +190,19 @@ function bestPairMatchups(
   }
   const byId = new Map(pairs.map((pair) => [pair.id, pair]));
   const ids = pairs.map((pair) => pair.id);
+  const allMatchings = enumeratePerfectMatchings(ids);
+  const noRematchMatchings = allMatchings.filter((matching) =>
+    matching.every(([a, b]) => (opponentMatrix.get(teamPairKey(a, b)) ?? 0) === 0)
+  );
+  const candidates = noRematchMatchings.length > 0 ? noRematchMatchings : allMatchings;
+
   let best: Array<[string, string]> | null = null;
   let bestCost = Number.POSITIVE_INFINITY;
 
-  for (const matching of enumeratePerfectMatchings(ids)) {
+  for (const matching of candidates) {
     let cost = 0;
     for (const [a, b] of matching) {
-      cost += opponentMatrix.get(pairKey(a, b)) ?? 0;
+      cost += opponentMatrix.get(teamPairKey(a, b)) ?? 0;
     }
     if (cost < bestCost) {
       bestCost = cost;
@@ -224,12 +239,12 @@ function pairGamesPlayed(pair: FixedPair, byId: Map<string, Player>): number {
 }
 
 function bumpOpponent(matrix: Map<string, number>, a: string, b: string): void {
-  const key = pairKey(a, b);
+  const key = teamPairKey(a, b);
   matrix.set(key, (matrix.get(key) ?? 0) + 1);
 }
 
 function pairKey(a: string, b: string): string {
-  return a < b ? `${a}|${b}` : `${b}|${a}`;
+  return teamPairKey(a, b);
 }
 
 function getTotalRounds(config: TournamentConfig, playerCount: number, teamCount: number): number {

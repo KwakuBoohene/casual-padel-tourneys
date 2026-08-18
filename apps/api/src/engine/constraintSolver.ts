@@ -1,6 +1,13 @@
 import { createId } from "@padel/shared";
 import type { Match, Player, Round } from "@padel/shared";
 
+import {
+  bumpClassicMatchMatrices,
+  createClassicPairingMatrices,
+  hasFacedOpponentTeam,
+  type ClassicPairingMatrices
+} from "./pairingMatrices.js";
+
 export interface BuildRoundInput {
   roundNumber: number;
   courts: number;
@@ -8,6 +15,7 @@ export interface BuildRoundInput {
   players: Player[];
   teammateMatrix: Map<string, number>;
   opponentMatrix: Map<string, number>;
+  opponentTeamMatrix: Map<string, number>;
   coPlayerMatrix: Map<string, number>;
 }
 
@@ -21,7 +29,13 @@ export function buildRound(input: BuildRoundInput): Round {
     if (group.length < 4) {
       break;
     }
-    const teams = bestTeams(group, input.variant, input.teammateMatrix, input.opponentMatrix);
+    const teams = bestTeams(
+      group,
+      input.variant,
+      input.teammateMatrix,
+      input.opponentMatrix,
+      input.opponentTeamMatrix
+    );
     const match: Match = {
       id: createId("match"),
       round: input.roundNumber,
@@ -31,7 +45,7 @@ export function buildRound(input: BuildRoundInput): Round {
       completed: false
     };
     matches.push(match);
-    bumpMatrices(match, input.teammateMatrix, input.opponentMatrix, input.coPlayerMatrix);
+    bumpClassicMatchMatrices(match, input);
   }
 
   return {
@@ -76,7 +90,8 @@ function bestTeams(
   players: Player[],
   variant: "CLASSIC" | "MIXED" | "TEAM",
   teammateMatrix: Map<string, number>,
-  opponentMatrix: Map<string, number>
+  opponentMatrix: Map<string, number>,
+  opponentTeamMatrix: Map<string, number>
 ): [string, string, string, string] {
   const ids = players.map((player) => player.id);
   const combos: [string, string, string, string][] = [
@@ -85,16 +100,24 @@ function bestTeams(
     [ids[0], ids[3], ids[1], ids[2]]
   ];
 
-  let best = combos[0];
+  const mixedValid = (candidate: [string, string, string, string]) =>
+    variant !== "MIXED" || isMixedValid(candidate, players);
+
+  const noRematch = combos.filter(
+    (candidate) =>
+      mixedValid(candidate) &&
+      !hasFacedOpponentTeam(opponentTeamMatrix, [candidate[0], candidate[1]], [candidate[2], candidate[3]])
+  );
+  const candidates = noRematch.length > 0 ? noRematch : combos.filter(mixedValid);
+
+  let best = candidates[0] ?? combos[0];
   let bestScore = Number.POSITIVE_INFINITY;
-  for (const candidate of combos) {
-    if (variant === "MIXED" && !isMixedValid(candidate, players)) {
-      continue;
-    }
+  for (const candidate of candidates) {
     const score =
       teammateCost(candidate[0], candidate[1], teammateMatrix) +
       teammateCost(candidate[2], candidate[3], teammateMatrix) +
-      opponentCost(candidate, opponentMatrix);
+      opponentCost(candidate, opponentMatrix) +
+      opponentTeamCost(candidate, opponentTeamMatrix);
     if (score < bestScore) {
       best = candidate;
       bestScore = score;
@@ -131,32 +154,28 @@ function opponentCost(candidate: [string, string, string, string], matrix: Map<s
   );
 }
 
-function bumpMatrices(
-  match: Match,
-  teammateMatrix: Map<string, number>,
-  opponentMatrix: Map<string, number>,
-  coPlayerMatrix: Map<string, number>
-): void {
-  bump(teammateMatrix, match.teamA[0], match.teamA[1]);
-  bump(teammateMatrix, match.teamB[0], match.teamB[1]);
-  const allPlayers = [...match.teamA, ...match.teamB];
-  for (let i = 0; i < allPlayers.length; i += 1) {
-    for (let j = i + 1; j < allPlayers.length; j += 1) {
-      bump(coPlayerMatrix, allPlayers[i], allPlayers[j]);
-    }
+function opponentTeamCost(
+  candidate: [string, string, string, string],
+  matrix: Map<string, number>
+): number {
+  const teamA: [string, string] = [candidate[0], candidate[1]];
+  const teamB: [string, string] = [candidate[2], candidate[3]];
+  let cost = 0;
+  for (const playerId of teamA) {
+    cost += matrix.get(playerOpponentTeamKey(playerId, teamB[0], teamB[1])) ?? 0;
   }
-  for (const playerA of match.teamA) {
-    for (const playerB of match.teamB) {
-      bump(opponentMatrix, playerA, playerB);
-    }
+  for (const playerId of teamB) {
+    cost += matrix.get(playerOpponentTeamKey(playerId, teamA[0], teamA[1])) ?? 0;
   }
+  return cost;
 }
 
-function bump(matrix: Map<string, number>, a: string, b: string): void {
-  const key = pairKey(a, b);
-  matrix.set(key, (matrix.get(key) ?? 0) + 1);
+function playerOpponentTeamKey(playerId: string, oppA: string, oppB: string): string {
+  return `${playerId}|${[oppA, oppB].sort().join(":")}`;
 }
 
 function pairKey(a: string, b: string): string {
   return [a, b].sort().join(":");
 }
+
+export { createClassicPairingMatrices, type ClassicPairingMatrices } from "./pairingMatrices.js";

@@ -221,10 +221,45 @@ test("estimateTournament ROUND_ROBIN mode - 16 players", () => {
 
   const result = estimateTournament(config);
 
-  // ROUND_ROBIN: rounds = 16 - 1 = 15
-  // matchTime for 32 points = (32 * 35) / 60 = 18.67
-  assert.equal(result.rounds, 15);
-  assert.equal(result.durationMinutes, Math.ceil(15 * matchTimeMinutes(32)));
+  // ROUND_ROBIN plays every partnership once: C(16,2) / 2 = 60 matches.
+  // Only 3 courts run at a time (the field could fill 4), so 60 / 3 = 20 rounds.
+  assert.equal(result.rounds, 20);
+  assert.equal(result.gamesPerPlayer, 15);
+  assert.equal(result.durationMinutes, Math.ceil(20 * matchTimeMinutes(32)));
+});
+
+test("estimateTournament ROUND_ROBIN needs more rounds when courts are scarce", () => {
+  const base: TournamentConfig = {
+    name: "Test",
+    mode: "AMERICANO",
+    variant: "CLASSIC",
+    schedulingMode: "ROUND_ROBIN",
+    players: Array.from({ length: 16 }, (_, i) => ({ name: `P${i + 1}` })),
+    courts: 4,
+    pointsPerMatch: 32
+  };
+
+  // 60 matches either way; fewer courts just stretches them over more rounds.
+  assert.equal(estimateTournament(base).rounds, 15);
+  assert.equal(estimateTournament({ ...base, courts: 2 }).rounds, 30);
+  assert.equal(estimateTournament({ ...base, courts: 1 }).rounds, 60);
+});
+
+test("estimateTournament ROUND_ROBIN counts pair matchups for TEAM variant", () => {
+  const config: TournamentConfig = {
+    name: "Team RR",
+    mode: "AMERICANO",
+    variant: "TEAM",
+    schedulingMode: "ROUND_ROBIN",
+    players: Array.from({ length: 16 }, (_, i) => ({ name: `P${i + 1}` })),
+    courts: 2,
+    pointsPerMatch: 24
+  };
+
+  // 8 teams => C(8,2) = 28 matchups over 2 courts = 14 rounds, 7 games per team.
+  const result = estimateTournament(config);
+  assert.equal(result.rounds, 14);
+  assert.equal(result.gamesPerPlayer, 7);
 });
 
 // ============================================================================

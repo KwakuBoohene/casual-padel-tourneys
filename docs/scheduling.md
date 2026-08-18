@@ -19,22 +19,50 @@ Secondary objective: reduce repeated teammates and opponents while balancing res
 - exactly four players assigned per court
 - player appears at most once per round
 - respect court count and game limits
-- **never repeat the same opponent team** (classic: the pair on the other side; team Americano: the same fixed pair) when any valid alternative exists
-- when recalculating remaining rounds, seed pairing matrices from locked rounds before generating new matchups
+- **never repeat the same opponent team** (classic: the pair on the other side; team Americano: the
+  same fixed pair). This is Americano's core promise and applies to every scheduling mode. Only
+  Mexicano, which ladders by standings, may repeat a matchup.
+- when recalculating remaining rounds, seed pairing history from locked rounds before generating
 
 ## Soft Constraints
 
 - minimize repeated teammate pairings
+- minimize repeated individual opponents
 - balance sit-outs when players exceed `courts * 4`
+
+## Schedule Length
+
+Length is driven by how many distinct matchups exist, never by player count alone. Courts only
+control how many of those matchups run in parallel — fewer courts means more rounds, not fewer
+matches. See `scheduleMath.ts`.
+
+| Mode | Team Americano (`t` teams) | Classic Americano (`n` players) |
+| --- | --- | --- |
+| `ROUND_ROBIN` | all `C(t,2)` matchups | every partnership once: `C(n,2) / 2` matches |
+| `TARGET_GAMES` | `t * target / 2`, capped at `C(t,2)` | `n * target / 4`, target capped at `C(n-1,2)` |
+| `TOTAL_TIME` | rounds from the time estimate, capped at capacity | same, capped at capacity |
+
+`matchesPerRound = min(courts, floor(t / 2))` for team play and `min(courts, floor(n / 4))` for
+classic. Targets are capped at capacity so a long event stops rather than forcing a rematch.
+
+## Matchup Selection
+
+- **Team Americano** plans the whole event upfront as an ordered matchup list using the circle
+  ("Berger table") rotation, so every pair meets exactly once and any prefix of the list stays
+  balanced. Rounds are then packed from that list, so a rematch is structurally impossible.
+- **Classic Americano** fills each round court by court with a backtracking search. Splits that
+  would repeat an opponent team are rejected outright; the search backtracks instead of settling
+  for the cheapest rematch, and relaxes the rule only if the field offers no alternative.
 
 ## Round Generation Strategy
 
 1. Sort players by `effectiveGames` ascending where `effectiveGames = gamesPlayed + (handicap ?? 0)`.
-2. Select the active player pool for this round.
-3. Split into groups of 4.
-4. Evaluate team combinations; prefer splits with no prior opponent-team history, then lowest repeat cost.
-5. Update teammate/opponent/opponent-team matrices.
-6. Repeat for all rounds derived from estimate.
+2. Anchor each court on the lowest-games player still free this round.
+3. Enumerate quadruples from nearby players and all three ways to split each into two teams.
+4. Discard splits that repeat an opponent team, then rank the rest by games balance, teammate
+   repeats, individual opponent repeats, and co-play diversity.
+5. Recurse to the next court, backtracking when a choice leaves no legal split behind.
+6. Update teammate/opponent/opponent-team matrices and repeat for all planned rounds.
 
 ## Handicap System
 
@@ -53,7 +81,7 @@ shape as Team Mexicano). Partners never split.
 - Create with `teams[]` (min **2** pairs). Players are flattened for scoring / career credit.
 - Schedule is generated upfront like Classic Americano (`TARGET_GAMES` / `TOTAL_TIME` /
   `ROUND_ROBIN`), but selection units are **pairs**: each court is pair vs pair.
-- Soft goals: balance games across pairs and minimize repeated pair matchups.
+- A pair never faces the same pair twice; `ROUND_ROBIN` plays all `C(t,2)` matchups.
 - Unlike Team Mexicano, later rounds are **not** laddered from standings.
 
 ## Fairness Validation
@@ -62,9 +90,13 @@ Simulation test runs 1,000 tournaments and checks:
 
 - `maxGamesPlayed - minGamesPlayed <= 1` (normal scenarios)
 - With integrated players: tolerances vary based on integration size:
-  - 2 players integrated: `maxGamesDelta <= 1`
+  - 2 players integrated: `maxGamesDelta <= 2` (their handicap costs them the first round back)
   - 4+ players or multiple waves: `maxGamesDelta <= 3-4`
   - Edge cases with high handicaps: `maxGamesDelta <= 5`
+
+`tests/engine/americanoNoRematch.test.ts` additionally asserts, across team counts, player counts,
+court counts, and every scheduling mode, that no player ever faces the same opponent team twice and
+that `ROUND_ROBIN` really does schedule every matchup.
 
 ## Mid-Tournament Changes
 

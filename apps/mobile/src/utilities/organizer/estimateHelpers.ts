@@ -1,12 +1,33 @@
 import type { Estimate, LiveTournamentState } from "../../types/organizer/tournament";
-import type { ScoringMode } from "@padel/shared";
+import type { ScoringMode, TournamentVariant } from "@padel/shared";
 
 import { americanoMatchTimeMinutes, regularMatchTimeMinutes } from "./matchDuration";
+
+/**
+ * Round robin length is set by how many matchups exist, not by player count. Keep in sync with
+ * the API's `roundRobinRounds` so the estimate matches the schedule that gets generated.
+ */
+export function roundRobinRounds(input: {
+  playersCount: number;
+  courts: number;
+  variant: TournamentVariant;
+}): number {
+  if (input.variant === "TEAM") {
+    const teams = Math.floor(input.playersCount / 2);
+    const matchesPerRound = Math.max(1, Math.min(input.courts, Math.floor(teams / 2)));
+    const totalMatches = teams < 2 ? 1 : (teams * (teams - 1)) / 2;
+    return Math.max(1, Math.ceil(totalMatches / matchesPerRound));
+  }
+  const matchesPerRound = Math.max(1, Math.min(input.courts, Math.floor(input.playersCount / 4)));
+  const partnerships = input.playersCount < 2 ? 2 : (input.playersCount * (input.playersCount - 1)) / 2;
+  return Math.max(1, Math.ceil(Math.ceil(partnerships / 2) / matchesPerRound));
+}
 
 export function computeEstimate(input: {
   courtsText: string;
   pointsText: string;
   mode: "AMERICANO" | "MEXICANO";
+  variant?: TournamentVariant;
   schedulingMode: "TARGET_GAMES" | "TOTAL_TIME" | "ROUND_ROBIN";
   targetGamesText: string;
   tournamentTimeText: string;
@@ -44,7 +65,11 @@ export function computeEstimate(input: {
 
   let rounds = 0;
   if (input.schedulingMode === "ROUND_ROBIN") {
-    rounds = Math.max(1, input.playersCount - 1);
+    rounds = roundRobinRounds({
+      playersCount: input.playersCount,
+      courts,
+      variant: input.variant ?? "CLASSIC"
+    });
   } else if (input.schedulingMode === "TARGET_GAMES") {
     const targetGames = Number(input.targetGamesText);
     if (!Number.isFinite(targetGames) || !Number.isInteger(targetGames) || targetGames < 1) {

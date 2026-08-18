@@ -41,6 +41,7 @@ export function useCreateTournament({
   const roster = usePlayerRoster({ mode, variant, tournaments, suggestedPlayerNames });
   const settings = useMatchSettings({
     mode,
+    variant,
     effectiveSchedulingMode,
     playersCount: roster.sanitizedPlayers.length
   });

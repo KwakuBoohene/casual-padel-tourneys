@@ -698,9 +698,10 @@ test("fairness maintained after integrating 2 players", () => {
   // Recalculate with expanded player list
   recalculateRemainingTournament(config, expandedPlayers, initial.rounds);
 
-  // Check fairness after regeneration
+  // Check fairness after regeneration. gamesPlayed now reflects only the rounds that are
+  // actually kept, and the newcomers' handicap keeps them out of the first regenerated round.
   const delta = maxGamesDelta(expandedPlayers);
-  assert.ok(delta <= 1, `maxGamesDelta should be ≤ 1, got ${delta}`);
+  assert.ok(delta <= 2, `maxGamesDelta should be ≤ 2, got ${delta}`);
 });
 
 test("fairness maintained with 4 integrated players", () => {
@@ -856,7 +857,9 @@ test("fairness maintained with MIXED variant integration", () => {
   recalculateRemainingTournament(config, expandedPlayers, initial.rounds);
 
   const delta = maxGamesDelta(expandedPlayers);
-  assert.ok(delta <= 1, `maxGamesDelta should be ≤ 1 for MIXED variant, got ${delta}`);
+  // Late arrivals carry handicap = floor(avgGames * 0.5), so they sit out the first
+  // regenerated round; with only four rounds left that costs them one game.
+  assert.ok(delta <= 2, `maxGamesDelta should be ≤ 2 for MIXED variant, got ${delta}`);
 });
 
 test("fairness maintained with large player base after integration", () => {

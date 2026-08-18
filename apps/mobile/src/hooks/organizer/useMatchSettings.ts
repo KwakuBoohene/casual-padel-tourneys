@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { SchedulingMode, ScoringMode, TournamentMode } from "@padel/shared";
+import type { SchedulingMode, ScoringMode, TournamentMode, TournamentVariant } from "@padel/shared";
 
 import { computeEstimate } from "../../utilities/organizer/utils";
 import { sanitizeWholeNumberInput } from "../../utilities/organizer/sanitizeInput";
@@ -8,11 +8,17 @@ import { useScoringModeSettings } from "./useScoringModeSettings";
 
 export interface UseMatchSettingsParams {
   mode: TournamentMode;
+  variant: TournamentVariant;
   effectiveSchedulingMode: SchedulingMode;
   playersCount: number;
 }
 
-export function useMatchSettings({ mode, effectiveSchedulingMode, playersCount }: UseMatchSettingsParams) {
+export function useMatchSettings({
+  mode,
+  variant,
+  effectiveSchedulingMode,
+  playersCount
+}: UseMatchSettingsParams) {
   const [courtsText, setCourtsText] = useState("2");
   const [pointsText, setPointsText] = useState("24");
   const [targetGamesText, setTargetGamesText] = useState("4");
@@ -28,6 +34,7 @@ export function useMatchSettings({ mode, effectiveSchedulingMode, playersCount }
             courtsText,
             pointsText,
             mode,
+            variant,
             schedulingMode: effectiveSchedulingMode,
             targetGamesText,
             tournamentTimeText,
@@ -44,7 +51,8 @@ export function useMatchSettings({ mode, effectiveSchedulingMode, playersCount }
       scoring.scoringMode,
       scoring.setsToWin,
       targetGamesText,
-      tournamentTimeText
+      tournamentTimeText,
+      variant
     ]
   );
 

@@ -1,8 +1,8 @@
 import { createId } from "@padel/shared";
 import type { FixedPair, Match, Player, Round, TournamentConfig } from "@padel/shared";
 
-import { estimateTournament } from "./timeEstimator.js";
 import { seedTeamOpponentMatrixFromRounds, teamPairKey } from "./pairingMatrices.js";
+import { courtsPerRound, teamScheduleShape } from "./scheduleMath.js";
 
 export interface TeamAmericanoScheduled {
   players: Player[];
@@ -39,7 +39,8 @@ export function recalculateTeamAmericanoRemaining(
   }
 
   const workingPlayers: Player[] = players.map((player) => ({ ...player }));
-  const regenerated = buildTeamAmericanoRounds(config, workingPlayers, pairs, lockedRounds);
+  const lockedMatches = lockedRounds.reduce((sum, round) => sum + round.matches.length, 0);
+  const unlockedRounds = buildTeamAmericanoRounds(config, workingPlayers, pairs, lockedRounds, lockedMatches);
 
   for (const player of players) {
     const working = workingPlayers.find((candidate) => candidate.id === player.id);
@@ -48,9 +49,6 @@ export function recalculateTeamAmericanoRemaining(
     }
   }
 
-  const totalRoundsNeeded = getTotalRounds(config, players.length, pairs.length);
-  const unlockedRoundsNeeded = Math.max(0, totalRoundsNeeded - lockedRounds.length);
-  const unlockedRounds = regenerated.slice(0, unlockedRoundsNeeded);
   const startingRoundNumber = lockedRounds.length + 1;
   for (let i = 0; i < unlockedRounds.length; i += 1) {
     unlockedRounds[i].roundNumber = startingRoundNumber + i;
@@ -98,38 +96,64 @@ function materializeFixedPairs(config: TournamentConfig): {
   return { players, fixedPairs };
 }
 
+/**
+ * The whole event is planned as a list of distinct matchups first (circle method, so every pair
+ * meets exactly once and in a balanced order), then packed into rounds a court at a time. Because
+ * the plan only ever contains unplayed matchups, a rematch is structurally impossible.
+ */
 function buildTeamAmericanoRounds(
   config: TournamentConfig,
   players: Player[],
   fixedPairs: FixedPair[],
-  seedRounds: Round[] = []
+  seedRounds: Round[] = [],
+  alreadyScheduledMatches = 0
 ): Round[] {
   const byId = new Map(players.map((player) => [player.id, player]));
+  const pairById = new Map(fixedPairs.map((pair) => [pair.id, pair]));
   const pairIdByPlayerId = new Map<string, string>();
   for (const pair of fixedPairs) {
     pairIdByPlayerId.set(pair.playerAId, pair.id);
     pairIdByPlayerId.set(pair.playerBId, pair.id);
   }
-  const opponentMatrix = seedTeamOpponentMatrixFromRounds(seedRounds, (playerId) =>
+  const played = seedTeamOpponentMatrixFromRounds(seedRounds, (playerId) =>
     pairIdByPlayerId.get(playerId)
   );
-  const rounds: Round[] = [];
-  const totalRounds = getTotalRounds(config, players.length, fixedPairs.length);
-  const courtsPerRound = getCourtsPerRound(config, totalRounds, players.length);
 
-  for (let roundNumber = 1; roundNumber <= totalRounds; roundNumber += 1) {
-    const courtsThisRound = courtsPerRound[roundNumber - 1] ?? config.courts;
-    const matchSlots = Math.min(courtsThisRound, Math.floor(fixedPairs.length / 2));
-    const selected = selectPairsForRound(fixedPairs, byId, matchSlots * 2);
-    const pairings = bestPairMatchups(selected, opponentMatrix);
-    const matches: Match[] = pairings.map((pairing, index) => {
-      bumpOpponent(opponentMatrix, pairing[0].id, pairing[1].id);
+  const shape = teamScheduleShape(config, fixedPairs.length);
+  const wanted = Math.max(0, shape.totalMatches - alreadyScheduledMatches);
+  const plan = circleMatchupOrder(fixedPairs.map((pair) => pair.id))
+    .filter((matchup) => (played.get(teamPairKey(matchup[0], matchup[1])) ?? 0) === 0)
+    .slice(0, wanted);
+
+  const rounds: Round[] = [];
+  let roundNumber = 1;
+  while (plan.length > 0) {
+    const used = new Set<string>();
+    const picked: Array<[string, string]> = [];
+    for (let index = 0; index < plan.length && picked.length < shape.matchesPerRound; index += 1) {
+      const [a, b] = plan[index];
+      if (used.has(a) || used.has(b)) {
+        continue;
+      }
+      used.add(a);
+      used.add(b);
+      picked.push(plan[index]);
+      plan.splice(index, 1);
+      index -= 1;
+    }
+    if (picked.length === 0) {
+      break;
+    }
+
+    const matches: Match[] = picked.map(([a, b], index) => {
+      const pairA = pairById.get(a)!;
+      const pairB = pairById.get(b)!;
       return {
         id: createId("match"),
         round: roundNumber,
         court: index + 1,
-        teamA: [pairing[0].playerAId, pairing[0].playerBId],
-        teamB: [pairing[1].playerAId, pairing[1].playerBId],
+        teamA: [pairA.playerAId, pairA.playerBId],
+        teamB: [pairB.playerAId, pairB.playerBId],
         completed: false
       };
     });
@@ -143,137 +167,41 @@ function buildTeamAmericanoRounds(
       }
     }
 
-    rounds.push({
-      id: createId("round"),
-      roundNumber,
-      matches,
-      isLocked: false
-    });
+    rounds.push({ id: createId("round"), roundNumber, matches, isLocked: false });
+    roundNumber += 1;
   }
 
   return rounds;
 }
 
-function selectPairsForRound(
-  fixedPairs: FixedPair[],
-  byId: Map<string, Player>,
-  count: number
-): FixedPair[] {
-  const remaining = [...fixedPairs];
-  const selected: FixedPair[] = [];
+/**
+ * Circle ("Berger table") rotation: one full pass over the list gives every pair exactly once,
+ * grouped so each rotation step covers every team. Taking a prefix therefore stays balanced.
+ */
+function circleMatchupOrder(pairIds: string[]): Array<[string, string]> {
+  const wheel = [...pairIds];
+  const bye = "__bye__";
+  if (wheel.length % 2 !== 0) {
+    wheel.push(bye);
+  }
+  const size = wheel.length;
+  const matchups: Array<[string, string]> = [];
+  if (size < 2) {
+    return matchups;
+  }
 
-  while (selected.length < count && remaining.length > 0) {
-    let bestIndex = 0;
-    let bestScore = Number.POSITIVE_INFINITY;
-    for (let index = 0; index < remaining.length; index += 1) {
-      const candidate = remaining[index];
-      const games = pairGamesPlayed(candidate, byId);
-      const score = games * 100 + index;
-      if (score < bestScore) {
-        bestScore = score;
-        bestIndex = index;
+  for (let step = 0; step < size - 1; step += 1) {
+    for (let slot = 0; slot < size / 2; slot += 1) {
+      const home = wheel[slot];
+      const away = wheel[size - 1 - slot];
+      if (home !== bye && away !== bye) {
+        matchups.push([home, away]);
       }
     }
-    const [chosen] = remaining.splice(bestIndex, 1);
-    selected.push(chosen);
+    // Rotate everything except the first entry.
+    wheel.splice(1, 0, wheel.pop()!);
   }
-  return selected;
-}
-
-/** Prefer perfect matchings with no repeated pair-vs-pair opponents. */
-function bestPairMatchups(
-  pairs: FixedPair[],
-  opponentMatrix: Map<string, number>
-): Array<[FixedPair, FixedPair]> {
-  if (pairs.length < 2) {
-    return [];
-  }
-  const byId = new Map(pairs.map((pair) => [pair.id, pair]));
-  const ids = pairs.map((pair) => pair.id);
-  const allMatchings = enumeratePerfectMatchings(ids);
-  const noRematchMatchings = allMatchings.filter((matching) =>
-    matching.every(([a, b]) => (opponentMatrix.get(teamPairKey(a, b)) ?? 0) === 0)
-  );
-  const candidates = noRematchMatchings.length > 0 ? noRematchMatchings : allMatchings;
-
-  let best: Array<[string, string]> | null = null;
-  let bestCost = Number.POSITIVE_INFINITY;
-
-  for (const matching of candidates) {
-    let cost = 0;
-    for (const [a, b] of matching) {
-      cost += opponentMatrix.get(teamPairKey(a, b)) ?? 0;
-    }
-    if (cost < bestCost) {
-      bestCost = cost;
-      best = matching;
-    }
-  }
-
-  return (best ?? []).map(([a, b]) => [byId.get(a)!, byId.get(b)!]);
-}
-
-function enumeratePerfectMatchings(ids: string[]): Array<Array<[string, string]>> {
-  if (ids.length === 0) {
-    return [[]];
-  }
-  if (ids.length % 2 !== 0) {
-    return enumeratePerfectMatchings(ids.slice(0, ids.length - 1));
-  }
-  const [first, ...rest] = ids;
-  const results: Array<Array<[string, string]>> = [];
-  for (let i = 0; i < rest.length; i += 1) {
-    const partner = rest[i];
-    const remaining = [...rest.slice(0, i), ...rest.slice(i + 1)];
-    for (const matching of enumeratePerfectMatchings(remaining)) {
-      results.push([[first, partner], ...matching]);
-    }
-  }
-  return results;
-}
-
-function pairGamesPlayed(pair: FixedPair, byId: Map<string, Player>): number {
-  const a = byId.get(pair.playerAId)?.gamesPlayed ?? 0;
-  const b = byId.get(pair.playerBId)?.gamesPlayed ?? 0;
-  return Math.max(a, b);
-}
-
-function bumpOpponent(matrix: Map<string, number>, a: string, b: string): void {
-  const key = teamPairKey(a, b);
-  matrix.set(key, (matrix.get(key) ?? 0) + 1);
-}
-
-function pairKey(a: string, b: string): string {
-  return teamPairKey(a, b);
-}
-
-function getTotalRounds(config: TournamentConfig, playerCount: number, teamCount: number): number {
-  if (config.schedulingMode === "ROUND_ROBIN") {
-    return Math.max(1, teamCount - 1);
-  }
-  if (config.schedulingMode === "TARGET_GAMES") {
-    const totalMatchesNeeded = Math.ceil((playerCount * (config.targetGamesPerPlayer ?? 4)) / 4);
-    return Math.max(1, Math.ceil(totalMatchesNeeded / config.courts));
-  }
-  return estimateTournament(config).rounds;
-}
-
-function getCourtsPerRound(
-  config: TournamentConfig,
-  totalRounds: number,
-  playerCount: number
-): number[] {
-  if (config.schedulingMode !== "TARGET_GAMES") {
-    return Array(totalRounds).fill(config.courts);
-  }
-  const totalMatchesNeeded = Math.ceil((playerCount * (config.targetGamesPerPlayer ?? 4)) / 4);
-  const result: number[] = [];
-  for (let r = 0; r < totalRounds; r += 1) {
-    const matchesSoFar = r * config.courts;
-    const matchesLeft = totalMatchesNeeded - matchesSoFar;
-    result.push(r < totalRounds - 1 ? config.courts : Math.max(1, Math.min(config.courts, matchesLeft)));
-  }
-  return result;
+  return matchups;
 }
 
 function countGamesInRounds(playerId: string, rounds: Round[]): number {

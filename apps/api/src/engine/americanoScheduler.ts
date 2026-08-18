@@ -3,11 +3,11 @@ import type { FixedPair, Player, Round, TournamentConfig } from "@padel/shared";
 
 import { buildRound } from "./constraintSolver.js";
 import { createClassicPairingMatrices, seedClassicMatricesFromRounds } from "./pairingMatrices.js";
+import { classicScheduleShape, courtsPerRound } from "./scheduleMath.js";
 import {
   generateTeamAmericano,
   recalculateTeamAmericanoRemaining
 } from "./teamAmericanoScheduler.js";
-import { estimateTournament } from "./timeEstimator.js";
 
 export interface ScheduledTournament {
   players: Player[];
@@ -50,7 +50,11 @@ export function recalculateRemainingTournament(
   // Create working copies to avoid mutating originals during calculation
   const workingPlayers: Player[] = players.map((p) => ({ ...p }));
 
-  const regeneratedRounds = buildRounds(config, workingPlayers, lockedRounds);
+  // Generate exactly the rounds that will be kept, otherwise gamesPlayed counts
+  // rounds that get discarded and fairness decisions drift.
+  const totalRoundsNeeded = getTotalRounds(config, players.length);
+  const unlockedRoundsNeeded = Math.max(0, totalRoundsNeeded - lockedRounds.length);
+  const unlockedRounds = buildRounds(config, workingPlayers, lockedRounds, unlockedRoundsNeeded);
 
   // Update original players with final gamesPlayed from working copies
   for (const player of players) {
@@ -59,13 +63,6 @@ export function recalculateRemainingTournament(
       player.gamesPlayed = workingPlayer.gamesPlayed;
     }
   }
-
-  // Keep locked rounds as-is, replace everything else with regenerated rounds
-  // buildRounds generates a complete tournament, but we already have locked rounds
-  // So we only need (totalRounds - lockedRounds.length) regenerated rounds
-  const totalRoundsNeeded = getTotalRounds(config, players.length);
-  const unlockedRoundsNeeded = totalRoundsNeeded - lockedRounds.length;
-  const unlockedRounds = regeneratedRounds.slice(0, unlockedRoundsNeeded);
 
   // Update round numbers to continue from where locked rounds left off
   const startingRoundNumber = lockedRounds.length + 1;
@@ -88,20 +85,26 @@ function countGamesInRounds(playerId: string, rounds: Round[]): number {
   return count;
 }
 
-function buildRounds(config: TournamentConfig, players: Player[], seedRounds: Round[] = []): Round[] {
+function buildRounds(
+  config: TournamentConfig,
+  players: Player[],
+  seedRounds: Round[] = [],
+  roundLimit?: number
+): Round[] {
   const matrices = createClassicPairingMatrices();
   seedClassicMatricesFromRounds(seedRounds, matrices);
   const { teammateMatrix, opponentMatrix, opponentTeamMatrix, coPlayerMatrix } = matrices;
   const rounds: Round[] = [];
 
-  const totalRounds = getTotalRounds(config, players.length);
-  const courtsPerRound = getCourtsPerRound(config, totalRounds, players.length);
+  const shape = classicScheduleShape(config, players.length);
+  const roundsToBuild = Math.min(shape.totalRounds, roundLimit ?? shape.totalRounds);
+  // Take the tail of the plan so a short final round stays last when regenerating a remainder.
+  const courts = courtsPerRound(shape).slice(shape.totalRounds - roundsToBuild);
 
-  for (let roundNumber = 1; roundNumber <= totalRounds; roundNumber += 1) {
-    const courtsThisRound = courtsPerRound[roundNumber - 1] ?? config.courts;
+  for (let roundNumber = 1; roundNumber <= roundsToBuild; roundNumber += 1) {
     const round = buildRound({
       roundNumber,
-      courts: courtsThisRound,
+      courts: courts[roundNumber - 1] ?? shape.matchesPerRound,
       variant: config.variant,
       players,
       teammateMatrix,
@@ -109,6 +112,9 @@ function buildRounds(config: TournamentConfig, players: Player[], seedRounds: Ro
       opponentTeamMatrix,
       coPlayerMatrix
     });
+    if (round.matches.length === 0) {
+      break;
+    }
     for (const match of round.matches) {
       const allPlayers = [...match.teamA, ...match.teamB];
       for (const playerId of allPlayers) {
@@ -125,27 +131,5 @@ function buildRounds(config: TournamentConfig, players: Player[], seedRounds: Ro
 }
 
 function getTotalRounds(config: TournamentConfig, actualPlayerCount: number): number {
-  if (config.schedulingMode === "TARGET_GAMES") {
-    const totalMatchesNeeded = Math.ceil((actualPlayerCount * (config.targetGamesPerPlayer ?? 4)) / 4);
-    return Math.max(1, Math.ceil(totalMatchesNeeded / config.courts));
-  }
-  return estimateTournament(config).rounds;
-}
-
-function getCourtsPerRound(
-  config: TournamentConfig,
-  totalRounds: number,
-  actualPlayerCount: number
-): number[] {
-  if (config.schedulingMode !== "TARGET_GAMES") {
-    return Array(totalRounds).fill(config.courts);
-  }
-  const totalMatchesNeeded = Math.ceil((actualPlayerCount * (config.targetGamesPerPlayer ?? 4)) / 4);
-  const result: number[] = [];
-  for (let r = 0; r < totalRounds; r++) {
-    const matchesSoFar = r * config.courts;
-    const matchesLeft = totalMatchesNeeded - matchesSoFar;
-    result.push(r < totalRounds - 1 ? config.courts : Math.max(1, Math.min(config.courts, matchesLeft)));
-  }
-  return result;
+  return classicScheduleShape(config, actualPlayerCount).totalRounds;
 }

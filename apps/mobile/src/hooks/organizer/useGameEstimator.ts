@@ -28,6 +28,7 @@ export function useGameEstimator() {
             courtsText: estimatorCourtsText,
             pointsText: estimatorPointsText,
             mode: estimatorMode,
+            variant: estimatorVariant,
             schedulingMode: effectiveEstimatorSchedulingMode,
             targetGamesText: estimatorTargetGamesText,
             tournamentTimeText: estimatorTournamentTimeText,
@@ -44,7 +45,8 @@ export function useGameEstimator() {
       estimatorSetsToWin,
       estimatorTargetGamesText,
       estimatorTournamentTimeText,
-      estimatorUsers
+      estimatorUsers,
+      estimatorVariant
     ]
   );
 

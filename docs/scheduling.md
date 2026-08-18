@@ -84,6 +84,30 @@ shape as Team Mexicano). Partners never split.
 - A pair never faces the same pair twice; `ROUND_ROBIN` plays all `C(t,2)` matchups.
 - Unlike Team Mexicano, later rounds are **not** laddered from standings.
 
+## Mexicano (laddered)
+
+Mexicano generates one round at a time: round 1 is a lottery, every later round is built from the
+table after the previous round is scored. Court `i` plays ranks `1+3 vs 2+4` (classic/mixed) or
+rank `2i-1 vs 2i` (team, where the units are fixed pairs). Repeat matchups are allowed here — the
+ladder, not opponent variety, is the point.
+
+When the field is bigger than the courts can hold, entry order is **rest first, table second**:
+
+1. Sort every unit by `gamesPlayed` ascending.
+2. Break ties by table position (points descending).
+3. Take the first `courts * 4` players (or `courts * 2` pairs); the rest sit out and get priority
+   next round.
+4. Re-sort the chosen units by table position and lay them on the courts with the ladder above.
+
+For 16 players on 2 courts this runs the night in halves: rounds 1 and 2 cover everyone once,
+then — with games level again — round 3 is the eight best and round 4 the eight worst, so everyone
+has two games after round 4. Games played never drift more than one apart, and nobody sits out two
+rounds in a row while others keep playing. When the field exactly fills the courts, step 1 is a
+no-op and this reduces to the plain standings ladder.
+
+`tests/engine/mexicanoRotation.test.ts` covers the halves behaviour, the games-played spread across
+oversubscribed fields, and partner integrity for Team Mexicano.
+
 ## Fairness Validation
 
 Simulation test runs 1,000 tournaments and checks:

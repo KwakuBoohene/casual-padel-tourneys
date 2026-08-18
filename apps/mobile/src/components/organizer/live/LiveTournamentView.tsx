@@ -42,6 +42,8 @@ export function LiveTournamentView({ session, score, sheets, actions }: LiveTour
     [session.tournament.config]
   );
   const allowEditAfterComplete = session.tournament.config.mode !== "MEXICANO";
+  const rotatesRestingPlayers =
+    session.tournament.players.length > session.tournament.config.courts * 4;
 
   useEffect(() => {
     if (focusSubmitMatchId) onSubmitFocusHandled();
@@ -93,6 +95,7 @@ export function LiveTournamentView({ session, score, sheets, actions }: LiveTour
       canSubmitScores={canSubmitScores}
       canGenerateNextRound={Boolean(session.canGenerateNextRound)}
       generatingNextRound={Boolean(session.generatingNextRound)}
+      rotatesRestingPlayers={rotatesRestingPlayers}
       isTournamentCompleted={session.isTournamentCompleted}
       isEditingCompletedTournament={session.isEditingCompletedTournament}
       allowEditAfterComplete={allowEditAfterComplete}

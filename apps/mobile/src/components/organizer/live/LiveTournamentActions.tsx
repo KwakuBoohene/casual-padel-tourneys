@@ -7,6 +7,8 @@ interface LiveTournamentActionsProps {
   canSubmitScores: boolean;
   canGenerateNextRound: boolean;
   generatingNextRound: boolean;
+  /** True when the field is bigger than the courts hold, so resting players enter first. */
+  rotatesRestingPlayers?: boolean;
   isTournamentCompleted: boolean;
   isEditingCompletedTournament: boolean;
   canFinish: boolean;
@@ -93,7 +95,9 @@ export function LiveTournamentActions(props: LiveTournamentActionsProps) {
       </Pressable>
       {props.canGenerateNextRound ? (
         <Text style={{ color: colors.muted, fontSize: 12, textAlign: "center" }}>
-          Next pairings come from the leaderboard (1+3 vs 2+4).
+          {props.rotatesRestingPlayers
+            ? "Players who sat out come on first, then the leaderboard (1+3 vs 2+4)."
+            : "Next pairings come from the leaderboard (1+3 vs 2+4)."}
         </Text>
       ) : null}
       <View style={{ flexDirection: "row", gap: spacing.sm }}>

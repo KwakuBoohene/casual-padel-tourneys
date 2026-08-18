@@ -2,7 +2,7 @@ import {
   buildMexicanoLadderAssignments,
   buildMexicanoTeamLadderAssignments,
   createId,
-  sortMexicanoStandings
+  selectMexicanoRoundUnits
 } from "@padel/shared";
 import type {
   FixedPair,
@@ -69,16 +69,17 @@ export function buildNextMexicanoRound(input: BuildNextMexicanoRoundInput): Roun
     return buildNextTeamMexicanoRound(input);
   }
 
-  const ordered = sortMexicanoStandings(
+  const { playing } = selectMexicanoRoundUnits(
     input.players.map((player) => ({
       playerId: player.id,
       totalPoints: player.totalPoints,
       gamesPlayed: player.gamesPlayed
-    }))
+    })),
+    playerSlotsPerRound(input.players.length, input.courts)
   );
   const byId = new Map(input.players.map((player) => [player.id, player]));
   const { courts } = buildMexicanoLadderAssignments(
-    ordered.map((row) => row.playerId),
+    playing.map((row) => row.playerId),
     input.courts
   );
   const matches: Match[] = courts.map((assignment) => {
@@ -167,9 +168,12 @@ function buildNextTeamMexicanoRound(input: BuildNextMexicanoRoundInput): Round {
       gamesPlayed: Math.max(a?.gamesPlayed ?? 0, b?.gamesPlayed ?? 0)
     };
   });
-  const ordered = sortMexicanoStandings(teamRows);
+  const { playing } = selectMexicanoRoundUnits(
+    teamRows,
+    teamSlotsPerRound(fixedPairs.length, input.courts)
+  );
   const { courts } = buildMexicanoTeamLadderAssignments(
-    ordered.map((row) => row.playerId),
+    playing.map((row) => row.playerId),
     input.courts
   );
 
@@ -261,6 +265,14 @@ function buildLotteryRound(input: BuildNextMexicanoRoundInput): Round {
     matches,
     isLocked: false
   };
+}
+
+function playerSlotsPerRound(playerCount: number, courts: number): number {
+  return Math.min(Math.floor(playerCount / 4), Math.max(0, courts)) * 4;
+}
+
+function teamSlotsPerRound(teamCount: number, courts: number): number {
+  return Math.min(Math.floor(teamCount / 2), Math.max(0, courts)) * 2;
 }
 
 function requireFixedPairs(fixedPairs: FixedPair[] | undefined): FixedPair[] {

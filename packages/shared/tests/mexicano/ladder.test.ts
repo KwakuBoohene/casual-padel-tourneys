@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildMexicanoLadderAssignments,
   buildMexicanoTeamLadderAssignments,
+  selectMexicanoRoundUnits,
   sortMexicanoStandings
 } from "../../src/mexicano/ladder.js";
 
@@ -73,4 +74,61 @@ test("5 teams leaves one sitting out", () => {
   );
   assert.equal(courts.length, 2);
   assert.deepEqual(sittingOut, ["t5"]);
+});
+
+test("selectMexicanoRoundUnits is plain standings order when games are level", () => {
+  const rows = [
+    { playerId: "p3", totalPoints: 10, gamesPlayed: 1 },
+    { playerId: "p1", totalPoints: 30, gamesPlayed: 1 },
+    { playerId: "p2", totalPoints: 20, gamesPlayed: 1 },
+    { playerId: "p4", totalPoints: 5, gamesPlayed: 1 }
+  ];
+  const { playing, sittingOut } = selectMexicanoRoundUnits(rows, 4);
+  assert.deepEqual(
+    playing.map((row) => row.playerId),
+    ["p1", "p2", "p3", "p4"]
+  );
+  assert.equal(sittingOut.length, 0);
+});
+
+test("selectMexicanoRoundUnits brings in whoever has played least", () => {
+  const rows = [
+    { playerId: "played", totalPoints: 40, gamesPlayed: 1 },
+    { playerId: "rested-low", totalPoints: 0, gamesPlayed: 0 },
+    { playerId: "rested-high", totalPoints: 0, gamesPlayed: 0 },
+    { playerId: "played-2", totalPoints: 30, gamesPlayed: 1 },
+    { playerId: "played-3", totalPoints: 20, gamesPlayed: 1 }
+  ];
+  const { playing, sittingOut } = selectMexicanoRoundUnits(rows, 4);
+  const ids = new Set(playing.map((row) => row.playerId));
+  assert.equal(ids.has("rested-low"), true);
+  assert.equal(ids.has("rested-high"), true);
+  assert.deepEqual(
+    sittingOut.map((row) => row.playerId),
+    ["played-3"]
+  );
+});
+
+test("selectMexicanoRoundUnits splits a 16-player field into halves", () => {
+  const rows = Array.from({ length: 16 }, (_, i) => ({
+    playerId: `p${i + 1}`,
+    totalPoints: 100 - i,
+    gamesPlayed: i < 8 ? 1 : 0
+  }));
+  const { playing } = selectMexicanoRoundUnits(rows, 8);
+  assert.deepEqual(
+    playing.map((row) => row.playerId),
+    ["p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16"]
+  );
+});
+
+test("selectMexicanoRoundUnits clamps to the number of units available", () => {
+  const rows = Array.from({ length: 3 }, (_, i) => ({
+    playerId: `p${i + 1}`,
+    totalPoints: 0,
+    gamesPlayed: 0
+  }));
+  const { playing, sittingOut } = selectMexicanoRoundUnits(rows, 8);
+  assert.equal(playing.length, 3);
+  assert.equal(sittingOut.length, 0);
 });

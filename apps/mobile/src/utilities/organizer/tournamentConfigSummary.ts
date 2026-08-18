@@ -6,7 +6,6 @@ import type { LiveTournamentState } from "../../types/organizer/tournament";
 import {
   formatSchedulingMode,
   formatScoringLabel,
-  formatTournamentMode,
   formatTournamentModeVariant
 } from "./formatLabels";
 
@@ -34,7 +33,8 @@ function formatRegularMatchLength(config: RegularScoringConfig): string | null {
 
 function formatRegularScoringRows(config: RegularScoringConfig): ConfigSummaryRow[] {
   const rows: ConfigSummaryRow[] = [
-    { label: "Set format", value: formatRegularSetFormat(config) }
+    { label: "Set format", value: formatRegularSetFormat(config) },
+    { label: "Win the set by", value: config.gameWinBy === 2 ? "2 games" : "1 game" }
   ];
   const matchLength = formatRegularMatchLength(config);
   if (matchLength) {

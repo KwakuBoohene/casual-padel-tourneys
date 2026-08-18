@@ -3,6 +3,11 @@ import { z } from "zod";
 import { AMERICANO_MIN_TEAMS } from "../americano/teams.js";
 import { MEXICANO_MIN_PLAYERS, MEXICANO_MIN_TEAMS } from "../mexicano/ladder.js";
 import { REGULAR_SETS_TO_WIN_MAX } from "../scoring/regularMatchLength.js";
+import {
+  DEFAULT_SET_TIEBREAK_TO,
+  defaultGameWinByForSetFormat,
+  needsSetTiebreak
+} from "../scoring/setMargin.js";
 import { KING_OF_THE_COURT, LEGACY_KING_OF_THE_HILL } from "../tournamentMode.js";
 import type { TournamentMode } from "../types/domain.js";
 
@@ -27,39 +32,29 @@ export const gameWinMethodSchema = z.enum(["REGULAR", "GOLDEN", "STAR"]);
 export const regularScoringSchema = z
   .object({
     setFormat: regularSetFormatSchema,
-    gameWinBy: gameWinBySchema,
+    /** Games margin to take a set. Defaults from `setFormat`; send it only to override. */
+    gameWinBy: gameWinBySchema.optional(),
     deuceMode: deuceModeSchema.optional(),
     setsToWin: z.number().int().min(1).max(REGULAR_SETS_TO_WIN_MAX),
     setTiebreakTo: tiebreakPointsSchema.optional(),
     matchTiebreak: z.boolean().optional()
   })
+  .transform((value) => {
+    const gameWinBy = value.gameWinBy ?? defaultGameWinByForSetFormat(value.setFormat);
+    const fillTiebreak =
+      needsSetTiebreak(value.setFormat, gameWinBy) && value.setTiebreakTo === undefined;
+    return {
+      ...value,
+      gameWinBy,
+      ...(fillTiebreak ? { setTiebreakTo: DEFAULT_SET_TIEBREAK_TO } : {})
+    };
+  })
   .superRefine((value, ctx) => {
-    if (value.setFormat === "FULL_SET" && value.gameWinBy === 2 && value.setTiebreakTo === undefined) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["setTiebreakTo"],
-        message: "Provide setTiebreakTo (7 or 10) for full set win-by-2."
-      });
-    }
     if (value.matchTiebreak === true && value.setsToWin !== 2) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["matchTiebreak"],
         message: "Match tiebreak is only valid with setsToWin: 2 (two sets + match tiebreak)."
-      });
-    }
-    if (value.deuceMode === "ADVANTAGE" && value.gameWinBy !== 2) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["gameWinBy"],
-        message: "Advantage deuce requires gameWinBy: 2."
-      });
-    }
-    if ((value.deuceMode === "GOLDEN" || value.deuceMode === "STAR") && value.gameWinBy !== 1) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["gameWinBy"],
-        message: "Golden and Star deuce require gameWinBy: 1."
       });
     }
   });

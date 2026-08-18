@@ -6,7 +6,7 @@ import type {
   SchedulingMode,
   TournamentConfig
 } from "@padel/shared";
-import { resolveDeuceMode } from "@padel/shared";
+import { defaultGameWinByForSetFormat, resolveDeuceMode } from "@padel/shared";
 import type { Tournament as DbTournament } from "@prisma/client";
 
 import type { TournamentState } from "../../../../types/state.js";
@@ -21,7 +21,10 @@ function regularConfigFromRow(tournament: DbTournament): RegularScoringConfig | 
   if (tournament.scoringMode !== "REGULAR" || !tournament.regularSetFormat) {
     return undefined;
   }
-  const gameWinBy = (tournament.regularGameWinBy === 2 ? 2 : 1) as 1 | 2;
+  const gameWinBy =
+    tournament.regularGameWinBy === 1 || tournament.regularGameWinBy === 2
+      ? (tournament.regularGameWinBy as 1 | 2)
+      : defaultGameWinByForSetFormat(tournament.regularSetFormat);
   const stored =
     tournament.regularDeuceMode === "ADVANTAGE" ||
     tournament.regularDeuceMode === "GOLDEN" ||

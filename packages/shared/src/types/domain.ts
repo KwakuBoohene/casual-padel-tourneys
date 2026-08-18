@@ -116,8 +116,12 @@ export interface Round {
  */
 export interface RegularScoringConfig {
   setFormat: RegularSetFormat;
+  /**
+   * Clear **games** needed to take a set: 1 for best-of-3/5 games, 2 for a full set.
+   * Defaults come from `setFormat` — this is unrelated to deuce, which is points within a game.
+   */
   gameWinBy: GameWinBy;
-  /** Advantage / Golden / Star. Omit on old payloads — infer from `gameWinBy`. */
+  /** Advantage / Golden / Star — points within a game. Omit on old payloads. */
   deuceMode?: DeuceMode;
   /** First to this many sets wins; max 4 (best of 7). */
   setsToWin: number;

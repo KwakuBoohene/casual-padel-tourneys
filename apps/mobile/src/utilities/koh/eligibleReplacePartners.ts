@@ -21,7 +21,7 @@ export function eligibleReplacePartners(
   const rows: EligibleReplacePartner[] = [];
   for (const row of listKohEditUnits(hub)) {
     const unit = row.unit;
-    const people: Array<{ playerId: string; name: string; partnerName: string }> = [
+    const people: { playerId: string; name: string; partnerName: string }[] = [
       { playerId: unit.playerAId, name: unit.playerAName, partnerName: unit.playerBName },
       { playerId: unit.playerBId, name: unit.playerBName, partnerName: unit.playerAName }
     ];

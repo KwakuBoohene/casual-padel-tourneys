@@ -179,8 +179,8 @@ test("createTournamentSchema rejects Americano points without pointsPerMatch", (
   assert.equal(result.success, false);
 });
 
-test("createTournamentSchema rejects full-set win-by-2 without setTiebreakTo", () => {
-  const result = createTournamentSchema.safeParse({
+test("createTournamentSchema defaults setTiebreakTo for a full set won by two", () => {
+  const parsed = createTournamentSchema.parse({
     name: "Sunday Mix",
     mode: "AMERICANO",
     variant: "CLASSIC",
@@ -195,11 +195,7 @@ test("createTournamentSchema rejects full-set win-by-2 without setTiebreakTo", (
       setsToWin: 2
     }
   });
-  assert.equal(result.success, false);
-  if (!result.success) {
-    const messages = result.error.issues.map((issue) => issue.message).join(" ");
-    assert.match(messages, /setTiebreakTo/i);
-  }
+  assert.equal(parsed.regularScoring?.setTiebreakTo, 7);
 });
 
 test("createTournamentSchema rejects setsToWin above best-of-7 max", () => {
@@ -276,34 +272,60 @@ test("regularScoringSchema accepts GOLDEN + gameWinBy 1", () => {
   assert.equal(parsed.regularScoring?.gameWinBy, 1);
 });
 
-test("regularScoringSchema rejects GOLDEN + gameWinBy 2", () => {
-  const result = createTournamentSchema.safeParse({
+test("deuce mode does not constrain the set margin", () => {
+  // Deuce decides points inside a game; the margin decides games inside a set.
+  const golden = createTournamentSchema.parse({
     ...americanoBase,
     scoringMode: "REGULAR",
     pointsPerMatch: undefined,
     regularScoring: {
-      setFormat: "BO3_GAMES",
-      gameWinBy: 2,
+      setFormat: "FULL_SET",
       deuceMode: "GOLDEN",
       setsToWin: 1
     }
   });
-  assert.equal(result.success, false);
-});
+  assert.equal(golden.regularScoring?.gameWinBy, 2);
 
-test("regularScoringSchema rejects ADVANTAGE + gameWinBy 1", () => {
-  const result = createTournamentSchema.safeParse({
+  const advantage = createTournamentSchema.parse({
     ...americanoBase,
     scoringMode: "REGULAR",
     pointsPerMatch: undefined,
     regularScoring: {
       setFormat: "BO3_GAMES",
-      gameWinBy: 1,
       deuceMode: "ADVANTAGE",
       setsToWin: 1
     }
   });
-  assert.equal(result.success, false);
+  assert.equal(advantage.regularScoring?.gameWinBy, 1);
+});
+
+test("gameWinBy defaults from the set format when the client omits it", () => {
+  const parse = (setFormat: string) =>
+    createTournamentSchema.parse({
+      ...americanoBase,
+      scoringMode: "REGULAR",
+      pointsPerMatch: undefined,
+      regularScoring: { setFormat, setsToWin: 1 }
+    }).regularScoring;
+
+  assert.equal(parse("BO3_GAMES")?.gameWinBy, 1);
+  assert.equal(parse("BO5_GAMES")?.gameWinBy, 1);
+  assert.equal(parse("FULL_SET")?.gameWinBy, 2);
+  assert.equal(parse("FULL_SET")?.setTiebreakTo, 7);
+});
+
+test("an explicit gameWinBy still overrides the format default", () => {
+  const parsed = createTournamentSchema.parse({
+    ...americanoBase,
+    scoringMode: "REGULAR",
+    pointsPerMatch: undefined,
+    regularScoring: {
+      setFormat: "BO5_GAMES",
+      gameWinBy: 2,
+      setsToWin: 1
+    }
+  });
+  assert.equal(parsed.regularScoring?.gameWinBy, 2);
 });
 
 test("regularScoringSchema omits deuceMode when client does not send it", () => {

@@ -1,5 +1,10 @@
 import type { RegularScoringConfig } from "@padel/shared";
-import { deuceModeLabel, gameWinByForDeuceMode } from "@padel/shared";
+import {
+  DEFAULT_SET_TIEBREAK_TO,
+  defaultGameWinByForSetFormat,
+  deuceModeLabel,
+  needsSetTiebreak
+} from "@padel/shared";
 
 import type { KohDeuceMode, KohMatchFormatChoice } from "../../types/koh/create";
 
@@ -7,21 +12,13 @@ export function regularScoringFromDraft(
   matchFormat: KohMatchFormatChoice,
   deuceMode: KohDeuceMode
 ): RegularScoringConfig {
-  const gameWinBy = gameWinByForDeuceMode(deuceMode);
-  if (matchFormat === "FULL_SET") {
-    return {
-      setFormat: "FULL_SET",
-      gameWinBy: gameWinBy === 2 ? 2 : 1,
-      deuceMode,
-      setsToWin: 1,
-      setTiebreakTo: gameWinBy === 2 ? 7 : undefined
-    };
-  }
+  const gameWinBy = defaultGameWinByForSetFormat(matchFormat);
   return {
     setFormat: matchFormat,
     gameWinBy,
     deuceMode,
-    setsToWin: 1
+    setsToWin: 1,
+    setTiebreakTo: needsSetTiebreak(matchFormat, gameWinBy) ? DEFAULT_SET_TIEBREAK_TO : undefined
   };
 }
 

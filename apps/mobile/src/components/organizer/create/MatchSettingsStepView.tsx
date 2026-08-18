@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type {
   DeuceMode,
+  GameWinBy,
   RegularSetFormat,
   SchedulingMode,
   ScoringMode,
@@ -26,6 +27,7 @@ interface MatchSettingsStepViewProps {
   scoringMode: ScoringMode;
   setFormat: RegularSetFormat;
   deuceMode: DeuceMode;
+  gameWinBy: GameWinBy;
   setsToWin: number;
   setTiebreakTo: TiebreakPoints;
   matchTiebreak: boolean;
@@ -39,6 +41,7 @@ interface MatchSettingsStepViewProps {
   onChangeScoringMode: (value: ScoringMode) => void;
   onChangeSetFormat: (value: RegularSetFormat) => void;
   onChangeDeuceMode: (value: DeuceMode) => void;
+  onChangeGameWinBy: (value: GameWinBy) => void;
   onChangeSetsToWin: (value: number) => void;
   onChangeSetTiebreakTo: (value: TiebreakPoints) => void;
   onChangeMatchTiebreak: (value: boolean) => void;
@@ -104,6 +107,7 @@ export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
             schedulingMode={props.schedulingMode}
             setFormat={props.setFormat}
             deuceMode={props.deuceMode}
+            gameWinBy={props.gameWinBy}
             setsToWin={props.setsToWin}
             setTiebreakTo={props.setTiebreakTo}
             matchTiebreak={props.matchTiebreak}
@@ -118,6 +122,7 @@ export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
             responseText={props.responseText}
             onChangeSetFormat={props.onChangeSetFormat}
             onChangeDeuceMode={props.onChangeDeuceMode}
+            onChangeGameWinBy={props.onChangeGameWinBy}
             onChangeSetsToWin={props.onChangeSetsToWin}
             onChangeSetTiebreakTo={props.onChangeSetTiebreakTo}
             onChangeMatchTiebreak={props.onChangeMatchTiebreak}

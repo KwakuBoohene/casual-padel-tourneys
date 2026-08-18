@@ -1,10 +1,9 @@
-import type { DeuceMode, GameWinBy, KohGameWinMethod, MatchSet, RegularScoringConfig } from "../types/domain.js";
+import type { DeuceMode, KohGameWinMethod, MatchSet, RegularScoringConfig } from "../types/domain.js";
 
-export function gameWinByForDeuceMode(mode: DeuceMode): GameWinBy {
-  return mode === "ADVANTAGE" ? 2 : 1;
-}
-
-/** When `deuceMode` is omitted, win-by-2 is Advantage and win-by-1 is Golden (not Star). */
+/**
+ * Legacy fallback for payloads saved before `deuceMode` existed: win-by-2 reads as Advantage and
+ * win-by-1 as Golden (not Star). Never use this to pick a set margin — see `setMargin.ts`.
+ */
 export function resolveDeuceMode(config: Pick<RegularScoringConfig, "gameWinBy" | "deuceMode">): DeuceMode {
   if (config.deuceMode) {
     return config.deuceMode;

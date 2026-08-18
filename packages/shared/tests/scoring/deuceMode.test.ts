@@ -4,17 +4,10 @@ import test from "node:test";
 import {
   allowsSpecialWinMethods,
   deuceModeLabel,
-  gameWinByForDeuceMode,
   hasWinMethodPayload,
   resolveDeuceMode,
   specialPointLabelForSet
 } from "../../src/scoring/deuceMode.ts";
-
-test("gameWinByForDeuceMode maps Advantage to 2 and Golden/Star to 1", () => {
-  assert.equal(gameWinByForDeuceMode("ADVANTAGE"), 2);
-  assert.equal(gameWinByForDeuceMode("GOLDEN"), 1);
-  assert.equal(gameWinByForDeuceMode("STAR"), 1);
-});
 
 test("resolveDeuceMode infers Advantage vs Golden when omitted", () => {
   assert.equal(resolveDeuceMode({ gameWinBy: 2 }), "ADVANTAGE");

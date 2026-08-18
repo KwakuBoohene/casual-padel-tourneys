@@ -65,6 +65,7 @@ export function OrganizerCreateWizard({
       scoringMode={create.scoringMode}
       setFormat={create.setFormat}
       deuceMode={create.deuceMode}
+      gameWinBy={create.gameWinBy}
       setsToWin={create.setsToWin}
       setTiebreakTo={create.setTiebreakTo}
       matchTiebreak={create.matchTiebreak}
@@ -78,6 +79,7 @@ export function OrganizerCreateWizard({
       onChangeScoringMode={create.setScoringMode}
       onChangeSetFormat={create.setSetFormat}
       onChangeDeuceMode={create.setDeuceMode}
+      onChangeGameWinBy={create.setGameWinBy}
       onChangeSetsToWin={create.setSetsToWin}
       onChangeSetTiebreakTo={create.setSetTiebreakTo}
       onChangeMatchTiebreak={create.setMatchTiebreak}

@@ -2,7 +2,7 @@ import { createId } from "@padel/shared";
 import type { FixedPair, Match, Player, Round, TournamentConfig } from "@padel/shared";
 
 import { seedTeamOpponentMatrixFromRounds, teamPairKey } from "./pairingMatrices.js";
-import { courtsPerRound, teamScheduleShape } from "./scheduleMath.js";
+import { teamScheduleShape } from "./scheduleMath.js";
 
 export interface TeamAmericanoScheduled {
   players: Player[];

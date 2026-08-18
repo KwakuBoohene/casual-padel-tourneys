@@ -1043,7 +1043,7 @@ test("fairness with different handicap ratios", () => {
   }
 });
 
-function opponentTeamRematches(rounds: Round[], players: Player[]): number {
+function opponentTeamRematches(rounds: Round[]): number {
   const seen = new Map<string, Set<string>>();
   let rematches = 0;
   for (const round of rounds) {
@@ -1051,7 +1051,6 @@ function opponentTeamRematches(rounds: Round[], players: Player[]): number {
       const oppAKey = [...match.teamB].sort().join(":");
       const oppBKey = [...match.teamA].sort().join(":");
       for (const playerId of match.teamA) {
-        const key = `${playerId}|${oppAKey}`;
         const prior = seen.get(playerId) ?? new Set<string>();
         if (prior.has(oppAKey)) rematches += 1;
         prior.add(oppAKey);
@@ -1081,7 +1080,7 @@ test("generateTournament avoids opponent-team rematches when feasible", () => {
   };
 
   const { rounds } = generateTournament(config);
-  assert.equal(opponentTeamRematches(rounds, []), 0);
+  assert.equal(opponentTeamRematches(rounds), 0);
 });
 
 test("recalculateRemainingTournament seeds locked history before regenerating", () => {
@@ -1109,5 +1108,5 @@ test("recalculateRemainingTournament seeds locked history before regenerating", 
   }
 
   const recalculated = recalculateRemainingTournament(config, initial.players, initial.rounds);
-  assert.equal(opponentTeamRematches(recalculated, initial.players), 0);
+  assert.equal(opponentTeamRematches(recalculated), 0);
 });

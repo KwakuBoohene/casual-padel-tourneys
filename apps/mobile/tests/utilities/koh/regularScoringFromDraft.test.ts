@@ -8,16 +8,23 @@ import {
   setGameWinMethod
 } from "../../../src/utilities/organizer/regularWinMethods.ts";
 
-test("regularScoringFromDraft Golden and Star use gameWinBy 1 and keep deuceMode", () => {
-  const golden = regularScoringFromDraft("BO3_GAMES", "GOLDEN");
-  assert.equal(golden.gameWinBy, 1);
-  assert.equal(golden.deuceMode, "GOLDEN");
-  const star = regularScoringFromDraft("FULL_SET", "STAR");
-  assert.equal(star.gameWinBy, 1);
-  assert.equal(star.deuceMode, "STAR");
-  const advantage = regularScoringFromDraft("FULL_SET", "ADVANTAGE");
-  assert.equal(advantage.gameWinBy, 2);
-  assert.equal(advantage.deuceMode, "ADVANTAGE");
+test("regularScoringFromDraft takes the set margin from the format, not the deuce mode", () => {
+  const shortGolden = regularScoringFromDraft("BO3_GAMES", "GOLDEN");
+  assert.equal(shortGolden.gameWinBy, 1);
+  assert.equal(shortGolden.setTiebreakTo, undefined);
+
+  const shortAdvantage = regularScoringFromDraft("BO5_GAMES", "ADVANTAGE");
+  assert.equal(shortAdvantage.gameWinBy, 1);
+
+  const fullStar = regularScoringFromDraft("FULL_SET", "STAR");
+  assert.equal(fullStar.gameWinBy, 2);
+  assert.equal(fullStar.setTiebreakTo, 7);
+});
+
+test("regularScoringFromDraft keeps the chosen deuce mode", () => {
+  assert.equal(regularScoringFromDraft("BO3_GAMES", "GOLDEN").deuceMode, "GOLDEN");
+  assert.equal(regularScoringFromDraft("FULL_SET", "STAR").deuceMode, "STAR");
+  assert.equal(regularScoringFromDraft("FULL_SET", "ADVANTAGE").deuceMode, "ADVANTAGE");
 });
 
 test("needsWinMethodPrompt is true only for Golden and Star", () => {

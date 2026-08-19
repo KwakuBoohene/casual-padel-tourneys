@@ -67,6 +67,8 @@ model User {
   isGuest                Boolean          @default(false)
   emailVerifiedAt        DateTime?
   emailVerificationDueAt DateTime?
+  /** Opt-in public link to this organizer's career board. Null = not shared. Read-only capability. */
+  careerShareToken       String?          @unique
   createdAt              DateTime         @default(now())
   updatedAt              DateTime         @updatedAt
   tournaments            Tournament[]

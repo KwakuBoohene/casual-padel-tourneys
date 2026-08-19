@@ -20,6 +20,34 @@ import {
 } from "./organizerPlayerManagement.js";
 
 export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepository {
+  async findShareToken(organizerId: string): Promise<string | null> {
+    const row = await prisma.user.findUnique({
+      where: { id: organizerId },
+      select: { careerShareToken: true }
+    });
+    return row?.careerShareToken ?? null;
+  }
+
+  async setShareToken(organizerId: string, token: string | null): Promise<string | null> {
+    const row = await prisma.user.update({
+      where: { id: organizerId },
+      data: { careerShareToken: token },
+      select: { careerShareToken: true }
+    });
+    return row.careerShareToken;
+  }
+
+  async findOrganizerByShareToken(token: string): Promise<{ id: string; name: string } | null> {
+    if (!token) return null;
+    const row = await prisma.user.findUnique({
+      where: { careerShareToken: token },
+      select: { id: true, name: true, isGuest: true }
+    });
+    // A guest has no career board, so their link resolves to nothing.
+    if (!row || row.isGuest) return null;
+    return { id: row.id, name: row.name };
+  }
+
   async listMatchesForExport(query: CareerMatchQuery): Promise<CareerMatchRow[]> {
     const rows = await prisma.organizerPlayerStatDelta.findMany({
       where: {

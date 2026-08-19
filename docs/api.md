@@ -78,6 +78,21 @@ Base URL: `http://localhost:3001`
   - King of the Court alias of the close flow. Returns `{ data: hub }`.
 - `DELETE /tournaments/:id`
 
+## Career share (account leaderboard)
+
+Opt-in, read-only, account-scoped. The token is a **capability** — never log it.
+
+- `GET /me/career-share` → `{ data: { token: string | null } }`
+- `POST /me/career-share` — create if absent. **Idempotent**: returns the existing token rather than
+  replacing a link that may already be pinned somewhere.
+- `POST /me/career-share/rotate` — issue a new token; the previous link stops working immediately.
+- `DELETE /me/career-share` — revoke; the link 404s from then on.
+- `GET /public/career/:token?range=month|year|all` — **no auth**. Standings only: organizer display
+  name, range, and rows. Carries no `organizerId` and no career identity ids. Unknown, malformed and
+  revoked tokens all return the same 404, so a visitor cannot confirm an account exists.
+
+Guests get 403 on the management routes — they have no career board.
+
 ## Realtime
 
 - `GET /ws/tournaments/:id` (websocket)

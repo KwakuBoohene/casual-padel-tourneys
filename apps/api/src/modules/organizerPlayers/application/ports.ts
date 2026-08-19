@@ -49,6 +49,12 @@ export interface OrganizerPlayerRepository {
    * happened even if the career has since been archived.
    */
   listMatchesForExport(query: CareerMatchQuery): Promise<CareerMatchRow[]>;
+  /** Null when the organizer has not shared their board. */
+  findShareToken(organizerId: string): Promise<string | null>;
+  /** Pass null to revoke. Returns the stored value. */
+  setShareToken(organizerId: string, token: string | null): Promise<string | null>;
+  /** Null for an unknown or revoked token — callers must not distinguish the two. */
+  findOrganizerByShareToken(token: string): Promise<{ id: string; name: string } | null>;
   findPlayer(organizerId: string, organizerPlayerId: string): Promise<{ id: string; name: string } | null>;
   listManaged(
     organizerId: string,

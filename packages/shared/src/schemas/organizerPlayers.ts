@@ -19,6 +19,20 @@ export interface OrganizerPlayerLeaderboardRow {
   eventsPlayed: number;
 }
 
+/** Public career board: standings only, with no identifiers a visitor could probe. */
+export interface PublicCareerBoardRow extends Omit<OrganizerPlayerLeaderboardRow, "id"> {}
+
+export interface PublicCareerBoard {
+  organizerName: string;
+  range: OrganizerPlayerRange;
+  rows: PublicCareerBoardRow[];
+}
+
+export interface CareerShareResponse {
+  /** Null when the organizer has not shared their board. */
+  token: string | null;
+}
+
 export interface OrganizerPlayerLeaderboard {
   range: OrganizerPlayerRange;
   rows: OrganizerPlayerLeaderboardRow[];

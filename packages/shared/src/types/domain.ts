@@ -96,6 +96,11 @@ export interface Match {
   scoreA?: number;
   scoreB?: number;
   completed: boolean;
+  /**
+   * Set when an organizer closed the event with this match unplayed. Void matches keep any
+   * partial score but never count towards standings or the career board.
+   */
+  voidedAt?: string | null;
   /** Regular scoring set lines (draft or complete). */
   sets?: MatchSet[];
   /** Match tiebreak points when sets are even and match TB is enabled. */

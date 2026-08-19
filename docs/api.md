@@ -61,6 +61,21 @@ Base URL: `http://localhost:3001`
   - body: `tournamentId`, `expectedVersion`
   - Integrates pending players into the active tournament with handicap calculation
   - Requires: ≥2 pending players, current round complete, integration wave < 3
+- `POST /tournaments/:id/close`
+  - body: `expectedVersion`
+  - Closes a live event for **any** mode (Americano, Mexicano, King of the Court).
+  - Every match still unplayed (`completed: false`) is marked **void** (`voidedAt`): it keeps any
+    partial score but never counts towards standings or the career board.
+  - returns: `{ data: { tournament, voidedMatchCount } }`. For King of the Court, `tournament` is the
+    KOC hub, matching how `GET /tournaments/:id` already branches by mode.
+  - Idempotent: closing an already-closed event returns current state with `voidedMatchCount: 0`.
+- `POST /tournaments/end-night`
+  - body: `tournamentId`, `expectedVersion`
+  - Mexicano alias of the close flow. Returns `{ data: tournament }`.
+  - The in-progress round is **voided, not discarded** — awarded points are no longer reversed.
+- `POST /koh/tournaments/:id/end`
+  - body: `expectedVersion`
+  - King of the Court alias of the close flow. Returns `{ data: hub }`.
 - `DELETE /tournaments/:id`
 
 ## Realtime
@@ -78,8 +93,10 @@ Events:
 - `PENDING_PLAYER_ADDED`
 - `PENDING_PLAYERS_INTEGRATED`
 - `TOURNAMENT_DELETED`
+- `ROUND_ADVANCED`
+- `TOURNAMENT_ENDED`
 
 ## Concurrency
 
-Mutating endpoints that can race (`score`, `adjust-courts`, `add-pending-player`, `integrate-pending`) require `expectedVersion`.
+Mutating endpoints that can race (`score`, `adjust-courts`, `add-pending-player`, `integrate-pending`, `close`) require `expectedVersion`.
 If mismatch occurs, API responds with conflict and caller must refresh state.

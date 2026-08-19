@@ -6,11 +6,13 @@ import { spacing, touch } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 import { CareerOptInRow } from "../create/CareerOptInRow";
 import type { ConfigSummaryRow } from "../../../utilities/organizer/tournamentConfigSummary";
+import { finishOptionDetail } from "../../../utilities/organizer/closeTournamentCopy";
 
 interface LiveTournamentOptionsSheetProps {
   visible: boolean;
   canAdjustCourts: boolean;
   canFinish: boolean;
+  unfinishedMatchCount: number;
   isMexicano: boolean;
   isTournamentCompleted: boolean;
   isEditingCompletedTournament: boolean;
@@ -131,15 +133,7 @@ export function LiveTournamentOptionsSheet(props: LiveTournamentOptionsSheetProp
         {showFinishInOptions ? (
           <OptionRow
             label={props.isMexicano ? "End night" : "Finish tournament"}
-            detail={
-              props.isMexicano
-                ? props.canFinish
-                  ? "Discard live round if unfinished"
-                  : "Already ended"
-                : props.canFinish
-                  ? "Lock results"
-                  : "Score all matches first"
-            }
+            detail={finishOptionDetail(props.canFinish, props.unfinishedMatchCount)}
             emphasized
             disabled={!props.canFinish}
             onPress={() => {

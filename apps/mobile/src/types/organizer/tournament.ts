@@ -57,6 +57,8 @@ export interface LiveTournamentState {
       scoreA?: number;
       scoreB?: number;
       completed: boolean;
+      /** Set when the organizer closed the event with this match unplayed. */
+      voidedAt?: string | null;
       sets?: MatchSet[];
       matchTbA?: number;
       matchTbB?: number;

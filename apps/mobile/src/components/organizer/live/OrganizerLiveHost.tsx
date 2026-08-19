@@ -38,7 +38,8 @@ export function OrganizerLiveHost() {
       playerNameById: org.playerNameById,
       canGenerateNextRound: org.canGenerateNextRound,
       generatingNextRound: org.generatingNextRound,
-      canFinishNight: org.canFinishNight
+      canFinishNight: org.canFinishNight,
+      unfinishedMatchCount: org.unfinishedMatchCount
     },
     score: {
       scoreInputs: org.scoreInputs,

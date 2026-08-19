@@ -7,10 +7,8 @@ import { LiveAdjustCourtsSheet } from "./LiveAdjustCourtsSheet";
 import { LiveRenamePlayersSheet } from "./LiveRenamePlayersSheet";
 import { LiveScoreEntrySheets } from "./LiveScoreEntrySheets";
 import { LiveTournamentOptionsSheet } from "./LiveTournamentOptionsSheet";
-import {
-  LiveTournamentConfirmSheets,
-  LiveTournamentPendingSheet
-} from "./LiveTournamentPendingSheet";
+import { LiveTournamentConfirmSheets } from "./LiveTournamentConfirmSheets";
+import { LiveTournamentPendingSheet } from "./LiveTournamentPendingSheet";
 
 type LiveTournamentSheetsProps = LiveTournamentViewProps & {
   configRows: ConfigSummaryRow[];
@@ -42,6 +40,7 @@ export function LiveTournamentSheets({
         currentCourts={session.currentCourts}
         proposedCourts={session.proposedCourts}
         pendingCount={session.tournament.pendingPlayers.length}
+        unfinishedMatchCount={session.unfinishedMatchCount ?? 0}
         onCloseEditConfirm={actions.onCloseEditConfirm}
         onConfirmEditGame={actions.onConfirmEditGame}
         onCloseAdjustCourtsConfirm={actions.onCloseAdjustCourtsConfirm}
@@ -58,6 +57,7 @@ export function LiveTournamentSheets({
         visible={sheets.showLiveOptionsModal}
         canAdjustCourts={session.canAdjustCourts}
         canFinish={session.canFinishNight ?? session.isTournamentCompleted}
+        unfinishedMatchCount={session.unfinishedMatchCount ?? 0}
         isMexicano={session.tournament.config.mode === "MEXICANO"}
         isTournamentCompleted={session.isTournamentCompleted}
         isEditingCompletedTournament={session.isEditingCompletedTournament}

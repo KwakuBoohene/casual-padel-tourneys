@@ -12,6 +12,9 @@ interface AccountPlayersFlowProps {
   onAttach?: () => void;
 }
 
+/** Same source the organizer screen uses for tournament share links. */
+const viewerBaseUrl = process.env.EXPO_PUBLIC_VIEWER_BASE_URL ?? "http://localhost:3000";
+
 export function AccountPlayersFlow(props: AccountPlayersFlowProps) {
   const players = useAccountPlayers({
     isGuest: props.isGuest,
@@ -33,6 +36,7 @@ export function AccountPlayersFlow(props: AccountPlayersFlowProps) {
   return (
     <PageShell>
       <AccountPlayersPanel
+        viewerBaseUrl={viewerBaseUrl}
         range={players.range}
         onRange={players.setRange}
         rows={players.board?.rows ?? []}

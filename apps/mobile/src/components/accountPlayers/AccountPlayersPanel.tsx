@@ -5,20 +5,18 @@ import {
   type OrganizerPlayerRange
 } from "@padel/shared";
 
-import { radius, spacing, touch, typography } from "../../theme";
+import { radius, spacing, touch } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
-import { StandingsHelpControl } from "../standings/StandingsHelpControl";
 import { StandingsTable } from "../standings/StandingsTable";
 import { ExportSheet } from "../exports/ExportSheet";
 import { useLeaderboardExport } from "../../hooks/exports/useLeaderboardExport";
-
-const RANGES: { id: OrganizerPlayerRange; label: string }[] = [
-  { id: "month", label: "Month" },
-  { id: "year", label: "Year" },
-  { id: "all", label: "All time" }
-];
+import { CareerShareSheet } from "./CareerShareSheet";
+import { useCareerShare } from "../../hooks/accountPlayers/useCareerShare";
+import { AccountPlayersHeader } from "./AccountPlayersHeader";
 
 interface AccountPlayersPanelProps {
+  /** Base URL of the public viewer, for the share link. */
+  viewerBaseUrl: string;
   range: OrganizerPlayerRange;
   onRange: (range: OrganizerPlayerRange) => void;
   rows: OrganizerPlayerLeaderboardRow[];
@@ -35,42 +33,17 @@ export function AccountPlayersPanel(props: AccountPlayersPanelProps) {
     displayName: "account",
     range: props.range
   });
+  const shareState = useCareerShare();
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView contentContainerStyle={{ padding: spacing.xl, gap: spacing.md, paddingBottom: spacing.xxl }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
-          <Text style={[typography.title, { color: colors.text, flex: 1 }]}>Account Leaderboard</Text>
-          {props.guestMessage ? null : (
-            <Pressable onPress={exportState.open} hitSlop={8}>
-              <Text style={{ color: colors.primary, fontWeight: "500", fontSize: 14 }}>Export</Text>
-            </Pressable>
-          )}
-          <StandingsHelpControl />
-        </View>
-        <View style={{ flexDirection: "row", gap: spacing.sm }}>
-          {RANGES.map((entry) => {
-            const active = props.range === entry.id;
-            return (
-              <Pressable
-                key={entry.id}
-                onPress={() => props.onRange(entry.id)}
-                style={{
-                  flex: 1,
-                  minHeight: touch.minSecondary,
-                  borderRadius: radius.pill,
-                  borderWidth: active ? 2 : 1,
-                  borderColor: active ? colors.primary : colors.border,
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                <Text style={{ color: active ? colors.primary : colors.text, fontWeight: "700" }}>
-                  {entry.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <AccountPlayersHeader
+          range={props.range}
+          onRange={props.onRange}
+          showActions={!props.guestMessage}
+          onShare={shareState.open}
+          onExport={exportState.open}
+        />
         {props.guestMessage ? (
           <View
             style={{
@@ -133,6 +106,19 @@ export function AccountPlayersPanel(props: AccountPlayersPanelProps) {
         error={exportState.error}
         onExport={exportState.run}
         onDismiss={exportState.close}
+      />
+      <CareerShareSheet
+        visible={shareState.visible}
+        viewerBaseUrl={props.viewerBaseUrl}
+        token={shareState.token}
+        busy={shareState.busy}
+        error={shareState.error}
+        copied={shareState.copied}
+        onEnable={shareState.enable}
+        onRotate={shareState.rotate}
+        onRevoke={shareState.revoke}
+        onCopied={shareState.markCopied}
+        onDismiss={shareState.close}
       />
       <Pressable
         onPress={props.onBack}

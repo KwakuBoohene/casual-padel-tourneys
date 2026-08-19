@@ -31,6 +31,15 @@ export function setAuthToken(token: string | null): void {
   logger.debug("api/setAuthToken", { hasToken: Boolean(token) });
 }
 
+/** Downloads bypass `apiGet` (they stream a file), so they need the header parts directly. */
+export function getAuthToken(): string | null {
+  return authToken;
+}
+
+export function getApiBaseUrl(): string {
+  return apiBaseUrl;
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
   logger.debug("apiGet", { path });
   const response = await fetch(`${apiBaseUrl}${path}`, {

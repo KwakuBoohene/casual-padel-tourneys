@@ -11,6 +11,8 @@ import { buildLiveTournamentConfigRows } from "../../../utilities/organizer/tour
 import { StandingsHelpControl } from "../../standings/StandingsHelpControl";
 import { StandingsTable } from "../../standings/StandingsTable";
 import { TournamentConfigSummaryPanel } from "../TournamentConfigSummaryPanel";
+import { ExportSheet } from "../../exports/ExportSheet";
+import { useLeaderboardExport } from "../../../hooks/exports/useLeaderboardExport";
 
 interface LeaderboardViewProps {
   tournament: LiveTournamentState;
@@ -24,6 +26,10 @@ type RankedRow = { row: LeaderboardRow; rank: number };
 
 export function LeaderboardView(props: LeaderboardViewProps) {
   const { colors } = useTheme();
+  const exportState = useLeaderboardExport({
+    displayName: props.tournament.config.name,
+    tournamentId: props.tournament.id
+  });
   const { formMaxWidth } = useBreakpoint();
 
   const rankedRows: RankedRow[] = props.rows.map((row, index) => ({
@@ -61,6 +67,9 @@ export function LeaderboardView(props: LeaderboardViewProps) {
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
           <Text style={[typography.title, { color: colors.text, flex: 1 }]}>Leaderboard</Text>
+          <Pressable onPress={exportState.open} hitSlop={8}>
+            <Text style={{ color: colors.primary, fontWeight: "500", fontSize: 14 }}>Export</Text>
+          </Pressable>
           <StandingsHelpControl />
         </View>
         <Text style={{ fontSize: 14, color: colors.muted }}>
@@ -89,6 +98,14 @@ export function LeaderboardView(props: LeaderboardViewProps) {
           onSelect={props.onOpenPlayer}
         />
       )}
+      <ExportSheet
+        visible={exportState.visible}
+        datasets={[{ dataset: "tournament", label: "Leaderboard" }]}
+        exporting={exportState.exporting}
+        error={exportState.error}
+        onExport={exportState.run}
+        onDismiss={exportState.close}
+      />
     </ScrollView>
   );
 }

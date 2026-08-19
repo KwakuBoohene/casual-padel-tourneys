@@ -1,6 +1,8 @@
 import { prisma } from "../../../lib/prisma.js";
 import type {
   CareerDeltaQuery,
+  CareerMatchQuery,
+  CareerMatchRow,
   OrganizerManagedPlayerRow,
   OrganizerPlayerRepository
 } from "../application/ports.js";
@@ -18,6 +20,44 @@ import {
 } from "./organizerPlayerManagement.js";
 
 export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepository {
+  async listMatchesForExport(query: CareerMatchQuery): Promise<CareerMatchRow[]> {
+    const rows = await prisma.organizerPlayerStatDelta.findMany({
+      where: {
+        organizerId: query.organizerId,
+        ...(query.since ? { occurredAt: { gte: query.since } } : {})
+      },
+      orderBy: { occurredAt: "desc" },
+      take: query.limit,
+      select: {
+        occurredAt: true,
+        tournamentName: true,
+        tournamentMode: true,
+        matchesWon: true,
+        matchesLost: true,
+        matchesDrawn: true,
+        gamesWon: true,
+        gamesLost: true,
+        americanoPointsWon: true,
+        americanoPointsLost: true,
+        organizerPlayer: { select: { name: true } }
+      }
+    });
+
+    return rows.map((row) => ({
+      occurredAt: row.occurredAt,
+      tournamentName: row.tournamentName,
+      tournamentMode: String(row.tournamentMode),
+      playerName: row.organizerPlayer.name,
+      matchesWon: row.matchesWon,
+      matchesLost: row.matchesLost,
+      matchesDrawn: row.matchesDrawn,
+      gamesWon: row.gamesWon,
+      gamesLost: row.gamesLost,
+      americanoPointsWon: row.americanoPointsWon,
+      americanoPointsLost: row.americanoPointsLost
+    }));
+  }
+
   async listDeltas(query: CareerDeltaQuery): Promise<CareerDelta[]> {
     const rows = await prisma.organizerPlayerStatDelta.findMany({
       where: {

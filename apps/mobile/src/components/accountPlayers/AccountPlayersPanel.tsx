@@ -9,6 +9,8 @@ import { radius, spacing, touch, typography } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
 import { StandingsHelpControl } from "../standings/StandingsHelpControl";
 import { StandingsTable } from "../standings/StandingsTable";
+import { ExportSheet } from "../exports/ExportSheet";
+import { useLeaderboardExport } from "../../hooks/exports/useLeaderboardExport";
 
 const RANGES: { id: OrganizerPlayerRange; label: string }[] = [
   { id: "month", label: "Month" },
@@ -29,11 +31,20 @@ interface AccountPlayersPanelProps {
 
 export function AccountPlayersPanel(props: AccountPlayersPanelProps) {
   const { colors } = useTheme();
+  const exportState = useLeaderboardExport({
+    displayName: "account",
+    range: props.range
+  });
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView contentContainerStyle={{ padding: spacing.xl, gap: spacing.md, paddingBottom: spacing.xxl }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
           <Text style={[typography.title, { color: colors.text, flex: 1 }]}>Account Leaderboard</Text>
+          {props.guestMessage ? null : (
+            <Pressable onPress={exportState.open} hitSlop={8}>
+              <Text style={{ color: colors.primary, fontWeight: "500", fontSize: 14 }}>Export</Text>
+            </Pressable>
+          )}
           <StandingsHelpControl />
         </View>
         <View style={{ flexDirection: "row", gap: spacing.sm }}>
@@ -111,6 +122,18 @@ export function AccountPlayersPanel(props: AccountPlayersPanelProps) {
           />
         ) : null}
       </ScrollView>
+      <ExportSheet
+        visible={exportState.visible}
+        datasets={[
+          { dataset: "careerLeaderboard", label: "Leaderboard" },
+          { dataset: "careerMatches", label: "All matches" }
+        ]}
+        range={props.range}
+        exporting={exportState.exporting}
+        error={exportState.error}
+        onExport={exportState.run}
+        onDismiss={exportState.close}
+      />
       <Pressable
         onPress={props.onBack}
         style={{ alignItems: "center", padding: spacing.xl, minHeight: touch.minSecondary }}

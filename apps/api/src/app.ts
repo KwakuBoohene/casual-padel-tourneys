@@ -41,7 +41,9 @@ export async function createApp() {
       "x-public-token",
       REQUEST_ID_HEADER
     ],
-    exposedHeaders: [REQUEST_ID_HEADER]
+    // Downloads are fetched cross-origin by the app; without exposing this the client cannot
+    // read the filename and falls back to a generic one.
+    exposedHeaders: [REQUEST_ID_HEADER, "Content-Disposition"]
   });
   await server.register(rateLimit, { max: 100, timeWindow: "1 minute" });
   await server.register(websocket);

@@ -21,6 +21,8 @@ export interface OrganizerManagedPlayerRow {
 /** One credited match for one career identity — the rows behind the account leaderboard. */
 export interface CareerMatchRow {
   occurredAt: Date;
+  tournamentId: string;
+  matchId: string;
   tournamentName: string;
   tournamentMode: string;
   playerName: string;

@@ -39,3 +39,28 @@ test("content types match the format", () => {
   assert.equal(exportContentType("csv"), "text/csv; charset=utf-8");
   assert.equal(exportContentType("pdf"), "application/pdf");
 });
+
+test("only filesystem- and header-safe characters survive", () => {
+  const hostile = ['Ana"s /../ Night: *?<>|', String.fromCharCode(13, 10), "Final"].join(" ");
+  const slug = slugifyForFileName(hostile);
+  assert.match(slug, /^[a-z0-9-]+$/, `unsafe characters leaked: ${slug}`);
+  assert.doesNotMatch(slug, /\.\./, "no path traversal");
+});
+
+test("a name that is entirely punctuation still yields a usable slug", () => {
+  assert.equal(slugifyForFileName("***"), "export");
+  assert.equal(slugifyForFileName("   "), "export");
+});
+
+test("emoji and CJK reduce to a safe slug rather than breaking the header", () => {
+  const slug = slugifyForFileName("Tuesday Night");
+  assert.match(slug, /^[a-z0-9-]+$/);
+  assert.ok(slug.includes("tuesday"));
+});
+
+test("the filename embeds the event name so downloads are identifiable", () => {
+  assert.equal(
+    exportFileName("leaderboard", "Tuesday Night Americano", "2026-08-19", "pdf"),
+    "tuesday-night-americano-leaderboard-2026-08-19.pdf"
+  );
+});

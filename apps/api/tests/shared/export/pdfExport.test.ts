@@ -76,18 +76,18 @@ test("columns never exceed the available width and keep a usable minimum", () =>
   const table = boardOf(5);
   const measure = (text: string, size: number) => text.length * size * 0.5;
   const available = 515;
-  const columns = layoutColumns(measure, table, available, 9, 9);
+  const columns = layoutColumns(measure, table.sections[0], available, 9, 9);
 
-  assert.equal(columns.length, table.headers.length);
+  assert.equal(columns.length, table.sections[0].headers.length);
   const total = columns.reduce((sum, column) => sum + column.width, 0);
   assert.ok(Math.abs(total - available) < 0.01, `columns should fill ${available}, got ${total}`);
   assert.ok(columns.every((column) => column.width >= 26));
 });
 
 test("figures align right and names align left, derived from the data", () => {
-  const columns = layoutColumns((text, size) => text.length * size * 0.5, boardOf(3), 515, 9, 9);
+  const columns = layoutColumns((text, size) => text.length * size * 0.5, boardOf(3).sections[0], 515, 9, 9);
   const byHeader = Object.fromEntries(
-    boardOf(3).headers.map((header, index) => [header, columns[index]])
+    boardOf(3).sections[0].headers.map((header, index) => [header, columns[index]])
   );
   assert.equal(byHeader.Player.align, "left", "names are text");
   assert.equal(byHeader["#"].align, "right", "rank is a figure");
@@ -115,8 +115,8 @@ test("a matches-style table keeps its date and text columns left-aligned", () =>
     ],
     { title: "Matches" }
   );
-  const columns = layoutColumns((text, size) => text.length * size * 0.5, table, 515, 9, 9);
-  const byHeader = Object.fromEntries(table.headers.map((h, i) => [h, columns[i]]));
+  const columns = layoutColumns((text, size) => text.length * size * 0.5, table.sections[0], 515, 9, 9);
+  const byHeader = Object.fromEntries(table.sections[0].headers.map((h, i) => [h, columns[i]]));
   assert.equal(byHeader.Date.align, "left");
   assert.equal(byHeader.Tournament.align, "left");
   assert.equal(byHeader.Mode.align, "left");
@@ -126,14 +126,14 @@ test("a matches-style table keeps its date and text columns left-aligned", () =>
 
 test("spare width is shared across text columns, not dumped into one", () => {
   const table = boardOf(3);
-  const columns = layoutColumns((text, size) => text.length * size * 0.5, table, 900, 9, 9);
+  const columns = layoutColumns((text, size) => text.length * size * 0.5, table.sections[0], 900, 9, 9);
   const widest = Math.max(...columns.map((c) => c.width));
   const narrowest = Math.min(...columns.map((c) => c.width));
   assert.ok(widest / narrowest < 6, `one column ballooned: ${widest} vs ${narrowest}`);
 });
 
 test("a very narrow page still yields ordered, non-overlapping columns", () => {
-  const columns = layoutColumns((text, size) => text.length * size * 0.5, boardOf(3), 120, 9, 9);
+  const columns = layoutColumns((text, size) => text.length * size * 0.5, boardOf(3).sections[0], 120, 9, 9);
   for (let i = 1; i < columns.length; i += 1) {
     assert.ok(
       columns[i].x >= columns[i - 1].x + columns[i - 1].width - 0.01,

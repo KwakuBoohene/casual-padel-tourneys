@@ -10,14 +10,20 @@ import {
   type ExportRequest
 } from "../../utilities/organizer/exportRequests";
 
+export interface ExportChoice {
+  dataset: ExportDataset;
+  label: string;
+  scope?: ExportRequest["scope"];
+}
+
 interface ExportSheetProps {
   visible: boolean;
-  /** Datasets offered, in order. One row of PDF/CSV buttons each. */
-  datasets: { dataset: ExportDataset; label: string }[];
+  /** Choices offered, in order. One row of PDF/CSV buttons each. */
+  choices: ExportChoice[];
   range?: ExportRequest["range"];
   exporting: ExportFormat | null;
   error: string | null;
-  onExport: (dataset: ExportDataset, format: ExportFormat) => void;
+  onExport: (choice: ExportChoice, format: ExportFormat) => void;
   onDismiss: () => void;
 }
 
@@ -29,11 +35,11 @@ export function ExportSheet(props: ExportSheetProps) {
       {props.error ? (
         <Text style={{ color: colors.danger, fontSize: 13 }}>{props.error}</Text>
       ) : null}
-      {props.datasets.map((entry) => (
-        <View key={entry.dataset} style={{ gap: spacing.xs }}>
+      {props.choices.map((entry) => (
+        <View key={`${entry.dataset}-${entry.scope ?? "full"}`} style={{ gap: spacing.xs }}>
           <Text style={{ color: colors.text, fontSize: 14, fontWeight: "600" }}>{entry.label}</Text>
           <Text style={{ color: colors.muted, fontSize: 12 }}>
-            {exportSheetSubtitle({ dataset: entry.dataset, range: props.range })}
+            {exportSheetSubtitle({ dataset: entry.dataset, range: props.range, scope: entry.scope })}
           </Text>
           <View style={{ flexDirection: "row", gap: spacing.sm }}>
             {(["pdf", "csv"] as const).map((format) => (
@@ -43,7 +49,7 @@ export function ExportSheet(props: ExportSheetProps) {
                 variant="secondary"
                 style={{ flex: 1 }}
                 disabled={props.exporting !== null}
-                onPress={() => props.onExport(entry.dataset, format)}
+                onPress={() => props.onExport(entry, format)}
               />
             ))}
           </View>

@@ -3,6 +3,7 @@ import {
   exportContentType,
   exportFileName,
   toCsv,
+  type ExportScope,
   type ExportTable
 } from "@padel/shared";
 import type { Readable } from "node:stream";
@@ -17,6 +18,7 @@ import type { TournamentModuleDeps } from "../application/ports.js";
 import {
   EXPORT_RATE_LIMIT,
   parseExportFormat,
+  parseScope,
   type SupportedExportFormat
 } from "./exportSupport.js";
 
@@ -25,9 +27,11 @@ function sendTable(
   table: ExportTable,
   name: string,
   isoDate: string,
-  format: SupportedExportFormat
+  format: SupportedExportFormat,
+  scope: ExportScope
 ): string | Readable {
-  const fileName = exportFileName("leaderboard", name, isoDate, format);
+  // The filename says which shape it is, so a downloads folder stays readable.
+  const fileName = exportFileName(scope === "full" ? "full" : "leaderboard", name, isoDate, format);
   reply.header("content-type", exportContentType(format));
   reply.header("content-disposition", `attachment; filename="${fileName}"`);
   return format === "pdf" ? renderExportTablePdf(table) : toCsv(table);
@@ -44,17 +48,20 @@ export function registerTournamentExportRoutes(
     async (request, reply) => {
       const params = request.params as { id: string };
       try {
-        const format = parseExportFormat((request.query as { format?: string })?.format);
+        const query = request.query as { format?: string; scope?: string };
+        const format = parseExportFormat(query.format);
+        const scope = parseScope(query.scope);
         if (!request.user) {
           throw notFound("Tournament not found.");
         }
         const tournament = await requireOrganizerTournament(deps.repo, params.id, request.user.id);
         return sendTable(
           reply,
-          buildTournamentExportTable(tournament),
+          buildTournamentExportTable(tournament, scope),
           tournament.config.name,
           tournament.updatedAt,
-          format
+          format,
+          scope
         );
       } catch (error) {
         return mapAppError(reply, error);
@@ -68,17 +75,20 @@ export function registerTournamentExportRoutes(
     async (request, reply) => {
       const params = request.params as { token: string };
       try {
-        const format = parseExportFormat((request.query as { format?: string })?.format);
+        const query = request.query as { format?: string; scope?: string };
+        const format = parseExportFormat(query.format);
+        const scope = parseScope(query.scope);
         const tournament = await deps.repo.getByPublicToken(params.token);
         if (!tournament) {
           throw notFound("Tournament not found.");
         }
         return sendTable(
           reply,
-          buildTournamentExportTable(tournament),
+          buildTournamentExportTable(tournament, scope),
           tournament.config.name,
           tournament.updatedAt,
-          format
+          format,
+          scope
         );
       } catch (error) {
         return mapAppError(reply, error);

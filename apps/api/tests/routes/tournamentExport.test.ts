@@ -72,12 +72,148 @@ test("organizer downloads the leaderboard as CSV", async () => {
     assert.match(response.headers["content-type"] as string, /text\/csv/);
     assert.match(
       response.headers["content-disposition"] as string,
-      /attachment; filename="export-night-leaderboard-\d{4}-\d{2}-\d{2}\.csv"/
+      /attachment; filename="export-night-full-\d{4}-\d{2}-\d{2}\.csv"/
     );
 
     const lines = rows(response.body);
-    assert.equal(lines[0], "#,Player,MP,W,L,D,GW,GL,GD,PW(A),PL(A),PTS");
+    assert.equal(lines[0], "Leaderboard");
+    assert.equal(lines[1], "#,Player,MP,W,L,D,GW,GL,GD,PW(A),PL(A),PTS");
+    // Every player has a standings row, ahead of the matches section.
+    const standings = lines.slice(2, 2 + createPayload.players.length);
+    assert.equal(standings.length, createPayload.players.length);
+    assert.ok(standings.every((line) => /^\d+,[A-Za-z]/.test(line)));
+  });
+});
+
+test("the export carries the rounds and matches, not just the leaderboard", async () => {
+  await withApp(async (app) => {
+    const token = signUser("export-owner-sections");
+    const tournament = await createTournament(app, token);
+    const match = tournament.rounds[0].matches[0];
+    await app.inject({
+      method: "POST",
+      url: "/tournaments/score",
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        tournamentId: tournament.id,
+        matchId: match.id,
+        scoreA: 16,
+        scoreB: 8,
+        expectedVersion: tournament.version
+      }
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: `/tournaments/${tournament.id}/export?format=csv`,
+      headers: { authorization: `Bearer ${token}` }
+    });
+    const lines = rows(response.body);
+
+    assert.ok(lines.includes("Leaderboard"), "leaderboard section is labelled");
+    assert.ok(lines.includes("Rounds and matches"), "matches section is present");
+    assert.ok(lines.includes("Round,Court,Team A,Team B,Score,Status"));
+
+    const played = lines.find((line) => line.includes("16-8"));
+    assert.ok(played, "the scored match and its score are listed");
+    assert.match(played!, /Completed$/);
+    assert.ok(
+      lines.some((line) => line.endsWith("Not played")),
+      "unplayed matches are listed too"
+    );
+
+    const totalMatches = tournament.rounds.flatMap((r: { matches: unknown[] }) => r.matches).length;
+    const matchLines = lines.filter((line) => /^\d+,\d+,/.test(line));
+    assert.equal(matchLines.length, totalMatches, "every match appears exactly once");
+  });
+});
+
+test("scope=leaderboard returns the standings only", async () => {
+  await withApp(async (app) => {
+    const token = signUser("export-owner-scope");
+    const tournament = await createTournament(app, token);
+
+    const response = await app.inject({
+      method: "GET",
+      url: `/tournaments/${tournament.id}/export?format=csv&scope=leaderboard`,
+      headers: { authorization: `Bearer ${token}` }
+    });
+
+    assert.equal(response.statusCode, 200);
+    const lines = rows(response.body);
+    assert.equal(lines[0], "#,Player,MP,W,L,D,GW,GL,GD,PW(A),PL(A),PTS", "no section heading");
+    assert.ok(!lines.includes("Rounds and matches"), "matches must be omitted");
     assert.equal(lines.length, 1 + createPayload.players.length);
+    assert.match(
+      response.headers["content-disposition"] as string,
+      /-leaderboard-\d{4}-\d{2}-\d{2}\.csv/
+    );
+  });
+});
+
+test("scope=full is the default and names the file differently", async () => {
+  await withApp(async (app) => {
+    const token = signUser("export-owner-scope2");
+    const tournament = await createTournament(app, token);
+
+    const explicit = await app.inject({
+      method: "GET",
+      url: `/tournaments/${tournament.id}/export?format=csv&scope=full`,
+      headers: { authorization: `Bearer ${token}` }
+    });
+    const implied = await app.inject({
+      method: "GET",
+      url: `/tournaments/${tournament.id}/export?format=csv`,
+      headers: { authorization: `Bearer ${token}` }
+    });
+
+    assert.equal(explicit.body, implied.body, "full is the default");
+    assert.ok(rows(explicit.body).includes("Rounds and matches"));
+    assert.match(
+      explicit.headers["content-disposition"] as string,
+      /-full-\d{4}-\d{2}-\d{2}\.csv/
+    );
+  });
+});
+
+test("an unknown scope is rejected", async () => {
+  await withApp(async (app) => {
+    const token = signUser("export-owner-scope3");
+    const tournament = await createTournament(app, token);
+    const response = await app.inject({
+      method: "GET",
+      url: `/tournaments/${tournament.id}/export?format=csv&scope=everything`,
+      headers: { authorization: `Bearer ${token}` }
+    });
+    assert.equal(response.statusCode, 400);
+    assert.match(response.json().message, /Supported: leaderboard, full/);
+  });
+});
+
+test("a closed tournament marks its unplayed matches Void in the export", async () => {
+  await withApp(async (app) => {
+    const token = signUser("export-owner-void");
+    const tournament = await createTournament(app, token);
+
+    const close = await app.inject({
+      method: "POST",
+      url: `/tournaments/${tournament.id}/close`,
+      headers: { authorization: `Bearer ${token}` },
+      payload: { expectedVersion: tournament.version }
+    });
+    assert.equal(close.statusCode, 200);
+
+    const response = await app.inject({
+      method: "GET",
+      url: `/tournaments/${tournament.id}/export?format=csv`,
+      headers: { authorization: `Bearer ${token}` }
+    });
+    const lines = rows(response.body).filter((line) => /^\d+,\d+,/.test(line));
+    assert.ok(lines.length > 0);
+    for (const line of lines) {
+      assert.match(line, /,Void$/, `voided match should read Void: ${line}`);
+      assert.match(line, /,,Void$/, "a voided match shows no score");
+    }
   });
 });
 
@@ -163,7 +299,7 @@ test("organizer downloads the leaderboard as PDF", async () => {
     assert.equal(response.headers["content-type"], "application/pdf");
     assert.match(
       response.headers["content-disposition"] as string,
-      /attachment; filename="export-night-leaderboard-\d{4}-\d{2}-\d{2}\.pdf"/
+      /attachment; filename="export-night-full-\d{4}-\d{2}-\d{2}\.pdf"/
     );
     assert.equal(response.rawPayload.subarray(0, 5).toString(), "%PDF-");
     assert.ok(response.rawPayload.length > 1000);

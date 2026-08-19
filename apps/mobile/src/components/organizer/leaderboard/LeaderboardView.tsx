@@ -100,7 +100,10 @@ export function LeaderboardView(props: LeaderboardViewProps) {
       )}
       <ExportSheet
         visible={exportState.visible}
-        datasets={[{ dataset: "tournament", label: "Leaderboard" }]}
+        choices={[
+          { dataset: "tournament", scope: "leaderboard", label: "Leaderboard only" },
+          { dataset: "tournament", scope: "full", label: "Leaderboard + matches" }
+        ]}
         exporting={exportState.exporting}
         error={exportState.error}
         onExport={exportState.run}

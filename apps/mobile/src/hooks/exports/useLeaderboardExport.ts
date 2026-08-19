@@ -1,11 +1,12 @@
 import { useState } from "react";
 
 import { downloadAndShareExport } from "../../api/exports";
-import type {
-  ExportDataset,
-  ExportFormat,
-  ExportRequest
-} from "../../utilities/organizer/exportRequests";
+import type { ExportFormat, ExportRequest } from "../../utilities/organizer/exportRequests";
+
+export interface ExportChoiceInput {
+  dataset: ExportRequest["dataset"];
+  scope?: ExportRequest["scope"];
+}
 
 interface UseLeaderboardExportInput {
   /** Used for the downloaded filename. */
@@ -29,13 +30,19 @@ export function useLeaderboardExport(input: UseLeaderboardExportInput) {
     setVisible(false);
   };
 
-  const run = async (dataset: ExportDataset, format: ExportFormat) => {
+  const run = async (choice: ExportChoiceInput, format: ExportFormat) => {
     if (exporting) return;
     setError(null);
     setExporting(format);
     try {
       await downloadAndShareExport(
-        { dataset, format, tournamentId: input.tournamentId, range: input.range },
+        {
+          dataset: choice.dataset,
+          scope: choice.scope,
+          format,
+          tournamentId: input.tournamentId,
+          range: input.range
+        },
         input.displayName
       );
       setVisible(false);

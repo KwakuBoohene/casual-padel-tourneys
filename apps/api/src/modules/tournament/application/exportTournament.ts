@@ -1,4 +1,9 @@
-import { buildLeaderboardExport, type ExportTable } from "@padel/shared";
+import {
+  buildLeaderboardSection,
+  buildTournamentMatchesSection,
+  type ExportScope,
+  type ExportTable
+} from "@padel/shared";
 
 import type { TournamentState } from "../../../types/state.js";
 import { buildTournamentExportRows } from "../domain/exportRows.js";
@@ -22,10 +27,32 @@ function subtitleFor(tournament: TournamentState): string {
   return parts.join(" \u00b7 ");
 }
 
-/** Format-neutral table for one tournament's leaderboard. */
-export function buildTournamentExportTable(tournament: TournamentState): ExportTable {
-  return buildLeaderboardExport(buildTournamentExportRows(tournament), {
+/**
+ * The whole night in one document: final standings, then every match and score. King of the
+ * Court is not routed here — it has no Round/Match aggregate to list.
+ */
+export function buildTournamentExportTable(
+  tournament: TournamentState,
+  scope: ExportScope = "full"
+): ExportTable {
+  const playerNameById = new Map(tournament.players.map((player) => [player.id, player.name]));
+  const leaderboard = buildLeaderboardSection(
+    buildTournamentExportRows(tournament),
+    scope === "full" ? "Leaderboard" : undefined
+  );
+  if (scope === "leaderboard") {
+    return { title: tournament.config.name, subtitle: subtitleFor(tournament), sections: [leaderboard] };
+  }
+  return {
     title: tournament.config.name,
-    subtitle: subtitleFor(tournament)
-  });
+    subtitle: subtitleFor(tournament),
+    sections: [
+      leaderboard,
+      buildTournamentMatchesSection({
+        rounds: tournament.rounds,
+        playerNameById,
+        scoringMode: tournament.config.scoringMode
+      })
+    ]
+  };
 }

@@ -1,4 +1,5 @@
-export type ExportKind = "leaderboard" | "matches";
+/** Names the shape of the file so a downloads folder stays readable. */
+export type ExportKind = "leaderboard" | "matches" | "full";
 export type ExportFormat = "pdf" | "csv";
 
 const MAX_SLUG_LENGTH = 60;

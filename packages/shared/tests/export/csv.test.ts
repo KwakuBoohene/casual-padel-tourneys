@@ -4,12 +4,10 @@ import assert from "node:assert/strict";
 import { escapeCsvField, toCsv, UTF8_BOM } from "../../src/export/csv.js";
 import type { ExportTable } from "../../src/export/exportTable.js";
 
-function table(overrides: Partial<ExportTable> = {}): ExportTable {
+function table(section: Partial<ExportTable["sections"][number]> = {}): ExportTable {
   return {
     title: "Board",
-    headers: ["A", "B"],
-    rows: [["1", "2"]],
-    ...overrides
+    sections: [{ headers: ["A", "B"], rows: [["1", "2"]], ...section }]
   };
 }
 
@@ -59,4 +57,28 @@ test("non-ascii names survive intact", () => {
   const csv = toCsv(table({ rows: [["José", "Ångström"]] }));
   assert.ok(csv.includes("José"));
   assert.ok(csv.includes("Ångström"));
+});
+
+test("sections are separated by a blank line and labelled", () => {
+  const csv = toCsv({
+    title: "Night",
+    sections: [
+      { heading: "Leaderboard", headers: ["#", "Player"], rows: [["1", "Ana"]] },
+      { heading: "Rounds and matches", headers: ["Round", "Score"], rows: [["1", "16-8"]] }
+    ]
+  });
+  const lines = csv.replace(UTF8_BOM, "").split("\r\n");
+  assert.deepEqual(lines.slice(0, 6), [
+    "Leaderboard",
+    "#,Player",
+    "1,Ana",
+    "",
+    "Rounds and matches",
+    "Round,Score"
+  ]);
+});
+
+test("a single-section document carries no heading noise", () => {
+  const csv = toCsv(table());
+  assert.equal(csv, `${UTF8_BOM}A,B\r\n1,2\r\n`);
 });

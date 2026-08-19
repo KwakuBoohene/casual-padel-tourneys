@@ -30,6 +30,8 @@ export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepositor
       take: query.limit,
       select: {
         occurredAt: true,
+        tournamentId: true,
+        matchId: true,
         tournamentName: true,
         tournamentMode: true,
         matchesWon: true,
@@ -45,6 +47,8 @@ export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepositor
 
     return rows.map((row) => ({
       occurredAt: row.occurredAt,
+      tournamentId: row.tournamentId,
+      matchId: row.matchId,
       tournamentName: row.tournamentName,
       tournamentMode: String(row.tournamentMode),
       playerName: row.organizerPlayer.name,

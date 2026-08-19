@@ -111,7 +111,7 @@ test("career board exports as CSV for the signed-in organizer", async () => {
 
     const response = await app.inject({
       method: "GET",
-      url: "/me/players/leaderboard/export?format=csv&range=all",
+      url: "/me/players/leaderboard/export?format=csv&range=all&scope=leaderboard",
       headers: { authorization: `Bearer ${token}` }
     });
 
@@ -150,6 +150,64 @@ test("career matches export lists one row per credited player", async () => {
       assert.equal(cells[8], "0", `GW should be 0: ${line}`);
       assert.equal(cells[9], "0", `GL should be 0: ${line}`);
     }
+  });
+});
+
+test("global scope=full carries the leaderboard, its tournaments and its matches", async () => {
+  await withApp(async (app, organizerId) => {
+    const token = signUser(organizerId);
+    await seedScoredEvent(app, token);
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/me/players/leaderboard/export?format=csv&range=year&scope=full",
+      headers: { authorization: `Bearer ${token}` }
+    });
+
+    assert.equal(response.statusCode, 200);
+    const lines = rows(response.body);
+    assert.ok(lines.includes("Account leaderboard"));
+    assert.ok(lines.includes("Tournaments"));
+    assert.ok(lines.includes("Matches"));
+    assert.ok(lines.includes("Date,Tournament,Mode,Players,Matches"));
+
+    const eventRow = lines.find((line) => line.startsWith("2026-") && line.includes("Club Night"));
+    assert.ok(eventRow, "the event is listed");
+    // One match was scored, crediting four players.
+    assert.match(eventRow!, /,4,1$/);
+    assert.match(response.headers["content-disposition"] as string, /-full-/);
+  });
+});
+
+test("global scope=leaderboard returns the standings only", async () => {
+  await withApp(async (app, organizerId) => {
+    const token = signUser(organizerId);
+    await seedScoredEvent(app, token);
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/me/players/leaderboard/export?format=csv&range=year&scope=leaderboard",
+      headers: { authorization: `Bearer ${token}` }
+    });
+
+    const lines = rows(response.body);
+    assert.equal(lines[0], "#,Player,MP,W,L,D,GW,GL,GD,PW(A),PL(A),PTS");
+    assert.ok(!lines.includes("Tournaments"));
+    assert.ok(!lines.includes("Matches"));
+    assert.match(response.headers["content-disposition"] as string, /-leaderboard-/);
+  });
+});
+
+test("an unknown scope is rejected on the global export", async () => {
+  await withApp(async (app, organizerId) => {
+    const token = signUser(organizerId);
+    const response = await app.inject({
+      method: "GET",
+      url: "/me/players/leaderboard/export?format=csv&range=year&scope=everything",
+      headers: { authorization: `Bearer ${token}` }
+    });
+    assert.equal(response.statusCode, 400);
+    assert.match(response.json().message, /Supported: leaderboard, full/);
   });
 });
 

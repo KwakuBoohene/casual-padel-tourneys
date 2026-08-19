@@ -8,6 +8,7 @@ import {
   exportCacheFileName,
   exportMimeType,
   exportRequestPath,
+  fileNameFromContentDisposition,
   type ExportRequest
 } from "../utilities/organizer/exportRequests";
 
@@ -24,12 +25,13 @@ export async function downloadAndShareExport(
   const token = getAuthToken();
   const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
 
+  const fileName = exportCacheFileName(request, displayName, now.toISOString());
+
   if (Platform.OS === "web") {
-    await downloadInBrowser(url, headers);
+    await downloadInBrowser(url, headers, fileName);
     return;
   }
 
-  const fileName = exportCacheFileName(request, displayName, now.toISOString());
   const target = new File(Paths.cache, fileName);
   let file: File;
   try {
@@ -52,17 +54,20 @@ export async function downloadAndShareExport(
 /** Web cannot attach an auth header to a plain navigation, so fetch then save the blob. */
 async function downloadInBrowser(
   url: string,
-  headers: Record<string, string> | undefined
+  headers: Record<string, string> | undefined,
+  fallbackFileName: string
 ): Promise<void> {
   const response = await fetch(url, { headers });
   if (!response.ok) {
     throw new ApiError({ message: "Export failed. Try again.", status: response.status });
   }
   const objectUrl = URL.createObjectURL(await response.blob());
-  const disposition = response.headers.get("content-disposition") ?? "";
+  // The header is only readable when the API exposes it via CORS; fall back to the name we
+  // already built rather than letting the browser save a generic "export".
+  const fromHeader = fileNameFromContentDisposition(response.headers.get("content-disposition"));
   const anchor = document.createElement("a");
   anchor.href = objectUrl;
-  anchor.download = /filename="([^"]+)"/.exec(disposition)?.[1] ?? "export";
+  anchor.download = fromHeader ?? fallbackFileName;
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();

@@ -11,7 +11,7 @@ export function unfinishedMatchCount(tournament: TournamentState): number {
 }
 
 /**
- * Close a live event, voiding whatever was never played.
+ * Close a live event, voiding whatever was never played. Returns how many matches it voided.
  *
  * Partial scores are deliberately left on the row: the organizer can close a rained-off
  * night without us either deleting the record or crediting a result nobody finished.

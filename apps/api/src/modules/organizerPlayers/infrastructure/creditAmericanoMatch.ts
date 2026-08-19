@@ -81,7 +81,8 @@ export async function creditAmericanoMatchIfComplete(input: {
   const organizerId = tournament.organizerId;
   if (!organizerId) return;
   const match = findMatch(tournament, matchId);
-  if (!match?.completed) return;
+  // A voided match was never played: it must never reach the account leaderboard.
+  if (!match?.completed || match.voidedAt) return;
   const sides = creditSides(match, tournament);
   if (!sides) return;
 
@@ -122,7 +123,7 @@ export async function creditAllCompletedAmericanoMatches(tournament: TournamentS
   };
   for (const round of optedIn.rounds) {
     for (const match of round.matches) {
-      if (match.completed) {
+      if (match.completed && !match.voidedAt) {
         await creditAmericanoMatchIfComplete({ tournament: optedIn, matchId: match.id });
       }
     }

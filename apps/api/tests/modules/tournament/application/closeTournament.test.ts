@@ -172,3 +172,24 @@ test("closeTournament reports a partially played event correctly", async () => {
   const persisted = (await repo.getById(initial.id))!;
   assert.equal(persisted.rounds[0].matches[0].voidedAt ?? null, null);
 });
+
+test("closeTournament voids every unplayed match but never a played one", async () => {
+  const initial = sampleTournament();
+  const playedId = initial.rounds[0].matches[0].id;
+  initial.rounds[0].matches[0].completed = true;
+  const totalMatches = initial.rounds.flatMap((round) => round.matches).length;
+  const repo = memoryRepo(initial);
+  const { events } = recordingEvents();
+
+  const result = await closeTournament(
+    { repo, events },
+    { tournamentId: initial.id, organizerId: "owner-1", expectedVersion: initial.version }
+  );
+
+  assert.equal(result.voidedMatchCount, totalMatches - 1);
+  const persisted = (await repo.getById(initial.id))!;
+  const played = persisted.rounds
+    .flatMap((round) => round.matches)
+    .find((match) => match.id === playedId)!;
+  assert.equal(played.voidedAt ?? null, null, "a played match is never voided");
+});

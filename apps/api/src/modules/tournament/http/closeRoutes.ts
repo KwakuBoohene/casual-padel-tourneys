@@ -7,6 +7,7 @@ import { notFound } from "../../../shared/kernel/appError.js";
 import { mapAppError } from "../../../shared/http/mapAppError.js";
 import { handleCloseKohTournament } from "../../koh/http/closeKoh.js";
 import { closeTournament } from "../application/closeTournament.js";
+import { stripVoidedMatchCareerDeltas } from "../infrastructure/stripVoidedMatchCareerDeltas.js";
 import type { TournamentModuleDeps } from "../application/ports.js";
 
 /**
@@ -36,18 +37,23 @@ export function registerTournamentCloseRoutes(
       if (!meta || meta.organizerId !== request.user.id) {
         throw notFound("Tournament not found.");
       }
-      const data = isKingOfTheCourtMode(meta.mode)
-        ? await handleCloseKohTournament(
-            server,
-            params.id,
-            request.user.id,
-            parsed.data.expectedVersion
-          )
-        : await closeTournament(deps, {
-            tournamentId: params.id,
-            organizerId: request.user.id,
-            expectedVersion: parsed.data.expectedVersion
-          });
+      let data: { tournament: unknown; voidedMatchCount: number };
+      if (isKingOfTheCourtMode(meta.mode)) {
+        data = await handleCloseKohTournament(
+          server,
+          params.id,
+          request.user.id,
+          parsed.data.expectedVersion
+        );
+      } else {
+        const result = await closeTournament(deps, {
+          tournamentId: params.id,
+          organizerId: request.user.id,
+          expectedVersion: parsed.data.expectedVersion
+        });
+        await stripVoidedMatchCareerDeltas(params.id);
+        data = { tournament: result.tournament, voidedMatchCount: result.voidedMatchCount };
+      }
       request.log.info(
         { id: params.id, mode: meta.mode, voidedMatchCount: data.voidedMatchCount },
         "POST /tournaments/:id/close"

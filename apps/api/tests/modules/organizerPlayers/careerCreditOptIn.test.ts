@@ -345,3 +345,98 @@ test("KOH can opt in after scoring and backfills four deltas", async () => {
     assert.equal(count, 4);
   });
 });
+
+test("closing an event credits only the matches that were played", async () => {
+  await withApp(async (app, organizerId) => {
+    const token = signUser(organizerId);
+    const create = await app.inject({
+      method: "POST",
+      url: "/tournaments",
+      headers: { authorization: `Bearer ${token}` },
+      payload: { ...amCreate, contributeToCareerLeaderboard: true }
+    });
+    assert.equal(create.statusCode, 200);
+    const created = create.json().data;
+    const match = created.rounds[0].matches[0];
+
+    const score = await app.inject({
+      method: "POST",
+      url: "/tournaments/score",
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        tournamentId: created.id,
+        matchId: match.id,
+        scoreA: 16,
+        scoreB: 8,
+        expectedVersion: created.version
+      }
+    });
+    assert.equal(score.statusCode, 200);
+    const scored = score.json().data;
+    const before = await prisma.organizerPlayerStatDelta.count({ where: { organizerId } });
+    assert.equal(before, 4);
+
+    const close = await app.inject({
+      method: "POST",
+      url: `/tournaments/${created.id}/close`,
+      headers: { authorization: `Bearer ${token}` },
+      payload: { expectedVersion: scored.version }
+    });
+    assert.equal(close.statusCode, 200);
+    assert.ok(close.json().data.voidedMatchCount > 0);
+
+    // Career totals must be unchanged by closing early.
+    const after = await prisma.organizerPlayerStatDelta.count({ where: { organizerId } });
+    assert.equal(after, 4);
+  });
+});
+
+test("closing strips career credit left behind by a voided match", async () => {
+  await withApp(async (app, organizerId) => {
+    const token = signUser(organizerId);
+    const create = await app.inject({
+      method: "POST",
+      url: "/tournaments",
+      headers: { authorization: `Bearer ${token}` },
+      payload: { ...amCreate, contributeToCareerLeaderboard: true }
+    });
+    assert.equal(create.statusCode, 200);
+    const created = create.json().data;
+    const unplayed = created.rounds[0].matches[0];
+
+    // Stand in for the reachable complete-then-edit-back-to-draft path, which reverses the
+    // player counters but leaves the delta behind.
+    const orphan = await prisma.organizerPlayer.create({
+      data: { organizerId, name: "Orphan", nameNormalized: "orphan" }
+    });
+    await prisma.organizerPlayerStatDelta.create({
+      data: {
+        organizerId,
+        organizerPlayerId: orphan.id,
+        tournamentId: created.id,
+        tournamentName: created.config.name,
+        matchId: unplayed.id,
+        tournamentMode: "AMERICANO",
+        matchesWon: 1
+      }
+    });
+    assert.equal(
+      await prisma.organizerPlayerStatDelta.count({ where: { matchId: unplayed.id } }),
+      1
+    );
+
+    const close = await app.inject({
+      method: "POST",
+      url: `/tournaments/${created.id}/close`,
+      headers: { authorization: `Bearer ${token}` },
+      payload: { expectedVersion: created.version }
+    });
+    assert.equal(close.statusCode, 200);
+
+    assert.equal(
+      await prisma.organizerPlayerStatDelta.count({ where: { matchId: unplayed.id } }),
+      0,
+      "a voided match must not keep career credit"
+    );
+  });
+});

@@ -107,3 +107,54 @@ test("applyCloseTournament voids nothing when every match is played", () => {
   assert.ok(state.endedAt, "a fully played event still closes");
   assert.ok(allMatches(state).every((match) => !match.voidedAt));
 });
+
+test("closing does not move player aggregates or the leaderboard", () => {
+  const state = americano();
+  const matches = allMatches(state);
+
+  // One played match, one abandoned with a partial score entered.
+  matches[0].completed = true;
+  matches[0].scoreA = 16;
+  matches[0].scoreB = 8;
+  for (const playerId of matches[0].teamA) {
+    const player = state.players.find((item) => item.id === playerId)!;
+    player.totalPoints += 16;
+    player.gamesPlayed += 1;
+  }
+  matches[1].scoreA = 9;
+  matches[1].scoreB = 4;
+
+  const before = state.players.map((player) => ({
+    id: player.id,
+    totalPoints: player.totalPoints,
+    gamesPlayed: player.gamesPlayed,
+    matchesWon: player.matchesWon ?? 0,
+    gamesWon: player.gamesWon ?? 0
+  }));
+
+  applyCloseTournament(state);
+
+  const after = state.players.map((player) => ({
+    id: player.id,
+    totalPoints: player.totalPoints,
+    gamesPlayed: player.gamesPlayed,
+    matchesWon: player.matchesWon ?? 0,
+    gamesWon: player.gamesWon ?? 0
+  }));
+
+  // The partial 9-4 must not reach anybody's totals, and the played 16-8 must survive.
+  assert.deepEqual(after, before);
+  assert.equal(state.leaderboard.length, state.players.length);
+});
+
+test("closing an event where every match is abandoned scores nobody", () => {
+  const state = americano();
+
+  applyCloseTournament(state);
+
+  // Everyone still appears on the board, all on zero, rather than the table going empty.
+  assert.equal(state.leaderboard.length, state.players.length);
+  assert.ok(state.leaderboard.every((row) => row.totalPoints === 0));
+  assert.ok(state.leaderboard.every((row) => (row.matchesWon ?? 0) === 0));
+  assert.ok(state.leaderboard.every((row) => (row.gamesWon ?? 0) === 0));
+});

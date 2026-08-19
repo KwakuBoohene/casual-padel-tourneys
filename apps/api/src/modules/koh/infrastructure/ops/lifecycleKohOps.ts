@@ -23,10 +23,21 @@ export async function endKohTournament(
 
   const now = new Date();
   const voidedMatchCount = await prisma.$transaction(async (tx) => {
-    const voided = await tx.kohMatch.updateMany({
+    const unplayed = await tx.kohMatch.findMany({
       where: { court: { tournamentId }, completed: false, voidedAt: null },
-      data: { voidedAt: now }
+      select: { id: true }
     });
+    const voidedMatchIds = unplayed.map((match) => match.id);
+    if (voidedMatchIds.length > 0) {
+      await tx.kohMatch.updateMany({
+        where: { id: { in: voidedMatchIds } },
+        data: { voidedAt: now }
+      });
+      // A voided match was never played: drop any career credit it still carries.
+      await tx.organizerPlayerStatDelta.deleteMany({
+        where: { tournamentId, matchId: { in: voidedMatchIds } }
+      });
+    }
     await tx.tournament.update({
       where: { id: tournamentId },
       data: {
@@ -36,7 +47,7 @@ export async function endKohTournament(
         kohPendingPromote: Prisma.JsonNull
       }
     });
-    return voided.count;
+    return voidedMatchIds.length;
   });
 
   logger.info("koh/endKohTournament", { tournamentId, voidedMatchCount });

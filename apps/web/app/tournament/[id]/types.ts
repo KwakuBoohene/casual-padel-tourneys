@@ -46,6 +46,8 @@ export type TournamentViewModel = {
       scoreA?: number;
       scoreB?: number;
       completed?: boolean;
+      /** Set when the organizer closed the event with this match unplayed. */
+      voidedAt?: string | null;
       sets?: MatchSet[];
       matchTbA?: number;
       matchTbB?: number;
@@ -78,13 +80,30 @@ export function formatScoringLabel(
   return `${mode} scoring`;
 }
 
+/** Voided: the organizer closed the event without this match being played. */
+export function isMatchVoided(
+  match: TournamentViewModel["rounds"][number]["matches"][number]
+): boolean {
+  return match.voidedAt != null;
+}
+
 export function isMatchComplete(match: TournamentViewModel["rounds"][number]["matches"][number]): boolean {
+  // A voided match is never a result, even if a partial score was entered before it was abandoned.
+  if (isMatchVoided(match)) return false;
   if (match.completed === true) return true;
   if (match.completed === false) return false;
   return match.scoreA !== undefined && match.scoreB !== undefined;
 }
 
+/** Nothing left to play: either played or voided. */
+export function isMatchResolved(
+  match: TournamentViewModel["rounds"][number]["matches"][number]
+): boolean {
+  return isMatchComplete(match) || isMatchVoided(match);
+}
+
 export function matchHasProgress(match: TournamentViewModel["rounds"][number]["matches"][number]): boolean {
+  if (isMatchVoided(match)) return false;
   if (isMatchComplete(match)) return true;
   if (match.scoreA !== undefined || match.scoreB !== undefined) return true;
   return Boolean(

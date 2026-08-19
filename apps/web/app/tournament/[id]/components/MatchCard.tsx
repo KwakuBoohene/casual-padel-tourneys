@@ -3,7 +3,7 @@ import { specialPointLabelForSet } from "@padel/shared";
 
 import { spectatorRegularStatusLine } from "../lib/regularMatchDisplay";
 
-type MatchStatus = "live" | "next" | "completed" | "pending";
+type MatchStatus = "live" | "next" | "completed" | "pending" | "void";
 
 interface MatchCardProps {
   court: number;
@@ -27,6 +27,7 @@ function americanoStatusText(
   scoreB: number | undefined,
   status: MatchStatus
 ): string {
+  if (status === "void") return "Not played";
   const hasScore = scoreA !== undefined && scoreB !== undefined;
   if (hasScore) {
     return `${scoreA}–${scoreB}`;
@@ -54,23 +55,33 @@ export function MatchCard({
       (player) => highlightPlayers.includes(player.id) || highlightPlayers.includes(player.name)
     );
 
-  const statusText =
-    scoringMode === "REGULAR"
+  const isVoid = status === "void";
+  const statusText = isVoid
+    ? "Not played"
+    : scoringMode === "REGULAR"
       ? spectatorRegularStatusLine({ sets, completed, status })
       : americanoStatusText(scoreA, scoreB, status);
-  const special = scoringMode === "REGULAR" && sets?.some((set) => specialPointLabelForSet(set));
+  const special = !isVoid && scoringMode === "REGULAR" && sets?.some((set) => specialPointLabelForSet(set));
 
   return (
     <article
       className={[
         "rounded-2xl border border-padel-border bg-padel-surface p-4 space-y-2",
         highlighted ? "border-padel-primary border-2" : "",
-        status === "live" && !completed ? "ring-0" : ""
+        status === "live" && !completed ? "ring-0" : "",
+        isVoid ? "opacity-60" : ""
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      <p className="text-sm font-bold text-padel-primary">Court {court}</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-bold text-padel-primary">Court {court}</p>
+        {isVoid ? (
+          <span className="text-[11px] px-2 py-0.5 rounded-md border border-padel-border bg-padel-surfaceAlt text-padel-muted font-semibold uppercase tracking-wide">
+            Void
+          </span>
+        ) : null}
+      </div>
       <p className="text-base font-semibold text-padel-text leading-snug">
         {formatTeam(teamA)} vs {formatTeam(teamB)}
       </p>

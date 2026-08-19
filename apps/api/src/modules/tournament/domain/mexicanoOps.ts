@@ -3,8 +3,8 @@ import type { TournamentState } from "../../../types/state.js";
 import { logger } from "../../../lib/logger.js";
 
 import { buildLeaderboard } from "./leaderboard.js";
+import { applyCloseTournament } from "./closeOps.js";
 import { assertMexicanoNotEnded, touch } from "./helpers.js";
-import { awardPoints, bumpGamesPlayed } from "./pointsScore.js";
 
 export function applyAdvanceMexicanoRound(tournament: TournamentState): TournamentState {
   if (tournament.config.mode !== "MEXICANO") {
@@ -74,32 +74,10 @@ export function applyEndMexicanoNight(tournament: TournamentState): TournamentSt
     throw new Error("This Mexicano night has already ended.");
   }
 
-  const ordered = [...tournament.rounds].sort((a, b) => a.roundNumber - b.roundNumber);
-  const latest = ordered[ordered.length - 1];
-  let discardedRoundNumber: number | null = null;
-
-  if (latest && latest.matches.some((match) => !match.completed)) {
-    discardedRoundNumber = latest.roundNumber;
-    for (const match of latest.matches) {
-      if (!match.completed) continue;
-      if (
-        (tournament.config.scoringMode ?? "AMERICANO_POINTS") === "AMERICANO_POINTS" &&
-        match.scoreA !== undefined &&
-        match.scoreB !== undefined
-      ) {
-        awardPoints(tournament.players, match, -match.scoreA, -match.scoreB);
-        bumpGamesPlayed(tournament.players, match, -1);
-      }
-    }
-    tournament.rounds = ordered.filter((round) => round.id !== latest.id);
-  }
-
-  tournament.endedAt = new Date().toISOString();
-  tournament.leaderboard = buildLeaderboard(tournament.players, tournament.config.scoringMode);
-  touch(tournament);
+  const voidedMatchCount = applyCloseTournament(tournament);
   logger.info("domain/applyEndMexicanoNight", {
     tournamentId: tournament.id,
-    discardedRoundNumber,
+    voidedMatchCount,
     roundsKept: tournament.rounds.length,
     version: tournament.version
   });

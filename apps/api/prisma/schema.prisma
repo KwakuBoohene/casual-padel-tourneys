@@ -255,6 +255,8 @@ model Match {
   matchTbA  Int?
   matchTbB  Int?
   completed Boolean    @default(false)
+  /** Set when an organizer closes the event with this match unplayed — excluded from standings and career. */
+  voidedAt  DateTime?
   round     Round      @relation(fields: [roundId], references: [id], onDelete: Cascade)
   sets      MatchSet[]
 }
@@ -348,6 +350,8 @@ model KohMatch {
   unitBId      String
   winnerUnitId String?
   completed    Boolean   @default(false)
+  /** Set when an organizer closes the event with this match unplayed — excluded from rankings and career. */
+  voidedAt     DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   court        KohCourt  @relation(fields: [courtId], references: [id], onDelete: Cascade)

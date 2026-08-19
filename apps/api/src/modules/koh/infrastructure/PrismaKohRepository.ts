@@ -9,7 +9,7 @@ import type {
   SwapKohUnitInput
 } from "@padel/shared";
 
-import type { KohRepository } from "../application/ports.js";
+import type { KohEndTournamentResult, KohRepository } from "../application/ports.js";
 import type { KohTournamentHub } from "../domain/types.js";
 import { assignKohCourts } from "./ops/assignKohOps.js";
 import { createKohTournament } from "./ops/createKohOps.js";
@@ -129,7 +129,7 @@ export class PrismaKohRepository implements KohRepository {
     tournamentId: string,
     organizerId: string,
     expectedVersion: number
-  ): Promise<KohTournamentHub> {
+  ): Promise<KohEndTournamentResult> {
     return endKohTournament(tournamentId, organizerId, expectedVersion);
   }
 }

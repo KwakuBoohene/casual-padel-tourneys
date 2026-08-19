@@ -92,7 +92,7 @@ test("POST /tournaments/next-round advances Mexicano ladder after round 1", asyn
   });
 });
 
-test("POST /tournaments/end-night discards incomplete live round", async () => {
+test("POST /tournaments/end-night voids the incomplete live round", async () => {
   await withApp(async (app) => {
     const token = signUser("owner-mx-end");
     const createResponse = await app.inject({
@@ -154,6 +154,86 @@ test("POST /tournaments/end-night discards incomplete live round", async () => {
     assert.equal(endResponse.statusCode, 200);
     const ended = endResponse.json().data;
     assert.ok(ended.endedAt);
-    assert.equal(ended.rounds.length, 1);
+    // The live round is kept and voided rather than discarded.
+    assert.equal(ended.rounds.length, 2);
+    assert.ok(ended.rounds[1].matches.every((match: { voidedAt?: string }) => match.voidedAt));
+    assert.ok(ended.rounds[0].matches.every((match: { voidedAt?: string }) => !match.voidedAt));
+  });
+});
+
+test("POST /tournaments/:id/close voids unplayed matches and reports the count", async () => {
+  await withApp(async (app) => {
+    const token = signUser("owner-mx-close");
+    const createResponse = await app.inject({
+      method: "POST",
+      url: "/tournaments",
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        name: "Mexicano Close",
+        mode: "MEXICANO",
+        variant: "CLASSIC",
+        schedulingMode: "TOTAL_TIME",
+        players: Array.from({ length: 8 }, (_, i) => ({ name: `P${i + 1}` })),
+        courts: 2,
+        pointsPerMatch: 24
+      }
+    });
+    assert.equal(createResponse.statusCode, 200);
+    const tournament = createResponse.json().data;
+    const totalMatches = tournament.rounds.flatMap(
+      (round: { matches: unknown[] }) => round.matches
+    ).length;
+
+    const closeResponse = await app.inject({
+      method: "POST",
+      url: `/tournaments/${tournament.id}/close`,
+      headers: { authorization: `Bearer ${token}` },
+      payload: { expectedVersion: tournament.version }
+    });
+    assert.equal(closeResponse.statusCode, 200);
+    const closed = closeResponse.json().data;
+    assert.equal(closed.voidedMatchCount, totalMatches);
+    assert.ok(closed.tournament.endedAt);
+
+    // Closing again is idempotent, not a conflict.
+    const again = await app.inject({
+      method: "POST",
+      url: `/tournaments/${tournament.id}/close`,
+      headers: { authorization: `Bearer ${token}` },
+      payload: { expectedVersion: closed.tournament.version }
+    });
+    assert.equal(again.statusCode, 200);
+    assert.equal(again.json().data.voidedMatchCount, 0);
+  });
+});
+
+test("POST /tournaments/:id/close hides another organizer's event as 404", async () => {
+  await withApp(async (app) => {
+    const ownerToken = signUser("owner-close-owner");
+    const strangerToken = signUser("owner-close-stranger");
+    const createResponse = await app.inject({
+      method: "POST",
+      url: "/tournaments",
+      headers: { authorization: `Bearer ${ownerToken}` },
+      payload: {
+        name: "Close Ownership",
+        mode: "MEXICANO",
+        variant: "CLASSIC",
+        schedulingMode: "TOTAL_TIME",
+        players: Array.from({ length: 8 }, (_, i) => ({ name: `P${i + 1}` })),
+        courts: 2,
+        pointsPerMatch: 24
+      }
+    });
+    assert.equal(createResponse.statusCode, 200);
+    const tournament = createResponse.json().data;
+
+    const closeResponse = await app.inject({
+      method: "POST",
+      url: `/tournaments/${tournament.id}/close`,
+      headers: { authorization: `Bearer ${strangerToken}` },
+      payload: { expectedVersion: tournament.version }
+    });
+    assert.equal(closeResponse.statusCode, 404);
   });
 });

@@ -10,12 +10,14 @@ import { PlayerSearch } from "./components/PlayerSearch";
 import { RoundSection } from "./components/RoundSection";
 import {
   isMatchComplete,
+  isMatchResolved,
+  isMatchVoided,
   isMexicanoMode,
   matchHasProgress,
   type TournamentViewModel
 } from "./types";
 
-type MatchStatus = "live" | "next" | "completed" | "pending";
+type MatchStatus = "live" | "next" | "completed" | "pending" | "void";
 
 export function LiveTournament({
   initial,
@@ -89,9 +91,10 @@ export function LiveTournament({
     if (sorted.length === 0) return 1;
 
     if (isMexicano) {
-      // Prefer the first incomplete round (newly generated next round), else latest.
+      // Prefer the first unresolved round (newly generated next round), else latest.
+      // Voided matches count as resolved, or a closed night would stick on an abandoned round.
       const incomplete = sorted.find((round) =>
-        round.matches.some((match) => !isMatchComplete(match))
+        round.matches.some((match) => !isMatchResolved(match))
       );
       return (incomplete ?? sorted[sorted.length - 1]).roundNumber;
     }
@@ -111,6 +114,8 @@ export function LiveTournament({
     match: TournamentViewModel["rounds"][number]["matches"][number],
     roundNumber: number
   ): MatchStatus => {
+    // Void first: an abandoned match must never read as live or next.
+    if (isMatchVoided(match)) return "void";
     if (isMatchComplete(match)) return "completed";
     if (roundNumber === currentRoundNumber) return "live";
     if (isMexicano) return "pending";

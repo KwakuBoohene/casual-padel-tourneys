@@ -80,7 +80,12 @@ export interface KohRepository {
     tournamentId: string,
     organizerId: string,
     expectedVersion: number
-  ): Promise<KohTournamentHub>;
+  ): Promise<KohEndTournamentResult>;
+}
+
+export interface KohEndTournamentResult {
+  hub: KohTournamentHub;
+  voidedMatchCount: number;
 }
 
 export interface KohEvents {

@@ -19,13 +19,16 @@ export function registerKohLifecycleRoutes(server: FastifyInstance, deps: KohMod
       return { message: "Unauthorized" };
     }
     try {
-      const data = await endKohTournament(deps, {
+      const result = await endKohTournament(deps, {
         tournamentId: params.id,
         organizerId: request.user.id,
         expectedVersion: parsed.data.expectedVersion
       });
-      request.log.info({ id: params.id }, "POST .../end");
-      return { data };
+      request.log.info(
+        { id: params.id, voidedMatchCount: result.voidedMatchCount },
+        "POST .../end"
+      );
+      return { data: result.hub };
     } catch (error) {
       return mapKohError(reply, error, "End tournament failed.");
     }

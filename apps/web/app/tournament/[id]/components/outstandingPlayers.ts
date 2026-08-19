@@ -1,6 +1,6 @@
 import type { ScoringMode } from "@padel/shared";
 
-import { isMatchComplete, type TournamentViewModel } from "../types";
+import { isMatchComplete, isMatchResolved, isMatchVoided, type TournamentViewModel } from "../types";
 
 export type TournamentLeaderboardEntry = TournamentViewModel["leaderboard"][number];
 export type TournamentRound = TournamentViewModel["rounds"][number];
@@ -70,6 +70,7 @@ export function buildOutstandingPlayerRows(tournament: TournamentWithLeaderboard
 
     for (const round of tournament.rounds) {
       for (const match of round.matches) {
+        if (isMatchVoided(match)) continue;
         if (!isMatchComplete(match) || match.scoreA === undefined || match.scoreB === undefined) {
           continue;
         }
@@ -112,11 +113,15 @@ export function buildOutstandingPlayerRows(tournament: TournamentWithLeaderboard
 export function isTournamentComplete(
   tournament: Pick<TournamentViewModel, "rounds" | "endedAt" | "config">
 ): boolean {
+  // A closed event is done in every mode, however much was left unplayed and voided.
+  if (tournament.endedAt) {
+    return true;
+  }
   if (tournament.config?.mode === "MEXICANO") {
-    return Boolean(tournament.endedAt);
+    return false;
   }
   return (
     tournament.rounds.length > 0 &&
-    tournament.rounds.every((round) => round.matches.every((match) => isMatchComplete(match)))
+    tournament.rounds.every((round) => round.matches.every((match) => isMatchResolved(match)))
   );
 }

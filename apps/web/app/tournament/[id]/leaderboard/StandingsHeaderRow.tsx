@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  STANDINGS_COLUMNS,
+  visibleStandingsColumns,
   type StandingsColumnKey,
   type StandingsSortState
 } from "@padel/shared";
@@ -23,6 +23,7 @@ export function ariaSortFor(sort: StandingsSortState | null, key: StandingsColum
  * operable for free and screen readers get `aria-sort` describing the current order.
  */
 export function StandingsHeaderRow(props: {
+  visible: StandingsColumnKey[];
   sort: StandingsSortState | null;
   onPressColumn: (key: StandingsColumnKey) => void;
 }) {
@@ -34,7 +35,7 @@ export function StandingsHeaderRow(props: {
       <th scope="col" className="px-2 py-2 text-left font-semibold">
         Player
       </th>
-      {STANDINGS_COLUMNS.map((col) => {
+      {visibleStandingsColumns(props.visible).map((col) => {
         const active = props.sort?.key === col.key ? props.sort : null;
         return (
           <th

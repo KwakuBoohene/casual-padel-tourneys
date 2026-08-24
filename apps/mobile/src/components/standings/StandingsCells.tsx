@@ -1,36 +1,23 @@
 import { Pressable, Text, View } from "react-native";
 import {
-  STANDINGS_COLUMNS,
   standingsCells,
   type StandingsColumnKey,
   type StandingsLine,
   type StandingsSortState
 } from "@padel/shared";
 
+import {
+  standingsColumnWidth,
+  type StandingsColumn
+} from "../../utilities/standings/columnWidth";
 import { spacing } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
 
 const RANK_W = 22;
-const COL_W = 28;
-const GD_W = 34;
-const AM_W = 42;
-/** Wide enough for "100.0%" without truncating; the em dash sits comfortably inside it. */
-const RATE_W = 46;
-
-/** Total stat width, so the table's minWidth cannot drift out of step with the columns. */
-export const STANDINGS_STATS_WIDTH = STANDINGS_COLUMNS.reduce(
-  (sum, col) => sum + widthFor(col.key),
-  0
-);
-
-function widthFor(key: string): number {
-  if (key === "mwr" || key === "gwr") return RATE_W;
-  if (key === "pwa" || key === "pla") return AM_W;
-  if (key === "gd" || key === "pts") return GD_W;
-  return COL_W;
-}
 
 interface StatCellsProps {
+  /** The columns to render, already filtered and in table order. */
+  columns: StandingsColumn[];
   line?: StandingsLine;
   header?: boolean;
   /** Active sort, when the table is sortable. Absent on a single-row table. */
@@ -47,7 +34,7 @@ export function StandingsStatCells(props: StatCellsProps) {
 
   return (
     <View style={{ flexDirection: "row", alignItems: "center" }}>
-      {STANDINGS_COLUMNS.map((col) => {
+      {props.columns.map((col) => {
         const active = props.sort?.key === col.key ? props.sort : null;
         const emphasised = col.key === "gd" || col.key === "pts";
         const label = (
@@ -58,7 +45,7 @@ export function StandingsStatCells(props: StatCellsProps) {
               props.header ? col.title : `${col.title} ${values?.[col.key] ?? ""}`
             }
             style={{
-              width: widthFor(col.key),
+              width: standingsColumnWidth(col.key),
               textAlign: "right",
               fontVariant: ["tabular-nums"],
               fontSize: props.header ? 10 : 12,

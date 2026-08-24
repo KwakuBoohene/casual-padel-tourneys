@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import {
   nextSortState,
+  sortAfterHiding,
   sortStandingsRows,
-  STANDINGS_COLUMNS,
   standingsCells,
+  visibleStandingsColumns,
   standingsPageCount,
   standingsPageRange,
   standingsPageSize,
@@ -14,7 +15,9 @@ import {
   type StandingsSortState
 } from "@padel/shared";
 
+import { standingsTableMinWidth } from "./columnWidth";
 import { StandingsHeaderRow } from "./StandingsHeaderRow";
+import { useStandingsColumns } from "./StandingsColumnsProvider";
 
 export type WebStandingsRow = {
   id: string;
@@ -27,6 +30,14 @@ export function WebStandingsTable(props: { rows: WebStandingsRow[] }) {
   const [pageSize, setPageSize] = useState(8);
   const [pageIndex, setPageIndex] = useState(0);
   const [sort, setSort] = useState<StandingsSortState | null>(null);
+  const { visible: visibleColumns } = useStandingsColumns();
+  const columns = visibleStandingsColumns(visibleColumns);
+
+  // A table ordered by a column that is no longer on screen has no visible explanation for its
+  // order, so hiding the sorted column drops back to rank order.
+  useEffect(() => {
+    setSort((current) => sortAfterHiding(current, visibleColumns));
+  }, [visibleColumns]);
 
   // Reordering makes whatever page you were on meaningless, so go back to the first.
   const pressColumn = (key: StandingsColumnKey) => {
@@ -51,9 +62,9 @@ export function WebStandingsTable(props: { rows: WebStandingsRow[] }) {
   return (
     <div className="space-y-3">
       <div className="overflow-x-auto rounded-2xl border border-padel-border bg-padel-surface">
-        <table className="w-full min-w-[548px] text-sm">
+        <table className="w-full text-sm" style={{ minWidth: standingsTableMinWidth(visibleColumns) }}>
           <thead>
-            <StandingsHeaderRow sort={sort} onPressColumn={pressColumn} />
+            <StandingsHeaderRow visible={visibleColumns} sort={sort} onPressColumn={pressColumn} />
           </thead>
           <tbody>
             {visible.map((row) => {
@@ -62,7 +73,7 @@ export function WebStandingsTable(props: { rows: WebStandingsRow[] }) {
                 <tr key={row.id} className="border-t border-padel-border">
                   <td className="px-3 py-3 text-padel-muted font-bold">{row.rank}</td>
                   <td className="px-2 py-3 font-semibold text-padel-text truncate max-w-[10rem]">{row.name}</td>
-                  {STANDINGS_COLUMNS.map((col) => (
+                  {columns.map((col) => (
                     <td
                       key={col.key}
                       className={[

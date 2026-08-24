@@ -8,6 +8,7 @@ import { useTheme } from "../../../theme/ThemeProvider";
 import type { LeaderboardRow, LiveTournamentState } from "../../../types/organizer/tournament";
 import { formatScoringLabel } from "../../../utilities/organizer/formatLabels";
 import { buildLiveTournamentConfigRows } from "../../../utilities/organizer/tournamentConfigSummary";
+import { StandingsColumnsControl } from "../../standings/StandingsColumnsControl";
 import { StandingsHelpControl } from "../../standings/StandingsHelpControl";
 import { StandingsTable } from "../../standings/StandingsTable";
 import { TournamentConfigSummaryPanel } from "../TournamentConfigSummaryPanel";
@@ -70,6 +71,7 @@ export function LeaderboardView(props: LeaderboardViewProps) {
           <Pressable onPress={exportState.open} hitSlop={8}>
             <Text style={{ color: colors.primary, fontWeight: "500", fontSize: 14 }}>Export</Text>
           </Pressable>
+          <StandingsColumnsControl />
           <StandingsHelpControl />
         </View>
         <Text style={{ fontSize: 14, color: colors.muted }}>

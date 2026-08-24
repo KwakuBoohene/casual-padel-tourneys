@@ -32,5 +32,8 @@ export function useStandingsSort<T extends SortableRow>(rows: T[], onSortChange?
 
   const sorted = useMemo(() => sortStandingsRows(rows, sort), [rows, sort]);
 
-  return { sort, sorted, pressColumn };
+  /** Used when the sorted column is hidden — see `sortAfterHiding`. */
+  const clearSort = useCallback(() => setSort(null), []);
+
+  return { sort, sorted, pressColumn, clearSort };
 }

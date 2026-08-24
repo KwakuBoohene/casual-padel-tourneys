@@ -13,7 +13,7 @@
     "export:web": "expo export --platform web",
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test --import tsx --test-force-exit $(find tests -name '*.test.ts' | sort)",
+    "test": "node --test --import tsx $(find tests -name '*.test.ts' | sort)",
     "android": "expo run:android",
     "ios": "expo run:ios"
   },

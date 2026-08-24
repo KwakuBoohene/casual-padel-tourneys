@@ -21,7 +21,7 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test --import tsx --test-force-exit $(find tests -name '*.test.ts' | sort)"
+    "test": "node --test --import tsx $(find tests -name '*.test.ts' | sort)"
   },
   "dependencies": {
     "zod": "4.3.6"

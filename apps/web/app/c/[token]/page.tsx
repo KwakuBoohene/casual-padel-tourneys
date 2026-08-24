@@ -4,14 +4,12 @@ import { WebStandingsHelp } from "../../tournament/[id]/leaderboard/StandingsHel
 import { WebStandingsTable } from "../../tournament/[id]/leaderboard/StandingsTable";
 import { RangeTabs } from "./RangeTabs";
 import { CAREER_RANGES, parseCareerRange } from "./range";
+import { internalApiBaseUrl } from "../../../lib/apiConfig";
 
-const defaultApi = "http://localhost:3004";
-const internalApiBaseUrl =
-  process.env.INTERNAL_API_BASE_URL ?? process.env.PUBLIC_API_BASE_URL ?? defaultApi;
 
 async function getBoard(token: string, range: string): Promise<PublicCareerBoard | null> {
   const response = await fetch(
-    `${internalApiBaseUrl}/public/career/${encodeURIComponent(token)}?range=${range}`,
+    `${internalApiBaseUrl()}/public/career/${encodeURIComponent(token)}?range=${range}`,
     { cache: "no-store" }
   );
   if (!response.ok) {

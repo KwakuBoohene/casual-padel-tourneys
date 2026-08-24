@@ -7,14 +7,11 @@ import { WebStandingsHelp } from "./StandingsHelp";
 
 import { buildOutstandingPlayerRows } from "../components/outstandingPlayers";
 import { formatScoringLabel, type TournamentViewModel } from "../types";
+import { internalApiBaseUrl, publicApiBaseUrl } from "../../../../lib/apiConfig";
 
-const defaultApi = "http://localhost:3004";
-const internalApiBaseUrl = process.env.INTERNAL_API_BASE_URL ?? process.env.PUBLIC_API_BASE_URL ?? defaultApi;
-// The browser downloads straight from the API, so this must be the public origin.
-const publicApiBaseUrl = process.env.PUBLIC_API_BASE_URL ?? defaultApi;
 
 async function getTournament(token: string) {
-  const response = await fetch(`${internalApiBaseUrl}/public/${token}`, { cache: "no-store" });
+  const response = await fetch(`${internalApiBaseUrl()}/public/${token}`, { cache: "no-store" });
   if (!response.ok) {
     return null;
   }
@@ -63,7 +60,7 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
         </div>
         <div className="flex items-center gap-3 self-start">
           <WebStandingsHelp />
-          <LeaderboardHeaderActions tournamentId={route.id} publicApiBaseUrl={publicApiBaseUrl} />
+          <LeaderboardHeaderActions tournamentId={route.id} publicApiBaseUrl={publicApiBaseUrl()} />
         </div>
       </header>
 

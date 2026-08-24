@@ -2,13 +2,11 @@ import { KohViewer } from "./KohViewer";
 import { isKohPublicHub } from "./kohTypes";
 import { TournamentViewer } from "./TournamentViewer";
 import type { TournamentViewModel } from "./types";
+import { internalApiBaseUrl, publicApiBaseUrl } from "../../../lib/apiConfig";
 
-const defaultApi = "http://localhost:3004";
-const internalApiBaseUrl = process.env.INTERNAL_API_BASE_URL ?? process.env.PUBLIC_API_BASE_URL ?? defaultApi;
-const publicApiBaseUrl = process.env.PUBLIC_API_BASE_URL ?? defaultApi;
 
 async function getTournament(token: string) {
-  const response = await fetch(`${internalApiBaseUrl}/public/${token}`, { cache: "no-store" });
+  const response = await fetch(`${internalApiBaseUrl()}/public/${token}`, { cache: "no-store" });
   if (!response.ok) {
     return null;
   }
@@ -33,13 +31,13 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   }
 
   if (isKohPublicHub(tournament)) {
-    return <KohViewer initial={tournament} apiBaseUrl={publicApiBaseUrl} token={route.id} />;
+    return <KohViewer initial={tournament} apiBaseUrl={publicApiBaseUrl()} token={route.id} />;
   }
 
   return (
     <TournamentViewer
       initial={tournament as TournamentViewModel}
-      apiBaseUrl={publicApiBaseUrl}
+      apiBaseUrl={publicApiBaseUrl()}
       token={route.id}
     />
   );

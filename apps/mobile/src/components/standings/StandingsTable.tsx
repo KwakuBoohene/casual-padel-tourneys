@@ -2,12 +2,16 @@ import { Pressable, ScrollView, View } from "react-native";
 import { standingsPageSize, type StandingsLine } from "@padel/shared";
 
 import { usePagedSlice } from "../../hooks/standings/usePagedSlice";
+import { useStandingsSort } from "../../hooks/standings/useStandingsSort";
 import { useBreakpoint } from "../../layout";
 import { spacing, touch } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
 import { ListPager } from "../lists/ListPager";
 
-import { StandingsNameSlot, StandingsStatCells } from "./StandingsCells";
+import { STANDINGS_STATS_WIDTH, StandingsNameSlot, StandingsStatCells } from "./StandingsCells";
+
+/** Rank column, the player name's minimum, the row gap and horizontal padding. */
+const NAME_AND_PADDING_W = 136;
 
 export interface StandingsTableRow {
   id: string;
@@ -26,7 +30,10 @@ export function StandingsTable(props: StandingsTableProps) {
   const { width, height } = useBreakpoint();
   const pageSize = standingsPageSize(width, height);
   const pages = usePagedSlice(props.rows.length, pageSize);
-  const visible = props.rows.slice(pages.pageStart, pages.pageEnd);
+  const sorting = useStandingsSort(props.rows, pages.reset);
+  // One row cannot be reordered; offering a sort there would just show a caret that does nothing.
+  const sortable = props.rows.length > 1;
+  const visible = sorting.sorted.slice(pages.pageStart, pages.pageEnd);
 
   return (
     <View>
@@ -38,7 +45,9 @@ export function StandingsTable(props: StandingsTableProps) {
       >
         <View
           style={{
-            minWidth: 456,
+            // Derived, not a magic number: the stat columns plus room for rank, name and padding.
+            // Adding a column to STANDINGS_COLUMNS widens the table instead of squeezing the name.
+            minWidth: STANDINGS_STATS_WIDTH + NAME_AND_PADDING_W,
             flexGrow: 1,
             borderRadius: 14,
             borderWidth: 1,
@@ -59,7 +68,11 @@ export function StandingsTable(props: StandingsTableProps) {
             }}
           >
             <StandingsNameSlot header name="Player" />
-            <StandingsStatCells header />
+            <StandingsStatCells
+              header
+              sort={sortable ? sorting.sort : null}
+              onPressColumn={sortable ? sorting.pressColumn : undefined}
+            />
           </View>
           {visible.map((row, index) => {
             const body = (

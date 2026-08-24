@@ -67,7 +67,11 @@ export function applyPointsScore(
   }
   lookup.round.isLocked = lookup.round.matches.every((match) => match.completed);
   awardPoints(tournament.players, lookup.match, scoreA, scoreB);
-  tournament.leaderboard = buildLeaderboard(tournament.players, tournament.config.scoringMode);
+  tournament.leaderboard = buildLeaderboard(
+    tournament.players,
+    tournament.config.scoringMode,
+    tournament.rounds
+  );
   touch(tournament);
   logger.info("domain/applyPointsScore", {
     tournamentId: tournament.id,

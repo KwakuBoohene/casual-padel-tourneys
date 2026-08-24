@@ -43,7 +43,11 @@ export function applyRegularScore(
   if (!options.complete) {
     lookup.match.completed = false;
     lookup.round.isLocked = lookup.round.matches.every((match) => match.completed);
-    tournament.leaderboard = buildLeaderboard(tournament.players, tournament.config.scoringMode);
+    tournament.leaderboard = buildLeaderboard(
+      tournament.players,
+      tournament.config.scoringMode,
+      tournament.rounds
+    );
     touch(tournament);
     logger.info("domain/applyRegularScore", {
       tournamentId: tournament.id,
@@ -65,7 +69,11 @@ export function applyRegularScore(
   lookup.match.completed = true;
   applyRegularAward(tournament.players, lookup.match, evaluation.winner, evaluation, 1);
   lookup.round.isLocked = lookup.round.matches.every((match) => match.completed);
-  tournament.leaderboard = buildLeaderboard(tournament.players, tournament.config.scoringMode);
+  tournament.leaderboard = buildLeaderboard(
+    tournament.players,
+    tournament.config.scoringMode,
+    tournament.rounds
+  );
   touch(tournament);
   logger.info("domain/applyRegularScore", {
     tournamentId: tournament.id,

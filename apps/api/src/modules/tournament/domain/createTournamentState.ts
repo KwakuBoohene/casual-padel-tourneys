@@ -22,7 +22,7 @@ export function createTournamentState(config: TournamentConfig, organizerId: str
     players: generated.players,
     rounds: generated.rounds,
     version: 0,
-    leaderboard: buildLeaderboard(generated.players, config.scoringMode),
+    leaderboard: buildLeaderboard(generated.players, config.scoringMode, generated.rounds),
     publicToken: createId("public"),
     organizerId,
     createdAt,

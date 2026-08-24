@@ -83,7 +83,11 @@ export function applyIntegratePendingPlayers(tournament: TournamentState): Tourn
     tournament.players,
     tournament.rounds
   );
-  tournament.leaderboard = buildLeaderboard(tournament.players, tournament.config.scoringMode);
+  tournament.leaderboard = buildLeaderboard(
+    tournament.players,
+    tournament.config.scoringMode,
+    tournament.rounds
+  );
   touch(tournament);
 
   logger.info("domain/applyIntegratePendingPlayers", {

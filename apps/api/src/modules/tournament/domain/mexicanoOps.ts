@@ -54,7 +54,11 @@ export function applyAdvanceMexicanoRound(tournament: TournamentState): Tourname
     throw new Error("Not enough players to build another Mexicano round.");
   }
   tournament.rounds.push(next);
-  tournament.leaderboard = buildLeaderboard(tournament.players, tournament.config.scoringMode);
+  tournament.leaderboard = buildLeaderboard(
+    tournament.players,
+    tournament.config.scoringMode,
+    tournament.rounds
+  );
   touch(tournament);
   logger.info("domain/applyAdvanceMexicanoRound", {
     tournamentId: tournament.id,

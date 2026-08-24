@@ -33,7 +33,11 @@ export function applyCloseTournament(tournament: TournamentState): number {
   }
 
   tournament.endedAt = now;
-  tournament.leaderboard = buildLeaderboard(tournament.players, tournament.config.scoringMode);
+  tournament.leaderboard = buildLeaderboard(
+    tournament.players,
+    tournament.config.scoringMode,
+    tournament.rounds
+  );
   touch(tournament);
   logger.info("domain/applyCloseTournament", {
     tournamentId: tournament.id,

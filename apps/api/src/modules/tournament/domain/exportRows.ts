@@ -1,4 +1,4 @@
-import type { LeaderboardExportRow } from "@padel/shared";
+import { isMatchCountable, type LeaderboardExportRow } from "@padel/shared";
 
 import type { TournamentState } from "../../../types/state.js";
 
@@ -44,7 +44,9 @@ export function buildTournamentExportRows(tournament: TournamentState): Leaderbo
 
   for (const round of tournament.rounds) {
     for (const match of round.matches) {
-      if (!match.completed) continue;
+      // Not just `completed`: a voided match must never be credited. Today voiding only ever
+      // targets unfinished matches, so the two agree — but the rule belongs here explicitly.
+      if (!isMatchCountable(match)) continue;
       if (match.scoreA === undefined || match.scoreB === undefined) continue;
       for (const playerId of match.teamA) credit(playerId, match.scoreA, match.scoreB);
       for (const playerId of match.teamB) credit(playerId, match.scoreB, match.scoreA);

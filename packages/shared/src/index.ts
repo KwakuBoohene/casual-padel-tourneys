@@ -8,6 +8,7 @@ export * from "./utils/ids.js";
 export * from "./utils/countNoun.js";
 export * from "./utils/standings.js";
 export * from "./utils/standingsPaging.js";
+export * from "./utils/standingsSort.js";
 export * from "./utils/playerNameSuggestions.js";
 export * from "./theme/tokens.js";
 export * from "./scoring/regularScoring.js";

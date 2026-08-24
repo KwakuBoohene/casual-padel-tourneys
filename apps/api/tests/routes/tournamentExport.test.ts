@@ -77,7 +77,7 @@ test("organizer downloads the leaderboard as CSV", async () => {
 
     const lines = rows(response.body);
     assert.equal(lines[0], "Leaderboard");
-    assert.equal(lines[1], "#,Player,MP,W,L,D,GW,GL,GD,PW(A),PL(A),PTS");
+    assert.equal(lines[1], "#,Player,MP,W,L,D,GW,GL,GD,PW(A),PL(A),PTS,MWR,GWR");
     // Every player has a standings row, ahead of the matches section.
     const standings = lines.slice(2, 2 + createPayload.players.length);
     assert.equal(standings.length, createPayload.players.length);
@@ -141,7 +141,7 @@ test("scope=leaderboard returns the standings only", async () => {
 
     assert.equal(response.statusCode, 200);
     const lines = rows(response.body);
-    assert.equal(lines[0], "#,Player,MP,W,L,D,GW,GL,GD,PW(A),PL(A),PTS", "no section heading");
+    assert.equal(lines[0], "#,Player,MP,W,L,D,GW,GL,GD,PW(A),PL(A),PTS,MWR,GWR", "no section heading");
     assert.ok(!lines.includes("Rounds and matches"), "matches must be omitted");
     assert.equal(lines.length, 1 + createPayload.players.length);
     assert.match(

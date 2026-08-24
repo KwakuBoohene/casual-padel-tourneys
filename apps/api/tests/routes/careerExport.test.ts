@@ -122,7 +122,7 @@ test("career board exports as CSV for the signed-in organizer", async () => {
       /attachment; filename="kwaku-club-leaderboard-\d{4}-\d{2}-\d{2}\.csv"/
     );
     const lines = rows(response.body);
-    assert.equal(lines[0], "#,Player,MP,W,L,D,GW,GL,GD,PW(A),PL(A),PTS");
+    assert.equal(lines[0], "#,Player,MP,W,L,D,GW,GL,GD,PW(A),PL(A),PTS,MWR,GWR");
     assert.equal(lines.length, 5, "four players credited from one match");
   });
 });
@@ -191,7 +191,7 @@ test("global scope=leaderboard returns the standings only", async () => {
     });
 
     const lines = rows(response.body);
-    assert.equal(lines[0], "#,Player,MP,W,L,D,GW,GL,GD,PW(A),PL(A),PTS");
+    assert.equal(lines[0], "#,Player,MP,W,L,D,GW,GL,GD,PW(A),PL(A),PTS,MWR,GWR");
     assert.ok(!lines.includes("Tournaments"));
     assert.ok(!lines.includes("Matches"));
     assert.match(response.headers["content-disposition"] as string, /-leaderboard-/);
@@ -238,7 +238,7 @@ test("a guest gets an empty table with headers, not an error", async () => {
     });
     assert.equal(response.statusCode, 200);
     const lines = rows(response.body);
-    assert.equal(lines[0], "#,Player,MP,W,L,D,GW,GL,GD,PW(A),PL(A),PTS");
+    assert.equal(lines[0], "#,Player,MP,W,L,D,GW,GL,GD,PW(A),PL(A),PTS,MWR,GWR");
     assert.match(response.body, /Attach an account/);
   }, true);
 });

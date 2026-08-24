@@ -2,7 +2,7 @@ import PDFDocument from "pdfkit";
 import type { Readable } from "node:stream";
 import type { ExportSection, ExportTable } from "@padel/shared";
 
-import { CELL_PADDING, layoutColumns } from "./pdfTableLayout.js";
+import { CELL_PADDING, fitTableFontSizes, layoutColumns } from "./pdfTableLayout.js";
 
 const PAGE_MARGIN = 40;
 const TITLE_SIZE = 18;
@@ -57,7 +57,15 @@ function drawSection(
   ctx: SectionContext
 ): number {
   const { left, available, bottom, measure } = ctx;
-  const columns = layoutColumns(measure, section, available, HEADER_SIZE, BODY_SIZE);
+  // Sized per section: a wide leaderboard may need smaller type than the matches table beside it.
+  const { headerSize, bodySize } = fitTableFontSizes(
+    measure,
+    section,
+    available,
+    HEADER_SIZE,
+    BODY_SIZE
+  );
+  const columns = layoutColumns(measure, section, available, headerSize, bodySize);
   let y = ctx.y;
 
   const cell = (text: string, x: number, width: number, align: "left" | "right"): void => {
@@ -70,7 +78,7 @@ function drawSection(
   };
 
   const drawHeaderRow = (): void => {
-    doc.font("Helvetica-Bold").fontSize(HEADER_SIZE);
+    doc.font("Helvetica-Bold").fontSize(headerSize);
     section.headers.forEach((header, index) => {
       cell(header, columns[index].x, columns[index].width, columns[index].align);
     });
@@ -81,7 +89,7 @@ function drawSection(
       .strokeColor("#cccccc")
       .lineWidth(0.5)
       .stroke();
-    doc.font("Helvetica").fontSize(BODY_SIZE);
+    doc.font("Helvetica").fontSize(bodySize);
   };
 
   if (ctx.showHeadings && section.heading) {

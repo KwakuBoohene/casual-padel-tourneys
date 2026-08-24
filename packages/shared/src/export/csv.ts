@@ -15,14 +15,28 @@ export function escapeCsvField(value: string): string {
   return `"${guarded.replace(/"/g, '""')}"`;
 }
 
-/** RFC 4180: CRLF line endings, quotes doubled inside quoted fields. */
-export function toCsv(table: ExportTable): string {
-  const lines = [table.headers, ...table.rows].map((row) =>
-    row.map(escapeCsvField).join(",")
-  );
-  if (table.note) {
-    lines.push("");
-    lines.push(escapeCsvField(table.note));
-  }
+/**
+ * RFC 4180: CRLF line endings, quotes doubled inside quoted fields.
+ * Multi-section documents get a blank line and a heading between tables, which spreadsheets
+ * read as a second block rather than a broken file.
+ */
+export function toCsv(document: ExportTable): string {
+  const lines: string[] = [];
+  document.sections.forEach((section, index) => {
+    if (index > 0) {
+      lines.push("");
+    }
+    if (section.heading) {
+      lines.push(escapeCsvField(section.heading));
+    }
+    lines.push(section.headers.map(escapeCsvField).join(","));
+    for (const row of section.rows) {
+      lines.push(row.map(escapeCsvField).join(","));
+    }
+    if (section.note) {
+      lines.push("");
+      lines.push(escapeCsvField(section.note));
+    }
+  });
   return UTF8_BOM + lines.join("\r\n") + "\r\n";
 }

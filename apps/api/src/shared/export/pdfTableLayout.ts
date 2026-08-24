@@ -1,4 +1,4 @@
-import type { ExportTable } from "@padel/shared";
+import type { ExportSection } from "@padel/shared";
 
 export interface ColumnLayout {
   x: number;
@@ -16,7 +16,7 @@ const NUMERIC_CELL = /^[+-]?\d+(\.\d+)?%?$/;
  * line up down the page while names and dates stay left. Derived from the data rather than
  * column position, because the leaderboard and per-match tables have different shapes.
  */
-function isNumericColumn(table: ExportTable, index: number): boolean {
+function isNumericColumn(table: ExportSection, index: number): boolean {
   const cells = table.rows.map((row) => row[index] ?? "").filter((cell) => cell.length > 0);
   return cells.length > 0 && cells.every((cell) => NUMERIC_CELL.test(cell));
 }
@@ -28,7 +28,7 @@ function isNumericColumn(table: ExportTable, index: number): boolean {
  */
 export function layoutColumns(
   measure: (text: string, size: number) => number,
-  table: ExportTable,
+  table: ExportSection,
   available: number,
   headerSize: number,
   bodySize: number

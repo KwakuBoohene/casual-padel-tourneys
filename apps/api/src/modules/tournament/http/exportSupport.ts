@@ -1,3 +1,5 @@
+import { parseExportScope, type ExportScope } from "@padel/shared";
+
 import { validation } from "../../../shared/kernel/appError.js";
 
 /**
@@ -17,4 +19,13 @@ export function parseExportFormat(value: string | undefined): SupportedExportFor
     throw validation(`Unsupported export format. Supported: ${SUPPORTED_FORMATS.join(", ")}.`);
   }
   return format as SupportedExportFormat;
+}
+
+/** `scope` mirrors `format`: unknown values are a 400 naming what is supported. */
+export function parseScope(value: string | undefined): ExportScope {
+  try {
+    return parseExportScope(value);
+  } catch (error) {
+    throw validation((error as Error).message);
+  }
 }

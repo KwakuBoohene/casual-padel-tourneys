@@ -7,6 +7,7 @@ import {
   organizerPlayerRangeSchema,
   toCsv,
   type ExportKind,
+  type ExportScope,
   type ExportTable,
   type OrganizerPlayerRange
 } from "@padel/shared";
@@ -17,10 +18,11 @@ import { renderExportTablePdf } from "../../../shared/export/PdfExportRenderer.j
 import {
   EXPORT_RATE_LIMIT,
   parseExportFormat,
+  parseScope,
   type SupportedExportFormat
 } from "../../tournament/http/exportSupport.js";
 import {
-  buildCareerLeaderboardExportTable,
+  buildCareerExportDocument,
   buildCareerMatchesExportTable
 } from "../application/exportCareer.js";
 import type { OrganizerPlayersDeps } from "../application/ports.js";
@@ -52,18 +54,20 @@ export function registerOrganizerPlayerExportRoutes(
         reply.status(401);
         return { message: "Unauthorized" };
       }
-      const query = request.query as { range?: string; format?: string };
+      const query = request.query as { range?: string; format?: string; scope?: string };
       const range = organizerPlayerRangeSchema.safeParse(query.range ?? "year");
       if (!range.success) {
         reply.status(400);
         return { message: RANGE_ERROR };
       }
       let format: SupportedExportFormat;
+      let scope: ExportScope;
       try {
         format = parseExportFormat(query.format);
-      } catch {
+        scope = parseScope(query.scope);
+      } catch (error) {
         reply.status(400);
-        return { message: "Unsupported export format. Supported: csv, pdf." };
+        return { message: (error as { message?: string }).message ?? "Unsupported export options." };
       }
 
       const now = new Date();
@@ -72,11 +76,13 @@ export function registerOrganizerPlayerExportRoutes(
       const table = request.user.isGuest
         ? emptyTable(kind, range.data, now)
         : kind === "leaderboard"
-          ? await buildCareerLeaderboardExportTable(deps, request.user.id, range.data, now)
+          ? await buildCareerExportDocument(deps, request.user.id, range.data, scope, now)
           : await buildCareerMatchesExportTable(deps, request.user.id, range.data, now);
 
-      request.log.info({ kind, range: range.data, format }, "GET /me/players export");
-      return send(reply, table, kind, accountName, format, now);
+      request.log.info({ kind, range: range.data, format, scope }, "GET /me/players export");
+      // The matches export has one shape; the board export is named by the scope requested.
+      const fileKind: ExportKind = kind === "matches" ? "matches" : scope === "full" ? "full" : "leaderboard";
+      return send(reply, table, fileKind, accountName, format, now);
     };
 
   server.get(

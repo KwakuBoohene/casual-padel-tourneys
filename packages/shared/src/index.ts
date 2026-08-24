@@ -18,6 +18,8 @@ export * from "./scoring/matchVoid.js";
 export * from "./export/exportTable.js";
 export * from "./export/csv.js";
 export * from "./export/fileName.js";
+export * from "./export/matchRows.js";
+export * from "./export/exportScope.js";
 export * from "./mexicano/ladder.js";
 export * from "./americano/teams.js";
 

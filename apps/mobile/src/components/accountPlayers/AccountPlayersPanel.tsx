@@ -97,8 +97,9 @@ export function AccountPlayersPanel(props: AccountPlayersPanelProps) {
       </ScrollView>
       <ExportSheet
         visible={exportState.visible}
-        datasets={[
-          { dataset: "careerLeaderboard", label: "Leaderboard" },
+        choices={[
+          { dataset: "careerLeaderboard", scope: "leaderboard", label: "Leaderboard only" },
+          { dataset: "careerLeaderboard", scope: "full", label: "Leaderboard + tournaments" },
           { dataset: "careerMatches", label: "All matches" }
         ]}
         range={props.range}

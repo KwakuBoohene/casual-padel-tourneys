@@ -11,6 +11,12 @@ import {
 } from "../../src/export/exportTable.js";
 import { STANDINGS_COLUMNS } from "../../src/utils/standings.js";
 
+/** These builders produce single-section documents. */
+function only(document: { sections: { headers: string[]; rows: string[][]; note?: string }[] }) {
+  assert.equal(document.sections.length, 1);
+  return document.sections[0];
+}
+
 function leaderboardRow(overrides: Partial<LeaderboardExportRow> = {}): LeaderboardExportRow {
   return {
     rank: 1,
@@ -54,13 +60,13 @@ test("leaderboard headers follow STANDINGS_COLUMNS so exports cannot drift from 
 test("leaderboard export emits one cell per column, in column order", () => {
   const table = buildLeaderboardExport([leaderboardRow()], { title: "Board" });
 
-  assert.equal(table.rows.length, 1);
-  assert.equal(table.rows[0].length, LEADERBOARD_EXPORT_HEADERS.length);
-  assert.equal(table.rows[0][0], "1", "rank");
-  assert.equal(table.rows[0][1], "Ana", "name");
+  assert.equal(only(table).rows.length, 1);
+  assert.equal(only(table).rows[0].length, LEADERBOARD_EXPORT_HEADERS.length);
+  assert.equal(only(table).rows[0][0], "1", "rank");
+  assert.equal(only(table).rows[0][1], "Ana", "name");
 
   const cellsByHeader = Object.fromEntries(
-    table.headers.map((header, index) => [header, table.rows[0][index]])
+    only(table).headers.map((header, index) => [header, only(table).rows[0][index]])
   );
   assert.equal(cellsByHeader.MP, "5", "wins + losses + draws");
   assert.equal(cellsByHeader.W, "3");
@@ -79,21 +85,21 @@ test("leaderboard export defaults optional fields rather than emitting blanks", 
     [{ rank: 2, name: "Ben", wins: 1, losses: 1, gamesWon: 0, gamesLost: 0 }],
     { title: "Board" }
   );
-  assert.ok(table.rows[0].every((cell) => cell !== "" && cell !== "undefined"));
+  assert.ok(only(table).rows[0].every((cell) => cell !== "" && cell !== "undefined"));
 });
 
 test("an empty leaderboard still carries headers", () => {
   const table = buildLeaderboardExport([], { title: "Board" });
-  assert.deepEqual(table.headers, LEADERBOARD_EXPORT_HEADERS);
-  assert.deepEqual(table.rows, []);
+  assert.deepEqual(only(table).headers, LEADERBOARD_EXPORT_HEADERS);
+  assert.deepEqual(only(table).rows, []);
 });
 
 test("matches export uses a date only and computes MP", () => {
   const table = buildMatchesExport([matchRow()], { title: "Matches" });
 
-  assert.deepEqual(table.headers, [...MATCHES_EXPORT_HEADERS]);
+  assert.deepEqual(only(table).headers, [...MATCHES_EXPORT_HEADERS]);
   const cells = Object.fromEntries(
-    table.headers.map((header, index) => [header, table.rows[0][index]])
+    only(table).headers.map((header, index) => [header, only(table).rows[0][index]])
   );
   assert.equal(cells.Date, "2026-08-19", "time is noise in a spreadsheet");
   assert.equal(cells.Tournament, "Tuesday Night");
@@ -108,7 +114,7 @@ test("matches export counts a draw in MP", () => {
     { title: "Matches" }
   );
   const cells = Object.fromEntries(
-    table.headers.map((header, index) => [header, table.rows[0][index]])
+    only(table).headers.map((header, index) => [header, only(table).rows[0][index]])
   );
   assert.equal(cells.MP, "1");
   assert.equal(cells.D, "1");
@@ -123,5 +129,5 @@ test("meta title, subtitle and note are carried through", () => {
   });
   assert.equal(table.title, "Tuesday Night");
   assert.equal(table.subtitle, "Americano · 19 Aug 2026");
-  assert.equal(table.note, "Truncated.");
+  assert.equal(only(table).note, "Truncated.");
 });

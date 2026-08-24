@@ -4,17 +4,37 @@ import {
   standingsLineFromRecord
 } from "../utils/standings.js";
 
-/**
- * Format-neutral table. PDF and CSV both render this, so a column added to
- * `STANDINGS_COLUMNS` reaches every export without touching either renderer.
- */
-export interface ExportTable {
-  title: string;
-  subtitle?: string;
+/** One table within an export. A document may hold several. */
+export interface ExportSection {
+  /** Shown above the table. Omitted for a single-section document. */
+  heading?: string;
   headers: string[];
   rows: string[][];
   /** Rendered under the table — used to declare truncation rather than hide it. */
   note?: string;
+}
+
+/**
+ * Format-neutral document. PDF and CSV both render this, so a column added to
+ * `STANDINGS_COLUMNS` — or a whole new section — reaches every export without touching
+ * either renderer.
+ */
+export interface ExportTable {
+  title: string;
+  subtitle?: string;
+  sections: ExportSection[];
+}
+
+/** Convenience for the common single-table document. */
+export function singleSection(
+  meta: ExportMeta,
+  section: Omit<ExportSection, "heading"> & { heading?: string }
+): ExportTable {
+  return {
+    title: meta.title,
+    subtitle: meta.subtitle,
+    sections: [{ ...section, note: section.note ?? meta.note }]
+  };
 }
 
 export interface ExportMeta {
@@ -42,14 +62,12 @@ export const LEADERBOARD_EXPORT_HEADERS: string[] = [
   ...STANDINGS_COLUMNS.map((column) => column.header)
 ];
 
-export function buildLeaderboardExport(
+export function buildLeaderboardSection(
   rows: LeaderboardExportRow[],
-  meta: ExportMeta
-): ExportTable {
+  heading?: string
+): ExportSection {
   return {
-    title: meta.title,
-    subtitle: meta.subtitle,
-    note: meta.note,
+    heading,
     headers: [...LEADERBOARD_EXPORT_HEADERS],
     rows: rows.map((row) => {
       const cells = standingsCells(standingsLineFromRecord(row));
@@ -60,6 +78,13 @@ export function buildLeaderboardExport(
       ];
     })
   };
+}
+
+export function buildLeaderboardExport(
+  rows: LeaderboardExportRow[],
+  meta: ExportMeta
+): ExportTable {
+  return singleSection(meta, buildLeaderboardSection(rows));
 }
 
 /** One credited match for one player — the rows behind a career leaderboard. */
@@ -98,11 +123,9 @@ function toDateOnly(occurredAt: string): string {
   return separator === -1 ? occurredAt : occurredAt.slice(0, separator);
 }
 
-export function buildMatchesExport(rows: MatchExportRow[], meta: ExportMeta): ExportTable {
+export function buildMatchesSection(rows: MatchExportRow[], heading?: string): ExportSection {
   return {
-    title: meta.title,
-    subtitle: meta.subtitle,
-    note: meta.note,
+    heading,
     headers: [...MATCHES_EXPORT_HEADERS],
     rows: rows.map((row) => [
       toDateOnly(row.occurredAt),
@@ -119,4 +142,8 @@ export function buildMatchesExport(rows: MatchExportRow[], meta: ExportMeta): Ex
       String(row.americanoPointsLost)
     ])
   };
+}
+
+export function buildMatchesExport(rows: MatchExportRow[], meta: ExportMeta): ExportTable {
+  return singleSection(meta, buildMatchesSection(rows));
 }

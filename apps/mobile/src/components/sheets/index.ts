@@ -7,4 +7,5 @@ export {
 } from "./AlertSheet";
 export { ErrorAlertSheet } from "./ErrorAlertSheet";
 export { SheetButton } from "./SheetButton";
+export { OptionRow, type OptionRowProps } from "./OptionRow";
 export { ScoreEntrySheet, type ScoreEntrySheetProps } from "./ScoreEntrySheet";

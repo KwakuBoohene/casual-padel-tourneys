@@ -3,10 +3,9 @@ import {
   STANDINGS_COLUMNS,
   standingsCells,
   type StandingsColumnKey,
-  type StandingsLine
+  type StandingsLine,
+  type StandingsSortState
 } from "@padel/shared";
-
-import type { StandingsSortState } from "../../hooks/standings/useStandingsSort";
 
 import { spacing } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";

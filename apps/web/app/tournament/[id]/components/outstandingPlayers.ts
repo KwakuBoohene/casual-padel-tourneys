@@ -55,12 +55,14 @@ export function buildOutstandingPlayerRows(tournament: TournamentWithLeaderboard
     ) => {
       const row = stats.get(playerId);
       if (!row) return;
+      // No games credited here on purpose: an Americano match is played to a rally point total and
+      // records none, which is what the standings help text says. Crediting one made GW mirror W,
+      // produced a non-zero GD, and would report a 100% game win rate for every Americano player.
+      // The result lives in W/L/D; the scoreline lives in PW(A) / PL(A).
       if (result === "WIN") {
         row.wins += 1;
-        row.gamesWon = (row.gamesWon ?? 0) + 1;
       } else if (result === "LOSS") {
         row.losses += 1;
-        row.gamesLost = (row.gamesLost ?? 0) + 1;
       } else {
         row.draws += 1;
       }

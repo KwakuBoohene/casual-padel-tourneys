@@ -7,6 +7,47 @@ import {
 
 export type StandingsSortDirection = "asc" | "desc";
 
+export interface StandingsSortState {
+  key: StandingsColumnKey;
+  direction: StandingsSortDirection;
+}
+
+interface SortableRow {
+  line: StandingsLine;
+}
+
+/**
+ * The press cycle for one column: ascending, then descending, then back to `null` — the board's own
+ * rank order. Three presses always return a viewer to where they started, so a sort can be undone
+ * without hunting for a reset control. Activating a different column starts its own cycle.
+ *
+ * Lives here rather than on either surface so mobile and web cannot drift into different
+ * interactions for the same table.
+ */
+export function nextSortState(
+  current: StandingsSortState | null,
+  key: StandingsColumnKey
+): StandingsSortState | null {
+  if (!current || current.key !== key) return { key, direction: "asc" };
+  if (current.direction === "asc") return { key, direction: "desc" };
+  return null;
+}
+
+/**
+ * Apply a sort, leaving the input untouched. `null` means the caller's existing order.
+ *
+ * Array#sort is stable, so rows with equal values — including a whole column of unavailable win
+ * rates early in an event — keep their rank order instead of reshuffling.
+ */
+export function sortStandingsRows<T extends SortableRow>(
+  rows: T[],
+  sort: StandingsSortState | null
+): T[] {
+  if (!sort) return rows;
+  const compare = compareByStandingsColumn(sort.key, sort.direction);
+  return [...rows].sort((a, b) => compare(a.line, b.line));
+}
+
 /**
  * The number behind a column, or `null` where there is genuinely no value — an unavailable win
  * rate. `null` is not zero: a player with too few matches has not "won 0%", so it must never sort

@@ -2,13 +2,19 @@
 
 import { useEffect, useState } from "react";
 import {
+  nextSortState,
+  sortStandingsRows,
   STANDINGS_COLUMNS,
   standingsCells,
   standingsPageCount,
   standingsPageRange,
   standingsPageSize,
-  type StandingsLine
+  type StandingsColumnKey,
+  type StandingsLine,
+  type StandingsSortState
 } from "@padel/shared";
+
+import { StandingsHeaderRow } from "./StandingsHeaderRow";
 
 export type WebStandingsRow = {
   id: string;
@@ -20,6 +26,13 @@ export type WebStandingsRow = {
 export function WebStandingsTable(props: { rows: WebStandingsRow[] }) {
   const [pageSize, setPageSize] = useState(8);
   const [pageIndex, setPageIndex] = useState(0);
+  const [sort, setSort] = useState<StandingsSortState | null>(null);
+
+  // Reordering makes whatever page you were on meaningless, so go back to the first.
+  const pressColumn = (key: StandingsColumnKey) => {
+    setSort((current) => nextSortState(current, key));
+    setPageIndex(0);
+  };
 
   useEffect(() => {
     const read = () => setPageSize(standingsPageSize(window.innerWidth, window.innerHeight));
@@ -30,23 +43,17 @@ export function WebStandingsTable(props: { rows: WebStandingsRow[] }) {
   const pageCount = standingsPageCount(props.rows.length, pageSize);
   const safeIndex = Math.min(pageIndex, pageCount - 1);
   const range = standingsPageRange(props.rows.length, safeIndex, pageSize);
-  const visible = props.rows.slice(range.start, range.end);
+  // Sorting happens here only: rank travels on the row, and the podium above reads the original
+  // order, so neither the # column nor the medals contradict what the table shows.
+  const visible = sortStandingsRows(props.rows, sort).slice(range.start, range.end);
   const from = props.rows.length === 0 ? 0 : range.start + 1;
 
   return (
     <div className="space-y-3">
       <div className="overflow-x-auto rounded-2xl border border-padel-border bg-padel-surface">
-        <table className="w-full min-w-[456px] text-sm">
+        <table className="w-full min-w-[548px] text-sm">
           <thead>
-            <tr className="border-b border-padel-border text-[10px] font-semibold tracking-wide text-padel-muted">
-              <th className="px-3 py-2 text-left font-semibold w-8">#</th>
-              <th className="px-2 py-2 text-left font-semibold">Player</th>
-              {STANDINGS_COLUMNS.map((col) => (
-                <th key={col.key} title={col.title} className="px-1.5 py-2 text-right font-semibold">
-                  {col.header}
-                </th>
-              ))}
-            </tr>
+            <StandingsHeaderRow sort={sort} onPressColumn={pressColumn} />
           </thead>
           <tbody>
             {visible.map((row) => {

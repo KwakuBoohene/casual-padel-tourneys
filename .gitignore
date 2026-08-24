@@ -17,3 +17,4 @@ casual-padel-tourneys.code-workspace
 
 # Cursor IDE local rules/skills (keep out of repo)
 .cursor/
+deploy.sh

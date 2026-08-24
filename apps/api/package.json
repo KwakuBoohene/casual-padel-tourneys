@@ -18,16 +18,16 @@
     "db:push": "prisma db push"
   },
   "dependencies": {
-    "@fastify/cors": "11.2.0",
-    "@fastify/rate-limit": "10.3.0",
-    "@fastify/websocket": "11.2.0",
+    "@fastify/cors": "11.3.0",
+    "@fastify/rate-limit": "11.2.0",
+    "@fastify/websocket": "11.3.0",
     "@padel/shared": "*",
-    "@prisma/client": "6.19.2",
+    "@prisma/client": "7.9.1",
     "@serenity-kit/opaque": "1.1.0",
-    "dotenv": "17.3.1",
-    "fastify": "5.8.2",
-    "google-auth-library": "9.15.1",
-    "ioredis": "5.10.0",
+    "dotenv": "17.4.2",
+    "fastify": "5.12.1",
+    "google-auth-library": "11.0.2",
+    "ioredis": "6.0.0",
     "jsonwebtoken": "9.0.3"
   },
   "devDependencies": {

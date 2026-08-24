@@ -24,7 +24,7 @@
     "test": "node --test --import tsx $(find tests -name '*.test.ts' | sort)"
   },
   "dependencies": {
-    "zod": "4.3.6"
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "tsx": "4.21.0"

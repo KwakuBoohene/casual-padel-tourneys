@@ -1,4 +1,5 @@
 import { ApiError } from "./errors";
+import { notifyAuthFailure } from "./sessionExpiry";
 import { logger } from "../logger";
 
 const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
@@ -42,6 +43,7 @@ export function getApiBaseUrl(): string {
 
 export async function apiGet<T>(path: string): Promise<T> {
   logger.debug("apiGet", { path });
+  const sentToken = authToken !== null;
   const response = await fetch(`${apiBaseUrl}${path}`, {
     headers: authToken
       ? {
@@ -52,6 +54,7 @@ export async function apiGet<T>(path: string): Promise<T> {
   if (!response.ok) {
     const error = await parseApiError(response);
     logger.error("apiGet failed", { path, status: error.status, message: error.message, code: error.code });
+    notifyAuthFailure(path, response.status, sentToken);
     throw error;
   }
   return response.json() as Promise<T>;
@@ -59,6 +62,7 @@ export async function apiGet<T>(path: string): Promise<T> {
 
 export async function apiPost<T>(path: string, payload: unknown): Promise<T> {
   logger.debug("apiPost", { path, hasPayload: payload != null });
+  const sentToken = authToken !== null;
   const response = await fetch(`${apiBaseUrl}${path}`, {
     method: "POST",
     headers: {
@@ -70,6 +74,7 @@ export async function apiPost<T>(path: string, payload: unknown): Promise<T> {
   if (!response.ok) {
     const error = await parseApiError(response);
     logger.error("apiPost failed", { path, status: error.status, message: error.message, code: error.code });
+    notifyAuthFailure(path, response.status, sentToken);
     throw error;
   }
   return response.json() as Promise<T>;
@@ -77,6 +82,7 @@ export async function apiPost<T>(path: string, payload: unknown): Promise<T> {
 
 export async function apiPut<T>(path: string, payload: unknown): Promise<T> {
   logger.debug("apiPut", { path, hasPayload: payload != null });
+  const sentToken = authToken !== null;
   const response = await fetch(`${apiBaseUrl}${path}`, {
     method: "PUT",
     headers: {
@@ -88,6 +94,7 @@ export async function apiPut<T>(path: string, payload: unknown): Promise<T> {
   if (!response.ok) {
     const error = await parseApiError(response);
     logger.error("apiPut failed", { path, status: error.status, message: error.message, code: error.code });
+    notifyAuthFailure(path, response.status, sentToken);
     throw error;
   }
   return response.json() as Promise<T>;
@@ -95,6 +102,7 @@ export async function apiPut<T>(path: string, payload: unknown): Promise<T> {
 
 export async function apiDelete<T>(path: string): Promise<T> {
   logger.debug("apiDelete", { path });
+  const sentToken = authToken !== null;
   const response = await fetch(`${apiBaseUrl}${path}`, {
     method: "DELETE",
     headers: authToken
@@ -111,6 +119,7 @@ export async function apiDelete<T>(path: string): Promise<T> {
       message: error.message,
       code: error.code
     });
+    notifyAuthFailure(path, response.status, sentToken);
     throw error;
   }
   return response.json() as Promise<T>;

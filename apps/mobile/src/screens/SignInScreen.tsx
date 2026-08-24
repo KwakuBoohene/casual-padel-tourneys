@@ -7,6 +7,7 @@ import { ThemeToggle } from "../components/ThemeToggle";
 import { useTheme } from "../theme/ThemeProvider";
 
 import { AuthErrorSheet } from "../components/auth/AuthErrorSheet";
+import { SessionExpiredNotice } from "../components/auth/SessionExpiredNotice";
 import { AuthMethodList } from "../components/auth/AuthMethodList";
 import { MagicLinkPanel } from "../components/auth/MagicLinkPanel";
 import { useSignIn } from "../hooks/auth/useSignIn";
@@ -15,6 +16,7 @@ interface SignInScreenProps {
   onSignedIn: (session: AuthSession) => void;
   onPassword: () => void;
   onForgotPassword?: () => void;
+  sessionExpired?: boolean;
 }
 
 export function SignInScreen(props: SignInScreenProps) {
@@ -35,6 +37,7 @@ export function SignInScreen(props: SignInScreenProps) {
     >
       <View style={{ alignItems: "center", gap: spacing.sm, width: "100%", maxWidth: formMaxWidth }}>
         <ThemeToggle compact />
+        {props.sessionExpired ? <SessionExpiredNotice /> : null}
         <Text style={[typography.title, { color: colors.text }]}>Casual Padel Tourneys</Text>
         <Text style={{ color: colors.muted, fontSize: 14 }}>Sign in to manage your tournaments.</Text>
       </View>

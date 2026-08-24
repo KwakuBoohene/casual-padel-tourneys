@@ -1,7 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
+import { isSessionExpiryLatched } from "../../api/sessionExpiry";
 import { useAuthSessionContext } from "../../providers/AuthSessionProvider";
 import type { CreateRouteIntent } from "../../types/organizer/createIntent";
 import { openOrganizerTournament, type OpenOrganizerResult } from "../../utilities/organizer/openOrganizerTournament";
@@ -15,7 +16,12 @@ import { useTournamentList } from "./useTournamentList";
 export function useOrganizerScreen() {
   const auth = useAuthSessionContext();
   const queryClient = useQueryClient();
-  const [errorText, setErrorText] = useState("");
+  const [errorText, setErrorTextState] = useState("");
+  // An expired session is already redirecting to sign-in; do not flash the API message at them.
+  const setErrorText = useCallback((value: string) => {
+    if (isSessionExpiryLatched()) return;
+    setErrorTextState(value);
+  }, []);
   const viewerBaseUrl = process.env.EXPO_PUBLIC_VIEWER_BASE_URL ?? "http://localhost:3000";
   const createIntentRef = useRef<CreateRouteIntent | null>(null);
   const liveCallbacks = useRef({

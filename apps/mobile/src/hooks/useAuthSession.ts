@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { AuthSession, AuthUser } from "../api/auth";
 import { clearAuthSession, loadStoredAuth, persistAuthSession } from "../api/authStorage";
+import { clearSessionExpiry } from "../api/sessionExpiry";
 import { logger } from "../logger";
 
 export function useAuthSession() {
@@ -10,6 +11,7 @@ export function useAuthSession() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [emailVerifyRequired, setEmailVerifyRequired] = useState(false);
   const [verifyBy, setVerifyBy] = useState<number | undefined>(undefined);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -30,6 +32,8 @@ export function useAuthSession() {
     setCurrentUser(session.user);
     setEmailVerifyRequired(false);
     setVerifyBy(undefined);
+    setSessionExpired(false);
+    clearSessionExpiry();
     try {
       await persistAuthSession(session.token, session.user);
     } catch (error) {
@@ -60,6 +64,11 @@ export function useAuthSession() {
     }
   }, []);
 
+  const handleSessionExpired = useCallback(async () => {
+    setSessionExpired(true);
+    await handleSignOut();
+  }, [handleSignOut]);
+
   const markEmailVerifyRequired = useCallback((dueAt?: number) => {
     setEmailVerifyRequired(true);
     setVerifyBy(dueAt);
@@ -76,8 +85,10 @@ export function useAuthSession() {
     currentUser,
     emailVerifyRequired,
     verifyBy,
+    sessionExpired,
     handleSignedIn,
     handleSignOut,
+    handleSessionExpired,
     updateUser,
     markEmailVerifyRequired,
     clearEmailVerifyRequired

@@ -74,7 +74,7 @@ The deploy script lives on the server at `/home/circleci/deployment-scripts/` (n
 
 1. Create migration in API workspace.
 2. Apply on staging.
-3. Backup prod DB.
+3. Backup prod DB — **automatic**: the deploy script dumps and verifies before migrating (see Backup And Restore).
 4. Apply migration on production.
 5. Verify API health and round generation.
 
@@ -97,17 +97,68 @@ The deploy script lives on the server at `/home/circleci/deployment-scripts/` (n
 
 ## Backup And Restore
 
-Backup:
+### Automatic pre-migration backup
+
+`deploy-casual-padel.sh` dumps the database **before it applies any migration** and aborts the
+deploy if it cannot produce a verified dump. There is no manual step.
+
+Each run writes two files to `BACKUP_DIR` (default `/home/circleci/db-backups`):
+
+| File | Contents |
+|------|----------|
+| `padel-<UTC timestamp>.sql.gz` | Gzipped `pg_dump` (`--no-owner --no-privileges`) |
+| `padel-<UTC timestamp>.info.txt` | Branch, commit, dump size, and per-table row counts taken **before** migrating |
+
+A dump must pass three checks or the deploy stops: valid gzip, at least `BACKUP_MIN_BYTES`
+(default 2000), and a real `PostgreSQL database dump` header. A dump that fails is renamed
+`.REJECTED` rather than deleted, so it can still be examined, and cannot be mistaken for a good
+backup. The newest `BACKUP_KEEP` (default 10) dumps are kept; older ones are pruned.
+
+Overrides: `BACKUP_DIR`, `BACKUP_KEEP`, `BACKUP_MIN_BYTES`.
+
+The `.info.txt` row counts are the fastest way to answer "did that migration lose data" — compare
+them against the same query after the deploy:
 
 ```bash
-docker exec -t <postgres_container> pg_dump -U padel -d padel > backup.sql
+docker compose exec -T db sh -c \
+  'psql -qAtF= -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "select relname, n_live_tup from pg_stat_user_tables order by relname"'
 ```
 
-Restore:
+### Restoring
+
+Restore into a **scratch database first** and check the row counts before touching the live one:
 
 ```bash
-cat backup.sql | docker exec -i <postgres_container> psql -U padel -d padel
+# 1. scratch database
+docker compose exec -T db psql -U padel -d padel -c "CREATE DATABASE restore_check OWNER padel;"
+
+# 2. restore the dump into it
+gunzip -c /home/circleci/db-backups/padel-<stamp>.sql.gz \
+  | docker compose exec -T db psql -U padel -d restore_check -q
+
+# 3. compare row counts against the .info.txt taken with the dump
+docker compose exec -T db psql -U padel -d restore_check -qAtF= \
+  -c "select relname, n_live_tup from pg_stat_user_tables order by relname"
 ```
+
+Only once that matches, replace the live database:
+
+```bash
+docker compose stop api web
+docker compose exec -T db psql -U padel -d postgres -c "DROP DATABASE padel;"
+docker compose exec -T db psql -U padel -d postgres -c "CREATE DATABASE padel OWNER padel;"
+gunzip -c /home/circleci/db-backups/padel-<stamp>.sql.gz \
+  | docker compose exec -T db psql -U padel -d padel -q
+docker compose start api web
+```
+
+### A failed migration blocks every later deploy
+
+Prisma refuses to apply anything once a migration is recorded as failed (`P3009`), even after the
+migration file itself is fixed. Check with `prisma migrate status`; resolve with
+`prisma migrate resolve --applied <name>` when the change is already present in the schema, or
+`--rolled-back <name>` when it is not and should be retried. The deploy script already does this
+for the King of the Court rename.
 
 ## Rollback
 

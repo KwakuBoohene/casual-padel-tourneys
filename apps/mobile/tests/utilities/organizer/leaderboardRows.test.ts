@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { standingsCells, standingsLineFromRecord } from "@padel/shared";
 
 import {
   buildLeaderboardRows,
@@ -202,11 +203,12 @@ test("buildLeaderboardRows sorts Americano by wins then rally points", () => {
   const rows = buildLeaderboardRows(tournament);
   assert.equal(rows[0]?.playerId, "p2");
   assert.equal(rows[0]?.wins, 1);
-  assert.equal(rows[0]?.gamesWon, 1);
+  // Americano records no games; the win shows up in W and in the rally points, never in GW.
+  assert.equal(rows[0]?.gamesWon, 0);
   assert.equal(rows[0]?.americanoPointsWon, 24);
   assert.equal(rows[0]?.americanoPointsLost, 10);
   assert.equal(rows[1]?.wins, 0);
-  assert.equal(rows[1]?.gamesLost, 1);
+  assert.equal(rows[1]?.gamesLost, 0);
   assert.equal(rows[1]?.americanoPointsWon, 10);
 });
 
@@ -245,4 +247,94 @@ test("buildLeaderboardRows counts an Americano tie as a draw", () => {
   assert.equal(rows[0]?.wins, 0);
   assert.equal(rows[0]?.losses, 0);
   assert.equal(rows[1]?.draws, 1);
+});
+
+// --- Americano records no games (epic 27, DECISIONS 17-19) --------------------------------------
+
+/** One completed Americano match: p1/x beat p2/y 24-10. */
+function americanoWithOneMatch(): LiveTournamentState {
+  return baseTournament({
+    players: [
+      { id: "p1", name: "Ada" },
+      { id: "p2", name: "Bea" }
+    ],
+    leaderboard: [
+      { playerId: "p1", name: "Ada", totalPoints: 24, gamesPlayed: 1, rank: 1 },
+      { playerId: "p2", name: "Bea", totalPoints: 10, gamesPlayed: 1, rank: 2 }
+    ],
+    rounds: [
+      {
+        id: "r1",
+        roundNumber: 1,
+        isLocked: false,
+        matches: [
+          {
+            id: "m1",
+            court: 1,
+            teamA: ["p1", "x"],
+            teamB: ["p2", "y"],
+            scoreA: 24,
+            scoreB: 10,
+            completed: true
+          }
+        ]
+      }
+    ]
+  });
+}
+
+test("an Americano match never credits a game, so GW/GL/GD stay zero", () => {
+  const rows = buildLeaderboardRows(americanoWithOneMatch());
+  for (const row of rows) {
+    assert.equal(row.gamesWon ?? 0, 0, `${row.name} should have no games won`);
+    assert.equal(row.gamesLost ?? 0, 0, `${row.name} should have no games lost`);
+  }
+});
+
+test("game win rate is unavailable for Americano rather than a fabricated 100%", () => {
+  const rows = buildLeaderboardRows(americanoWithOneMatch());
+  const winner = rows.find((row) => row.playerId === "p1")!;
+  const line = standingsLineFromRecord({
+    wins: winner.wins,
+    losses: winner.losses,
+    draws: winner.draws,
+    gamesWon: winner.gamesWon ?? 0,
+    gamesLost: winner.gamesLost ?? 0
+  });
+  assert.equal(standingsCells(line).gwr, "—", "no games played means no game win rate");
+});
+
+test("a voided Americano match is not credited at all", () => {
+  const tournament = americanoWithOneMatch();
+  tournament.rounds[0].matches[0].voidedAt = new Date().toISOString();
+  const rows = buildLeaderboardRows(tournament);
+  for (const row of rows) {
+    assert.equal(row.wins, 0, `${row.name} played nothing that counts`);
+    assert.equal(row.losses, 0);
+    assert.equal(row.americanoPointsWon ?? 0, 0);
+  }
+});
+
+test("Regular play still reports real games — the fix is Americano-only", () => {
+  const tournament = baseTournament({
+    config: { scoringMode: "REGULAR" },
+    players: [{ id: "p1", name: "Ada", matchesWon: 1, matchesLost: 0, setsWon: 1, gamesWon: 6, gamesLost: 4 }],
+    leaderboard: [
+      {
+        playerId: "p1",
+        name: "Ada",
+        totalPoints: 0,
+        gamesPlayed: 1,
+        rank: 1,
+        matchesWon: 1,
+        matchesLost: 0,
+        setsWon: 1,
+        gamesWon: 6,
+        gamesLost: 4
+      }
+    ]
+  });
+  const row = buildLeaderboardRows(tournament)[0];
+  assert.equal(row.gamesWon, 6);
+  assert.equal(row.gamesLost, 4);
 });

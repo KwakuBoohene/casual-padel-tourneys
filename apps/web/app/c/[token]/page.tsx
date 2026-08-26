@@ -1,6 +1,9 @@
 import { standingsLineFromRecord, type PublicCareerBoard } from "@padel/shared";
 
 import { WebStandingsHelp } from "../../tournament/[id]/leaderboard/StandingsHelp";
+import { StandingsColumnsControl } from "../../tournament/[id]/leaderboard/StandingsColumnsControl";
+import { StandingsColumnsProvider } from "../../tournament/[id]/leaderboard/StandingsColumnsProvider";
+import { readVisibleColumnsCookie } from "../../../lib/standingsColumnsCookie";
 import { WebStandingsTable } from "../../tournament/[id]/leaderboard/StandingsTable";
 import { RangeTabs } from "./RangeTabs";
 import { CAREER_RANGES, parseCareerRange } from "./range";
@@ -30,6 +33,7 @@ export default async function PublicCareerPage({
   const query = await searchParams;
   const range = parseCareerRange(query.range);
   const board = await getBoard(route.token, range);
+  const initialColumns = await readVisibleColumnsCookie();
 
   if (!board) {
     return (
@@ -48,6 +52,7 @@ export default async function PublicCareerPage({
 
   return (
     <main className="min-h-screen bg-padel-background text-padel-text px-5 py-8 md:px-10 md:py-10">
+      <StandingsColumnsProvider initial={initialColumns}>
       <header className="mb-8 flex flex-col gap-4 max-w-3xl mx-auto w-full">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
@@ -57,6 +62,7 @@ export default async function PublicCareerPage({
             <p className="text-sm text-padel-muted">Standings · {rangeLabel} · read-only</p>
           </div>
           <div className="self-start">
+            <StandingsColumnsControl />
             <WebStandingsHelp />
           </div>
         </div>
@@ -87,6 +93,7 @@ export default async function PublicCareerPage({
           />
         )}
       </div>
+      </StandingsColumnsProvider>
     </main>
   );
 }

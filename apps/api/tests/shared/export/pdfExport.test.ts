@@ -1,9 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import PDFDocument from "pdfkit";
 import { buildLeaderboardExport, buildMatchesExport, type ExportTable } from "@padel/shared";
 
 import { renderExportTablePdf } from "../../../src/shared/export/PdfExportRenderer.js";
-import { layoutColumns } from "../../../src/shared/export/pdfTableLayout.js";
+import {
+  CELL_PADDING,
+  fitTableFontSizes,
+  layoutColumns
+} from "../../../src/shared/export/pdfTableLayout.js";
 
 function boardOf(count: number): ExportTable {
   return buildLeaderboardExport(
@@ -140,4 +145,81 @@ test("a very narrow page still yields ordered, non-overlapping columns", () => {
       "columns must not overlap"
     );
   }
+});
+
+// --- fitting wide tables to the page -----------------------------------------------------------
+
+/**
+ * A4 portrait minus both margins — the width the renderer actually has to work with.
+ * Measured with the same Helvetica metrics the renderer uses.
+ */
+const A4_AVAILABLE = 595.28 - 40 * 2;
+
+/**
+ * A board with names of the length real organizers actually enter. `boardOf` uses "Player 1",
+ * which is short enough that 14 columns still fit at 9pt — it is the long names that force the
+ * squeeze, so the fitting tests need a fixture that reflects that.
+ */
+function wideBoard(): ExportTable {
+  return buildLeaderboardExport(
+    [
+      { rank: 1, name: "Ana Beatriz Fernandes", wins: 9, losses: 1, draws: 0, gamesWon: 54, gamesLost: 21, americanoPointsWon: 0, americanoPointsLost: 0 },
+      { rank: 2, name: "Wilhelmina Vandersteen", wins: 6, losses: 3, draws: 1, gamesWon: 44, gamesLost: 36, americanoPointsWon: 128, americanoPointsLost: 110 },
+      { rank: 3, name: "Jean-Luc D'Artagnan-Smythe", wins: 5, losses: 5, draws: 0, gamesWon: 0, gamesLost: 0, americanoPointsWon: 240, americanoPointsLost: 236 }
+    ],
+    { title: "Friday Night Padel" }
+  );
+}
+
+function helveticaMeasure(): (text: string, size: number) => number {
+  const doc = new PDFDocument({ size: "A4", margin: 40 });
+  return (text: string, size: number) => doc.fontSize(size).widthOfString(text ?? "");
+}
+
+test("a table that already fits keeps the default type size", () => {
+  const measure = helveticaMeasure();
+  const narrow = { headers: ["#", "Player", "Score"], rows: [["1", "Ana", "6-2"]] };
+  assert.deepEqual(fitTableFontSizes(measure, narrow, A4_AVAILABLE, 9, 9), {
+    headerSize: 9,
+    bodySize: 9
+  });
+});
+
+test("the full leaderboard shrinks to fit rather than overflowing the page", () => {
+  const measure = helveticaMeasure();
+  const section = wideBoard().sections[0];
+  const fitted = fitTableFontSizes(measure, section, A4_AVAILABLE, 9, 9);
+  assert.ok(fitted.bodySize < 9, "14 columns do not fit A4 portrait at 9pt");
+  assert.ok(fitted.bodySize >= 6, "type must stay legible");
+});
+
+test("every column has room for its own content once fitted, so nothing breaks mid-token", () => {
+  const measure = helveticaMeasure();
+  const section = wideBoard().sections[0];
+  const fitted = fitTableFontSizes(measure, section, A4_AVAILABLE, 9, 9);
+  const columns = layoutColumns(measure, section, A4_AVAILABLE, fitted.headerSize, fitted.bodySize);
+
+  section.headers.forEach((header, index) => {
+    const room = columns[index].width - CELL_PADDING * 2;
+    assert.ok(
+      room >= measure(header, fitted.headerSize),
+      `header "${header}" has ${room.toFixed(2)}pt but needs ${measure(header, fitted.headerSize).toFixed(2)}pt`
+    );
+    for (const row of section.rows) {
+      const value = row[index] ?? "";
+      assert.ok(
+        room >= measure(value, fitted.bodySize),
+        `cell "${value}" in column "${header}" has ${room.toFixed(2)}pt but needs ${measure(value, fitted.bodySize).toFixed(2)}pt`
+      );
+    }
+  });
+});
+
+test("the fitted table still spans the full page width", () => {
+  const measure = helveticaMeasure();
+  const section = wideBoard().sections[0];
+  const fitted = fitTableFontSizes(measure, section, A4_AVAILABLE, 9, 9);
+  const columns = layoutColumns(measure, section, A4_AVAILABLE, fitted.headerSize, fitted.bodySize);
+  const total = columns.reduce((sum, column) => sum + column.width, 0);
+  assert.ok(Math.abs(total - A4_AVAILABLE) < 0.5, `table spans ${total.toFixed(2)} of ${A4_AVAILABLE}`);
 });

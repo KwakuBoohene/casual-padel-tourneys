@@ -13,6 +13,7 @@ export default function SignInRoute() {
         router.replace("/");
       }}
       onPassword={() => router.push("/password")}
+      sessionExpired={auth.sessionExpired}
     />
   );
 }

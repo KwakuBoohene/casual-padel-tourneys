@@ -35,7 +35,7 @@ function scoreFirstMatch(state: TournamentState, scoreA: number, scoreB: number)
     const player = state.players.find((p) => p.id === id)!;
     player.totalPoints += scoreB;
   }
-  state.leaderboard = buildLeaderboard(state.players, state.config.scoringMode);
+  state.leaderboard = buildLeaderboard(state.players, state.config.scoringMode, state.rounds);
 }
 
 test("every player gets a row, including those who never played", () => {
@@ -104,7 +104,7 @@ test("Regular standings come straight from the player aggregates", () => {
   player.matchesLost = 1;
   player.gamesWon = 12;
   player.gamesLost = 7;
-  state.leaderboard = buildLeaderboard(state.players, "REGULAR");
+  state.leaderboard = buildLeaderboard(state.players, "REGULAR", state.rounds);
 
   const row = buildTournamentExportRows(state).find((r) => r.name === player.name)!;
   assert.equal(row.wins, 2);

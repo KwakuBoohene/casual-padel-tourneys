@@ -35,6 +35,27 @@ Base URL: `http://localhost:3001`
 - `GET /tournaments/:id`
 - `GET /public/:token` (read-only viewer endpoint)
 
+### Leaderboard rows
+
+Each `leaderboard[]` entry carries the counters a client needs to derive standings; the rates
+themselves are **not** sent, so there is exactly one implementation of each formula.
+
+| Field | Notes |
+|-------|-------|
+| `rank`, `playerId`, `name` | Rank is the row order the API already sorted. |
+| `totalPoints` | Americano rally points. |
+| `matchesWon` / `matchesLost` | Regular standings; may be absent on points events. |
+| `matchesDrawn` | Tied points matches, counted for **both** sides. Always `0` for Regular and King of the Court, which cannot draw. |
+| `setsWon` / `setsLost`, `gamesWon` / `gamesLost` | Regular play only — Americano records no games. |
+
+Matches played is `matchesWon + matchesLost + matchesDrawn`; a draw dilutes match win rate exactly
+like a loss, matching the `points = wins` rule where a draw scores 0. Derive both rates with
+`matchWinRate` / `gameWinRate` from `@padel/shared` rather than recomputing per surface. Voided
+matches (an event closed with unplayed matches) never contribute to any of these counters.
+
+`matchesDrawn` is optional on the wire: an older cached payload without it behaves as `0`, which is
+exactly today's behaviour.
+
 ## Players
 
 - `GET /players/suggestions` (requires auth)

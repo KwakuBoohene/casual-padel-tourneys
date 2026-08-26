@@ -4,6 +4,7 @@ import { Platform } from "react-native";
 
 import { getApiBaseUrl, getAuthToken } from "./client";
 import { ApiError } from "./errors";
+import { notifyAuthFailure } from "./sessionExpiry";
 import {
   exportCacheFileName,
   exportMimeType,
@@ -21,14 +22,15 @@ export async function downloadAndShareExport(
   displayName: string,
   now: Date = new Date()
 ): Promise<void> {
-  const url = `${getApiBaseUrl()}${exportRequestPath(request)}`;
+  const path = exportRequestPath(request);
+  const url = `${getApiBaseUrl()}${path}`;
   const token = getAuthToken();
   const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
 
   const fileName = exportCacheFileName(request, displayName, now.toISOString());
 
   if (Platform.OS === "web") {
-    await downloadInBrowser(url, headers, fileName);
+    await downloadInBrowser(path, url, headers, fileName);
     return;
   }
 
@@ -53,12 +55,14 @@ export async function downloadAndShareExport(
 
 /** Web cannot attach an auth header to a plain navigation, so fetch then save the blob. */
 async function downloadInBrowser(
+  path: string,
   url: string,
   headers: Record<string, string> | undefined,
   fallbackFileName: string
 ): Promise<void> {
   const response = await fetch(url, { headers });
   if (!response.ok) {
+    notifyAuthFailure(path, response.status, Boolean(headers));
     throw new ApiError({ message: "Export failed. Try again.", status: response.status });
   }
   const objectUrl = URL.createObjectURL(await response.blob());

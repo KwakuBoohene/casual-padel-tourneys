@@ -6,6 +6,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 import { AuthSessionProvider } from "../src/providers/AuthSessionProvider";
 import { QueryProvider } from "../src/providers/QueryProvider";
+import { StandingsColumnsProvider } from "../src/providers/StandingsColumnsProvider";
 import { useWebDocumentBackground } from "../src/layout/useWebDocumentBackground";
 import { useWebFocusRing } from "../src/layout/useWebFocusRing";
 import { ThemeProvider, useTheme } from "../src/theme/ThemeProvider";
@@ -29,11 +30,13 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <ThemeProvider>
           <QueryProvider>
+            <StandingsColumnsProvider>
             <AuthSessionProvider>
               <RootChrome>
                 <RootStack />
               </RootChrome>
             </AuthSessionProvider>
+            </StandingsColumnsProvider>
           </QueryProvider>
         </ThemeProvider>
       </SafeAreaProvider>

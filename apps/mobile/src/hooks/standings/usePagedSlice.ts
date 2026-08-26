@@ -22,6 +22,8 @@ export function usePagedSlice(itemCount: number, pageSize: number) {
     canGoPrev: pageIndex > 0,
     canGoNext: pageIndex < pageCount - 1,
     goPrev: () => setPageIndex((value) => Math.max(0, value - 1)),
-    goNext: () => setPageIndex((value) => Math.min(pageCount - 1, value + 1))
+    goNext: () => setPageIndex((value) => Math.min(pageCount - 1, value + 1)),
+    /** Back to page 1 — reordering the list makes the current page meaningless. */
+    reset: () => setPageIndex(0)
   };
 }

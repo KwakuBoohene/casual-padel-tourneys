@@ -1,6 +1,7 @@
 import type { OrganizerPlayerRange } from "@padel/shared";
 import { Pressable, Text, View } from "react-native";
 
+import { StandingsColumnsControl } from "../standings/StandingsColumnsControl";
 import { StandingsHelpControl } from "../standings/StandingsHelpControl";
 import { radius, spacing, touch, typography } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
@@ -34,6 +35,7 @@ export function AccountPlayersHeader(props: AccountPlayersHeaderProps) {
         <Text style={[typography.title, { color: colors.text, flex: 1 }]}>Account Leaderboard</Text>
         {props.showActions ? action("Share", props.onShare) : null}
         {props.showActions ? action("Export", props.onExport) : null}
+        <StandingsColumnsControl />
         <StandingsHelpControl />
       </View>
       <View style={{ flexDirection: "row", gap: spacing.sm }}>

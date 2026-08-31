@@ -46,7 +46,7 @@
   },
   "devDependencies": {
     "@types/react": "19.1.17",
-    "eslint-config-expo": "~10.0.0",
+    "eslint-config-expo": "~57.0.2",
     "tsx": "4.23.12"
   }
 }

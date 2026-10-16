@@ -6,7 +6,8 @@ COPY apps/web/package.json ./apps/web/package.json
 COPY apps/mobile/package.json ./apps/mobile/package.json
 COPY packages/shared/package.json ./packages/shared/package.json
 # Skip lifecycle scripts so @padel/api postinstall does not run prisma generate without schema.
-RUN npm install --ignore-scripts
+# Next.js compilation needs dev dependencies even when Coolify sets NODE_ENV=production.
+RUN npm install --ignore-scripts --include=dev
 
 FROM base AS build
 COPY . .

@@ -6,7 +6,8 @@ COPY apps/web/package.json ./apps/web/package.json
 COPY apps/mobile/package.json ./apps/mobile/package.json
 COPY packages/shared/package.json ./packages/shared/package.json
 # Skip lifecycle scripts: @padel/api postinstall runs prisma generate before schema is copied.
-RUN npm install --ignore-scripts
+# Compilation needs dev dependencies even when Coolify sets NODE_ENV=production during build.
+RUN npm install --ignore-scripts --include=dev
 
 FROM base AS build
 # OpenSSL for Prisma on Alpine

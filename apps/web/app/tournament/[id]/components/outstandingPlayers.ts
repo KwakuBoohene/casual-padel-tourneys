@@ -1,6 +1,6 @@
 import type { ScoringMode } from "@padel/shared";
 
-import { isMatchComplete, type TournamentViewModel } from "../types";
+import { isMatchComplete, isMatchResolved, isMatchVoided, type TournamentViewModel } from "../types";
 
 export type TournamentLeaderboardEntry = TournamentViewModel["leaderboard"][number];
 export type TournamentRound = TournamentViewModel["rounds"][number];
@@ -55,12 +55,14 @@ export function buildOutstandingPlayerRows(tournament: TournamentWithLeaderboard
     ) => {
       const row = stats.get(playerId);
       if (!row) return;
+      // No games credited here on purpose: an Americano match is played to a rally point total and
+      // records none, which is what the standings help text says. Crediting one made GW mirror W,
+      // produced a non-zero GD, and would report a 100% game win rate for every Americano player.
+      // The result lives in W/L/D; the scoreline lives in PW(A) / PL(A).
       if (result === "WIN") {
         row.wins += 1;
-        row.gamesWon = (row.gamesWon ?? 0) + 1;
       } else if (result === "LOSS") {
         row.losses += 1;
-        row.gamesLost = (row.gamesLost ?? 0) + 1;
       } else {
         row.draws += 1;
       }
@@ -70,6 +72,7 @@ export function buildOutstandingPlayerRows(tournament: TournamentWithLeaderboard
 
     for (const round of tournament.rounds) {
       for (const match of round.matches) {
+        if (isMatchVoided(match)) continue;
         if (!isMatchComplete(match) || match.scoreA === undefined || match.scoreB === undefined) {
           continue;
         }
@@ -112,11 +115,15 @@ export function buildOutstandingPlayerRows(tournament: TournamentWithLeaderboard
 export function isTournamentComplete(
   tournament: Pick<TournamentViewModel, "rounds" | "endedAt" | "config">
 ): boolean {
+  // A closed event is done in every mode, however much was left unplayed and voided.
+  if (tournament.endedAt) {
+    return true;
+  }
   if (tournament.config?.mode === "MEXICANO") {
-    return Boolean(tournament.endedAt);
+    return false;
   }
   return (
     tournament.rounds.length > 0 &&
-    tournament.rounds.every((round) => round.matches.every((match) => isMatchComplete(match)))
+    tournament.rounds.every((round) => round.matches.every((match) => isMatchResolved(match)))
   );
 }

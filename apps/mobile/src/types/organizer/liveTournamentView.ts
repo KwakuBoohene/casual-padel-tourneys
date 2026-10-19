@@ -26,6 +26,8 @@ export interface LiveTournamentSessionState {
   canGenerateNextRound?: boolean;
   generatingNextRound?: boolean;
   canFinishNight?: boolean;
+  /** Matches that would be voided by closing now — drives the warning copy. */
+  unfinishedMatchCount?: number;
 }
 
 export interface LiveTournamentScoreState {

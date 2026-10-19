@@ -96,6 +96,11 @@ export interface Match {
   scoreA?: number;
   scoreB?: number;
   completed: boolean;
+  /**
+   * Set when an organizer closed the event with this match unplayed. Void matches keep any
+   * partial score but never count towards standings or the career board.
+   */
+  voidedAt?: string | null;
   /** Regular scoring set lines (draft or complete). */
   sets?: MatchSet[];
   /** Match tiebreak points when sets are even and match TB is enabled. */
@@ -171,6 +176,13 @@ export interface LeaderboardEntry {
   /** Regular standings (optional until award path fills them). */
   matchesWon?: number;
   matchesLost?: number;
+  /**
+   * Tied points matches, counted for both sides. Absent or 0 for Regular and King of the Court,
+   * which cannot draw. Needed so matches played is `wins + losses + draws` on the tournament board
+   * as well as the career board — without it a drawn match vanishes from the denominator and
+   * inflates match win rate.
+   */
+  matchesDrawn?: number;
   setsWon?: number;
   setsLost?: number;
   gamesWon?: number;

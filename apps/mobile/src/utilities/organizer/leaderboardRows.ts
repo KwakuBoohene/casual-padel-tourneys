@@ -1,5 +1,5 @@
 import type { LeaderboardRow, LiveTournamentState, PlayerGameRow } from "../../types/organizer/tournament";
-import { evaluateMatch } from "@padel/shared";
+import { evaluateMatch, isMatchCountable } from "@padel/shared";
 
 import { formatRegularMatchScore } from "./regularMatchDisplay";
 
@@ -7,6 +7,14 @@ function isRegular(tournament: LiveTournamentState): boolean {
   return (tournament.config.scoringMode ?? "AMERICANO_POINTS") === "REGULAR";
 }
 
+/**
+ * Credit one Americano match result.
+ *
+ * Deliberately does **not** touch `gamesWon` / `gamesLost`: an Americano match is played to a rally
+ * point total and records no games, which is what the standings help text on the same screen says.
+ * Counting a match win as a game win made GW mirror W, produced a non-zero GD, and would report a
+ * 100% game win rate for every Americano player. Rally points live in PW(A) / PL(A) instead.
+ */
 function bumpResult(stats: Map<string, LeaderboardRow>, playerId: string, result: "WIN" | "LOSS" | "DRAW"): void {
   const row = stats.get(playerId);
   if (!row) {
@@ -14,10 +22,8 @@ function bumpResult(stats: Map<string, LeaderboardRow>, playerId: string, result
   }
   if (result === "WIN") {
     row.wins += 1;
-    row.gamesWon = (row.gamesWon ?? 0) + 1;
   } else if (result === "LOSS") {
     row.losses += 1;
-    row.gamesLost = (row.gamesLost ?? 0) + 1;
   } else {
     row.draws += 1;
   }
@@ -115,7 +121,7 @@ export function buildLeaderboardRows(tournament: LiveTournamentState): Leaderboa
   if (!regular) {
     for (const round of tournament.rounds) {
       for (const match of round.matches) {
-        if (!match.completed || match.scoreA === undefined || match.scoreB === undefined) {
+        if (!isMatchCountable(match) || match.scoreA === undefined || match.scoreB === undefined) {
           continue;
         }
         const teamAResult =

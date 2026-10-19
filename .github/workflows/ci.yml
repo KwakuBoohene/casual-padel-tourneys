@@ -8,6 +8,24 @@ on:
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
+    services:
+      # ~18 of the api tests exercise the real Prisma client, so the job needs a database.
+      # Throwaway credentials for a container that lives and dies with this run.
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: padel
+          POSTGRES_USER: padel
+          POSTGRES_PASSWORD: padel
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://padel:padel@localhost:5432/padel
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,6 +44,9 @@ jobs:
         run: npm run lint
       - name: Typecheck
         run: npm run typecheck
+      - name: Apply migrations to the CI database
+        # migrate deploy, never migrate dev — this must not generate or edit migration files.
+        run: npx prisma migrate deploy --schema apps/api/prisma/schema.prisma
       - name: Unit and integration tests
         run: npm run test
       - name: Build

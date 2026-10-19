@@ -36,6 +36,7 @@ export function nestedRounds(state: TournamentState) {
         matchTbA: match.matchTbA ?? null,
         matchTbB: match.matchTbB ?? null,
         completed: match.completed,
+        voidedAt: match.voidedAt ? new Date(match.voidedAt) : null,
         sets: {
           create: (match.sets ?? []).map((set) => ({
             setNumber: set.setNumber,

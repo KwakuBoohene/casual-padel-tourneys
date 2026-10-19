@@ -1,11 +1,20 @@
 import { Pressable, ScrollView, View } from "react-native";
-import { standingsPageSize, type StandingsLine } from "@padel/shared";
+import { sortAfterHiding, standingsPageSize, visibleStandingsColumns, type StandingsLine } from "@padel/shared";
+
+import { useEffect } from "react";
 
 import { usePagedSlice } from "../../hooks/standings/usePagedSlice";
+import { useStandingsSort } from "../../hooks/standings/useStandingsSort";
+import { useStandingsColumns } from "../../providers/StandingsColumnsProvider";
 import { useBreakpoint } from "../../layout";
 import { spacing, touch } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
 import { ListPager } from "../lists/ListPager";
+
+import {
+  NAME_AND_PADDING_W,
+  standingsStatsWidth
+} from "../../utilities/standings/columnWidth";
 
 import { StandingsNameSlot, StandingsStatCells } from "./StandingsCells";
 
@@ -26,7 +35,20 @@ export function StandingsTable(props: StandingsTableProps) {
   const { width, height } = useBreakpoint();
   const pageSize = standingsPageSize(width, height);
   const pages = usePagedSlice(props.rows.length, pageSize);
-  const visible = props.rows.slice(pages.pageStart, pages.pageEnd);
+  const sorting = useStandingsSort(props.rows, pages.reset);
+  const { visible: visibleColumns } = useStandingsColumns();
+  const columns = visibleStandingsColumns(visibleColumns);
+  // One row cannot be reordered; offering a sort there would just show a caret that does nothing.
+  const sortable = props.rows.length > 1;
+
+  // A table ordered by a column that is no longer on screen has no visible explanation for its
+  // order, so hiding the sorted column drops back to rank order.
+  useEffect(() => {
+    if (sorting.sort && sortAfterHiding(sorting.sort, visibleColumns) === null) {
+      sorting.clearSort();
+    }
+  }, [visibleColumns, sorting]);
+  const visible = sorting.sorted.slice(pages.pageStart, pages.pageEnd);
 
   return (
     <View>
@@ -38,7 +60,9 @@ export function StandingsTable(props: StandingsTableProps) {
       >
         <View
           style={{
-            minWidth: 456,
+            // Derived, not a magic number: the stat columns plus room for rank, name and padding.
+            // Adding a column to STANDINGS_COLUMNS widens the table instead of squeezing the name.
+            minWidth: standingsStatsWidth(columns) + NAME_AND_PADDING_W,
             flexGrow: 1,
             borderRadius: 14,
             borderWidth: 1,
@@ -59,7 +83,12 @@ export function StandingsTable(props: StandingsTableProps) {
             }}
           >
             <StandingsNameSlot header name="Player" />
-            <StandingsStatCells header />
+            <StandingsStatCells
+              columns={columns}
+              header
+              sort={sortable ? sorting.sort : null}
+              onPressColumn={sortable ? sorting.pressColumn : undefined}
+            />
           </View>
           {visible.map((row, index) => {
             const body = (
@@ -75,7 +104,7 @@ export function StandingsTable(props: StandingsTableProps) {
                 }}
               >
                 <StandingsNameSlot rank={row.rank} name={row.name} />
-                <StandingsStatCells line={row.line} />
+                <StandingsStatCells columns={columns} line={row.line} />
               </View>
             );
             if (!props.onSelect) {

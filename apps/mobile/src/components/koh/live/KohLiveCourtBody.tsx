@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 import type { KohTournamentHub } from "../../../types/koh/create";
@@ -7,6 +8,7 @@ import { buildKohConfigRows } from "../../../utilities/organizer/tournamentConfi
 import { TournamentConfigSummaryPanel } from "../../organizer/TournamentConfigSummaryPanel";
 
 import { KohLiveActions } from "./KohLiveActions";
+import { KohLiveOptionsSheet } from "./KohLiveOptionsSheet";
 import { KohLiveCourtPager, KohLiveUnitCard } from "./KohLiveCourtBits";
 import { KohLiveWaitingQueue } from "./KohLiveWaitingQueue";
 
@@ -35,6 +37,7 @@ interface KohLiveCourtBodyProps {
 
 export function KohLiveCourtBody(props: KohLiveCourtBodyProps) {
   const { colors } = useTheme();
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const court = props.court;
 
   const pairingLabel =
@@ -72,16 +75,22 @@ export function KohLiveCourtBody(props: KohLiveCourtBodyProps) {
           ended={props.ended}
           onEnterResult={props.onEnterResult}
           onSwap={props.onSwap}
-          onRename={props.onRename}
           onShare={props.onShare}
-          onRank={props.onRank}
-          onEnd={props.onEnd}
-          onHome={props.onHome}
-          contributeToCareerLeaderboard={props.contributeToCareerLeaderboard}
-          careerSaving={props.careerSaving}
-          onSetContributeToCareerLeaderboard={props.onSetContributeToCareerLeaderboard}
+          onOpenOptions={() => setOptionsOpen(true)}
         />
       </View>
+      <KohLiveOptionsSheet
+        visible={optionsOpen}
+        ended={props.ended}
+        onClose={() => setOptionsOpen(false)}
+        onRank={props.onRank}
+        onRename={props.onRename}
+        onEnd={props.onEnd}
+        onHome={props.onHome}
+        contributeToCareerLeaderboard={props.contributeToCareerLeaderboard}
+        careerSaving={props.careerSaving}
+        onSetContributeToCareerLeaderboard={props.onSetContributeToCareerLeaderboard}
+      />
     </View>
   );
 }

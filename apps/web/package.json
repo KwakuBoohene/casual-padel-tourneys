@@ -8,7 +8,7 @@
     "start": "next start -p 3005",
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test"
+    "test": "node --test --import tsx $(find tests -name '*.test.ts' | sort)"
   },
   "dependencies": {
     "@padel/shared": "*",

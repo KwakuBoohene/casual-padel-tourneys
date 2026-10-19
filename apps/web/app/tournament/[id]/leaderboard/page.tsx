@@ -4,15 +4,17 @@ import Link from "next/link";
 import PodiumShowcase from "./PodiumShowcase";
 import { WebStandingsTable } from "./StandingsTable";
 import { WebStandingsHelp } from "./StandingsHelp";
+import { StandingsColumnsControl } from "./StandingsColumnsControl";
+import { StandingsColumnsProvider } from "./StandingsColumnsProvider";
+import { readVisibleColumnsCookie } from "../../../../lib/standingsColumnsCookie";
 
 import { buildOutstandingPlayerRows } from "../components/outstandingPlayers";
 import { formatScoringLabel, type TournamentViewModel } from "../types";
+import { internalApiBaseUrl, publicApiBaseUrl } from "../../../../lib/apiConfig";
 
-const defaultApi = "http://localhost:3004";
-const internalApiBaseUrl = process.env.INTERNAL_API_BASE_URL ?? process.env.PUBLIC_API_BASE_URL ?? defaultApi;
 
 async function getTournament(token: string) {
-  const response = await fetch(`${internalApiBaseUrl}/public/${token}`, { cache: "no-store" });
+  const response = await fetch(`${internalApiBaseUrl()}/public/${token}`, { cache: "no-store" });
   if (!response.ok) {
     return null;
   }
@@ -43,9 +45,11 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
   const outstandingPlayers = rows.slice(0, 3);
   const scoringLabel = formatScoringLabel(String(tournament.config.mode), tournament.config.scoringMode);
   const isRegular = tournament.config.scoringMode === "REGULAR";
+  const initialColumns = await readVisibleColumnsCookie();
 
   return (
     <main className="min-h-screen bg-padel-background text-padel-text px-5 py-8 md:px-10 md:py-10">
+      <StandingsColumnsProvider initial={initialColumns}>
       <header className="mb-8 flex flex-col gap-3 md:flex-row md:items-center md:justify-between max-w-3xl mx-auto w-full">
         <div className="space-y-2">
           <Link
@@ -60,8 +64,9 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
           </p>
         </div>
         <div className="flex items-center gap-3 self-start">
+          <StandingsColumnsControl />
           <WebStandingsHelp />
-          <LeaderboardHeaderActions tournamentId={route.id} />
+          <LeaderboardHeaderActions tournamentId={route.id} publicApiBaseUrl={publicApiBaseUrl()} />
         </div>
       </header>
 
@@ -89,6 +94,7 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
           }))}
         />
       </div>
+      </StandingsColumnsProvider>
     </main>
   );
 }

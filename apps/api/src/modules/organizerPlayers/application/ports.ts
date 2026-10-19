@@ -18,9 +18,45 @@ export interface OrganizerManagedPlayerRow {
   suggestedRestoreName?: string;
 }
 
+/** One credited match for one career identity — the rows behind the account leaderboard. */
+export interface CareerMatchRow {
+  occurredAt: Date;
+  tournamentId: string;
+  matchId: string;
+  tournamentName: string;
+  tournamentMode: string;
+  playerName: string;
+  matchesWon: number;
+  matchesLost: number;
+  matchesDrawn: number;
+  gamesWon: number;
+  gamesLost: number;
+  americanoPointsWon: number;
+  americanoPointsLost: number;
+}
+
+export interface CareerMatchQuery {
+  organizerId: string;
+  /** `null` = no lower bound (the `all` range). */
+  since: Date | null;
+  /** Fetch one more than the cap so the caller can tell truncation from an exact fit. */
+  limit: number;
+}
+
 export interface OrganizerPlayerRepository {
   /** Credited match results, newest first. */
   listDeltas(query: CareerDeltaQuery): Promise<CareerDelta[]>;
+  /**
+   * Per-match rows for the export, newest first. Includes archived identities — the match
+   * happened even if the career has since been archived.
+   */
+  listMatchesForExport(query: CareerMatchQuery): Promise<CareerMatchRow[]>;
+  /** Null when the organizer has not shared their board. */
+  findShareToken(organizerId: string): Promise<string | null>;
+  /** Pass null to revoke. Returns the stored value. */
+  setShareToken(organizerId: string, token: string | null): Promise<string | null>;
+  /** Null for an unknown or revoked token — callers must not distinguish the two. */
+  findOrganizerByShareToken(token: string): Promise<{ id: string; name: string } | null>;
   findPlayer(organizerId: string, organizerPlayerId: string): Promise<{ id: string; name: string } | null>;
   listManaged(
     organizerId: string,

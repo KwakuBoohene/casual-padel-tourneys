@@ -15,7 +15,11 @@ export function applyRenamePlayer(
     throw new Error("Player not found.");
   }
   player.name = newName;
-  tournament.leaderboard = buildLeaderboard(tournament.players, tournament.config.scoringMode);
+  tournament.leaderboard = buildLeaderboard(
+    tournament.players,
+    tournament.config.scoringMode,
+    tournament.rounds
+  );
   touch(tournament);
   logger.info("domain/applyRenamePlayer", { tournamentId: tournament.id, playerId, newName });
   return tournament;

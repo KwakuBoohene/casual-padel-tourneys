@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import type { LiveTournamentState } from "../../../types/organizer/tournament";
+import { areAllMatchesResolved, countUnfinishedMatches } from "@padel/shared";
 
 export function useLiveRounds(liveTournament: LiveTournamentState | null) {
   const [selectedRoundIndex, setSelectedRoundIndex] = useState(0);
@@ -40,11 +41,15 @@ export function useLiveRounds(liveTournament: LiveTournamentState | null) {
     if (!liveTournament) {
       return false;
     }
+    // A closed event is done in every mode, however much was left unplayed.
+    if (liveTournament.endedAt) {
+      return true;
+    }
     // Mexicano is open-ended until the organizer ends the night.
     if (isMexicano) {
-      return Boolean(liveTournament.endedAt);
+      return false;
     }
-    return liveTournament.rounds.every((round) => round.matches.every((match) => match.completed));
+    return areAllMatchesResolved(liveTournament.rounds);
   }, [isMexicano, liveTournament]);
 
   const isLastRound = useMemo(() => {
@@ -67,6 +72,8 @@ export function useLiveRounds(liveTournament: LiveTournamentState | null) {
     isMexicano,
     isLatestRoundComplete,
     canGenerateNextRound: Boolean(isMexicano && isLatestRoundComplete && !liveTournament?.endedAt),
-    canFinishNight: isMexicano ? !liveTournament?.endedAt : isTournamentCompleted
+    // Closing early is allowed in every mode; unplayed matches are voided, not lost.
+    canFinishNight: !liveTournament?.endedAt,
+    unfinishedMatchCount: countUnfinishedMatches(liveTournament?.rounds ?? [])
   };
 }

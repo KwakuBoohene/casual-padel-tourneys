@@ -1,6 +1,8 @@
 import { prisma } from "../../../lib/prisma.js";
 import type {
   CareerDeltaQuery,
+  CareerMatchQuery,
+  CareerMatchRow,
   OrganizerManagedPlayerRow,
   OrganizerPlayerRepository
 } from "../application/ports.js";
@@ -18,6 +20,76 @@ import {
 } from "./organizerPlayerManagement.js";
 
 export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepository {
+  async findShareToken(organizerId: string): Promise<string | null> {
+    const row = await prisma.user.findUnique({
+      where: { id: organizerId },
+      select: { careerShareToken: true }
+    });
+    return row?.careerShareToken ?? null;
+  }
+
+  async setShareToken(organizerId: string, token: string | null): Promise<string | null> {
+    const row = await prisma.user.update({
+      where: { id: organizerId },
+      data: { careerShareToken: token },
+      select: { careerShareToken: true }
+    });
+    return row.careerShareToken;
+  }
+
+  async findOrganizerByShareToken(token: string): Promise<{ id: string; name: string } | null> {
+    if (!token) return null;
+    const row = await prisma.user.findUnique({
+      where: { careerShareToken: token },
+      select: { id: true, name: true, isGuest: true }
+    });
+    // A guest has no career board, so their link resolves to nothing.
+    if (!row || row.isGuest) return null;
+    return { id: row.id, name: row.name };
+  }
+
+  async listMatchesForExport(query: CareerMatchQuery): Promise<CareerMatchRow[]> {
+    const rows = await prisma.organizerPlayerStatDelta.findMany({
+      where: {
+        organizerId: query.organizerId,
+        ...(query.since ? { occurredAt: { gte: query.since } } : {})
+      },
+      orderBy: { occurredAt: "desc" },
+      take: query.limit,
+      select: {
+        occurredAt: true,
+        tournamentId: true,
+        matchId: true,
+        tournamentName: true,
+        tournamentMode: true,
+        matchesWon: true,
+        matchesLost: true,
+        matchesDrawn: true,
+        gamesWon: true,
+        gamesLost: true,
+        americanoPointsWon: true,
+        americanoPointsLost: true,
+        organizerPlayer: { select: { name: true } }
+      }
+    });
+
+    return rows.map((row) => ({
+      occurredAt: row.occurredAt,
+      tournamentId: row.tournamentId,
+      matchId: row.matchId,
+      tournamentName: row.tournamentName,
+      tournamentMode: String(row.tournamentMode),
+      playerName: row.organizerPlayer.name,
+      matchesWon: row.matchesWon,
+      matchesLost: row.matchesLost,
+      matchesDrawn: row.matchesDrawn,
+      gamesWon: row.gamesWon,
+      gamesLost: row.gamesLost,
+      americanoPointsWon: row.americanoPointsWon,
+      americanoPointsLost: row.americanoPointsLost
+    }));
+  }
+
   async listDeltas(query: CareerDeltaQuery): Promise<CareerDelta[]> {
     const rows = await prisma.organizerPlayerStatDelta.findMany({
       where: {

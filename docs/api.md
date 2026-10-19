@@ -35,6 +35,27 @@ Base URL: `http://localhost:3001`
 - `GET /tournaments/:id`
 - `GET /public/:token` (read-only viewer endpoint)
 
+### Leaderboard rows
+
+Each `leaderboard[]` entry carries the counters a client needs to derive standings; the rates
+themselves are **not** sent, so there is exactly one implementation of each formula.
+
+| Field | Notes |
+|-------|-------|
+| `rank`, `playerId`, `name` | Rank is the row order the API already sorted. |
+| `totalPoints` | Americano rally points. |
+| `matchesWon` / `matchesLost` | Regular standings; may be absent on points events. |
+| `matchesDrawn` | Tied points matches, counted for **both** sides. Always `0` for Regular and King of the Court, which cannot draw. |
+| `setsWon` / `setsLost`, `gamesWon` / `gamesLost` | Regular play only — Americano records no games. |
+
+Matches played is `matchesWon + matchesLost + matchesDrawn`; a draw dilutes match win rate exactly
+like a loss, matching the `points = wins` rule where a draw scores 0. Derive both rates with
+`matchWinRate` / `gameWinRate` from `@padel/shared` rather than recomputing per surface. Voided
+matches (an event closed with unplayed matches) never contribute to any of these counters.
+
+`matchesDrawn` is optional on the wire: an older cached payload without it behaves as `0`, which is
+exactly today's behaviour.
+
 ## Players
 
 - `GET /players/suggestions` (requires auth)
@@ -61,7 +82,37 @@ Base URL: `http://localhost:3001`
   - body: `tournamentId`, `expectedVersion`
   - Integrates pending players into the active tournament with handicap calculation
   - Requires: ≥2 pending players, current round complete, integration wave < 3
+- `POST /tournaments/:id/close`
+  - body: `expectedVersion`
+  - Closes a live event for **any** mode (Americano, Mexicano, King of the Court).
+  - Every match still unplayed (`completed: false`) is marked **void** (`voidedAt`): it keeps any
+    partial score but never counts towards standings or the career board.
+  - returns: `{ data: { tournament, voidedMatchCount } }`. For King of the Court, `tournament` is the
+    KOC hub, matching how `GET /tournaments/:id` already branches by mode.
+  - Idempotent: closing an already-closed event returns current state with `voidedMatchCount: 0`.
+- `POST /tournaments/end-night`
+  - body: `tournamentId`, `expectedVersion`
+  - Mexicano alias of the close flow. Returns `{ data: tournament }`.
+  - The in-progress round is **voided, not discarded** — awarded points are no longer reversed.
+- `POST /koh/tournaments/:id/end`
+  - body: `expectedVersion`
+  - King of the Court alias of the close flow. Returns `{ data: hub }`.
 - `DELETE /tournaments/:id`
+
+## Career share (account leaderboard)
+
+Opt-in, read-only, account-scoped. The token is a **capability** — never log it.
+
+- `GET /me/career-share` → `{ data: { token: string | null } }`
+- `POST /me/career-share` — create if absent. **Idempotent**: returns the existing token rather than
+  replacing a link that may already be pinned somewhere.
+- `POST /me/career-share/rotate` — issue a new token; the previous link stops working immediately.
+- `DELETE /me/career-share` — revoke; the link 404s from then on.
+- `GET /public/career/:token?range=month|year|all` — **no auth**. Standings only: organizer display
+  name, range, and rows. Carries no `organizerId` and no career identity ids. Unknown, malformed and
+  revoked tokens all return the same 404, so a visitor cannot confirm an account exists.
+
+Guests get 403 on the management routes — they have no career board.
 
 ## Realtime
 
@@ -78,8 +129,10 @@ Events:
 - `PENDING_PLAYER_ADDED`
 - `PENDING_PLAYERS_INTEGRATED`
 - `TOURNAMENT_DELETED`
+- `ROUND_ADVANCED`
+- `TOURNAMENT_ENDED`
 
 ## Concurrency
 
-Mutating endpoints that can race (`score`, `adjust-courts`, `add-pending-player`, `integrate-pending`) require `expectedVersion`.
+Mutating endpoints that can race (`score`, `adjust-courts`, `add-pending-player`, `integrate-pending`, `close`) require `expectedVersion`.
 If mismatch occurs, API responds with conflict and caller must refresh state.

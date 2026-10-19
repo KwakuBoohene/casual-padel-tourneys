@@ -22,9 +22,9 @@ services:
     env_file:
       - ./.env
     environment:
-      # Server-side fetch from container uses service name; client (browser) needs public URL
+      # Server-side fetch from this container uses the Compose service name.
       INTERNAL_API_BASE_URL: http://api:3004
-      PUBLIC_API_BASE_URL: http://localhost:3004
+
     depends_on:
       - api
     ports:

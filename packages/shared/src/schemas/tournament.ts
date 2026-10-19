@@ -245,11 +245,21 @@ export const advanceMexicanoRoundSchema = z.object({
   expectedVersion: z.number().int().min(0)
 });
 
-/** End Mexicano night; incomplete live round is discarded. */
+/** End Mexicano night. Alias of the close flow; unplayed matches are voided, not discarded. */
 export const endMexicanoNightSchema = z.object({
   tournamentId: z.string().min(1),
   expectedVersion: z.number().int().min(0)
 });
+
+/**
+ * Close a live event for any mode. Unplayed matches are voided so they never reach
+ * standings or the career board. Tournament id comes from the route path.
+ */
+export const closeTournamentSchema = z.object({
+  expectedVersion: z.number().int().min(0)
+});
+
+export type CloseTournamentInput = z.infer<typeof closeTournamentSchema>;
 
 /** DELETE /tournaments/:id query. Omitted flag keeps career credits. */
 export const deleteTournamentQuerySchema = z.object({

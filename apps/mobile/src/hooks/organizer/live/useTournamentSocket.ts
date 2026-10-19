@@ -5,6 +5,8 @@ import { parseTournamentSocketMessage } from "../../../utilities/realtime/tourna
 import { buildTournamentWsUrl } from "../../../utilities/realtime/tournamentWsUrl";
 
 const MAX_BACKOFF_MS = 30_000;
+/** The hub rejects a bad share token or a missing tournament; reconnecting cannot fix either. */
+const TERMINAL_CLOSE_CODES = new Set([4401, 4404]);
 
 export function useTournamentSocket(params: {
   tournamentId: string | null;
@@ -57,9 +59,13 @@ export function useTournamentSocket(params: {
         }
       };
 
-      socket.onclose = () => {
+      socket.onclose = (event) => {
         socket = null;
         if (closed) return;
+        if (TERMINAL_CLOSE_CODES.has(event.code)) {
+          closed = true;
+          return;
+        }
         const delay = Math.min(MAX_BACKOFF_MS, 1000 * 2 ** attempt);
         attempt += 1;
         reconnectTimer = setTimeout(connect, delay);

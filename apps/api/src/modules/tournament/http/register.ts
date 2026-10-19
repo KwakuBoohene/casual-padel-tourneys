@@ -8,8 +8,10 @@ import type { FastifyInstance } from "fastify";
 
 import { createTournamentDeps } from "./deps.js";
 import { registerTournamentCareerRoutes } from "./careerRoutes.js";
+import { registerTournamentCloseRoutes } from "./closeRoutes.js";
 import { registerTournamentCreateRoutes } from "./createRoutes.js";
 import { registerTournamentEditRoutes } from "./editRoutes.js";
+import { registerTournamentExportRoutes } from "./exportRoutes.js";
 import { registerTournamentLifecycleRoutes } from "./lifecycleRoutes.js";
 import { registerTournamentQueryRoutes } from "./queryRoutes.js";
 import { registerTournamentScoreRoutes } from "./scoreRoutes.js";
@@ -22,4 +24,6 @@ export async function registerTournamentModule(server: FastifyInstance): Promise
   registerTournamentEditRoutes(server, deps);
   registerTournamentCareerRoutes(server, deps);
   registerTournamentLifecycleRoutes(server, deps);
+  registerTournamentCloseRoutes(server, deps);
+  registerTournamentExportRoutes(server, deps);
 }

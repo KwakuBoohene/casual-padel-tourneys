@@ -19,6 +19,7 @@ export function mapRoundsFromDb(tournament: DbTournamentGraph): DomainRound[] {
         scoreA: match.scoreA ?? undefined,
         scoreB: match.scoreB ?? undefined,
         completed: match.completed,
+        voidedAt: match.voidedAt ? match.voidedAt.toISOString() : undefined,
         matchTbA: match.matchTbA ?? undefined,
         matchTbB: match.matchTbB ?? undefined,
         sets: match.sets

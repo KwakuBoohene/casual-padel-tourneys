@@ -90,7 +90,7 @@ test("advanceMexicanoRound refuses double advance", () => {
   assert.throws(() => advanceMexicanoRound(tournament.id), /already generated/);
 });
 
-test("endMexicanoNight discards incomplete latest round and reverses points", () => {
+test("endMexicanoNight voids the unplayed matches and keeps scored ones", () => {
   const tournament = createTournament(mexicanoConfig(), "org_mx_end");
   for (const match of tournament.rounds[0].matches) {
     submitScore(tournament.id, match.id, 16, 8);
@@ -101,14 +101,23 @@ test("endMexicanoNight discards incomplete latest round and reverses points", ()
   assert.ok(afterAdvance);
   const scoredOne = submitScore(tournament.id, afterAdvance.rounds[1].matches[0].id, 14, 10);
   const playerId = scoredOne.rounds[1].matches[0].teamA[0];
-  const pointsBeforeDiscard = scoredOne.players.find((player) => player.id === playerId)!.totalPoints;
+  const pointsBeforeEnd = scoredOne.players.find((player) => player.id === playerId)!.totalPoints;
 
   const ended = endMexicanoNight(tournament.id);
   assert.ok(ended.endedAt);
-  assert.equal(ended.rounds.length, 1);
-  assert.equal(ended.rounds[0].roundNumber, 1);
+
+  // The live round is kept, not discarded, and the score already entered still counts.
+  assert.equal(ended.rounds.length, 2);
   const pointsAfter = ended.players.find((player) => player.id === playerId)!.totalPoints;
-  assert.equal(pointsAfter, pointsBeforeDiscard - 14);
+  assert.equal(pointsAfter, pointsBeforeEnd);
+
+  const liveRound = ended.rounds[1];
+  const scored = liveRound.matches.filter((match) => match.completed);
+  const voided = liveRound.matches.filter((match) => match.voidedAt);
+  assert.equal(scored.length, 1);
+  assert.equal(voided.length, liveRound.matches.length - 1);
+  assert.ok(scored.every((match) => !match.voidedAt));
+
   assert.throws(() => submitScore(tournament.id, ended.rounds[0].matches[0].id, 12, 12), /already ended/);
   assert.throws(() => endMexicanoNight(tournament.id), /already ended/);
 });
@@ -122,6 +131,7 @@ test("endMexicanoNight keeps a fully scored latest round", () => {
   assert.ok(ended.endedAt);
   assert.equal(ended.rounds.length, 1);
   assert.ok(ended.rounds[0].matches.every((match) => match.completed));
+  assert.ok(ended.rounds[0].matches.every((match) => !match.voidedAt));
 });
 
 test("Team Mexicano advance keeps pairs together", () => {

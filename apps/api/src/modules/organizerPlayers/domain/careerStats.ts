@@ -23,8 +23,20 @@ export interface CareerDelta {
 
 const MAX_RECENT_EVENTS = 12;
 
+/**
+ * Americano is scored in rally points, not games. Credit rows written by `creditSides` still
+ * carry a 1/0 in `gamesWon`/`gamesLost` for a decisive Americano match, so every reader must
+ * normalise those away — otherwise a match win double-reports as a game win.
+ */
+export function isAmericanoPointsRow(row: {
+  americanoPointsWon: number;
+  americanoPointsLost: number;
+}): boolean {
+  return row.americanoPointsWon + row.americanoPointsLost > 0;
+}
+
 function isAmericanoPointsDelta(delta: CareerDelta): boolean {
-  return delta.americanoPointsWon + delta.americanoPointsLost > 0;
+  return isAmericanoPointsRow(delta);
 }
 
 interface AggregatedCareer {

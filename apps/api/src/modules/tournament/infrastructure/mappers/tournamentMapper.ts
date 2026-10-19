@@ -104,13 +104,15 @@ export function mapDbTournamentToState(tournament: DbTournamentGraph): Tournamen
     createdAt: pp.createdAt.toISOString()
   }));
 
+  const rounds = mapRoundsFromDb(tournament);
+
   return {
     id: tournament.id,
     config,
     players,
-    rounds: mapRoundsFromDb(tournament),
+    rounds,
     version: tournament.version,
-    leaderboard: buildLeaderboard(players, config.scoringMode),
+    leaderboard: buildLeaderboard(players, config.scoringMode, rounds),
     publicToken: tournament.publicToken,
     createdAt: tournament.createdAt.toISOString(),
     updatedAt: tournament.updatedAt.toISOString(),

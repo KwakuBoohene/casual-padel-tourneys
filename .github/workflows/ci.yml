@@ -26,6 +26,7 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://padel:padel@localhost:5432/padel
+      TEST_DATABASE_URL: postgresql://padel:padel@localhost:5432/padel
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -51,3 +52,9 @@ jobs:
         run: npm run test
       - name: Build
         run: npm run build
+      - name: Build Expo web app
+        run: npm run export:web --workspace @padel/mobile
+        env:
+          EXPO_PUBLIC_API_BASE_URL: https://api.example.test
+          EXPO_PUBLIC_VIEWER_BASE_URL: https://viewer.example.test
+          EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ci.apps.googleusercontent.com

@@ -10,11 +10,11 @@ export function createBottomSheetStyles(colors: PadelColors) {
       justifyContent: "flex-end"
     },
     overlayScrim: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: overlay.dim
     },
     overlayDismissHit: {
-      ...StyleSheet.absoluteFillObject
+      ...StyleSheet.absoluteFill
     },
     sheet: {
       backgroundColor: colors.surfaceAlt,

@@ -43,7 +43,7 @@ export function useBottomSheetMotion(input: {
     translateY.value = withTiming(
       SCREEN_HEIGHT,
       { duration: CLOSE_MS, easing: Easing.in(Easing.cubic) },
-      (finished) => {
+      (finished?: boolean) => {
         if (finished) {
           runOnJS(finishClose)(thenDismiss);
         }

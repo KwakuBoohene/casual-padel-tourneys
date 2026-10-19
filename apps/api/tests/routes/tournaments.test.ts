@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import jwt from "jsonwebtoken";
+import { Socket } from "node:net";
 
 import { createApp } from "../../src/app.js";
 import { prisma } from "../../src/lib/prisma.js";
@@ -203,7 +204,12 @@ test("GET /tournaments/:id requires auth and organizer", async () => {
   });
 });
 
-test("WebSocket subscribe requires public token or organizer JWT", async () => {
+test("WebSocket subscribe requires public token or organizer JWT", async (t) => {
+  // injectWS does not provide a client IP; the rate limiter needs one for the handshake.
+  const socket = new Socket();
+  Object.defineProperty(socket, "remoteAddress", { value: "127.0.0.1" });
+  t.after(() => socket.destroy());
+
   await withApp(async (app) => {
     const ownerToken = signUser("owner-1");
     const createResponse = await app.inject({
@@ -214,7 +220,7 @@ test("WebSocket subscribe requires public token or organizer JWT", async () => {
     });
     const created = createResponse.json().data;
 
-    const denied = await app.injectWS(`/ws/tournaments/${created.id}`);
+    const denied = await app.injectWS(`/ws/tournaments/${created.id}`, { socket });
     const deniedCode = await new Promise<number>((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error("denied WS did not close")), 3000);
       if (denied.readyState === denied.CLOSED) {
@@ -231,7 +237,8 @@ test("WebSocket subscribe requires public token or organizer JWT", async () => {
     denied.terminate();
 
     const allowed = await app.injectWS(
-      `/ws/tournaments/${created.id}?token=${encodeURIComponent(created.publicToken)}`
+      `/ws/tournaments/${created.id}?token=${encodeURIComponent(created.publicToken)}`,
+      { socket }
     );
     await new Promise<void>((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error("allowed WS closed unexpectedly")), 1000);
@@ -255,6 +262,7 @@ test("WebSocket subscribe requires public token or organizer JWT", async () => {
     allowed.terminate();
 
     const asOrganizer = await app.injectWS(`/ws/tournaments/${created.id}`, {
+      socket,
       headers: { authorization: `Bearer ${ownerToken}` }
     });
     await new Promise((r) => setTimeout(r, 50));

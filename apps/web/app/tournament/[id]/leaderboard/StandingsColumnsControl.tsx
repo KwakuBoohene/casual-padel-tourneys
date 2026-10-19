@@ -35,7 +35,7 @@ export function StandingsColumnsControl() {
           role="group"
           aria-label="Leaderboard columns"
           className={[
-            "absolute right-0 z-20 mt-2 w-72 rounded-2xl border border-padel-border",
+            "absolute left-0 z-20 mt-2 w-72 rounded-2xl border border-padel-border sm:left-auto sm:right-0",
             "bg-padel-surface p-3 shadow-lg"
           ].join(" ")}
         >

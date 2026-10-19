@@ -5,6 +5,7 @@ import type { LiveTournamentState } from "../../../types/organizer/tournament";
 import { submitRoundScoreDrafts, type LiveRound } from "../../../utilities/organizer/scoreDraftActions";
 import { useScoreDraftPersistence } from "./useScoreDraftPersistence";
 import { useScoreEntry } from "./useScoreEntry";
+import { useSubmission } from "../../useSubmission";
 
 export interface UseScoreDraftsParams {
   liveTournament: LiveTournamentState | null;
@@ -21,7 +22,10 @@ export function useScoreDrafts({
 }: UseScoreDraftsParams) {
   const { scoreInputs, setScoreInputs } = useScoreDraftPersistence(liveTournament?.id);
   const [focusSubmitMatchId, setFocusSubmitMatchId] = useState<string | null>(null);
+  const submission = useSubmission();
+  const { saving: submittingRoundScores, run } = submission;
   const entry = useScoreEntry({
+    submission,
     liveTournament,
     scoreInputs,
     setScoreInputs,
@@ -48,23 +52,25 @@ export function useScoreDrafts({
     });
   };
 
-  const submitRoundScores = async () => {
-    if (!liveTournament || !displayedRound) return;
-    await submitRoundScoreDrafts({
-      tournament: liveTournament,
-      round: displayedRound,
-      scoreInputs,
-      setScoreInputs,
-      onTournamentUpdated,
-      setErrorText
+  const submitRoundScores = () =>
+    run(async () => {
+      if (!liveTournament || !displayedRound) return;
+      await submitRoundScoreDrafts({
+        tournament: liveTournament,
+        round: displayedRound,
+        scoreInputs,
+        setScoreInputs,
+        onTournamentUpdated,
+        setErrorText
+      });
     });
-  };
 
   return {
     scoreInputs,
     updateScoreInput,
     clearScoreForMatch,
     submitRoundScores,
+    submittingRoundScores,
     focusSubmitMatchId,
     setFocusSubmitMatchId,
     ...entry

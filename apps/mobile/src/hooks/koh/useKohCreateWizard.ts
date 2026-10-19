@@ -13,6 +13,7 @@ import {
   syncCourts
 } from "../../utilities/koh/createDraft";
 import { submitKohCreate } from "../../utilities/koh/submitKohCreate";
+import { useSubmission } from "../useSubmission";
 
 const ALL_STEPS: KohCreateStep[] = [
   "NAME",
@@ -39,7 +40,7 @@ export interface UseKohCreateWizardParams {
 export function useKohCreateWizard(params: UseKohCreateWizardParams) {
   const [draft, setDraft] = useState<KohCreateDraft>(createEmptyDraft);
   const [step, setStep] = useState<KohCreateStep>("NAME");
-  const [submitting, setSubmitting] = useState(false);
+  const { saving: submitting, run, isPending } = useSubmission();
   const [showRrInfo, setShowRrInfo] = useState(false);
   const [addPairOpen, setAddPairOpen] = useState(false);
   const [pairA, setPairA] = useState("");
@@ -56,6 +57,7 @@ export function useKohCreateWizard(params: UseKohCreateWizardParams) {
   };
 
   const goBack = () => {
+    if (isPending()) return;
     const index = steps.indexOf(step);
     if (index <= 0) {
       params.onCancel();
@@ -81,14 +83,7 @@ export function useKohCreateWizard(params: UseKohCreateWizardParams) {
     setAddPairOpen(false);
   };
 
-  const startTournament = async () => {
-    setSubmitting(true);
-    try {
-      await submitKohCreate(draft, params);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const startTournament = () => run(() => submitKohCreate(draft, params));
 
   return {
     draft,

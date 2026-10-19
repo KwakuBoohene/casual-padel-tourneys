@@ -2,12 +2,9 @@ import { useEffect, useState } from "react";
 import type { KohCourtChange } from "@padel/shared";
 
 import type { KohTournamentHub } from "../../types/koh/create";
-import {
-  queueCourtChange,
-  runKohEnd,
-  runKohPromotePick,
-  runKohSwap
-} from "../../utilities/koh/liveActions";
+import { queueCourtChange, runKohEnd, runKohPromotePick, runKohSwap } from "../../utilities/koh/liveActions";
+
+import { useSubmission } from "../useSubmission";
 
 import { useKohLiveScore } from "./useKohLiveScore";
 import { useKohTournamentSocket } from "./useKohTournamentSocket";
@@ -30,7 +27,7 @@ type SwapInput = {
 export function useKohLive(params: UseKohLiveParams) {
   const [courtIndex, setCourtIndex] = useState(0);
   const [swapOpen, setSwapOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const submission = useSubmission();
   const [pendingCourtChange, setPendingCourtChange] = useState<KohCourtChange | null>(null);
   const [queuedCourtChange, setQueuedCourtChange] = useState<KohCourtChange | null>(null);
   const court = params.hub.courts[courtIndex] ?? params.hub.courts[0];
@@ -48,6 +45,7 @@ export function useKohLive(params: UseKohLiveParams) {
   };
 
   const score = useKohLiveScore({
+    submission,
     hub: params.hub,
     courtId: court?.id,
     matchId: court?.activeMatch?.id,
@@ -78,26 +76,30 @@ export function useKohLive(params: UseKohLiveParams) {
   const runMut = async (
     fn: () => Promise<KohTournamentHub | null>,
     after?: (hub: KohTournamentHub) => void
-  ) => {
-    setSaving(true);
-    const hub = await fn();
-    setSaving(false);
-    if (hub) {
-      after?.(hub);
-      applyHub(hub, score.scoreUiOpen);
-    }
-    return Boolean(hub);
-  };
+  ) =>
+    submission.run(async () => {
+      params.setErrorText("");
+      const hub = await fn();
+      if (hub) {
+        after?.(hub);
+        applyHub(hub, score.scoreUiOpen);
+      }
+      return Boolean(hub);
+    });
 
   return {
     ...score,
     courtIndex,
-    setCourtIndex,
+    setCourtIndex: (index: number) => {
+      if (!submission.isPending()) setCourtIndex(index);
+    },
     court,
     canScore: Boolean(court?.king && court?.challenger),
     swapOpen,
-    setSwapOpen,
-    saving: saving || score.saving,
+    setSwapOpen: (open: boolean) => {
+      if (!submission.isPending()) setSwapOpen(open);
+    },
+    saving: submission.saving,
     pendingCourtChange,
     pendingPromote: params.hub.pendingPromote ?? null,
     applySwap: (input: SwapInput) =>

@@ -7,11 +7,10 @@ import { tournamentQueryKeys } from "../../utilities/organizer/tournamentQueryKe
 import { fetchTournamentList } from "../../utilities/organizer/tournamentQueries";
 
 import { usePlayerNameSuggestions } from "./usePlayerNameSuggestions";
+import { useSubmission } from "../useSubmission";
+
 import { useTournamentDelete } from "./useTournamentDelete";
-import {
-  useTournamentListModals,
-  type ConfirmTournamentActionResult
-} from "./useTournamentListModals";
+import { useTournamentListModals, type ConfirmTournamentActionResult } from "./useTournamentListModals";
 
 export type { ConfirmTournamentActionResult };
 
@@ -34,6 +33,7 @@ export function useTournamentList({
   openTournament,
   onTournamentDeleted
 }: UseTournamentListParams) {
+  const { saving: tournamentActionSaving, run, isPending } = useSubmission();
   const modals = useTournamentListModals();
   const suggestedPlayerNames = usePlayerNameSuggestions(authReady && Boolean(authToken));
   const deleteMutation = useTournamentDelete(onTournamentDeleted);
@@ -57,45 +57,49 @@ export function useTournamentList({
     setErrorText((listQuery.error as Error).message);
   }, [listQuery.error, markEmailVerifyRequired, setErrorText]);
 
-  const confirmTournamentAction = async (): Promise<ConfirmTournamentActionResult | null> => {
-    const tournamentId = modals.selectedTournamentId;
-    const action = modals.pendingTournamentAction;
-    if (!tournamentId || !action) {
-      modals.clearActionSelection();
-      return null;
-    }
-    let holdSelection = false;
-    try {
-      setErrorText("");
-      if (action === "DELETE") {
-        const row = (listQuery.data ?? []).find((item) => item.id === tournamentId);
-        if (row?.config.contributeToCareerLeaderboard !== false) {
-          modals.openCareerDelete();
-          holdSelection = true;
-          return null;
-        }
-        await deleteMutation.mutateAsync({ tournamentId, stripCareer: false });
-        return { action: "DELETE", tournamentId };
+  const confirmTournamentAction = () =>
+    run(async (): Promise<ConfirmTournamentActionResult | null> => {
+      const tournamentId = modals.selectedTournamentId;
+      const action = modals.pendingTournamentAction;
+      if (!tournamentId || !action) {
+        modals.clearActionSelection();
+        return null;
       }
-      return { action: "EDIT", tournamentId, openResult: await openTournament(tournamentId, true) };
-    } catch (error) {
-      setErrorText((error as Error).message);
-      return null;
-    } finally {
-      if (!holdSelection) modals.clearActionSelection();
-    }
-  };
+      let holdSelection = false;
+      try {
+        setErrorText("");
+        if (action === "DELETE") {
+          const row = (listQuery.data ?? []).find((item) => item.id === tournamentId);
+          if (row?.config.contributeToCareerLeaderboard !== false) {
+            modals.openCareerDelete();
+            holdSelection = true;
+            return null;
+          }
+          await deleteMutation.mutateAsync({ tournamentId, stripCareer: false });
+          return { action: "DELETE", tournamentId };
+        }
+        return { action: "EDIT", tournamentId, openResult: await openTournament(tournamentId, true) };
+      } catch (error) {
+        holdSelection = true;
+        setErrorText((error as Error).message);
+        return null;
+      } finally {
+        if (!holdSelection) modals.clearActionSelection();
+      }
+    });
 
-  const confirmCareerDelete = async (stripCareer: boolean) => {
-    const tournamentId = modals.selectedTournamentId;
-    if (!tournamentId) return;
-    try {
-      setErrorText("");
-      await deleteMutation.mutateAsync({ tournamentId, stripCareer });
-    } catch (error) {
-      setErrorText((error as Error).message);
-    } finally { modals.clearActionSelection(); }
-  };
+  const confirmCareerDelete = (stripCareer: boolean) =>
+    run(async () => {
+      const tournamentId = modals.selectedTournamentId;
+      if (!tournamentId) return;
+      try {
+        setErrorText("");
+        await deleteMutation.mutateAsync({ tournamentId, stripCareer });
+        modals.clearActionSelection();
+      } catch (error) {
+        setErrorText((error as Error).message);
+      }
+    });
 
   return {
     tournaments: listQuery.data ?? [],
@@ -109,11 +113,16 @@ export function useTournamentList({
     requestTournamentAction: modals.requestTournamentAction,
     confirmTournamentAction,
     confirmCareerDelete,
-    cancelCareerDelete: modals.clearActionSelection,
+    tournamentActionSaving,
+    cancelCareerDelete: () => {
+      if (!isPending()) modals.clearActionSelection();
+    },
     showTournamentOptionsModal: modals.showTournamentOptionsModal,
     setShowTournamentOptionsModal: modals.setShowTournamentOptionsModal,
     showTournamentActionConfirmModal: modals.showTournamentActionConfirmModal,
-    setShowTournamentActionConfirmModal: modals.setShowTournamentActionConfirmModal,
+    setShowTournamentActionConfirmModal: (value: boolean) => {
+      if (!isPending()) modals.setShowTournamentActionConfirmModal(value);
+    },
     showCareerDeleteModal: modals.showCareerDeleteModal,
     pendingTournamentAction: modals.pendingTournamentAction
   };

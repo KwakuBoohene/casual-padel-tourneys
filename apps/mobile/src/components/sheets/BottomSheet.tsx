@@ -16,6 +16,8 @@ export interface BottomSheetProps {
   onDismiss: () => void;
   /** When false, overlay / hardware back / pan do not dismiss (destructive confirms). */
   dismissOnOverlay?: boolean;
+  /** Keep a submitted form visible while its result is pending. */
+  busy?: boolean;
   /** Optional max width override; defaults to formMaxWidth. */
   maxWidth?: number;
 }
@@ -24,7 +26,7 @@ export function BottomSheet(props: BottomSheetProps) {
   const { colors } = useTheme();
   const { formMaxWidth } = useBreakpoint();
   const styles = createBottomSheetStyles(colors);
-  const dismissOnOverlay = props.dismissOnOverlay !== false;
+  const dismissOnOverlay = !props.busy && props.dismissOnOverlay !== false;
   const maxWidth = props.maxWidth ?? formMaxWidth;
 
   const motion = useBottomSheetMotion({

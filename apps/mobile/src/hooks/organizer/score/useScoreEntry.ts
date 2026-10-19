@@ -13,10 +13,12 @@ import {
 import { runOpenScoreSave } from "../../../utilities/organizer/scoreSaveFlows";
 import type { ScoreDraftMap } from "./useScoreDraftPersistence";
 import { useScoreEntryMeta } from "./useScoreEntryMeta";
+import type { useSubmission } from "../../useSubmission";
 
 export type { ScoreEntryState } from "../../../utilities/organizer/scoreEntryHelpers";
 
 export function useScoreEntry(params: {
+  submission: ReturnType<typeof useSubmission>;
   liveTournament: LiveTournamentState | null;
   scoreInputs: ScoreDraftMap;
   setScoreInputs: Dispatch<SetStateAction<ScoreDraftMap>>;
@@ -27,41 +29,44 @@ export function useScoreEntry(params: {
   const [scoreEntry, setScoreEntry] = useState<ScoreEntryState | null>(null);
   const [pendingCompletedEditMatchId, setPendingCompletedEditMatchId] = useState<string | null>(null);
   const [scoreSheetError, setScoreSheetError] = useState<string | null>(null);
-  const [savingScore, setSavingScore] = useState(false);
+  const submission = params.submission;
+  const { saving: savingScore, isPending } = submission;
   const points = liveTournament?.config.pointsPerMatch ?? 0;
   const meta = useScoreEntryMeta(liveTournament, scoreEntry);
 
   const openEntry = (matchId: string) => {
-    if (!liveTournament) return;
+    if (!liveTournament || isPending()) return;
     setScoreSheetError(null);
     setScoreEntry(
       buildScoreEntryFromPair(liveTournament, matchId, initialScorePair(liveTournament, matchId, scoreInputs))
     );
   };
 
-  const runSave = async (complete: boolean, sets?: MatchSet[]) => {
-    if (!liveTournament || !scoreEntry) return;
-    setSavingScore(true);
-    setScoreSheetError(null);
-    setErrorText("");
-    try {
-      const error = await runOpenScoreSave({
-        tournament: liveTournament,
-        entry: { ...scoreEntry, sets: sets ?? scoreEntry.sets },
-        complete,
-        points,
-        regular: meta.regular,
-        onTournamentUpdated,
-        setScoreInputs
-      });
-      if (error) setScoreSheetError(error);
-      else setScoreEntry(null);
-    } catch (error) {
-      setScoreSheetError(error instanceof Error ? error.message : "Could not save score. Please try again.");
-    } finally {
-      setSavingScore(false);
-    }
-  };
+  const runSave = (complete: boolean, sets?: MatchSet[]) =>
+    submission.run(async () => {
+      if (!liveTournament || !scoreEntry) return;
+      setScoreSheetError(null);
+      setErrorText("");
+      const submittedEntry = { ...scoreEntry, sets: sets ?? scoreEntry.sets };
+      if (sets) setScoreEntry(submittedEntry);
+      try {
+        const error = await runOpenScoreSave({
+          tournament: liveTournament,
+          entry: submittedEntry,
+          complete,
+          points,
+          regular: meta.regular,
+          onTournamentUpdated,
+          setScoreInputs
+        });
+        if (error) setScoreSheetError(error);
+        else setScoreEntry(null);
+      } catch (error) {
+        setScoreSheetError(
+          error instanceof Error ? error.message : "Could not save score. Please try again."
+        );
+      }
+    });
 
   return {
     scoreEntry,
@@ -72,7 +77,7 @@ export function useScoreEntry(params: {
     scoreEntryPlusDisabledA: meta.plusDisabledA,
     scoreEntryPlusDisabledB: meta.plusDisabledB,
     requestOpenScoreEntry: (matchId: string) => {
-      if (!liveTournament) return;
+      if (!liveTournament || isPending()) return;
       if (findMatchInTournament(liveTournament, matchId)?.completed) {
         setPendingCompletedEditMatchId(matchId);
         return;
@@ -80,25 +85,28 @@ export function useScoreEntry(params: {
       openEntry(matchId);
     },
     closeScoreEntry: () => {
+      if (isPending()) return;
       setScoreEntry(null);
       setScoreSheetError(null);
     },
     changeScoreA: (next: number) => {
-      if (!scoreEntry || !liveTournament) return;
+      if (!scoreEntry || !liveTournament || isPending()) return;
       setScoreEntry(changeScoreEntrySide(scoreEntry, liveTournament, "A", next, points));
     },
     changeScoreB: (next: number) => {
-      if (!scoreEntry || !liveTournament) return;
+      if (!scoreEntry || !liveTournament || isPending()) return;
       setScoreEntry(changeScoreEntrySide(scoreEntry, liveTournament, "B", next, points));
     },
-    undoScoreEntry: () =>
+    undoScoreEntry: () => {
+      if (isPending()) return;
       setScoreEntry((prev) =>
         prev && liveTournament ? (restoreScoreEntryUndo(prev, liveTournament) ?? prev) : prev
-      ),
+      );
+    },
     saveScoreEntry: (sets?: MatchSet[]) => void runSave(meta.regular ? meta.canComplete : true, sets),
     saveScoreDraft: () => void runSave(false),
     advanceRegularSet: (sets?: MatchSet[]) => {
-      if (!scoreEntry || !liveTournament) return;
+      if (!scoreEntry || !liveTournament || isPending()) return;
       const next = advanceToNextRegularSet(scoreEntry, liveTournament, sets);
       if (next) setScoreEntry(next);
     },

@@ -41,6 +41,9 @@ export function LiveTournamentSheets({
         proposedCourts={session.proposedCourts}
         pendingCount={session.tournament.pendingPlayers.length}
         unfinishedMatchCount={session.unfinishedMatchCount ?? 0}
+        adjustingCourts={sheets.adjustingCourts}
+        integratingPendingPlayers={sheets.integratingPendingPlayers}
+        finishingTournament={sheets.finishingTournament}
         onCloseEditConfirm={actions.onCloseEditConfirm}
         onConfirmEditGame={actions.onConfirmEditGame}
         onCloseAdjustCourtsConfirm={actions.onCloseAdjustCourtsConfirm}
@@ -48,10 +51,7 @@ export function LiveTournamentSheets({
         onCloseIntegrateConfirm={actions.onCloseIntegrateConfirm}
         onConfirmIntegratePendingPlayers={actions.onConfirmIntegratePendingPlayers}
         onCloseFinishConfirm={actions.onCloseFinishConfirm}
-        onConfirmFinishTournament={() => {
-          actions.onCloseFinishConfirm();
-          actions.onFinishTournament();
-        }}
+        onConfirmFinishTournament={actions.onFinishTournament}
       />
       <LiveTournamentOptionsSheet
         visible={sheets.showLiveOptionsModal}
@@ -104,6 +104,7 @@ export function LiveTournamentSheets({
         visible={sheets.showAddPendingPlayerModal}
         nameDraft={sheets.pendingPlayerNameDraft}
         gender={sheets.pendingPlayerGender}
+        saving={sheets.addingPendingPlayer}
         onClose={actions.onCloseAddPendingPlayer}
         onChangeName={actions.onChangePendingPlayerName}
         onChangeGender={actions.onChangePendingPlayerGender}

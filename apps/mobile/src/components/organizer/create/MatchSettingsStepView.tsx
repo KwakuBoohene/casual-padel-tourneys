@@ -37,6 +37,7 @@ interface MatchSettingsStepViewProps {
   tournamentTimeText: string;
   estimate: Estimate | null;
   responseText: string;
+  creating: boolean;
   playersCount: number;
   onChangeScoringMode: (value: ScoringMode) => void;
   onChangeSetFormat: (value: RegularSetFormat) => void;
@@ -72,6 +73,7 @@ export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
   const isRegular = !isMexicano && props.scoringMode === "REGULAR";
 
   const tryCreate = () => {
+    if (props.creating) return;
     if (!canCreate) {
       setShowError(true);
       return;
@@ -93,7 +95,8 @@ export function MatchSettingsStepView(props: MatchSettingsStepViewProps) {
         title={
           isMode ? "How do we count?" : isMexicano ? "Mexicano settings" : isRegular ? "Set rules" : "Americano scoring"
         }
-        primaryLabel={isMode ? "Next" : "Create tournament"}
+        busy={props.creating}
+        primaryLabel={props.creating ? "Creating…" : isMode ? "Next" : "Create tournament"}
         primaryDisabled={isMode ? false : !canCreate}
         onPrimary={isMode ? props.onNextFromMode : tryCreate}
         onBack={isMode ? props.onBackToPlayers : isMexicano ? props.onBackToPlayers : props.onBackToMode}

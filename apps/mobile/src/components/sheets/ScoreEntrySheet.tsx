@@ -18,6 +18,7 @@ export interface ScoreEntrySheetProps {
   scoreB: number | null;
   canUndo: boolean;
   saveDisabled?: boolean;
+  saving?: boolean;
   saveLabel?: string;
   secondarySaveLabel?: string;
   plusDisabledA?: boolean;
@@ -40,7 +41,14 @@ export function ScoreEntrySheet(props: ScoreEntrySheetProps) {
   const max = props.max ?? 99;
 
   return (
-    <BottomSheet visible={props.visible} title={props.title} onDismiss={props.onDismiss}>
+    <BottomSheet
+      busy={props.saving}
+      visible={props.visible}
+      title={props.title}
+      onDismiss={() => {
+        if (!props.saving) props.onDismiss();
+      }}
+    >
       <Text style={{ color: colors.muted, fontSize: 14 }}>{props.contextLine}</Text>
       <ScoreEntrySideRow
         label={props.teamALabel}
@@ -48,7 +56,9 @@ export function ScoreEntrySheet(props: ScoreEntrySheetProps) {
         min={min}
         max={max}
         plusDisabled={props.plusDisabledA}
-        onChange={props.onChangeScoreA}
+        onChange={(value) => {
+          if (!props.saving) props.onChangeScoreA(value);
+        }}
       />
       <ScoreEntrySideRow
         label={props.teamBLabel}
@@ -56,22 +66,29 @@ export function ScoreEntrySheet(props: ScoreEntrySheetProps) {
         min={min}
         max={max}
         plusDisabled={props.plusDisabledB}
-        onChange={props.onChangeScoreB}
+        onChange={(value) => {
+          if (!props.saving) props.onChangeScoreB(value);
+        }}
       />
       {props.extraContent}
-      <SheetButton label="Undo" disabled={!props.canUndo} onPress={props.onUndo} style={{ minHeight: touch.minPrimary }} />
+      <SheetButton
+        label="Undo"
+        disabled={!props.canUndo || props.saving}
+        onPress={props.onUndo}
+        style={{ minHeight: touch.minPrimary }}
+      />
       {props.secondarySaveLabel && props.onSecondarySave ? (
         <SheetButton
           label={props.secondarySaveLabel}
-          disabled={props.saveDisabled}
+          disabled={props.saveDisabled || props.saving}
           onPress={props.onSecondarySave}
           style={{ minHeight: touch.minPrimary }}
         />
       ) : null}
       <SheetButton
-        label={props.saveLabel ?? "Save"}
+        label={props.saving ? "Saving…" : (props.saveLabel ?? "Save")}
         variant="primary"
-        disabled={props.saveDisabled}
+        disabled={props.saveDisabled || props.saving}
         onPress={props.onSave}
       />
     </BottomSheet>

@@ -22,6 +22,7 @@ export async function finishLiveTournament(input: {
   applyTournamentUpdate: (data: LiveTournamentState) => void;
   setIsEditingCompletedTournament: (value: boolean) => void;
   setErrorText: (value: string) => void;
+  onFinished?: () => void;
 }): Promise<void> {
   const { liveTournament, setErrorText } = input;
   if (!input.canFinishNight) {
@@ -37,6 +38,7 @@ export async function finishLiveTournament(input: {
     );
     input.applyTournamentUpdate(response.data.tournament);
     input.setIsEditingCompletedTournament(false);
+    input.onFinished?.();
     router.replace(tournamentLeaderboardPath(liveTournament.id));
   } catch (error) {
     const message = (error as Error).message;

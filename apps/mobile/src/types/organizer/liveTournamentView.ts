@@ -25,6 +25,8 @@ export interface LiveTournamentSessionState {
   playerNameById: Map<string, string>;
   canGenerateNextRound?: boolean;
   generatingNextRound?: boolean;
+  savingTournament?: boolean;
+  savingTournamentName?: boolean;
   canFinishNight?: boolean;
   /** Matches that would be voided by closing now — drives the warning copy. */
   unfinishedMatchCount?: number;
@@ -46,6 +48,7 @@ export interface LiveTournamentScoreState {
   scoreEntryPlusDisabledA: boolean;
   scoreEntryPlusDisabledB: boolean;
   savingScore: boolean;
+  submittingRoundScores?: boolean;
   pendingCompletedEditMatchId: string | null;
   scoreSheetError: string | null;
   focusSubmitMatchId: string | null;
@@ -64,6 +67,10 @@ export interface LiveTournamentSheetState {
   renameDrafts: Record<string, string>;
   renameSaving: boolean;
   careerSaving: boolean;
+  adjustingCourts?: boolean;
+  finishingTournament?: boolean;
+  addingPendingPlayer?: boolean;
+  integratingPendingPlayers?: boolean;
 }
 
 export interface LiveTournamentActions {

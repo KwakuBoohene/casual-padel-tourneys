@@ -38,6 +38,8 @@ export function OrganizerLiveHost() {
       playerNameById: org.playerNameById,
       canGenerateNextRound: org.canGenerateNextRound,
       generatingNextRound: org.generatingNextRound,
+      savingTournament: org.savingTournament,
+      savingTournamentName: org.savingTournamentName,
       canFinishNight: org.canFinishNight,
       unfinishedMatchCount: org.unfinishedMatchCount
     },
@@ -51,6 +53,7 @@ export function OrganizerLiveHost() {
       scoreEntryPlusDisabledA: org.scoreEntryPlusDisabledA,
       scoreEntryPlusDisabledB: org.scoreEntryPlusDisabledB,
       savingScore: org.savingScore,
+      submittingRoundScores: org.submittingRoundScores,
       pendingCompletedEditMatchId: org.pendingCompletedEditMatchId,
       scoreSheetError: org.scoreSheetError,
       focusSubmitMatchId: org.focusSubmitMatchId
@@ -67,7 +70,11 @@ export function OrganizerLiveHost() {
       renamePlayersVisible: org.renamePlayersVisible,
       renameDrafts: org.renameDrafts,
       renameSaving: org.renameSaving,
-      careerSaving: org.careerSaving
+      careerSaving: org.careerSaving,
+      adjustingCourts: org.adjustingCourts,
+      finishingTournament: org.finishingTournament,
+      addingPendingPlayer: org.addingPendingPlayer,
+      integratingPendingPlayers: org.integratingPendingPlayers
     },
     actions: {
       onBackToList: () => {

@@ -32,6 +32,7 @@ export function RegularWinMethodSheet(props: RegularWinMethodSheetProps) {
 
   return (
     <BottomSheet
+      busy={props.saving}
       visible={props.visible}
       title={`Set ${set?.setNumber ?? props.setIndex + 1} win methods`}
       onDismiss={props.onDismiss}

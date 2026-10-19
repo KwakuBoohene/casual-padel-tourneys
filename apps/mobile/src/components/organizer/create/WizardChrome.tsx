@@ -16,6 +16,7 @@ export interface WizardChromeProps {
   children: ReactNode;
   primaryLabel: string;
   primaryDisabled?: boolean;
+  busy?: boolean;
   onPrimary: () => void;
   onBack?: () => void;
   backLabel?: string;
@@ -26,6 +27,7 @@ export interface WizardChromeProps {
 export function WizardChrome(props: WizardChromeProps) {
   const { colors } = useTheme();
   const { formMaxWidth } = useBreakpoint();
+  const primaryDisabled = props.busy || props.primaryDisabled;
   const progress = props.progressText ?? `${props.modeLabel} · Step ${props.stepIndex} of ${props.stepCount}`;
 
   return (
@@ -49,7 +51,9 @@ export function WizardChrome(props: WizardChromeProps) {
         {props.subtitle ? (
           <Text style={{ fontSize: 13, color: colors.muted }}>{props.subtitle}</Text>
         ) : null}
-        {props.children}
+        <View pointerEvents={props.busy ? "none" : "auto"} style={{ gap: spacing.md }}>
+          {props.children}
+        </View>
       </ScrollView>
 
       <View
@@ -70,6 +74,7 @@ export function WizardChrome(props: WizardChromeProps) {
         {props.onBack ? (
           <View style={{ flexDirection: "row", gap: spacing.sm }}>
             <Pressable
+              disabled={props.busy}
               onPress={props.onBack}
               style={{
                 flex: 1,
@@ -87,21 +92,21 @@ export function WizardChrome(props: WizardChromeProps) {
               </Text>
             </Pressable>
             <Pressable
-              disabled={props.primaryDisabled}
+              disabled={primaryDisabled}
               onPress={props.onPrimary}
               style={{
                 flex: 1,
                 minHeight: touch.minPrimary,
                 borderRadius: radius.lg,
-                backgroundColor: props.primaryDisabled ? colors.surfaceAlt : colors.primary,
+                backgroundColor: primaryDisabled ? colors.surfaceAlt : colors.primary,
                 alignItems: "center",
                 justifyContent: "center",
-                opacity: props.primaryDisabled ? 0.5 : 1
+                opacity: primaryDisabled ? 0.5 : 1
               }}
             >
               <Text
                 style={{
-                  color: props.primaryDisabled ? colors.text : colors.onPrimary,
+                  color: primaryDisabled ? colors.text : colors.onPrimary,
                   fontWeight: "700",
                   fontSize: 17
                 }}
@@ -112,20 +117,20 @@ export function WizardChrome(props: WizardChromeProps) {
           </View>
         ) : (
           <Pressable
-            disabled={props.primaryDisabled}
+            disabled={primaryDisabled}
             onPress={props.onPrimary}
             style={{
               minHeight: touch.minPrimary,
               borderRadius: radius.lg,
-              backgroundColor: props.primaryDisabled ? colors.surfaceAlt : colors.primary,
+              backgroundColor: primaryDisabled ? colors.surfaceAlt : colors.primary,
               alignItems: "center",
               justifyContent: "center",
-              opacity: props.primaryDisabled ? 0.5 : 1
+              opacity: primaryDisabled ? 0.5 : 1
             }}
           >
             <Text
               style={{
-                color: props.primaryDisabled ? colors.text : colors.onPrimary,
+                color: primaryDisabled ? colors.text : colors.onPrimary,
                 fontWeight: "700",
                 fontSize: 17
               }}

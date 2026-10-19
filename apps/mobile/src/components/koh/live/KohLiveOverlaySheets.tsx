@@ -68,6 +68,7 @@ export function KohLiveOverlaySheets(props: KohLiveOverlaySheetsProps) {
         scoreB={props.scoreDraft.gamesB}
         canUndo={props.scoreDraft.undoStack.length > 0}
         saveDisabled={props.saving}
+        saving={props.saving}
         saveLabel={props.canComplete ? "Complete match" : "Save draft"}
         secondarySaveLabel={props.canComplete ? "Save draft" : undefined}
         onChangeScoreA={(next) => props.changeGames("A", next)}
@@ -118,6 +119,7 @@ export function KohLiveOverlaySheets(props: KohLiveOverlaySheetsProps) {
       />
       <AlertSheet
         visible={props.endConfirmOpen}
+        busy={props.saving}
         variant="warning"
         title="End this KOH night?"
         message="Scoring and swaps stop. You can still open rankings and the spectator link."

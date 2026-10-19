@@ -55,7 +55,7 @@ export function KohWinMethodSheet(props: KohWinMethodSheetProps) {
   );
 
   return (
-    <BottomSheet visible={props.visible} title="Win methods" onDismiss={props.onDismiss}>
+    <BottomSheet busy={props.saving} visible={props.visible} title="Win methods" onDismiss={props.onDismiss}>
       <Text style={{ color: colors.muted, fontSize: 13 }}>
         How each game was won (default Regular).
       </Text>

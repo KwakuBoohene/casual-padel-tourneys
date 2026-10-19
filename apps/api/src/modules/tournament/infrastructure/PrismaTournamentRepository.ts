@@ -9,11 +9,7 @@ import {
   tournamentInclude,
   type DbTournamentGraph
 } from "./mappers/tournamentMapper.js";
-import {
-  nestedPlayers,
-  nestedRounds,
-  scalarTournamentData
-} from "./mappers/tournamentWriteMapper.js";
+import { nestedPlayers, nestedRounds, scalarTournamentData } from "./mappers/tournamentWriteMapper.js";
 import { hardDeleteTournament } from "./hardDeleteTournament.js";
 
 export class PrismaTournamentRepository implements TournamentRepository {
@@ -72,41 +68,47 @@ export class PrismaTournamentRepository implements TournamentRepository {
   }
 
   async save(state: TournamentState, expectedVersion: number): Promise<void> {
-    const updated = await prisma.tournament.updateMany({
-      where: { id: state.id, version: expectedVersion },
-      data: { version: state.version, updatedAt: new Date(state.updatedAt) }
-    });
-    if (updated.count === 0) {
-      const exists = await prisma.tournament.findUnique({
-        where: { id: state.id },
-        select: { id: true }
-      });
-      if (!exists) {
-        throw notFound("Tournament not found.");
-      }
-      throw conflict("Version mismatch. Refresh tournament data.");
-    }
+    // The version check and aggregate replacement must commit or roll back together.
+    await prisma.$transaction(
+      async (tx) => {
+        const updated = await tx.tournament.updateMany({
+          where: { id: state.id, version: expectedVersion },
+          data: { version: state.version, updatedAt: new Date(state.updatedAt) }
+        });
+        if (updated.count === 0) {
+          const exists = await tx.tournament.findUnique({
+            where: { id: state.id },
+            select: { id: true }
+          });
+          if (!exists) {
+            throw notFound("Tournament not found.");
+          }
+          throw conflict("Version mismatch. Refresh tournament data.");
+        }
 
-    await prisma.player.deleteMany({ where: { tournamentId: state.id } });
-    await prisma.round.deleteMany({ where: { tournamentId: state.id } });
-    await prisma.pendingPlayer.deleteMany({ where: { tournamentId: state.id } });
+        await tx.player.deleteMany({ where: { tournamentId: state.id } });
+        await tx.round.deleteMany({ where: { tournamentId: state.id } });
+        await tx.pendingPlayer.deleteMany({ where: { tournamentId: state.id } });
 
-    await prisma.tournament.update({
-      where: { id: state.id },
-      data: {
-        ...scalarTournamentData(state),
-        players: { create: nestedPlayers(state) },
-        pendingPlayers: {
-          create: state.pendingPlayers.map((pp) => ({
-            id: pp.id,
-            name: pp.name,
-            gender: pp.gender ?? null,
-            createdAt: new Date(pp.createdAt)
-          }))
-        },
-        rounds: { create: nestedRounds(state) }
-      }
-    });
+        await tx.tournament.update({
+          where: { id: state.id },
+          data: {
+            ...scalarTournamentData(state),
+            players: { create: nestedPlayers(state) },
+            pendingPlayers: {
+              create: state.pendingPlayers.map((pp) => ({
+                id: pp.id,
+                name: pp.name,
+                gender: pp.gender ?? null,
+                createdAt: new Date(pp.createdAt)
+              }))
+            },
+            rounds: { create: nestedRounds(state) }
+          }
+        });
+      },
+      { maxWait: 15_000, timeout: 30_000 }
+    );
   }
 
   async delete(id: string, options?: { stripCareer?: boolean }): Promise<void> {

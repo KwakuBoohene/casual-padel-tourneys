@@ -2,7 +2,8 @@ import { createId } from "@padel/shared";
 import type { FixedPair, Match, Player, Round, TournamentConfig } from "@padel/shared";
 
 import { seedTeamOpponentMatrixFromRounds, teamPairKey } from "./pairingMatrices.js";
-import { teamScheduleShape } from "./scheduleMath.js";
+import { teamGamesTarget, teamScheduleShape } from "./scheduleMath.js";
+import { balancedTeamMatchups, remainingTeamMatchups } from "./teamTargetMatching.js";
 
 export interface TeamAmericanoScheduled {
   players: Player[];
@@ -13,7 +14,7 @@ export interface TeamAmericanoScheduled {
 /**
  * Team Americano: fixed doubles pairs for the whole event.
  * Unlike Classic Americano, partners never rotate. Units are pairs; each court
- * is pair vs pair. Soft goal: balance games and minimize repeated pair matchups.
+ * is pair vs pair. Target games are a per-team ceiling, with equal counts when feasible.
  * (Team Mexicano instead ladders pairs by standings after each round.)
  */
 export function generateTeamAmericano(config: TournamentConfig): TeamAmericanoScheduled {
@@ -97,8 +98,8 @@ function materializeFixedPairs(config: TournamentConfig): {
 }
 
 /**
- * The whole event is planned as a list of distinct matchups first (circle method, so every pair
- * meets exactly once and in a balanced order), then packed into rounds a court at a time. Because
+ * The whole event is planned as a set of distinct matchups first, then ordered by the circle
+ * method and packed into rounds a court at a time. Because
  * the plan only ever contains unplayed matchups, a rematch is structurally impossible.
  */
 function buildTeamAmericanoRounds(
@@ -121,9 +122,25 @@ function buildTeamAmericanoRounds(
 
   const shape = teamScheduleShape(config, fixedPairs.length);
   const wanted = Math.max(0, shape.totalMatches - alreadyScheduledMatches);
-  const plan = circleMatchupOrder(fixedPairs.map((pair) => pair.id))
-    .filter((matchup) => (played.get(teamPairKey(matchup[0], matchup[1])) ?? 0) === 0)
-    .slice(0, wanted);
+  const pairIds = fixedPairs.map((pair) => pair.id);
+  const available = circleMatchupOrder(pairIds)
+    .filter((matchup) => (played.get(teamPairKey(matchup[0], matchup[1])) ?? 0) === 0);
+  let plan: Array<[string, string]>;
+  if (config.schedulingMode === "TARGET_GAMES") {
+    const target = teamGamesTarget(config, fixedPairs.length);
+    const index = new Map(pairIds.map((id, i) => [id, i]));
+    const allowances = fixedPairs.map((pair) => Math.max(0, target - Math.max(
+      countGamesInRounds(pair.playerAId, seedRounds),
+      countGamesInRounds(pair.playerBId, seedRounds)
+    )));
+    const selected = seedRounds.length === 0
+      ? balancedTeamMatchups(fixedPairs.length, target)
+      : remainingTeamMatchups(available.map(([a, b]) => [index.get(a)!, index.get(b)!]), allowances);
+    const keys = new Set(selected.map(([a, b]) => teamPairKey(pairIds[a], pairIds[b])));
+    plan = available.filter(([a, b]) => keys.has(teamPairKey(a, b)));
+  } else {
+    plan = available.slice(0, wanted);
+  }
 
   const rounds: Round[] = [];
   let roundNumber = 1;
@@ -176,7 +193,7 @@ function buildTeamAmericanoRounds(
 
 /**
  * Circle ("Berger table") rotation: one full pass over the list gives every pair exactly once,
- * grouped so each rotation step covers every team. Taking a prefix therefore stays balanced.
+ * grouped into rotations with at most one appearance per team in each rotation.
  */
 function circleMatchupOrder(pairIds: string[]): Array<[string, string]> {
   const wheel = [...pairIds];

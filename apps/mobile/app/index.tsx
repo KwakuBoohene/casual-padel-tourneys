@@ -1,6 +1,6 @@
-import { Redirect , router } from "expo-router";
+import { Redirect, router } from "expo-router";
 import { useEffect } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Platform, View } from "react-native";
 import * as Linking from "expo-linking";
 
 import { parseAuthDeepLink } from "../src/api/authDeepLink";
@@ -8,10 +8,13 @@ import { logger } from "../src/logger";
 import { useAuthSessionContext } from "../src/providers/AuthSessionProvider";
 import { useTheme } from "../src/theme/ThemeProvider";
 
+const handledAuthUrls = new Set<string>();
 function redirectAuthUrl(url: string | null): void {
-  if (!url) return;
+  if (!url || handledAuthUrls.has(url)) return;
   const link = parseAuthDeepLink(url);
   if (!link) return;
+  if (handledAuthUrls.size >= 16) handledAuthUrls.clear();
+  handledAuthUrls.add(url);
   logger.info("auth deep link → route", { kind: link.kind });
   if (link.kind === "magic") {
     router.replace({ pathname: "/auth/magic", params: { token: link.token } });
@@ -26,6 +29,9 @@ export default function Index() {
   const auth = useAuthSessionContext();
 
   useEffect(() => {
+    // Browser routes already handle the callback. Replaying its initial URL after sign-in
+    // would navigate back to an already consumed one-time link.
+    if (Platform.OS === "web") return;
     void Linking.getInitialURL().then(redirectAuthUrl);
     const sub = Linking.addEventListener("url", (event) => redirectAuthUrl(event.url));
     return () => sub.remove();
@@ -33,7 +39,14 @@ export default function Index() {
 
   if (!auth.ready) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: colors.background
+        }}
+      >
         <ActivityIndicator color={colors.primary} />
       </View>
     );

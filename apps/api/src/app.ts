@@ -1,3 +1,5 @@
+import { registerOrganizerAccessRoutes } from "./modules/organizerAccess/http/routes.js";
+import { registerOrganizerMutationWork } from "./modules/organizerAccess/http/mutationWork.js";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import websocket from "@fastify/websocket";
@@ -39,6 +41,7 @@ export async function createApp() {
       "x-organizer-token",
       "Authorization",
       "x-public-token",
+      "X-Organizer-Id",
       REQUEST_ID_HEADER
     ],
     // Downloads are fetched cross-origin by the app; without exposing this the client cannot
@@ -58,7 +61,9 @@ export async function createApp() {
   registerRequestId(server);
   registerAppErrorHandler(server);
   logger.info("createApp: registering routes");
+  registerOrganizerMutationWork(server);
   registerOpsRoutes(server);
+  registerOrganizerAccessRoutes(server);
   await registerAuthModule(server);
   await registerTournamentModule(server);
   await registerKohModule(server);

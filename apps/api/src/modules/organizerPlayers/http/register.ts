@@ -13,6 +13,10 @@ export function createOrganizerPlayersDeps(): OrganizerPlayersDeps {
 
 export function registerOrganizerPlayersModule(server: FastifyInstance): void {
   const deps = createOrganizerPlayersDeps();
+  registerOrganizerPlayerManagementRoutes(server, deps, "/organizers/:organizerId");
+  registerOrganizerPlayerRoutes(server, deps, "/organizers/:organizerId");
+  registerOrganizerPlayerExportRoutes(server, deps, "/organizers/:organizerId");
+  registerCareerShareRoutes(server, deps, "/organizers/:organizerId");
   registerOrganizerPlayerManagementRoutes(server, deps);
   registerOrganizerPlayerRoutes(server, deps);
   registerOrganizerPlayerExportRoutes(server, deps);

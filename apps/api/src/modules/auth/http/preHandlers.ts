@@ -1,5 +1,7 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 
+import { resolveOrganizerRequest } from "../../organizerAccess/infrastructure/access.js";
+
 import type { AuthUser } from "../../../lib/authTypes.js";
 import { logger } from "../../../lib/logger.js";
 import { verifyAuthToken } from "../infrastructure/JwtAuthTokens.js";
@@ -61,10 +63,7 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply):
  * Blocks organizer routes after emailVerificationDueAt until emailVerifiedAt is set.
  * Guests bypass. Uses the DB so a fresh verify token works on the next request.
  */
-export async function requireVerifiedEmail(
-  request: FastifyRequest,
-  reply: FastifyReply
-): Promise<void> {
+export async function requireVerifiedEmail(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   if (!request.user) {
     reply.status(401);
     throw new Error("Unauthenticated.");
@@ -94,4 +93,4 @@ export async function requireVerifiedEmail(
 }
 
 /** Organizer routes: auth + verify gate. */
-export const requireOrganizerAccess = [requireAuth, requireVerifiedEmail];
+export const requireOrganizerAccess = [requireAuth, requireVerifiedEmail, resolveOrganizerRequest];

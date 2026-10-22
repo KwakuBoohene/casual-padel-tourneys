@@ -1,3 +1,4 @@
+import { rememberTournamentVersion } from "../../api/organizerContext";
 import { useEffect, useRef } from "react";
 
 import type { KohTournamentHub } from "../../types/koh/create";
@@ -29,6 +30,7 @@ export function useKohTournamentSocket(params: {
         };
         const inner = parsed?.payload?.payload;
         if (inner && typeof inner === "object" && "courts" in inner && "config" in inner) {
+          rememberTournamentVersion(inner);
           onHubRef.current(inner);
         }
       } catch {

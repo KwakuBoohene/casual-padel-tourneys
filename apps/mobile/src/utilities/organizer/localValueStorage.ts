@@ -1,10 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 
-import {
-  readWithLegacyMigration,
-  type StorageBackend
-} from "./localValueMigration";
+import { readWithLegacyMigration, type StorageBackend } from "./localValueMigration";
 
 function primaryStorage(): StorageBackend {
   return {
@@ -38,4 +35,10 @@ export async function deleteLocalValue(key: string): Promise<void> {
   } catch {
     // ignore legacy cleanup failures
   }
+}
+
+export async function clearOrganizerDrafts(actorId: string, organizerId: string): Promise<void> {
+  const prefix = `scoreDraft:${actorId}:${organizerId}:`;
+  const keys: string[] = await AsyncStorage.getAllKeys();
+  await Promise.all(keys.filter((key) => key.startsWith(prefix)).map((key) => AsyncStorage.removeItem(key)));
 }

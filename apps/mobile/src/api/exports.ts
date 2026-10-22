@@ -1,3 +1,4 @@
+import { captureOrganizerContext } from "./organizerContext";
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { Platform } from "react-native";
@@ -22,15 +23,16 @@ export async function downloadAndShareExport(
   displayName: string,
   now: Date = new Date()
 ): Promise<void> {
-  const path = exportRequestPath(request);
+  const context = captureOrganizerContext();
+  const path = context.path(exportRequestPath(request));
   const url = `${getApiBaseUrl()}${path}`;
   const token = getAuthToken();
-  const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+  const headers = { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...context.headers };
 
-  const fileName = exportCacheFileName(request, displayName, now.toISOString());
+  const fileName = exportCacheFileName(request, context.account?.name ?? displayName, now.toISOString());
 
   if (Platform.OS === "web") {
-    await downloadInBrowser(path, url, headers, fileName);
+    await downloadInBrowser(path, url, headers, fileName, context.assertCurrent);
     return;
   }
 
@@ -44,9 +46,16 @@ export async function downloadAndShareExport(
     throw new ApiError({ message: (error as Error).message || "Export failed.", status: 0 });
   }
 
+  try {
+    context.assertCurrent();
+  } catch (error) {
+    if (file.exists) file.delete();
+    throw error;
+  }
   if (!(await Sharing.isAvailableAsync())) {
     throw new ApiError({ message: "Sharing is not available on this device.", status: 0 });
   }
+  context.assertCurrent();
   await Sharing.shareAsync(file.uri, {
     mimeType: exportMimeType(request.format),
     UTI: request.format === "pdf" ? "com.adobe.pdf" : "public.comma-separated-values-text"
@@ -58,14 +67,17 @@ async function downloadInBrowser(
   path: string,
   url: string,
   headers: Record<string, string> | undefined,
-  fallbackFileName: string
+  fallbackFileName: string,
+  assertCurrent: () => void
 ): Promise<void> {
   const response = await fetch(url, { headers });
   if (!response.ok) {
     notifyAuthFailure(path, response.status, Boolean(headers));
     throw new ApiError({ message: "Export failed. Try again.", status: response.status });
   }
-  const objectUrl = URL.createObjectURL(await response.blob());
+  const blob = await response.blob();
+  assertCurrent();
+  const objectUrl = URL.createObjectURL(blob);
   // The header is only readable when the API exposes it via CORS; fall back to the name we
   // already built rather than letting the browser save a generic "export".
   const fromHeader = fileNameFromContentDisposition(response.headers.get("content-disposition"));

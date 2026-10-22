@@ -25,3 +25,4 @@ export * from "./export/exportScope.js";
 export * from "./mexicano/ladder.js";
 export * from "./americano/teams.js";
 
+export * from "./schemas/organizerAccess.js";

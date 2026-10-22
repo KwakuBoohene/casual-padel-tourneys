@@ -1,3 +1,4 @@
+import { organizerId } from "../../organizerAccess/infrastructure/access.js";
 import type { FastifyInstance } from "fastify";
 import { assignKohCourtsSchema, reorderKohQueueSchema } from "@padel/shared";
 
@@ -26,7 +27,7 @@ export function registerKohQueueRoutes(server: FastifyInstance, deps: KohModuleD
       try {
         const data = await assignKohCourts(deps, {
           tournamentId: params.id,
-          organizerId: request.user.id,
+          organizerId: organizerId(request),
           assignment: parsed.data
         });
         request.log.info({ id: params.id, ready: data.ready }, "PUT /koh/tournaments/:id/assignment");
@@ -54,7 +55,7 @@ export function registerKohQueueRoutes(server: FastifyInstance, deps: KohModuleD
       try {
         const data = await randomizeKohQueue(deps, {
           tournamentId: params.id,
-          organizerId: request.user.id,
+          organizerId: organizerId(request),
           courtNumber: court.courtNumber
         });
         request.log.info({ id: params.id, courtNumber: court.courtNumber }, "POST .../randomize");
@@ -87,7 +88,7 @@ export function registerKohQueueRoutes(server: FastifyInstance, deps: KohModuleD
       try {
         const data = await reorderKohQueue(deps, {
           tournamentId: params.id,
-          organizerId: request.user.id,
+          organizerId: organizerId(request),
           courtNumber: court.courtNumber,
           unitIds: parsed.data.unitIds
         });

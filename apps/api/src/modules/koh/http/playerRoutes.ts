@@ -1,3 +1,4 @@
+import { organizerId } from "../../organizerAccess/infrastructure/access.js";
 import type { FastifyInstance } from "fastify";
 import { renameKohPlayerSchema, replaceKohPartnerSchema } from "@padel/shared";
 
@@ -24,7 +25,7 @@ export function registerKohPlayerRoutes(server: FastifyInstance, deps: KohModule
       try {
         const data = await renameKohPlayer(deps, {
           tournamentId: params.id,
-          organizerId: request.user.id,
+          organizerId: organizerId(request),
           playerId: params.playerId,
           rename: parsed.data
         });
@@ -53,7 +54,7 @@ export function registerKohPlayerRoutes(server: FastifyInstance, deps: KohModule
       try {
         const data = await replaceKohPartner(deps, {
           tournamentId: params.id,
-          organizerId: request.user.id,
+          organizerId: organizerId(request),
           unitId: params.unitId,
           replacement: parsed.data
         });

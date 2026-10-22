@@ -1,3 +1,5 @@
+import { OrganizerAccountChrome } from "../../src/components/organizerAccess/OrganizerAccountChrome";
+import { useOrganizerAccount } from "../../src/providers/OrganizerAccountProvider";
 import type { ReactNode } from "react";
 import { Redirect, Stack } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
@@ -12,7 +14,14 @@ function AppAuthGate({ children }: { children: ReactNode }) {
 
   if (!auth.ready) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: colors.background
+        }}
+      >
         <ActivityIndicator color={colors.primary} />
       </View>
     );
@@ -30,11 +39,14 @@ function AppAuthGate({ children }: { children: ReactNode }) {
 }
 
 export default function AppLayout() {
+  const account = useOrganizerAccount();
   return (
     <AppAuthGate>
-      <OrganizerSessionProvider>
-        <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }} />
-      </OrganizerSessionProvider>
+      <OrganizerAccountChrome>
+        <OrganizerSessionProvider key={account.selected?.id}>
+          <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }} />
+        </OrganizerSessionProvider>
+      </OrganizerAccountChrome>
     </AppAuthGate>
   );
 }

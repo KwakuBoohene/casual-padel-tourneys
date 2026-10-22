@@ -1,3 +1,4 @@
+import { organizerId } from "../../organizerAccess/infrastructure/access.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import {
   buildLeaderboardExport,
@@ -21,10 +22,7 @@ import {
   parseScope,
   type SupportedExportFormat
 } from "../../tournament/http/exportSupport.js";
-import {
-  buildCareerExportDocument,
-  buildCareerMatchesExportTable
-} from "../application/exportCareer.js";
+import { buildCareerExportDocument, buildCareerMatchesExportTable } from "../application/exportCareer.js";
 import type { OrganizerPlayersDeps } from "../application/ports.js";
 
 const RANGE_ERROR = "range must be month, year, or all.";
@@ -46,7 +44,8 @@ function send(
 /** Account-wide exports. Organizer JWT only — a career board spans the whole account. */
 export function registerOrganizerPlayerExportRoutes(
   server: FastifyInstance,
-  deps: OrganizerPlayersDeps
+  deps: OrganizerPlayersDeps,
+  prefix = "/me"
 ): void {
   const handler = (kind: ExportKind) =>
     async function exportHandler(request: FastifyRequest, reply: FastifyReply) {
@@ -71,13 +70,14 @@ export function registerOrganizerPlayerExportRoutes(
       }
 
       const now = new Date();
-      const accountName = request.user.name?.trim() || "account";
+      const accountName =
+        (request.organizerContext?.ownerName?.trim() ?? request.user.name?.trim()) || "account";
       // A guest has no cross-event career: hand back the empty shape, not an error.
       const table = request.user.isGuest
         ? emptyTable(kind, range.data, now)
         : kind === "leaderboard"
-          ? await buildCareerExportDocument(deps, request.user.id, range.data, scope, now)
-          : await buildCareerMatchesExportTable(deps, request.user.id, range.data, now);
+          ? await buildCareerExportDocument(deps, organizerId(request), range.data, scope, now)
+          : await buildCareerMatchesExportTable(deps, organizerId(request), range.data, now);
 
       request.log.info({ kind, range: range.data, format, scope }, "GET /me/players export");
       // The matches export has one shape; the board export is named by the scope requested.
@@ -86,12 +86,12 @@ export function registerOrganizerPlayerExportRoutes(
     };
 
   server.get(
-    "/me/players/leaderboard/export",
+    `${prefix}/players/leaderboard/export`,
     { preHandler: requireOrganizerAccess, config: EXPORT_RATE_LIMIT },
     handler("leaderboard")
   );
   server.get(
-    "/me/players/matches/export",
+    `${prefix}/players/matches/export`,
     { preHandler: requireOrganizerAccess, config: EXPORT_RATE_LIMIT },
     handler("matches")
   );

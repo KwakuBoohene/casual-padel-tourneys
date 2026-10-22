@@ -1,3 +1,4 @@
+import { rememberTournamentVersion } from "../../../api/organizerContext";
 import { useEffect, useRef } from "react";
 
 import type { LiveTournamentState } from "../../../types/organizer/tournament";
@@ -51,6 +52,7 @@ export function useTournamentSocket(params: {
       socket.onmessage = (event) => {
         const parsed = parseTournamentSocketMessage(String(event.data));
         if (parsed.kind === "tournament") {
+          rememberTournamentVersion(parsed.data);
           onTournamentRef.current(parsed.data);
           return;
         }

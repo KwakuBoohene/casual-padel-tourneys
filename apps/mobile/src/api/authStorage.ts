@@ -1,3 +1,4 @@
+import { setOrganizerIdentity } from "./organizerContext";
 import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
@@ -52,12 +53,14 @@ export async function loadStoredAuth(): Promise<{ token: string | null; user: Au
   }
   if (token) {
     setAuthToken(token);
+    setOrganizerIdentity(user?.id ?? "");
   }
   return { token, user };
 }
 
 export async function persistAuthSession(token: string, user: AuthUser): Promise<void> {
   setAuthToken(token);
+  setOrganizerIdentity(user.id);
   await writeLocalValue(TOKEN_KEY, token);
   await writeLocalValue(USER_KEY, JSON.stringify(user));
 }

@@ -1,3 +1,4 @@
+import { OrganizerAccountProvider } from "../src/providers/OrganizerAccountProvider";
 import type { ReactNode } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "react-native";
@@ -31,11 +32,13 @@ export default function RootLayout() {
         <ThemeProvider>
           <QueryProvider>
             <StandingsColumnsProvider>
-            <AuthSessionProvider>
-              <RootChrome>
-                <RootStack />
-              </RootChrome>
-            </AuthSessionProvider>
+              <AuthSessionProvider>
+                <OrganizerAccountProvider>
+                  <RootChrome>
+                    <RootStack />
+                  </RootChrome>
+                </OrganizerAccountProvider>
+              </AuthSessionProvider>
             </StandingsColumnsProvider>
           </QueryProvider>
         </ThemeProvider>

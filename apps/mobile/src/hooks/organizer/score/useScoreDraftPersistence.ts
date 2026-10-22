@@ -1,19 +1,27 @@
+import { getOrganizerScope } from "../../../api/organizerContext";
 import { useEffect, useState } from "react";
 
 import { logger } from "../../../logger";
 
-import { deleteLocalValue, readLocalValue, writeLocalValue } from "../../../utilities/organizer/localValueStorage";
+import {
+  deleteLocalValue,
+  readLocalValue,
+  writeLocalValue
+} from "../../../utilities/organizer/localValueStorage";
 
 export type ScoreDraftMap = Record<string, { scoreA: string; scoreB: string }>;
 
-export const scoreDraftStorageKey = (tournamentId: string) => `scoreDraft:${tournamentId}`;
+export const scoreDraftStorageKey = (tournamentId: string) =>
+  `scoreDraft:${getOrganizerScope().join(":")}:${tournamentId}`;
 
 export function useScoreDraftPersistence(tournamentId: string | undefined) {
+  // Capture the scope during render so an old effect can never save into a newly selected account.
+  const storageKey = tournamentId ? scoreDraftStorageKey(tournamentId) : undefined;
   const [scoreInputs, setScoreInputs] = useState<ScoreDraftMap>({});
   const [scoreDraftHydratedTournamentId, setScoreDraftHydratedTournamentId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!tournamentId) {
+    if (!tournamentId || !storageKey) {
       setScoreInputs({});
       setScoreDraftHydratedTournamentId(null);
       return;
@@ -22,7 +30,7 @@ export function useScoreDraftPersistence(tournamentId: string | undefined) {
     let cancelled = false;
     const loadDraftScores = async () => {
       try {
-        const raw = await readLocalValue(scoreDraftStorageKey(tournamentId));
+        const raw = await readLocalValue(storageKey);
         if (cancelled) {
           return;
         }
@@ -48,10 +56,10 @@ export function useScoreDraftPersistence(tournamentId: string | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [tournamentId]);
+  }, [tournamentId, storageKey]);
 
   useEffect(() => {
-    if (!tournamentId || scoreDraftHydratedTournamentId !== tournamentId) {
+    if (!tournamentId || !storageKey || scoreDraftHydratedTournamentId !== tournamentId) {
       return;
     }
 
@@ -60,7 +68,7 @@ export function useScoreDraftPersistence(tournamentId: string | undefined) {
         const hasDraftValues = Object.values(scoreInputs).some(
           (entry) => (entry?.scoreA ?? "").trim().length > 0 || (entry?.scoreB ?? "").trim().length > 0
         );
-        const key = scoreDraftStorageKey(tournamentId);
+        const key = storageKey;
         if (!hasDraftValues) {
           await deleteLocalValue(key);
           return;
@@ -72,7 +80,7 @@ export function useScoreDraftPersistence(tournamentId: string | undefined) {
     };
 
     void persistDraftScores();
-  }, [tournamentId, scoreDraftHydratedTournamentId, scoreInputs]);
+  }, [tournamentId, storageKey, scoreDraftHydratedTournamentId, scoreInputs]);
 
   return { scoreInputs, setScoreInputs };
 }

@@ -71,6 +71,10 @@ model User {
   careerShareToken       String?          @unique
   createdAt              DateTime         @default(now())
   updatedAt              DateTime         @updatedAt
+  ownedMemberships       OrganizerMembership[] @relation("MembershipOwner")
+  memberships            OrganizerMembership[] @relation("MembershipMember")
+  organizerInvitations   OrganizerInvitation[]
+  organizerActivities    OrganizerActivity[]
   tournaments            Tournament[]
   magicLinkTokens        MagicLinkToken[]
   opaqueRecord           OpaqueRecord?
@@ -384,3 +388,54 @@ model KohMatchSet {
   @@index([matchId])
 }
 
+
+model OrganizerMembership {
+  id              String    @id @default(cuid())
+  organizerId     String
+  memberUserId    String
+  role            String    @default("MANAGER")
+  createdAt       DateTime  @default(now())
+  acceptedAt      DateTime  @default(now())
+  revokedAt       DateTime?
+  revokedByUserId String?
+  owner           User      @relation("MembershipOwner", fields: [organizerId], references: [id], onDelete: Cascade)
+  member          User      @relation("MembershipMember", fields: [memberUserId], references: [id], onDelete: Cascade)
+
+  @@unique([organizerId, memberUserId])
+  @@index([memberUserId, revokedAt])
+  @@index([organizerId, revokedAt])
+}
+
+model OrganizerInvitation {
+  id                     String    @id @default(cuid())
+  organizerId            String
+  invitedEmailNormalized String
+  invitedByUserId        String
+  tokenHash              String    @unique
+  createdAt              DateTime  @default(now())
+  expiresAt              DateTime
+  acceptedAt             DateTime?
+  acceptedByUserId       String?
+  revokedAt              DateTime?
+  deliveryStatus         String    @default("PENDING")
+  lastSentAt             DateTime?
+  sendAttempts           Int       @default(0)
+  owner                  User      @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+
+  @@index([organizerId, invitedEmailNormalized])
+}
+
+model OrganizerActivity {
+  id          String   @id @default(cuid())
+  organizerId String
+  actorUserId String
+  actorName   String
+  action      String
+  targetId    String?
+  occurredAt  DateTime @default(now())
+  requestId   String?
+  metadata    Json?
+  owner       User     @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+
+  @@index([organizerId, occurredAt, id])
+}

@@ -15,7 +15,8 @@
     "simulate": "node --import tsx src/engine/simulate.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push",
+    "maintenance:prune-activity": "node dist/apps/api/src/maintenance/pruneOrganizerActivity.js"
   },
   "dependencies": {
     "@fastify/cors": "11.3.1",

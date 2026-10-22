@@ -1,3 +1,4 @@
+import { organizerId } from "../../organizerAccess/infrastructure/access.js";
 import type { FastifyInstance } from "fastify";
 import { isKingOfTheCourtMode } from "@padel/shared";
 import { logger } from "../../../lib/logger.js";
@@ -13,10 +14,7 @@ import { PrismaKohRepository } from "../../koh/infrastructure/PrismaKohRepositor
 import type { TournamentModuleDeps } from "../application/ports.js";
 import { listPlayerSuggestionNames } from "../infrastructure/listPlayerSuggestions.js";
 
-export function registerTournamentQueryRoutes(
-  server: FastifyInstance,
-  deps: TournamentModuleDeps
-): void {
+export function registerTournamentQueryRoutes(server: FastifyInstance, deps: TournamentModuleDeps): void {
   // KOH hubs are a separate aggregate; reads here delegate to the KOH module.
   const koh = { repo: new PrismaKohRepository() };
 
@@ -24,9 +22,9 @@ export function registerTournamentQueryRoutes(
     if (!request.user) {
       return { data: [] };
     }
-    const data = await deps.repo.listByOrganizer(request.user.id);
+    const data = await deps.repo.listByOrganizer(organizerId(request));
     request.log.info({ count: data.length }, "GET /tournaments");
-    logger.debug("GET /tournaments", { organizerId: request.user.id, count: data.length });
+    logger.debug("GET /tournaments", { organizerId: organizerId(request), count: data.length });
     return { data };
   });
 
@@ -46,14 +44,14 @@ export function registerTournamentQueryRoutes(
         logger.debug("GET /tournaments/:id King of the Court hub", { id: params.id });
         const data = await getKohHub(koh, {
           tournamentId: params.id,
-          organizerId: request.user.id
+          organizerId: organizerId(request)
         });
         request.log.info({ id: params.id }, "GET /tournaments/:id KOH hub");
         return { data };
       }
       logger.debug("GET /tournaments/:id americano/mexicano", { id: params.id, mode: row?.mode });
       const data = await deps.repo.getById(params.id);
-      if (!data || data.organizerId !== request.user.id) {
+      if (!data || data.organizerId !== organizerId(request)) {
         reply.status(404);
         return { message: "Tournament not found." };
       }
@@ -125,7 +123,7 @@ export function registerTournamentQueryRoutes(
       reply.status(401);
       return { names: [] };
     }
-    const names = await listPlayerSuggestionNames(request.user.id);
+    const names = await listPlayerSuggestionNames(organizerId(request));
     return { names };
   });
 }

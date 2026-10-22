@@ -14,11 +14,13 @@ import { isAppError } from "../kernel/appError.js";
 export function registerAppErrorHandler(server: FastifyInstance): void {
   server.setErrorHandler((error, request, reply) => {
     if (isAppError(error)) {
-      request.log.warn(
-        { code: error.code, status: error.httpStatus },
-        "request failed with AppError"
-      );
-      reply.status(error.httpStatus).send({ message: error.message });
+      request.log.warn({ code: error.code, status: error.httpStatus }, "request failed with AppError");
+      reply
+        .status(error.httpStatus)
+        .send({
+          message: error.message,
+          ...(error.details && typeof error.details === "object" ? error.details : {})
+        });
       return;
     }
     reply.send(error);

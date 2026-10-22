@@ -10,7 +10,7 @@ export class ConsoleMailer implements Mailer {
     logger.info("mail/console: message queued (not sent)", {
       to: message.to,
       subject: message.subject,
-      text: message.text
+      text: message.sensitive ? "[sensitive invitation content omitted]" : message.text
     });
   }
 }

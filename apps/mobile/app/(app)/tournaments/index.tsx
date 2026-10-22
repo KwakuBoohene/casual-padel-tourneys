@@ -1,12 +1,17 @@
+import { useOrganizerAccount } from "../../../src/providers/OrganizerAccountProvider";
 import { router } from "expo-router";
 
 import { OrganizerListScreen } from "../../../src/components/organizer/list/OrganizerListScreen";
 import { PageShell } from "../../../src/layout";
 import { useOrganizerSession } from "../../../src/providers/OrganizerSessionProvider";
-import { tournamentLivePath, tournamentLeaderboardPath } from "../../../src/utilities/organizer/tournamentRoutes";
+import {
+  tournamentLivePath,
+  tournamentLeaderboardPath
+} from "../../../src/utilities/organizer/tournamentRoutes";
 
 export default function TournamentsListRoute() {
   const org = useOrganizerSession();
+  const account = useOrganizerAccount();
 
   const openListedTournament = (id: string, edit = false) => {
     const listed = org.tournaments.find((item) => item.id === id);
@@ -23,6 +28,7 @@ export default function TournamentsListRoute() {
   return (
     <PageShell>
       <OrganizerListScreen
+        canDelete={account.selected?.capabilities.deleteTournament}
         tournaments={org.tournaments}
         refreshing={org.listRefreshing}
         actionSaving={org.tournamentActionSaving}

@@ -1,3 +1,4 @@
+import { organizerId } from "../../organizerAccess/infrastructure/access.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { organizerPlayerRangeSchema } from "@padel/shared";
 
@@ -33,20 +34,21 @@ function organizerOrReject(request: FastifyRequest, reply: FastifyReply): string
     reply.status(403);
     return null;
   }
-  return request.user.id;
+  return organizerId(request);
 }
 
 export function registerCareerShareRoutes(
   server: FastifyInstance,
-  deps: OrganizerPlayersDeps
+  deps: OrganizerPlayersDeps,
+  prefix = "/me"
 ): void {
-  server.get("/me/career-share", { preHandler: requireOrganizerAccess }, async (request, reply) => {
+  server.get(`${prefix}/career-share`, { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const organizerId = organizerOrReject(request, reply);
     if (!organizerId) return { message: GUEST_MESSAGE };
     return { data: await getCareerShare(deps, organizerId) };
   });
 
-  server.post("/me/career-share", { preHandler: requireOrganizerAccess }, async (request, reply) => {
+  server.post(`${prefix}/career-share`, { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const organizerId = organizerOrReject(request, reply);
     if (!organizerId) return { message: GUEST_MESSAGE };
     const state = await enableCareerShare(deps, organizerId, makeToken);
@@ -56,7 +58,7 @@ export function registerCareerShareRoutes(
   });
 
   server.post(
-    "/me/career-share/rotate",
+    `${prefix}/career-share/rotate`,
     { preHandler: requireOrganizerAccess },
     async (request, reply) => {
       const organizerId = organizerOrReject(request, reply);
@@ -67,37 +69,30 @@ export function registerCareerShareRoutes(
     }
   );
 
-  server.delete(
-    "/me/career-share",
-    { preHandler: requireOrganizerAccess },
-    async (request, reply) => {
-      const organizerId = organizerOrReject(request, reply);
-      if (!organizerId) return { message: GUEST_MESSAGE };
-      const state = await revokeCareerShare(deps, organizerId);
-      request.log.info({ revoked: true }, "DELETE /me/career-share");
-      return { data: state };
-    }
-  );
+  server.delete(`${prefix}/career-share`, { preHandler: requireOrganizerAccess }, async (request, reply) => {
+    const organizerId = organizerOrReject(request, reply);
+    if (!organizerId) return { message: GUEST_MESSAGE };
+    const state = await revokeCareerShare(deps, organizerId);
+    request.log.info({ revoked: true }, "DELETE /me/career-share");
+    return { data: state };
+  });
 
-  server.get(
-    "/public/career/:token",
-    { config: PUBLIC_CAREER_RATE_LIMIT },
-    async (request, reply) => {
-      const params = request.params as { token: string };
-      const parsed = organizerPlayerRangeSchema.safeParse(
-        (request.query as { range?: string })?.range ?? "year"
-      );
-      if (!parsed.success) {
-        reply.status(400);
-        return { message: "range must be month, year, or all." };
-      }
-      const board = await readPublicCareerBoard(deps, params.token, parsed.data);
-      if (!board) {
-        // Same answer for unknown, malformed and revoked: never confirm an account exists.
-        reply.status(404);
-        return { message: "Leaderboard not found." };
-      }
-      return { data: board };
+  if (prefix !== "/me") return;
+  server.get("/public/career/:token", { config: PUBLIC_CAREER_RATE_LIMIT }, async (request, reply) => {
+    const params = request.params as { token: string };
+    const parsed = organizerPlayerRangeSchema.safeParse(
+      (request.query as { range?: string })?.range ?? "year"
+    );
+    if (!parsed.success) {
+      reply.status(400);
+      return { message: "range must be month, year, or all." };
     }
-  );
+    const board = await readPublicCareerBoard(deps, params.token, parsed.data);
+    if (!board) {
+      // Same answer for unknown, malformed and revoked: never confirm an account exists.
+      reply.status(404);
+      return { message: "Leaderboard not found." };
+    }
+    return { data: board };
+  });
 }

@@ -1,3 +1,4 @@
+import { destinationAfterSignIn } from "../../../src/api/pendingOrganizerInvite";
 import { router } from "expo-router";
 
 import { AttachAccountScreen } from "../../../src/screens/AttachAccountScreen";
@@ -11,7 +12,7 @@ export default function ProfileAttachRoute() {
       onBack={() => router.replace("/profile")}
       onAttached={async (session) => {
         await org.handleSignedIn(session);
-        router.replace("/tournaments");
+        router.replace(await destinationAfterSignIn());
       }}
       onEmailPending={(user) => void org.updateUser(user)}
     />

@@ -1,3 +1,4 @@
+import { organizerId } from "../../organizerAccess/infrastructure/access.js";
 import type { FastifyInstance } from "fastify";
 import { closeTournamentSchema, isKingOfTheCourtMode } from "@padel/shared";
 
@@ -14,10 +15,7 @@ import type { TournamentModuleDeps } from "../application/ports.js";
  * Close a live event for any mode. King of the Court owns a separate aggregate, so this
  * route branches on mode the same way the create and read routes already do.
  */
-export function registerTournamentCloseRoutes(
-  server: FastifyInstance,
-  deps: TournamentModuleDeps
-): void {
+export function registerTournamentCloseRoutes(server: FastifyInstance, deps: TournamentModuleDeps): void {
   server.post("/tournaments/:id/close", { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const params = request.params as { id: string };
     const parsed = closeTournamentSchema.safeParse(request.body);
@@ -34,7 +32,7 @@ export function registerTournamentCloseRoutes(
         where: { id: params.id },
         select: { mode: true, organizerId: true }
       });
-      if (!meta || meta.organizerId !== request.user.id) {
+      if (!meta || meta.organizerId !== organizerId(request)) {
         throw notFound("Tournament not found.");
       }
       let data: { tournament: unknown; voidedMatchCount: number };
@@ -42,13 +40,13 @@ export function registerTournamentCloseRoutes(
         data = await handleCloseKohTournament(
           server,
           params.id,
-          request.user.id,
+          organizerId(request),
           parsed.data.expectedVersion
         );
       } else {
         const result = await closeTournament(deps, {
           tournamentId: params.id,
-          organizerId: request.user.id,
+          organizerId: organizerId(request),
           expectedVersion: parsed.data.expectedVersion
         });
         await stripVoidedMatchCareerDeltas(params.id);

@@ -1,3 +1,4 @@
+import { destinationAfterSignIn } from "../../../src/api/pendingOrganizerInvite";
 import { useCallback, useEffect, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 
@@ -6,7 +7,7 @@ import { MagicLinkConsumeScreen } from "../../../src/screens/MagicLinkConsumeScr
 import { useAuthSessionContext } from "../../../src/providers/AuthSessionProvider";
 
 export default function MagicLinkRoute() {
-  const auth = useAuthSessionContext();
+  const { clearEmailVerifyRequired, handleSignedIn } = useAuthSessionContext();
   const params = useLocalSearchParams<{ token?: string | string[] }>();
   const tokenParam = params.token;
   const token = Array.isArray(tokenParam) ? tokenParam[0] : tokenParam;
@@ -20,15 +21,15 @@ export default function MagicLinkRoute() {
       setMessage(undefined);
       try {
         const session = await consumeMagicLink(value);
-        auth.clearEmailVerifyRequired();
-        await auth.handleSignedIn(session);
-        router.replace("/");
+        clearEmailVerifyRequired();
+        await handleSignedIn(session);
+        router.replace(await destinationAfterSignIn());
       } catch (error) {
         setStatus("error");
         setMessage(error instanceof Error ? error.message : "Invalid or expired sign-in link.");
       }
     },
-    [auth]
+    [clearEmailVerifyRequired, handleSignedIn]
   );
 
   useEffect(() => {

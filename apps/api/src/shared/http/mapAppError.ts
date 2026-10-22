@@ -10,7 +10,10 @@ import { AppError, isAppError } from "../kernel/appError.js";
 export function mapAppError(reply: FastifyReply, error: unknown): { message: string } {
   if (isAppError(error)) {
     reply.status(error.httpStatus);
-    return { message: error.message };
+    return {
+      message: error.message,
+      ...(error.details && typeof error.details === "object" ? error.details : {})
+    };
   }
 
   if (error instanceof Error) {

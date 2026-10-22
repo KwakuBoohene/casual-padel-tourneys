@@ -1,3 +1,4 @@
+import { organizerId } from "../../organizerAccess/infrastructure/access.js";
 import type { FastifyInstance } from "fastify";
 import { isKingOfTheCourtMode, setCareerLeaderboardSchema } from "@padel/shared";
 
@@ -8,10 +9,7 @@ import { PrismaKohRepository } from "../../koh/infrastructure/PrismaKohRepositor
 import { setCareerContribution } from "../../organizerPlayers/infrastructure/setCareerContribution.js";
 import type { TournamentModuleDeps } from "../application/ports.js";
 
-export function registerTournamentCareerRoutes(
-  server: FastifyInstance,
-  deps: TournamentModuleDeps
-): void {
+export function registerTournamentCareerRoutes(server: FastifyInstance, deps: TournamentModuleDeps): void {
   const koh = { repo: new PrismaKohRepository() };
 
   server.post(
@@ -30,13 +28,13 @@ export function registerTournamentCareerRoutes(
       try {
         const result = await setCareerContribution({
           tournamentId: parsed.data.tournamentId,
-          organizerId: request.user.id,
+          organizerId: organizerId(request),
           contributeToCareerLeaderboard: parsed.data.contributeToCareerLeaderboard
         });
         if (isKingOfTheCourtMode(result.mode)) {
           const data = await getKohHub(koh, {
             tournamentId: parsed.data.tournamentId,
-            organizerId: request.user.id
+            organizerId: organizerId(request)
           });
           await deps.events.publish({
             type: "KOH_HUB_UPDATED",

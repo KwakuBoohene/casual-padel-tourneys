@@ -3,6 +3,8 @@ export interface MailMessage {
   subject: string;
   text: string;
   html?: string;
+  /** Never print credential-bearing invitation content in a console adapter. */
+  sensitive?: boolean;
 }
 
 /**

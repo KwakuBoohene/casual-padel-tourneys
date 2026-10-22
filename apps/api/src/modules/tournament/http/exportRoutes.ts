@@ -1,11 +1,6 @@
+import { organizerId } from "../../organizerAccess/infrastructure/access.js";
 import type { FastifyInstance, FastifyReply } from "fastify";
-import {
-  exportContentType,
-  exportFileName,
-  toCsv,
-  type ExportScope,
-  type ExportTable
-} from "@padel/shared";
+import { exportContentType, exportFileName, toCsv, type ExportScope, type ExportTable } from "@padel/shared";
 import type { Readable } from "node:stream";
 
 import { requireOrganizerAccess } from "../../../lib/auth.js";
@@ -38,10 +33,7 @@ function sendTable(
 }
 
 /** Leaderboard download for the organizer and for spectators holding the share token. */
-export function registerTournamentExportRoutes(
-  server: FastifyInstance,
-  deps: TournamentModuleDeps
-): void {
+export function registerTournamentExportRoutes(server: FastifyInstance, deps: TournamentModuleDeps): void {
   server.get(
     "/tournaments/:id/export",
     { preHandler: requireOrganizerAccess, config: EXPORT_RATE_LIMIT },
@@ -54,7 +46,7 @@ export function registerTournamentExportRoutes(
         if (!request.user) {
           throw notFound("Tournament not found.");
         }
-        const tournament = await requireOrganizerTournament(deps.repo, params.id, request.user.id);
+        const tournament = await requireOrganizerTournament(deps.repo, params.id, organizerId(request));
         return sendTable(
           reply,
           buildTournamentExportTable(tournament, scope),
@@ -69,30 +61,26 @@ export function registerTournamentExportRoutes(
     }
   );
 
-  server.get(
-    "/public/:token/export",
-    { config: EXPORT_RATE_LIMIT },
-    async (request, reply) => {
-      const params = request.params as { token: string };
-      try {
-        const query = request.query as { format?: string; scope?: string };
-        const format = parseExportFormat(query.format);
-        const scope = parseScope(query.scope);
-        const tournament = await deps.repo.getByPublicToken(params.token);
-        if (!tournament) {
-          throw notFound("Tournament not found.");
-        }
-        return sendTable(
-          reply,
-          buildTournamentExportTable(tournament, scope),
-          tournament.config.name,
-          tournament.updatedAt,
-          format,
-          scope
-        );
-      } catch (error) {
-        return mapAppError(reply, error);
+  server.get("/public/:token/export", { config: EXPORT_RATE_LIMIT }, async (request, reply) => {
+    const params = request.params as { token: string };
+    try {
+      const query = request.query as { format?: string; scope?: string };
+      const format = parseExportFormat(query.format);
+      const scope = parseScope(query.scope);
+      const tournament = await deps.repo.getByPublicToken(params.token);
+      if (!tournament) {
+        throw notFound("Tournament not found.");
       }
+      return sendTable(
+        reply,
+        buildTournamentExportTable(tournament, scope),
+        tournament.config.name,
+        tournament.updatedAt,
+        format,
+        scope
+      );
+    } catch (error) {
+      return mapAppError(reply, error);
     }
-  );
+  });
 }

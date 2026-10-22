@@ -1,3 +1,4 @@
+import { organizerId } from "../../organizerAccess/infrastructure/access.js";
 import type { FastifyInstance } from "fastify";
 import { promoteKohPickSchema, submitKohScoreSchema, swapKohUnitSchema } from "@padel/shared";
 
@@ -25,7 +26,7 @@ export function registerKohScoreRoutes(server: FastifyInstance, deps: KohModuleD
       try {
         const data = await submitKohScore(deps, {
           tournamentId: params.id,
-          organizerId: request.user.id,
+          organizerId: organizerId(request),
           courtId: params.courtId,
           score: parsed.data
         });
@@ -57,14 +58,11 @@ export function registerKohScoreRoutes(server: FastifyInstance, deps: KohModuleD
       try {
         const data = await swapKohSlot(deps, {
           tournamentId: params.id,
-          organizerId: request.user.id,
+          organizerId: organizerId(request),
           courtId: params.courtId,
           swap: parsed.data
         });
-        request.log.info(
-          { id: params.id, courtId: params.courtId, slot: parsed.data.slot },
-          "POST .../swap"
-        );
+        request.log.info({ id: params.id, courtId: params.courtId, slot: parsed.data.slot }, "POST .../swap");
         return { data };
       } catch (error) {
         return mapKohError(reply, error, "Swap failed.");
@@ -89,7 +87,7 @@ export function registerKohScoreRoutes(server: FastifyInstance, deps: KohModuleD
       try {
         const data = await pickKohPromotion(deps, {
           tournamentId: params.id,
-          organizerId: request.user.id,
+          organizerId: organizerId(request),
           pick: parsed.data
         });
         request.log.info({ id: params.id }, "POST .../promote/pick");

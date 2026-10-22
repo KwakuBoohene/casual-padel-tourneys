@@ -1,3 +1,4 @@
+import { organizerId } from "../../organizerAccess/infrastructure/access.js";
 import type { FastifyInstance } from "fastify";
 import { endKohTournamentSchema } from "@padel/shared";
 
@@ -21,13 +22,10 @@ export function registerKohLifecycleRoutes(server: FastifyInstance, deps: KohMod
     try {
       const result = await endKohTournament(deps, {
         tournamentId: params.id,
-        organizerId: request.user.id,
+        organizerId: organizerId(request),
         expectedVersion: parsed.data.expectedVersion
       });
-      request.log.info(
-        { id: params.id, voidedMatchCount: result.voidedMatchCount },
-        "POST .../end"
-      );
+      request.log.info({ id: params.id, voidedMatchCount: result.voidedMatchCount }, "POST .../end");
       return { data: result.hub };
     } catch (error) {
       return mapKohError(reply, error, "End tournament failed.");

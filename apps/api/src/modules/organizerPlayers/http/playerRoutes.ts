@@ -1,3 +1,4 @@
+import { organizerId } from "../../organizerAccess/infrastructure/access.js";
 import type { FastifyInstance } from "fastify";
 import { organizerPlayerRangeSchema } from "@padel/shared";
 
@@ -20,10 +21,11 @@ const GUEST_LEADERBOARD = {
 
 export function registerOrganizerPlayerRoutes(
   server: FastifyInstance,
-  deps: OrganizerPlayersDeps
+  deps: OrganizerPlayersDeps,
+  prefix = "/me"
 ): void {
   server.get(
-    "/me/players/leaderboard",
+    `${prefix}/players/leaderboard`,
     { preHandler: requireOrganizerAccess },
     async (request, reply) => {
       if (!request.user) {
@@ -41,13 +43,13 @@ export function registerOrganizerPlayerRoutes(
         return { message: RANGE_ERROR };
       }
 
-      const data = await getOrganizerPlayerLeaderboard(deps, request.user.id, parsed.data);
+      const data = await getOrganizerPlayerLeaderboard(deps, organizerId(request), parsed.data);
       request.log.info({ range: parsed.data, rows: data.rows.length }, "GET /me/players/leaderboard");
       return { data };
     }
   );
 
-  server.get("/me/players/:id", { preHandler: requireOrganizerAccess }, async (request, reply) => {
+  server.get(`${prefix}/players/:id`, { preHandler: requireOrganizerAccess }, async (request, reply) => {
     if (!request.user) {
       reply.status(401);
       return { message: "Unauthorized" };
@@ -65,7 +67,7 @@ export function registerOrganizerPlayerRoutes(
       return { message: RANGE_ERROR };
     }
 
-    const data = await getOrganizerPlayerDetail(deps, request.user.id, params.id, parsed.data);
+    const data = await getOrganizerPlayerDetail(deps, organizerId(request), params.id, parsed.data);
     if (!data) {
       reply.status(404);
       return { message: "Player not found." };

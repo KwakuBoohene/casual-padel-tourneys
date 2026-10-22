@@ -1,7 +1,4 @@
-import {
-  readWithLegacyMigration,
-  type StorageBackend
-} from "./localValueMigration";
+import { readWithLegacyMigration, type StorageBackend } from "./localValueMigration";
 
 function webStorage(): StorageBackend | null {
   const anyGlobal = globalThis as typeof globalThis & {
@@ -45,4 +42,12 @@ export async function writeLocalValue(key: string, value: string): Promise<void>
 
 export async function deleteLocalValue(key: string): Promise<void> {
   await primaryStorage().removeItem(key);
+}
+
+export async function clearOrganizerDrafts(actorId: string, organizerId: string): Promise<void> {
+  const storage = globalThis.localStorage;
+  if (!storage) return;
+  const prefix = `scoreDraft:${actorId}:${organizerId}:`;
+  const keys = Array.from({ length: storage.length }, (_, index) => storage.key(index));
+  for (const key of keys) if (key?.startsWith(prefix)) storage.removeItem(key);
 }

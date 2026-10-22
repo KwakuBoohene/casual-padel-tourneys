@@ -10,6 +10,7 @@ import { TournamentListView } from "./TournamentListView";
 
 interface OrganizerListScreenProps {
   tournaments: LiveTournamentState[];
+  canDelete?: boolean;
   refreshing: boolean;
   actionSaving?: boolean;
   showTournamentOptionsModal: boolean;
@@ -61,7 +62,9 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
       >
         <View style={{ gap: spacing.sm }}>
           <SheetButton label="Edit Tournament" onPress={props.onRequestEdit} />
-          <SheetButton label="Delete Tournament" variant="danger" onPress={props.onRequestDelete} />
+          {props.canDelete !== false ? (
+            <SheetButton label="Delete Tournament" variant="danger" onPress={props.onRequestDelete} />
+          ) : null}
           <SheetButton label="Cancel" onPress={props.onCloseOptionsModal} />
         </View>
       </BottomSheet>

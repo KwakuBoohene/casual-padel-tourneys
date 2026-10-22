@@ -1,3 +1,4 @@
+import { organizerId } from "../../organizerAccess/infrastructure/access.js";
 import type { FastifyInstance } from "fastify";
 import { createTournamentSchema, isKingOfTheCourtMode } from "@padel/shared";
 
@@ -8,10 +9,7 @@ import { createTournament } from "../application/createTournament.js";
 import type { TournamentModuleDeps } from "../application/ports.js";
 import { ensureOrganizerUser } from "../infrastructure/ensureOrganizerUser.js";
 
-export function registerTournamentCreateRoutes(
-  server: FastifyInstance,
-  deps: TournamentModuleDeps
-): void {
+export function registerTournamentCreateRoutes(server: FastifyInstance, deps: TournamentModuleDeps): void {
   server.post("/tournaments", { preHandler: requireOrganizerAccess }, async (request, reply) => {
     if (!request.user) {
       reply.status(401);
@@ -20,7 +18,7 @@ export function registerTournamentCreateRoutes(
 
     const body = request.body as { mode?: string } | undefined;
     if (isKingOfTheCourtMode(body?.mode)) {
-      const result = await handleCreateKohTournament(server, request.body, request.user.id);
+      const result = await handleCreateKohTournament(server, request.body, organizerId(request));
       reply.status(result.status);
       return result.payload;
     }
@@ -44,7 +42,7 @@ export function registerTournamentCreateRoutes(
         isGuest: request.user.isGuest
       });
       const tournament = await createTournament(deps, {
-        organizerId: request.user.id,
+        organizerId: organizerId(request),
         config: {
           ...data,
           players: playersFromTeams,

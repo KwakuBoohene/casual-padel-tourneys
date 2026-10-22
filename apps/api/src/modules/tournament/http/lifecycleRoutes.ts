@@ -1,3 +1,4 @@
+import { organizerId } from "../../organizerAccess/infrastructure/access.js";
 import type { FastifyInstance } from "fastify";
 import {
   advanceMexicanoRoundSchema,
@@ -12,17 +13,10 @@ import { prisma } from "../../../lib/prisma.js";
 import { notFound } from "../../../shared/kernel/appError.js";
 import { mapAppError } from "../../../shared/http/mapAppError.js";
 import { deleteKohTournament } from "../../koh/infrastructure/ops/deleteKohOps.js";
-import {
-  advanceMexicanoRound,
-  deleteTournament,
-  endMexicanoNight
-} from "../application/liveMutations.js";
+import { advanceMexicanoRound, deleteTournament, endMexicanoNight } from "../application/liveMutations.js";
 import type { TournamentModuleDeps } from "../application/ports.js";
 
-export function registerTournamentLifecycleRoutes(
-  server: FastifyInstance,
-  deps: TournamentModuleDeps
-): void {
+export function registerTournamentLifecycleRoutes(server: FastifyInstance, deps: TournamentModuleDeps): void {
   server.post("/tournaments/next-round", { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const parsed = advanceMexicanoRoundSchema.safeParse(request.body);
     if (!parsed.success) {
@@ -32,7 +26,7 @@ export function registerTournamentLifecycleRoutes(
     try {
       const tournament = await advanceMexicanoRound(deps, {
         tournamentId: parsed.data.tournamentId,
-        organizerId: request.user!.id,
+        organizerId: organizerId(request),
         expectedVersion: parsed.data.expectedVersion
       });
       return { data: tournament };
@@ -50,7 +44,7 @@ export function registerTournamentLifecycleRoutes(
     try {
       const tournament = await endMexicanoNight(deps, {
         tournamentId: parsed.data.tournamentId,
-        organizerId: request.user!.id,
+        organizerId: organizerId(request),
         expectedVersion: parsed.data.expectedVersion
       });
       return { data: tournament };
@@ -73,9 +67,9 @@ export function registerTournamentLifecycleRoutes(
       logger.debug("DELETE /tournaments/:id", {
         id: params.id,
         mode: meta?.mode,
-        organizerMatch: meta?.organizerId === request.user.id
+        organizerMatch: meta?.organizerId === organizerId(request)
       });
-      if (!meta || meta.organizerId !== request.user.id) {
+      if (!meta || meta.organizerId !== organizerId(request)) {
         throw notFound("Tournament not found.");
       }
       const query = deleteTournamentQuerySchema.safeParse(request.query ?? {});
@@ -85,7 +79,7 @@ export function registerTournamentLifecycleRoutes(
       }
       const stripCareer = query.data.removeFromCareerLeaderboard;
       if (isKingOfTheCourtMode(meta.mode)) {
-        await deleteKohTournament(params.id, request.user.id, { stripCareer });
+        await deleteKohTournament(params.id, organizerId(request), { stripCareer });
         await deps.events.publish({
           type: "TOURNAMENT_DELETED",
           tournamentId: params.id,
@@ -95,7 +89,7 @@ export function registerTournamentLifecycleRoutes(
       }
       await deleteTournament(deps, {
         tournamentId: params.id,
-        organizerId: request.user.id,
+        organizerId: organizerId(request),
         stripCareer
       });
       return { ok: true };

@@ -1,3 +1,4 @@
+import { organizerId } from "../../organizerAccess/infrastructure/access.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import {
   bulkOrganizerPlayerIdsSchema,
@@ -22,7 +23,7 @@ import {
 const GUEST_MESSAGE = "Attach an account to manage player careers.";
 
 function requireSignedIn(
-  request: { user?: { id: string; isGuest?: boolean } | null },
+  request: FastifyRequest,
   reply: { status: (code: number) => void }
 ): { id: string } | null {
   if (!request.user) {
@@ -33,7 +34,7 @@ function requireSignedIn(
     reply.status(403);
     return null;
   }
-  return request.user;
+  return { id: organizerId(request) };
 }
 
 async function withSigned(
@@ -52,9 +53,10 @@ async function withSigned(
 
 export function registerOrganizerPlayerManagementRoutes(
   server: FastifyInstance,
-  deps: OrganizerPlayersDeps
+  deps: OrganizerPlayersDeps,
+  prefix = "/me"
 ): void {
-  server.get("/me/players", { preHandler: requireOrganizerAccess }, async (request, reply) => {
+  server.get(`${prefix}/players`, { preHandler: requireOrganizerAccess }, async (request, reply) => {
     if (!request.user) {
       reply.status(401);
       return { message: "Unauthorized" };
@@ -69,11 +71,11 @@ export function registerOrganizerPlayerManagementRoutes(
       reply.status(400);
       return { message: "status must be active or archived." };
     }
-    const players = await listManagedOrganizerPlayers(deps, request.user.id, parsed.data);
+    const players = await listManagedOrganizerPlayers(deps, organizerId(request), parsed.data);
     return { data: { status: parsed.data, players } };
   });
 
-  server.post("/me/players/merge", { preHandler: requireOrganizerAccess }, async (request, reply) => {
+  server.post(`${prefix}/players/merge`, { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const parsed = mergeOrganizerPlayersSchema.safeParse(request.body);
     if (!parsed.success) {
       reply.status(400);
@@ -82,30 +84,30 @@ export function registerOrganizerPlayerManagementRoutes(
     return withSigned(request, reply, (id) => mergeOrganizerPlayers(deps, id, parsed.data));
   });
 
-  server.post("/me/players/archive", { preHandler: requireOrganizerAccess }, async (request, reply) => {
+  server.post(`${prefix}/players/archive`, { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const parsed = bulkOrganizerPlayerIdsSchema.safeParse(request.body);
     if (!parsed.success) {
       reply.status(400);
       return { errors: parsed.error.flatten() };
     }
-    return withSigned(request, reply, (id) =>
-      archiveOrganizerPlayers(deps, id, parsed.data.playerIds)
-    );
-  });
-
-  server.post("/me/players/unarchive", { preHandler: requireOrganizerAccess }, async (request, reply) => {
-    const parsed = bulkOrganizerPlayerIdsSchema.safeParse(request.body);
-    if (!parsed.success) {
-      reply.status(400);
-      return { errors: parsed.error.flatten() };
-    }
-    return withSigned(request, reply, (id) =>
-      unarchiveOrganizerPlayers(deps, id, parsed.data.playerIds)
-    );
+    return withSigned(request, reply, (id) => archiveOrganizerPlayers(deps, id, parsed.data.playerIds));
   });
 
   server.post(
-    "/me/players/:id/archive",
+    `${prefix}/players/unarchive`,
+    { preHandler: requireOrganizerAccess },
+    async (request, reply) => {
+      const parsed = bulkOrganizerPlayerIdsSchema.safeParse(request.body);
+      if (!parsed.success) {
+        reply.status(400);
+        return { errors: parsed.error.flatten() };
+      }
+      return withSigned(request, reply, (id) => unarchiveOrganizerPlayers(deps, id, parsed.data.playerIds));
+    }
+  );
+
+  server.post(
+    `${prefix}/players/:id/archive`,
     { preHandler: requireOrganizerAccess },
     async (request, reply) => {
       const params = request.params as { id: string };
@@ -114,7 +116,7 @@ export function registerOrganizerPlayerManagementRoutes(
   );
 
   server.post(
-    "/me/players/:id/unarchive",
+    `${prefix}/players/:id/unarchive`,
     { preHandler: requireOrganizerAccess },
     async (request, reply) => {
       const params = request.params as { id: string };
@@ -123,7 +125,7 @@ export function registerOrganizerPlayerManagementRoutes(
   );
 
   server.post(
-    "/me/players/:id/rename",
+    `${prefix}/players/:id/rename`,
     { preHandler: requireOrganizerAccess },
     async (request, reply) => {
       const parsed = renameOrganizerPlayerSchema.safeParse(request.body);
@@ -132,9 +134,7 @@ export function registerOrganizerPlayerManagementRoutes(
         return { errors: parsed.error.flatten() };
       }
       const params = request.params as { id: string };
-      return withSigned(request, reply, (id) =>
-        renameOrganizerPlayer(deps, id, params.id, parsed.data.name)
-      );
+      return withSigned(request, reply, (id) => renameOrganizerPlayer(deps, id, params.id, parsed.data.name));
     }
   );
 }

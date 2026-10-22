@@ -1,3 +1,4 @@
+import { resolveAccess } from "../modules/organizerAccess/infrastructure/access.js";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { WebSocket } from "@fastify/websocket";
 
@@ -59,7 +60,15 @@ export function mountSocketHub(server: FastifyInstance): SocketMap {
       const publicToken = readPublicToken(request);
       const tokenOk = Boolean(publicToken && publicToken === access.publicToken);
       const user = tryAuthUser(request);
-      const organizerOk = Boolean(user && access.organizerId && user.id === access.organizerId);
+      let organizerOk = Boolean(user && access.organizerId && user.id === access.organizerId);
+      if (!tokenOk && user && access.organizerId && !organizerOk) {
+        try {
+          await resolveAccess(user.id, access.organizerId);
+          organizerOk = true;
+        } catch {
+          /* reject below */
+        }
+      }
 
       if (!tokenOk && !organizerOk) {
         logger.warn("socketHub: subscribe rejected (unauthorized)", { tournamentId });
@@ -83,7 +92,11 @@ export function mountSocketHub(server: FastifyInstance): SocketMap {
   return subscriptions;
 }
 
-export function broadcastToTournament(subscriptions: SocketMap, tournamentId: string, payload: unknown): void {
+export function broadcastToTournament(
+  subscriptions: SocketMap,
+  tournamentId: string,
+  payload: unknown
+): void {
   const set = subscriptions.get(tournamentId);
   if (!set) {
     return;

@@ -1,3 +1,4 @@
+import { deferUntilCommit } from "../../../lib/databaseContext.js";
 import type { Redis } from "ioredis";
 import type { WebSocket } from "@fastify/websocket";
 
@@ -15,6 +16,13 @@ export class RealtimeTournamentEvents implements TournamentEvents {
   ) {}
 
   async publish(event: TournamentEvent): Promise<void> {
+    if (
+      deferUntilCommit(async () => {
+        await publishEvent(this.redis, event);
+        broadcastToTournament(this.subscriptions, event.tournamentId, event);
+      })
+    )
+      return;
     await publishEvent(this.redis, event);
     broadcastToTournament(this.subscriptions, event.tournamentId, event);
   }

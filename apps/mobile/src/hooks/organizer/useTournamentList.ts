@@ -1,3 +1,4 @@
+import { getSelectedOrganizer } from "../../api/organizerContext";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
@@ -110,7 +111,13 @@ export function useTournamentList({
       await listQuery.refetch();
     },
     openTournamentOptions: modals.openTournamentOptions,
-    requestTournamentAction: modals.requestTournamentAction,
+    requestTournamentAction: (action: "EDIT" | "DELETE") => {
+      if (action === "DELETE" && getSelectedOrganizer()?.role === "MANAGER") {
+        setErrorText("Only the owner can permanently delete a tournament.");
+        return;
+      }
+      modals.requestTournamentAction(action);
+    },
     confirmTournamentAction,
     confirmCareerDelete,
     tournamentActionSaving,

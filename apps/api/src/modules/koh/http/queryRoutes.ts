@@ -1,3 +1,4 @@
+import { organizerId } from "../../organizerAccess/infrastructure/access.js";
 import type { FastifyInstance } from "fastify";
 
 import { requireOrganizerAccess } from "../../../lib/auth.js";
@@ -16,7 +17,7 @@ export function registerKohQueryRoutes(server: FastifyInstance, deps: KohModuleD
     try {
       const data = await getKohHub(deps, {
         tournamentId: params.id,
-        organizerId: request.user.id
+        organizerId: organizerId(request)
       });
       request.log.info({ id: params.id }, "GET /koh/tournaments/:id");
       return { data };
@@ -43,13 +44,10 @@ export function registerKohQueryRoutes(server: FastifyInstance, deps: KohModuleD
       try {
         const data = await getKohRankings(deps, {
           tournamentId: params.id,
-          organizerId: request.user.id,
+          organizerId: organizerId(request),
           courtNumber: court.courtNumber
         });
-        request.log.info(
-          { id: params.id, courtNumber: court.courtNumber ?? null },
-          "GET .../rankings"
-        );
+        request.log.info({ id: params.id, courtNumber: court.courtNumber ?? null }, "GET .../rankings");
         return { data };
       } catch (error) {
         return mapKohError(reply, error, "Rankings failed.");

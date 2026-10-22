@@ -1,3 +1,4 @@
+import { destinationAfterSignIn } from "../../src/api/pendingOrganizerInvite";
 import { router } from "expo-router";
 
 import { PasswordScreen } from "../../src/screens/PasswordScreen";
@@ -11,7 +12,7 @@ export default function PasswordRoute() {
       onBack={() => router.replace("/sign-in")}
       onSignedIn={async (session) => {
         await auth.handleSignedIn(session);
-        router.replace("/");
+        router.replace(await destinationAfterSignIn());
       }}
       onForgotPassword={() => router.push("/auth/reset")}
     />

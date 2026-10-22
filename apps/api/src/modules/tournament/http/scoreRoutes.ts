@@ -1,3 +1,4 @@
+import { organizerId } from "../../organizerAccess/infrastructure/access.js";
 import type { FastifyInstance } from "fastify";
 import { isRegularScoreBody, submitScoreSchema } from "@padel/shared";
 
@@ -7,10 +8,7 @@ import { creditAmericanoMatchIfComplete } from "../../organizerPlayers/infrastru
 import type { TournamentModuleDeps } from "../application/ports.js";
 import { submitPointsScore, submitRegularScore } from "../application/submitScore.js";
 
-export function registerTournamentScoreRoutes(
-  server: FastifyInstance,
-  deps: TournamentModuleDeps
-): void {
+export function registerTournamentScoreRoutes(server: FastifyInstance, deps: TournamentModuleDeps): void {
   server.post("/tournaments/score", { preHandler: requireOrganizerAccess }, async (request, reply) => {
     const parsed = submitScoreSchema.safeParse(request.body);
     if (!parsed.success) {
@@ -35,7 +33,7 @@ export function registerTournamentScoreRoutes(
         }
         tournament = await submitRegularScore(deps, {
           tournamentId: body.tournamentId,
-          organizerId: request.user.id,
+          organizerId: organizerId(request),
           expectedVersion: body.expectedVersion,
           matchId: body.matchId,
           sets: body.sets,
@@ -50,7 +48,7 @@ export function registerTournamentScoreRoutes(
         }
         tournament = await submitPointsScore(deps, {
           tournamentId: body.tournamentId,
-          organizerId: request.user.id,
+          organizerId: organizerId(request),
           expectedVersion: body.expectedVersion,
           matchId: body.matchId,
           scoreA: body.scoreA,

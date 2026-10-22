@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 
 import type { TournamentViewModel } from "../types";
 
@@ -27,7 +27,7 @@ export function MexicanoStandingsStrip({
           </p>
         </div>
         <Link
-          href={`/tournament/${token}/leaderboard`}
+          to={`/tournament/${token}/leaderboard`}
           className="text-sm font-semibold text-padel-primary hover:underline shrink-0"
         >
           Full board

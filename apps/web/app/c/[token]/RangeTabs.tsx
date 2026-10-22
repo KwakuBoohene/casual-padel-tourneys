@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 
 import { CAREER_RANGES, type CareerRangeOption } from "./range";
 
@@ -7,8 +7,7 @@ const base =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-padel-primary focus-visible:ring-offset-2 focus-visible:ring-offset-padel-background";
 
 /**
- * Plain links rather than client state: the range lives in the URL, so a particular view stays
- * linkable and the page needs no JavaScript to switch.
+ * Keep the range in the URL so each view remains shareable and browser history works.
  */
 export function RangeTabs({ token, active }: { token: string; active: CareerRangeOption }) {
   return (
@@ -18,7 +17,7 @@ export function RangeTabs({ token, active }: { token: string; active: CareerRang
         return (
           <Link
             key={range.id}
-            href={`/c/${encodeURIComponent(token)}?range=${range.id}`}
+            to={`/c/${encodeURIComponent(token)}?range=${range.id}`}
             aria-current={selected ? "page" : undefined}
             className={[
               base,

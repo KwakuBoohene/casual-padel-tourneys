@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { STANDINGS_COLUMNS } from "@padel/shared";
 

@@ -156,6 +156,8 @@ body {
 }
 
 body {
+  /* Reserve the fixed navigation height; unlayered resets override Tailwind utilities. */
+  padding-top: 56px;
   background-color: var(--color-padel-background);
   color: var(--color-padel-text);
 }

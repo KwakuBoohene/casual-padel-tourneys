@@ -1,9 +1,4 @@
-import { cookies } from "next/headers";
-import {
-  parseVisibleColumns,
-  STANDINGS_COLUMN_STORAGE_KEY,
-  type StandingsColumnKey
-} from "@padel/shared";
+import { parseVisibleColumns, STANDINGS_COLUMN_STORAGE_KEY, type StandingsColumnKey } from "@padel/shared";
 
 /**
  * `decodeURIComponent` throws `URIError` on a malformed escape — a hand-edited or truncated cookie
@@ -21,13 +16,12 @@ export function decodeColumnsCookie(raw: string | undefined): StandingsColumnKey
   return parseVisibleColumns(decoded);
 }
 
-/**
- * The viewer's column choice, read on the server.
- *
- * The leaderboard is server rendered, so reading this only in the browser would paint the default
- * five and then swap after hydration. Mirrors how the theme cookie is read in `app/layout.tsx`.
- */
-export async function readVisibleColumnsCookie(): Promise<StandingsColumnKey[]> {
-  const store = await cookies();
-  return decodeColumnsCookie(store.get(STANDINGS_COLUMN_STORAGE_KEY)?.value);
+/** Read the existing preference cookie before rendering a standings table. */
+export function readVisibleColumnsCookie(): StandingsColumnKey[] {
+  const prefix = `${STANDINGS_COLUMN_STORAGE_KEY}=`;
+  const raw = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith(prefix))
+    ?.slice(prefix.length);
+  return decodeColumnsCookie(raw);
 }

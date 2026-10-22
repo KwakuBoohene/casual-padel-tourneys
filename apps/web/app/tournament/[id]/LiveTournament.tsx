@@ -1,6 +1,4 @@
-"use client";
-
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 
 import { MatchCard } from "./components/MatchCard";
@@ -222,7 +220,7 @@ export function LiveTournament({
                 : "Tournament completed. View final standings on the leaderboard."}
             </p>
             <Link
-              href={`/tournament/${token}/leaderboard`}
+              to={`/tournament/${token}/leaderboard`}
               className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-padel-border bg-padel-surface px-4 text-sm font-semibold text-padel-text hover:bg-padel-surfaceAlt transition"
             >
               Go to leaderboard

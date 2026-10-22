@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "allowJs": false,
     "noEmit": true,
     "incremental": true,
@@ -11,20 +11,20 @@
         "../../packages/shared/src/index.ts"
       ]
     },
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "isolatedModules": true
+    "isolatedModules": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": [
+      "vite/client"
+    ]
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx",
-    "next-env.d.ts",
-    ".next/types/**/*.ts"
+    "**/*.tsx"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "dist",
+    ".next"
   ]
 }

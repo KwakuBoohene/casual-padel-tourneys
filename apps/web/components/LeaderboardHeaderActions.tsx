@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 
 import {
   tournamentExportUrl,
@@ -32,7 +32,7 @@ export function LeaderboardHeaderActions({
 }: LeaderboardHeaderActionsProps) {
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-padel-muted">
-      <Link href={`/tournament/${tournamentId}`} className={actionClass}>
+      <Link to={`/tournament/${tournamentId}`} className={actionClass}>
         <span className={labelClass}>Back to live view</span>
       </Link>
       {GROUPS.map((group) => (

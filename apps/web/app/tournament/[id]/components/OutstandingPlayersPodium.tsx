@@ -1,6 +1,4 @@
-"use client";
-
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import type { OutstandingPlayerRow } from "./outstandingPlayers";
 
 type PodiumStyle = {
@@ -176,7 +174,7 @@ export function OutstandingPlayersPodium({
       {leaderboardHref ? (
         <div className="mt-5 flex justify-center">
           <Link
-            href={leaderboardHref}
+            to={leaderboardHref}
             className="inline-flex items-center gap-2 rounded-full bg-[#111827] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1f2937]"
           >
             <span aria-hidden="true">↗</span>

@@ -1,5 +1,3 @@
-"use client";
-
 import {
   createContext,
   useCallback,
@@ -35,8 +33,7 @@ function persist(keys: StandingsColumnKey[]) {
   } catch {
     // private browsing or a full quota — the cookie below still carries the choice
   }
-  // The leaderboard is server rendered, so the cookie is what makes the *first* paint correct.
-  // Without it the page would show the default five and swap after hydration.
+  // Keep existing cookies compatible with share links opened on this device.
   document.cookie = `${STANDINGS_COLUMN_STORAGE_KEY}=${encodeURIComponent(value)}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
 }
 
@@ -52,9 +49,8 @@ function clearPersisted() {
 /**
  * Which standings columns this browser shows.
  *
- * `initial` comes from the cookie the server already read, so the first paint is correct. After
- * hydration `localStorage` wins and the cookie is rewritten to match — that only differs if the
- * choice was changed in another tab.
+ * `initial` comes from the existing browser cookie. Local storage takes precedence when
+ * available, keeping choices made in other tabs compatible with the previous viewer.
  */
 export function StandingsColumnsProvider(props: {
   initial: StandingsColumnKey[];

@@ -1,5 +1,3 @@
-"use client";
-
 import { THEME_STORAGE_KEY, type ThemeMode } from "@padel/shared";
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
@@ -28,7 +26,7 @@ function applyModeToDocument(mode: ThemeMode) {
 }
 
 function persistMode(mode: ThemeMode) {
-  window.localStorage.setItem(THEME_STORAGE_KEY, mode);
+  try { window.localStorage.setItem(THEME_STORAGE_KEY, mode); } catch { /* Cookie still persists the choice. */ }
   document.cookie = `${THEME_STORAGE_KEY}=${mode}; path=/; max-age=31536000; samesite=lax`;
 }
 

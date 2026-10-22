@@ -17,7 +17,7 @@ Self-hosted, mobile-first platform for running Padel Americano and Mexicano tour
 ## Monorepo Structure
 
 - `apps/api`: Fastify backend, scheduling engine, websocket events.
-- `apps/web`: Next.js public viewer portal.
+- `apps/web`: React + Vite public viewer portal (static Nginx deployment).
 - `apps/mobile`: Expo React Native organizer app.
 - `packages/shared`: shared tournament types and Zod schemas.
 - `infra`: Docker Compose and Nginx reverse proxy.
@@ -26,7 +26,7 @@ Self-hosted, mobile-first platform for running Padel Americano and Mexicano tour
 ## Tech Stack
 
 - Backend: Node.js + TypeScript + Fastify + Prisma + PostgreSQL + Redis
-- Web viewer: Next.js
+- Web viewer: React + Vite
 - Mobile organizer: React Native (Expo)
 - Realtime: WebSocket + Redis Pub/Sub
 - Infra: Docker Compose + Nginx
@@ -78,7 +78,7 @@ See `.env.example`:
 - `REDIS_URL`: Redis connection string
 - `API_PORT`: backend port
 - `WEB_PORT`: web port
-- `PUBLIC_API_BASE_URL`: API origin consumed by web
+- `PUBLIC_API_BASE_URL`: public API origin consumed by the viewer (runtime configuration in Docker; environment variable during local development/builds)
 - `JWT_SECRET`: organizer auth secret
 
 ## Standard Engineering Concepts Included

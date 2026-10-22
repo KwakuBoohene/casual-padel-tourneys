@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Live Americano &amp; Mexicano padel viewer for Casual Padel Tourneys." />
+    <title>Casual Padel Tourneys</title>
+    <script>
+      // Apply the existing preference before painting, including browsers that block storage.
+      try {
+        var cookie = document.cookie.split('; ').find(function (value) { return value.startsWith('padel-theme='); });
+        var mode = cookie ? cookie.slice('padel-theme='.length) : null;
+        try { mode = localStorage.getItem('padel-theme') || mode; } catch (_) {}
+        document.documentElement.dataset.theme = mode === 'light' ? 'light' : 'dark';
+      } catch (_) {}
+    </script>
+  </head>
+  <body class="min-h-screen bg-padel-background text-padel-text antialiased font-display pt-14">
+    <div id="root"></div>
+    <noscript>Enable JavaScript to watch live scores and standings.</noscript>
+    <script type="module" src="/main.tsx"></script>
+  </body>
+</html>

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 
 export default function NotFound() {
   return (
@@ -12,7 +12,7 @@ export default function NotFound() {
           The page you’re looking for doesn’t exist or has been moved.
         </p>
         <Link
-          href="/"
+          to="/"
           className="inline-block px-4 py-2 rounded-xl bg-padel-primary text-padel-on-primary text-sm font-extrabold tracking-wide"
         >
           Back to home

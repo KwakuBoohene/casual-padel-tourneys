@@ -18,7 +18,7 @@ interface VerifyGateScreenProps {
 
 export function VerifyGateScreen(props: VerifyGateScreenProps) {
   const { colors } = useTheme();
-  const { formMaxWidth } = useBreakpoint();
+  const { formMaxWidth, isWide } = useBreakpoint();
   const [loading, setLoading] = useState(false);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -67,7 +67,7 @@ export function VerifyGateScreen(props: VerifyGateScreenProps) {
         padding: spacing.lg
       }}
     >
-      <View style={{ width: "100%", maxWidth: formMaxWidth, gap: spacing.lg, paddingTop: spacing.xxl }}>
+      <View style={{ width: "100%", maxWidth: isWide ? 580 : formMaxWidth, gap: spacing.lg, paddingTop: isWide ? spacing.xl : spacing.xxl, paddingHorizontal: isWide ? spacing.xl : 0, paddingBottom: isWide ? spacing.xl : 0, marginTop: isWide ? 34 : 0, borderRadius: isWide ? radius.lg : 0, backgroundColor: isWide ? colors.surface : "transparent" }}>
         {props.invitationOrganizerName ? (
           <View style={{ alignSelf: "flex-start", borderRadius: radius.pill, backgroundColor: colors.surface, paddingHorizontal: 12, paddingVertical: 7 }}>
             <Text style={{ color: colors.statusNext, fontWeight: "700", fontSize: 12 }}>●  Invitation saved</Text>

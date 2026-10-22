@@ -15,12 +15,14 @@ import { useTheme } from "../../src/theme/ThemeProvider";
 import { AccessButton } from "../../src/components/organizerAccess/AccessButton";
 import { useEmailVerificationRefresh } from "../../src/hooks/auth/useEmailVerificationRefresh";
 import { radius, spacing } from "../../src/theme";
+import { useBreakpoint } from "../../src/layout";
 
 export default function AcceptOrganizerInvitation() {
   useEmailVerificationRefresh();
   const auth = useAuthSessionContext();
   const account = useOrganizerAccount();
   const { colors } = useTheme();
+  const { isWide } = useBreakpoint();
   const url = Linking.useURL();
   const [token, setToken] = useState<string | null>(null);
   const [preview, setPreview] = useState<{
@@ -85,15 +87,18 @@ export default function AcceptOrganizerInvitation() {
         justifyContent: "flex-start",
         alignItems: "center",
         padding: spacing.lg,
-        paddingTop: 40,
+        paddingTop: isWide ? 74 : 40,
         backgroundColor: colors.background
       }}
     >
       <View
         style={{
           width: "100%",
-          maxWidth: 520,
-          gap: spacing.lg
+          maxWidth: isWide ? 580 : 520,
+          gap: spacing.lg,
+          padding: isWide ? spacing.xl : 0,
+          borderRadius: isWide ? radius.lg : 0,
+          backgroundColor: isWide ? colors.surface : "transparent"
         }}
       >
         {preview ? (

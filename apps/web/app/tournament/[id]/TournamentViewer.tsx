@@ -1,6 +1,4 @@
-"use client";
-
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { useCallback, useState } from "react";
 
 import { LiveTournament } from "./LiveTournament";
@@ -48,7 +46,7 @@ export function TournamentViewer({
             ) : null}
           </div>
           <Link
-            href={`/tournament/${token}/leaderboard`}
+            to={`/tournament/${token}/leaderboard`}
             className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-padel-border bg-padel-surface px-4 text-[17px] font-semibold text-padel-text hover:bg-padel-surfaceAlt transition shrink-0"
           >
             Leaderboard

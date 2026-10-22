@@ -14,6 +14,7 @@ interface LiveTournamentPendingSheetProps {
   visible: boolean;
   nameDraft: string;
   gender: PlayerGender | undefined;
+  saving?: boolean;
   onClose: () => void;
   onChangeName: (value: string) => void;
   onChangeGender: (gender: PlayerGender) => void;
@@ -29,7 +30,7 @@ export function LiveTournamentPendingSheet(props: LiveTournamentPendingSheetProp
   ];
 
   return (
-    <BottomSheet visible={props.visible} title="Add pending player" onDismiss={props.onClose}>
+    <BottomSheet busy={props.saving} visible={props.visible} title="Add pending player" onDismiss={props.onClose}>
       <Text style={{ color: colors.muted, fontSize: 14 }}>
         Joins when you integrate · pick a saved name if they already play with you
       </Text>
@@ -53,11 +54,11 @@ export function LiveTournamentPendingSheet(props: LiveTournamentPendingSheetProp
           ))}
         </View>
       ) : null}
-      <SheetButton label="Cancel" onPress={props.onClose} style={{ minHeight: touch.minPrimary }} />
+      <SheetButton label="Cancel" disabled={props.saving} onPress={props.onClose} style={{ minHeight: touch.minPrimary }} />
       <SheetButton
-        label="Add player"
+        label={props.saving ? "Adding…" : "Add player"}
         variant="primary"
-        disabled={!props.nameDraft.trim()}
+        disabled={!props.nameDraft.trim() || props.saving}
         onPress={props.onSubmit}
       />
     </BottomSheet>

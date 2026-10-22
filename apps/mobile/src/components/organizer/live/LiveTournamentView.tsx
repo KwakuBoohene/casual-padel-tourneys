@@ -60,6 +60,7 @@ export function LiveTournamentView({ session, score, sheets, actions }: LiveTour
     <LiveTournamentHeader
       tournament={session.tournament}
       tournamentNameDraft={session.tournamentNameDraft}
+      savingName={session.savingTournamentName}
       isEditingCompletedTournament={session.isEditingCompletedTournament}
       roundsCount={roundsCount}
       openEndedRounds={session.tournament.config.mode === "MEXICANO"}
@@ -95,6 +96,7 @@ export function LiveTournamentView({ session, score, sheets, actions }: LiveTour
       canSubmitScores={canSubmitScores}
       canGenerateNextRound={Boolean(session.canGenerateNextRound)}
       generatingNextRound={Boolean(session.generatingNextRound)}
+      saving={Boolean(session.savingTournament || score.savingScore || score.submittingRoundScores)}
       rotatesRestingPlayers={rotatesRestingPlayers}
       isTournamentCompleted={session.isTournamentCompleted}
       isEditingCompletedTournament={session.isEditingCompletedTournament}

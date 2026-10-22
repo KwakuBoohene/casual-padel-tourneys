@@ -15,6 +15,9 @@ interface LiveTournamentConfirmSheetsProps {
   proposedCourts: number;
   pendingCount: number;
   unfinishedMatchCount: number;
+  adjustingCourts?: boolean;
+  integratingPendingPlayers?: boolean;
+  finishingTournament?: boolean;
   onCloseEditConfirm: () => void;
   onConfirmEditGame: () => void;
   onCloseAdjustCourtsConfirm: () => void;
@@ -41,6 +44,7 @@ export function LiveTournamentConfirmSheets(props: LiveTournamentConfirmSheetsPr
         visible={props.showAdjustCourtsConfirmModal}
         variant="warning"
         title="Adjust Courts?"
+        busy={props.adjustingCourts}
         message={`Are you sure you want to change courts from ${props.currentCourts} to ${props.proposedCourts}? Remaining rounds will be recalculated.`}
         primaryAction={{ label: "Yes, Reassign Games", onPress: props.onConfirmAdjustCourts }}
         secondaryAction={{ label: "Cancel", onPress: props.onCloseAdjustCourtsConfirm }}
@@ -50,6 +54,7 @@ export function LiveTournamentConfirmSheets(props: LiveTournamentConfirmSheetsPr
         visible={props.showIntegrateConfirmModal}
         variant="warning"
         title="Integrate Players?"
+        busy={props.integratingPendingPlayers}
         message={`Integrate ${props.pendingCount} waiting player${
           props.pendingCount !== 1 ? "s" : ""
         } into the tournament?`}
@@ -61,6 +66,7 @@ export function LiveTournamentConfirmSheets(props: LiveTournamentConfirmSheetsPr
         visible={props.showFinishConfirmModal}
         variant="warning"
         title={finishSheetTitle(Boolean(props.isMexicano), props.unfinishedMatchCount)}
+        busy={props.finishingTournament}
         message={finishSheetMessage(props.unfinishedMatchCount)}
         primaryAction={{
           label: finishPrimaryLabel(Boolean(props.isMexicano), props.unfinishedMatchCount),

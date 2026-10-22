@@ -22,7 +22,7 @@ export function LiveRenamePlayersSheet(props: LiveRenamePlayersSheetProps) {
   });
 
   return (
-    <BottomSheet visible={props.visible} title="Rename players" onDismiss={props.onClose}>
+    <BottomSheet busy={props.saving} visible={props.visible} title="Rename players" onDismiss={props.onClose}>
       <Text style={{ color: colors.muted, fontSize: 14 }}>Fix names mid-event</Text>
       <ScrollView style={{ maxHeight: 320 }} contentContainerStyle={{ gap: spacing.sm }}>
         {props.players.map((player) => (
@@ -38,6 +38,7 @@ export function LiveRenamePlayersSheet(props: LiveRenamePlayersSheetProps) {
             }}
           >
             <TextInput
+              editable={!props.saving}
               value={props.drafts[player.id] ?? player.name}
               onChangeText={(value) => props.onChangeDraft(player.id, value)}
               placeholder="Player name"
@@ -53,7 +54,7 @@ export function LiveRenamePlayersSheet(props: LiveRenamePlayersSheetProps) {
           </View>
         ))}
       </ScrollView>
-      <SheetButton label="Cancel" onPress={props.onClose} style={{ minHeight: touch.minPrimary }} />
+      <SheetButton label="Cancel" disabled={props.saving} onPress={props.onClose} style={{ minHeight: touch.minPrimary }} />
       <SheetButton
         label={props.saving ? "Saving…" : "Save names"}
         variant="primary"

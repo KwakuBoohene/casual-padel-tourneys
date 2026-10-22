@@ -11,6 +11,7 @@ import { TournamentListView } from "./TournamentListView";
 interface OrganizerListScreenProps {
   tournaments: LiveTournamentState[];
   refreshing: boolean;
+  actionSaving?: boolean;
   showTournamentOptionsModal: boolean;
   showTournamentActionConfirmModal: boolean;
   pendingTournamentAction: "EDIT" | "DELETE" | null;
@@ -67,6 +68,8 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
 
       <AlertSheet
         visible={props.showTournamentActionConfirmModal}
+        busy={props.actionSaving}
+        busyLabel={isDelete ? "Deleting…" : "Opening…"}
         variant={isDelete ? "warning" : "info"}
         title={isDelete ? "Delete Tournament?" : "Edit Tournament?"}
         message={
@@ -85,6 +88,7 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
 
       <CareerDeleteSheet
         visible={props.showCareerDeleteModal}
+        saving={props.actionSaving}
         onRemove={props.onRemoveFromLeaderboard}
         onKeep={props.onKeepOnLeaderboard}
         onCancel={props.onCancelCareerDelete}

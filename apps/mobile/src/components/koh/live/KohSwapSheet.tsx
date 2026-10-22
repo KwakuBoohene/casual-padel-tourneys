@@ -30,7 +30,7 @@ export function KohSwapSheet(props: KohSwapSheetProps) {
   const candidates = props.waiting;
 
   return (
-    <BottomSheet visible={props.visible} title="Swap" onDismiss={props.onDismiss}>
+    <BottomSheet busy={props.saving} visible={props.visible} title="Swap" onDismiss={props.onDismiss}>
       <Text style={{ color: colors.muted, fontSize: 13 }}>Swap king or challenger with a waiting pair.</Text>
       <View style={{ flexDirection: "row", gap: spacing.sm }}>
         {(["KING", "CHALLENGER"] as const).map((option) => (

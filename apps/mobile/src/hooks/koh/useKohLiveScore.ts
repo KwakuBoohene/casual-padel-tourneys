@@ -1,4 +1,6 @@
 import { useState } from "react";
+
+import type { useSubmission } from "../useSubmission";
 import type { KohGameWinMethod } from "@padel/shared";
 
 import type { KohTournamentHub } from "../../types/koh/create";
@@ -13,6 +15,7 @@ import {
 } from "../../utilities/koh/liveActions";
 
 export function useKohLiveScore(params: {
+  submission: ReturnType<typeof useSubmission>;
   hub: KohTournamentHub;
   courtId: string | undefined;
   matchId: string | undefined;
@@ -23,27 +26,26 @@ export function useKohLiveScore(params: {
   const [scoreOpen, setScoreOpen] = useState(false);
   const [methodsOpen, setMethodsOpen] = useState(false);
   const [scoreDraft, setScoreDraft] = useState<KohScoreDraft>(emptyKohScoreDraft());
-  const [saving, setSaving] = useState(false);
+  const { saving, run, isPending } = params.submission;
 
-  const saveScore = async (status: "DRAFT" | "COMPLETE") => {
-    if (!params.courtId) return;
-    setSaving(true);
-    const hub = await runKohScoreSave({
-      hub: params.hub,
-      courtId: params.courtId,
-      draft: scoreDraft,
-      status,
-      matchId: params.matchId,
-      setErrorText: params.setErrorText,
-      markEmailVerifyRequired: params.markEmailVerifyRequired
+  const saveScore = (status: "DRAFT" | "COMPLETE") =>
+    run(async () => {
+      if (!params.courtId) return;
+      const hub = await runKohScoreSave({
+        hub: params.hub,
+        courtId: params.courtId,
+        draft: scoreDraft,
+        status,
+        matchId: params.matchId,
+        setErrorText: params.setErrorText,
+        markEmailVerifyRequired: params.markEmailVerifyRequired
+      });
+      if (hub) {
+        setScoreOpen(false);
+        setMethodsOpen(false);
+        params.onSaved(hub);
+      }
     });
-    setSaving(false);
-    if (hub) {
-      setScoreOpen(false);
-      setMethodsOpen(false);
-      params.onSaved(hub);
-    }
-  };
 
   return {
     scoreOpen,
@@ -53,17 +55,23 @@ export function useKohLiveScore(params: {
     scoreUiOpen: scoreOpen || methodsOpen,
     canComplete: kohScoreCanComplete(scoreDraft, params.hub.config.regularScoring),
     openScore: () => {
+      if (isPending()) return;
       setScoreDraft(emptyKohScoreDraft());
       setScoreOpen(true);
     },
     closeScore: () => {
+      if (isPending()) return;
       setScoreOpen(false);
       setMethodsOpen(false);
     },
-    changeGames: (side: "A" | "B", next: number) =>
-      setScoreDraft((prev) => changeKohGames(prev, side, next)),
-    undoGames: () => setScoreDraft((prev) => undoKohGames(prev)),
+    changeGames: (side: "A" | "B", next: number) => {
+      if (!isPending()) setScoreDraft((prev) => changeKohGames(prev, side, next));
+    },
+    undoGames: () => {
+      if (!isPending()) setScoreDraft((prev) => undoKohGames(prev));
+    },
     requestComplete: () => {
+      if (isPending()) return;
       if (!kohScoreCanComplete(scoreDraft, params.hub.config.regularScoring)) {
         params.setErrorText("Match is not complete yet.");
         return;
@@ -75,6 +83,7 @@ export function useKohLiveScore(params: {
     confirmMethods: () => void saveScore("COMPLETE"),
     saveDraft: () => void saveScore("DRAFT"),
     setMethod: (side: "A" | "B", index: number, method: KohGameWinMethod) => {
+      if (isPending()) return;
       setScoreDraft((prev) => {
         const key = side === "A" ? "winMethodsA" : "winMethodsB";
         const methods = [...prev[key]];

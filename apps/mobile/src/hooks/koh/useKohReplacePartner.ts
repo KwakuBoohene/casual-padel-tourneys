@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 
+import { useSubmission } from "../useSubmission";
+
 import { replaceKohPartner } from "../../api/koh";
 import type { KohTournamentHub } from "../../types/koh/create";
 import type { KohEditUnitRow } from "../../utilities/koh/editPlayersList";
@@ -19,18 +21,18 @@ export function useKohReplacePartner(params: {
   const [selectedReplacementId, setSelectedReplacementId] = useState<string | null>(null);
   const [addingNew, setAddingNew] = useState(false);
   const [confirmReplace, setConfirmReplace] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const { saving, run, isPending } = useSubmission();
 
   const leaveIsA = params.selectedFresh?.unit.playerAId === replacePlayerId;
   const leaveName = leaveIsA
-    ? params.selectedFresh?.unit.playerAName ?? ""
-    : params.selectedFresh?.unit.playerBName ?? "";
+    ? (params.selectedFresh?.unit.playerAName ?? "")
+    : (params.selectedFresh?.unit.playerBName ?? "");
   const stayName = leaveIsA
-    ? params.selectedFresh?.unit.playerBName ?? ""
-    : params.selectedFresh?.unit.playerAName ?? "";
+    ? (params.selectedFresh?.unit.playerBName ?? "")
+    : (params.selectedFresh?.unit.playerAName ?? "");
   const stayPlayerId = leaveIsA
-    ? params.selectedFresh?.unit.playerBId ?? ""
-    : params.selectedFresh?.unit.playerAId ?? "";
+    ? (params.selectedFresh?.unit.playerBId ?? "")
+    : (params.selectedFresh?.unit.playerAId ?? "");
 
   const partners = useMemo(() => {
     if (!params.selectedFresh || !replacePlayerId) return [];
@@ -44,7 +46,7 @@ export function useKohReplacePartner(params: {
 
   const joinName = addingNew
     ? replaceName.trim()
-    : partners.find((row) => row.playerId === selectedReplacementId)?.name ?? "";
+    : (partners.find((row) => row.playerId === selectedReplacementId)?.name ?? "");
 
   function resetReplace(): void {
     setReplacePlayerId(null);
@@ -69,6 +71,7 @@ export function useKohReplacePartner(params: {
     partners,
     resetReplace,
     openReplace: (playerId: string) => {
+      if (isPending()) return;
       if (params.selectedFresh?.midMatch) {
         params.setErrorText("Blocked mid-match. Finish or abandon the score first.");
         return;
@@ -87,26 +90,24 @@ export function useKohReplacePartner(params: {
       setSelectedReplacementId(null);
       setAddingNew((value) => !value);
     },
-    submitReplace: async () => {
-      if (!params.selectedFresh || !replacePlayerId) return;
-      setSaving(true);
-      try {
-        params.setErrorText("");
-        const hub = await replaceKohPartner(params.hub.id, params.selectedFresh.unit.id, {
-          leavePlayerId: replacePlayerId,
-          expectedVersion: params.hub.version,
-          ...(addingNew
-            ? { replacement: { name: replaceName.trim() } }
-            : { replacementPlayerId: selectedReplacementId ?? "" })
-        });
-        params.setHub(hub);
-        resetReplace();
-        params.setSelected(null);
-      } catch (error) {
-        reportKohEditError(error, params.markEmailVerifyRequired, params.setErrorText);
-      } finally {
-        setSaving(false);
-      }
-    }
+    submitReplace: () =>
+      run(async () => {
+        if (!params.selectedFresh || !replacePlayerId) return;
+        try {
+          params.setErrorText("");
+          const hub = await replaceKohPartner(params.hub.id, params.selectedFresh.unit.id, {
+            leavePlayerId: replacePlayerId,
+            expectedVersion: params.hub.version,
+            ...(addingNew
+              ? { replacement: { name: replaceName.trim() } }
+              : { replacementPlayerId: selectedReplacementId ?? "" })
+          });
+          params.setHub(hub);
+          resetReplace();
+          params.setSelected(null);
+        } catch (error) {
+          reportKohEditError(error, params.markEmailVerifyRequired, params.setErrorText);
+        }
+      })
   };
 }

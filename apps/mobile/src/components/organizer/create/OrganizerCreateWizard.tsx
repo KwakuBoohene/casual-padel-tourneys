@@ -75,6 +75,7 @@ export function OrganizerCreateWizard({
       tournamentTimeText={create.tournamentTimeText}
       estimate={create.estimate}
       responseText={create.responseText}
+      creating={create.creatingTournament}
       playersCount={create.sanitizedPlayers.length}
       onChangeScoringMode={create.setScoringMode}
       onChangeSetFormat={create.setSetFormat}

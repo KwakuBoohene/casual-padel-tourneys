@@ -7,6 +7,7 @@ interface LiveTournamentActionsProps {
   canSubmitScores: boolean;
   canGenerateNextRound: boolean;
   generatingNextRound: boolean;
+  saving?: boolean;
   /** True when the field is bigger than the courts hold, so resting players enter first. */
   rotatesRestingPlayers?: boolean;
   isTournamentCompleted: boolean;
@@ -48,6 +49,11 @@ export function LiveTournamentActions(props: LiveTournamentActionsProps) {
     primaryLabel = "View board";
     onPrimary = props.onViewLeaderboard;
     primaryDisabled = false;
+  }
+
+  if (props.saving) {
+    primaryLabel = props.generatingNextRound ? "Generating…" : "Saving…";
+    primaryDisabled = true;
   }
 
   const secondary = (label: string, onPress: () => void) => (

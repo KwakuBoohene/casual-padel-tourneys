@@ -119,8 +119,9 @@ export function KohLiveHub(props: KohLiveHubProps) {
         setShareOpen={setShareOpen}
         setEndConfirmOpen={setEndConfirm}
         onConfirmEnd={() => {
-          setEndConfirm(false);
-          void live.endNight();
+          void live.endNight().then((saved) => {
+            if (saved) setEndConfirm(false);
+          });
         }}
         dismissCourtChange={live.dismissCourtChange}
         applyPromotePick={live.applyPromotePick}

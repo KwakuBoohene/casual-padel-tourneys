@@ -1,16 +1,14 @@
-"use client";
-
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 export default function HomePage() {
   const [token, setToken] = useState("");
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const handleJoin = () => {
     if (token.trim()) {
-      router.push(`/tournament/${token.trim()}`);
+      navigate(`/tournament/${encodeURIComponent(token.trim())}`);
     }
   };
 
@@ -68,7 +66,7 @@ export default function HomePage() {
               </div>
               <p className="text-sm text-padel-muted">
                 Or try our{" "}
-                <Link href="/tournament/demo" className="text-padel-primary font-semibold hover:underline">
+                <Link to="/tournament/demo" className="text-padel-primary font-semibold hover:underline">
                   demo tournament
                 </Link>
               </p>

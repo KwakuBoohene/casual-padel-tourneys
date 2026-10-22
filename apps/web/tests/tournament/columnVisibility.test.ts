@@ -37,9 +37,9 @@ test("width does not depend on the order of the keys", () => {
   );
 });
 
-// --- what the server reads out of the cookie ----------------------------------------------------
+// --- what the viewer reads out of the cookie ----------------------------------------------------
 
-/** The real decoder the server uses; `readVisibleColumnsCookie` only adds `next/headers`. */
+/** The real decoder used when reading the existing browser preference cookie. */
 const fromCookie = decodeColumnsCookie;
 
 test("no cookie yields the default five, the same as a first-time mobile user", () => {

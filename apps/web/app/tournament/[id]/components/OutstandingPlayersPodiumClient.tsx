@@ -1,5 +1,3 @@
-"use client";
-
 import { OutstandingPlayersPodium as OutstandingPlayersPodiumView } from "./OutstandingPlayersPodium";
 import type { OutstandingPlayerRow } from "./outstandingPlayers";
 

@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 
+import { useSubmission } from "../useSubmission";
+
 import { renameKohPlayer } from "../../api/koh";
 import type { KohTournamentHub } from "../../types/koh/create";
 import { listKohEditUnits, type KohEditUnitRow } from "../../utilities/koh/editPlayersList";
@@ -16,7 +18,7 @@ export function useKohEditPlayers(params: {
   const [selected, setSelected] = useState<KohEditUnitRow | null>(null);
   const [renamePlayerId, setRenamePlayerId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
-  const [renameSaving, setRenameSaving] = useState(false);
+  const { saving: renameSaving, run, isPending } = useSubmission();
 
   const units = useMemo(() => listKohEditUnits(params.hub), [params.hub]);
   const selectedFresh = useMemo(() => {
@@ -64,26 +66,25 @@ export function useKohEditPlayers(params: {
     selectReplacement: replace.selectReplacement,
     toggleAddingNew: replace.toggleAddingNew,
     dismissSubflow: () => {
+      if (isPending() || replace.saving) return;
       setRenamePlayerId(null);
       replace.resetReplace();
     },
-    submitRename: async () => {
-      if (!renamePlayerId) return;
-      setRenameSaving(true);
-      try {
-        params.setErrorText("");
-        const hub = await renameKohPlayer(params.hub.id, renamePlayerId, {
-          newName: renameValue.trim(),
-          expectedVersion: params.hub.version
-        });
-        params.setHub(hub);
-        setRenamePlayerId(null);
-      } catch (error) {
-        reportKohEditError(error, params.markEmailVerifyRequired, params.setErrorText);
-      } finally {
-        setRenameSaving(false);
-      }
-    },
+    submitRename: () =>
+      run(async () => {
+        if (!renamePlayerId) return;
+        try {
+          params.setErrorText("");
+          const hub = await renameKohPlayer(params.hub.id, renamePlayerId, {
+            newName: renameValue.trim(),
+            expectedVersion: params.hub.version
+          });
+          params.setHub(hub);
+          setRenamePlayerId(null);
+        } catch (error) {
+          reportKohEditError(error, params.markEmailVerifyRequired, params.setErrorText);
+        }
+      }),
     submitReplace: replace.submitReplace
   };
 }

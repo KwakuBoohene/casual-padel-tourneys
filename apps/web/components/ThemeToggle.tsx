@@ -1,5 +1,3 @@
-"use client";
-
 import { useThemeMode } from "../app/ThemeProvider";
 
 interface ThemeToggleProps {

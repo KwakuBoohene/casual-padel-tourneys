@@ -91,7 +91,7 @@ export function KohReplacePartnerSheet(props: KohReplacePartnerSheetProps) {
         <SheetButton label="Continue" disabled={!canContinue} onPress={props.onContinue} />
       </BottomSheet>
 
-      <BottomSheet visible={props.visible && props.confirm} title="Confirm replace" onDismiss={props.onDismiss}>
+      <BottomSheet busy={props.saving} visible={props.visible && props.confirm} title="Confirm replace" onDismiss={props.onDismiss}>
         <Text style={{ color: colors.text, lineHeight: 22 }}>
           {props.leaveName} leaves · {props.joinName} joins. Unit becomes{" "}
           {formatKohUnitLabel(props.stayName, props.joinName)}. Keeps {props.role} slot · match record{" "}
@@ -106,7 +106,7 @@ export function KohReplacePartnerSheet(props: KohReplacePartnerSheetProps) {
           disabled={props.saving}
           onPress={props.onConfirm}
         />
-        <SheetButton label="Cancel" onPress={props.onDismiss} />
+        <SheetButton label="Cancel" disabled={props.saving} onPress={props.onDismiss} />
       </BottomSheet>
     </>
   );

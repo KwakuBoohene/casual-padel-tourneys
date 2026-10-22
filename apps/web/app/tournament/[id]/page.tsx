@@ -1,22 +1,16 @@
+import { useParams } from "react-router-dom";
+import { usePublicData, DataStatus } from "../../../lib/usePublicData";
 import { KohViewer } from "./KohViewer";
 import { isKohPublicHub } from "./kohTypes";
 import { TournamentViewer } from "./TournamentViewer";
 import type { TournamentViewModel } from "./types";
-import { internalApiBaseUrl, publicApiBaseUrl } from "../../../lib/apiConfig";
+import { publicApiBaseUrl } from "../../../lib/apiConfig";
 
-
-async function getTournament(token: string) {
-  const response = await fetch(`${internalApiBaseUrl()}/public/${token}`, { cache: "no-store" });
-  if (!response.ok) {
-    return null;
-  }
-  const payload = (await response.json()) as { data: unknown };
-  return payload.data;
-}
-
-export default async function TournamentPage({ params }: { params: Promise<{ id: string }> }) {
-  const route = await params;
-  const tournament = await getTournament(route.id);
+export default function TournamentPage() {
+  const route = useParams<{ id: string }>();
+  const state = usePublicData<unknown>(`/public/${encodeURIComponent(route.id!)}`);
+  if (state.loading || state.error) return <DataStatus state={state} />;
+  const tournament = state.data;
   if (!tournament) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-padel-background text-padel-text px-5">
@@ -31,14 +25,14 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   }
 
   if (isKohPublicHub(tournament)) {
-    return <KohViewer initial={tournament} apiBaseUrl={publicApiBaseUrl()} token={route.id} />;
+    return <KohViewer initial={tournament} apiBaseUrl={publicApiBaseUrl()} token={route.id!} />;
   }
 
   return (
     <TournamentViewer
       initial={tournament as TournamentViewModel}
       apiBaseUrl={publicApiBaseUrl()}
-      token={route.id}
+      token={route.id!}
     />
   );
 }

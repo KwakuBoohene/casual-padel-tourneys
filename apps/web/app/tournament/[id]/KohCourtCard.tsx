@@ -1,5 +1,3 @@
-"use client";
-
 import { formatKohLastResult, formatKohPair, type KohPublicCourt } from "./kohTypes";
 
 export function KohCourtCard({ court }: { court: KohPublicCourt }) {

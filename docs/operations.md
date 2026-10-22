@@ -29,7 +29,7 @@ npm run dev         # Run API, web, and mobile
 **How it works:**
 
 - Specifying `db redis` tells Docker Compose to start only those services
-- Applications run locally with native hot-reloading (tsx watch, Next.js HMR)
+- Applications run locally with native hot-reloading (tsx watch, Vite HMR)
 - Applications access database on `localhost:5400` and Redis on `localhost:6579`
 
 **Database operations:**
@@ -198,3 +198,34 @@ In production, omit `MAIL_PROVIDER` or set `mailgun` and ensure key/domain/`MAIL
 - Install dependencies with `npm ci --ignore-scripts` (never `npm install` in CI/production); commit `package-lock.json` and review lockfile diffs on every dependency PR.
 - Direct dependencies use exact versions in `package.json`; Dependabot opens weekly update PRs.
 - Docker builds use `npm ci --ignore-scripts` and explicit `prisma generate` (no arbitrary package lifecycle scripts at install time).
+
+
+## Static viewer deployment
+
+The viewer is a React + Vite SPA. Its Docker image serves only static files through Nginx
+on port 3005; no Node.js process runs in the viewer container. The API, PostgreSQL and Redis
+remain separate services. Existing `/tournament/:token`, `/tournament/:token/leaderboard`,
+`/tournament/:token/rankings`, and `/c/:token?range=...` links are unchanged.
+
+Set `PUBLIC_API_BASE_URL` to the API's **public HTTPS origin** in the viewer's deployment
+environment. The container writes `/runtime-config.json` on startup, so changing the API
+origin requires a container restart, not a frontend rebuild. `INTERNAL_API_BASE_URL` is no
+longer used by the viewer. The API must be reachable from spectators' browsers; live updates
+use its corresponding `wss://` WebSocket endpoint. Existing API CORS support allows these requests.
+
+For local development, set `PUBLIC_API_BASE_URL=http://localhost:3004` in `apps/web/.env.local`
+(or export it in your shell) and run `npm run dev --workspace @padel/web`. Match the port to
+your running API. Localhost is allowed in development, but production requires a public origin.
+
+Build with `npm run build --workspace @padel/shared` followed by
+`npm run build --workspace @padel/web`. `npm run start --workspace @padel/web` previews the
+build locally; production uses the Docker image/Nginx. For another static host, set
+`PUBLIC_API_BASE_URL` during the build or supply `dist/runtime-config.json` containing
+`{"apiBaseUrl":"https://api.example.com"}`. Serve configuration and HTML without caching,
+cache hashed `/assets/` files, and rewrite frontend routes to `/index.html`.
+
+Initial data loads in the browser; loading, unavailable-link and retryable network-error
+states are displayed in the existing theme. Theme and standings-column preferences continue
+to use the same browser storage/cookie keys. Per-tournament server-rendered HTML is no longer
+provided. Build the image in CI and deploy the finished image to avoid build-time resource
+spikes on a small shared server. `/health` provides the viewer container's health check.

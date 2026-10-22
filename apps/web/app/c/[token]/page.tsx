@@ -1,3 +1,5 @@
+import { useParams, useSearchParams } from "react-router-dom";
+import { usePublicData, DataStatus } from "../../../lib/usePublicData";
 import { standingsLineFromRecord, type PublicCareerBoard } from "@padel/shared";
 
 import { WebStandingsHelp } from "../../tournament/[id]/leaderboard/StandingsHelp";
@@ -7,33 +9,16 @@ import { readVisibleColumnsCookie } from "../../../lib/standingsColumnsCookie";
 import { WebStandingsTable } from "../../tournament/[id]/leaderboard/StandingsTable";
 import { RangeTabs } from "./RangeTabs";
 import { CAREER_RANGES, parseCareerRange } from "./range";
-import { internalApiBaseUrl } from "../../../lib/apiConfig";
 
 
-async function getBoard(token: string, range: string): Promise<PublicCareerBoard | null> {
-  const response = await fetch(
-    `${internalApiBaseUrl()}/public/career/${encodeURIComponent(token)}?range=${range}`,
-    { cache: "no-store" }
-  );
-  if (!response.ok) {
-    return null;
-  }
-  const payload = (await response.json()) as { data: PublicCareerBoard };
-  return payload.data;
-}
-
-export default async function PublicCareerPage({
-  params,
-  searchParams
-}: {
-  params: Promise<{ token: string }>;
-  searchParams: Promise<{ range?: string }>;
-}) {
-  const route = await params;
-  const query = await searchParams;
-  const range = parseCareerRange(query.range);
-  const board = await getBoard(route.token, range);
-  const initialColumns = await readVisibleColumnsCookie();
+export default function PublicCareerPage() {
+  const route = useParams<{ token: string }>();
+  const [query] = useSearchParams();
+  const range = parseCareerRange(query.get("range") ?? undefined);
+  const state = usePublicData<PublicCareerBoard>(`/public/career/${encodeURIComponent(route.token!)}?range=${range}`);
+  if (state.loading || state.error) return <DataStatus state={state} />;
+  const board = state.data;
+  const initialColumns = readVisibleColumnsCookie();
 
   if (!board) {
     return (
@@ -66,7 +51,7 @@ export default async function PublicCareerPage({
             <WebStandingsHelp />
           </div>
         </div>
-        <RangeTabs token={route.token} active={range} />
+        <RangeTabs token={route.token!} active={range} />
       </header>
 
       <div className="max-w-3xl mx-auto w-full space-y-6">

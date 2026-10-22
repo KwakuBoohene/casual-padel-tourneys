@@ -1,6 +1,8 @@
+import { useParams } from "react-router-dom";
+import { usePublicData, DataStatus } from "../../../../lib/usePublicData";
 import { LeaderboardHeaderActions } from "../../../../components/LeaderboardHeaderActions";
 import { standingsLineFromRecord } from "@padel/shared";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import PodiumShowcase from "./PodiumShowcase";
 import { WebStandingsTable } from "./StandingsTable";
 import { WebStandingsHelp } from "./StandingsHelp";
@@ -10,21 +12,14 @@ import { readVisibleColumnsCookie } from "../../../../lib/standingsColumnsCookie
 
 import { buildOutstandingPlayerRows } from "../components/outstandingPlayers";
 import { formatScoringLabel, type TournamentViewModel } from "../types";
-import { internalApiBaseUrl, publicApiBaseUrl } from "../../../../lib/apiConfig";
+import { publicApiBaseUrl } from "../../../../lib/apiConfig";
 
 
-async function getTournament(token: string) {
-  const response = await fetch(`${internalApiBaseUrl()}/public/${token}`, { cache: "no-store" });
-  if (!response.ok) {
-    return null;
-  }
-  const payload = (await response.json()) as { data: TournamentViewModel };
-  return payload.data;
-}
-
-export default async function LeaderboardPage({ params }: { params: Promise<{ id: string }> }) {
-  const route = await params;
-  const tournament = await getTournament(route.id);
+export default function LeaderboardPage() {
+  const route = useParams<{ id: string }>();
+  const state = usePublicData<TournamentViewModel>(`/public/${encodeURIComponent(route.id!)}`);
+  if (state.loading || state.error) return <DataStatus state={state} />;
+  const tournament = state.data;
   if (!tournament) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-padel-background text-padel-text px-5">
@@ -45,7 +40,7 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
   const outstandingPlayers = rows.slice(0, 3);
   const scoringLabel = formatScoringLabel(String(tournament.config.mode), tournament.config.scoringMode);
   const isRegular = tournament.config.scoringMode === "REGULAR";
-  const initialColumns = await readVisibleColumnsCookie();
+  const initialColumns = readVisibleColumnsCookie();
 
   return (
     <main className="min-h-screen bg-padel-background text-padel-text px-5 py-8 md:px-10 md:py-10">
@@ -53,7 +48,7 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
       <header className="mb-8 flex flex-col gap-3 md:flex-row md:items-center md:justify-between max-w-3xl mx-auto w-full">
         <div className="space-y-2">
           <Link
-            href={`/tournament/${route.id}`}
+            to={`/tournament/${route.id}`}
             className="inline-flex min-h-12 items-center text-sm font-medium text-padel-primary"
           >
             ← Live
@@ -66,7 +61,7 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
         <div className="flex items-center gap-3 self-start">
           <StandingsColumnsControl />
           <WebStandingsHelp />
-          <LeaderboardHeaderActions tournamentId={route.id} publicApiBaseUrl={publicApiBaseUrl()} />
+          <LeaderboardHeaderActions tournamentId={route.id!} publicApiBaseUrl={publicApiBaseUrl()} />
         </div>
       </header>
 

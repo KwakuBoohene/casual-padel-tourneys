@@ -8,6 +8,7 @@ import type {
   TournamentListResponse
 } from "../../types/organizer/tournament";
 import { submitCreateTournament } from "../../utilities/organizer/submitCreateTournament";
+import { useSubmission } from "../useSubmission";
 
 import { useMatchSettings } from "./useMatchSettings";
 import { usePlayerRoster } from "./usePlayerRoster";
@@ -36,6 +37,7 @@ export function useCreateTournament({
   const [variant, setVariant] = useState<TournamentVariant>("CLASSIC");
   const [schedulingMode, setSchedulingMode] = useState<SchedulingMode>("TARGET_GAMES");
   const [responseText, setResponseText] = useState("No tournament created yet.");
+  const { saving: creatingTournament, run, isPending } = useSubmission();
   const effectiveSchedulingMode: SchedulingMode = mode === "MEXICANO" ? "TOTAL_TIME" : schedulingMode;
 
   const roster = usePlayerRoster({ mode, variant, tournaments, suggestedPlayerNames });
@@ -70,28 +72,30 @@ export function useCreateTournament({
   };
 
   const createTournament = () =>
-    submitCreateTournament({
-      name,
-      mode,
-      variant,
-      schedulingMode: effectiveSchedulingMode,
-      players: roster.players,
-      playerGenders: roster.playerGenders,
-      teams: roster.teams,
-      sanitizedPlayersCount: roster.sanitizedPlayers.length,
-      hasDuplicatePlayerNames: roster.hasDuplicatePlayerNames,
-      courtsText: settings.courtsText,
-      pointsText: settings.pointsText,
-      targetGamesText: settings.targetGamesText,
-      tournamentTimeText: settings.tournamentTimeText,
-      scoringMode: settings.scoringMode,
-      regularScoring: settings.regularScoring,
-      contributeToCareerLeaderboard: settings.contributeToCareerLeaderboard,
-      setErrorText,
-      setResponseText,
-      markEmailVerifyRequired,
-      adoptTournament
-    });
+    run(() =>
+      submitCreateTournament({
+        name,
+        mode,
+        variant,
+        schedulingMode: effectiveSchedulingMode,
+        players: roster.players,
+        playerGenders: roster.playerGenders,
+        teams: roster.teams,
+        sanitizedPlayersCount: roster.sanitizedPlayers.length,
+        hasDuplicatePlayerNames: roster.hasDuplicatePlayerNames,
+        courtsText: settings.courtsText,
+        pointsText: settings.pointsText,
+        targetGamesText: settings.targetGamesText,
+        tournamentTimeText: settings.tournamentTimeText,
+        scoringMode: settings.scoringMode,
+        regularScoring: settings.regularScoring,
+        contributeToCareerLeaderboard: settings.contributeToCareerLeaderboard,
+        setErrorText,
+        setResponseText,
+        markEmailVerifyRequired,
+        adoptTournament
+      })
+    );
 
   return {
     ...roster,
@@ -107,6 +111,7 @@ export function useCreateTournament({
     startCreateWithMode,
     startCreateFromEstimator,
     cancelCreateToList: () => {
+      if (isPending()) return;
       setModeLockedFromList(false);
       router.replace("/tournaments");
     },
@@ -116,6 +121,7 @@ export function useCreateTournament({
     setSchedulingMode,
     effectiveSchedulingMode,
     responseText,
+    creatingTournament,
     createTournament
   };
 }

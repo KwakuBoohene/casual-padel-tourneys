@@ -60,6 +60,7 @@ export function LiveScoreEntrySheets({ session, score, actions }: LiveScoreEntry
         scoreB={score.scoreEntry?.scoreB ?? null}
         canUndo={Boolean(score.scoreEntry && score.scoreEntry.undoStack.length > 0)}
         saveDisabled={score.savingScore}
+        saving={score.savingScore}
         saveLabel={saveLabel}
         secondarySaveLabel={regular && score.scoreEntryPrimaryAction !== "DRAFT" ? "Save draft" : undefined}
         plusDisabledA={score.scoreEntryPlusDisabledA}
@@ -105,15 +106,9 @@ export function LiveScoreEntrySheets({ session, score, actions }: LiveScoreEntry
         title="Cannot save score"
         message={score.scoreSheetError || "Please try again."}
         primaryAction={{
-          label: score.scoreEntry ? "Retry" : "OK",
-          onPress: () => {
-            if (score.scoreEntry) winMethods.requestPrimary();
-            else actions.onClearScoreSheetError();
-          }
+          label: score.scoreEntry ? "Back to score" : "OK",
+          onPress: actions.onClearScoreSheetError
         }}
-        secondaryAction={
-          score.scoreEntry ? { label: "Dismiss", onPress: actions.onClearScoreSheetError } : undefined
-        }
         onDismiss={actions.onClearScoreSheetError}
       />
     </>

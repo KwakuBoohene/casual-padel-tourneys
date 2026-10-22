@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useSubmission } from "../useSubmission";
 
 import { apiPost } from "../../api/client";
 
@@ -10,24 +10,22 @@ export function useCareerLeaderboardToggle<T>(params: {
   careerSaving: boolean;
   setContributeToCareerLeaderboard: (value: boolean) => Promise<void>;
 } {
-  const [careerSaving, setCareerSaving] = useState(false);
+  const { saving: careerSaving, run } = useSubmission();
 
-  const setContributeToCareerLeaderboard = async (contributeToCareerLeaderboard: boolean) => {
-    if (!params.tournamentId) return;
-    try {
-      params.setErrorText("");
-      setCareerSaving(true);
-      const response = await apiPost<{ data: T }>("/tournaments/career-leaderboard", {
-        tournamentId: params.tournamentId,
-        contributeToCareerLeaderboard
-      });
-      params.apply(response.data);
-    } catch (error) {
-      params.setErrorText((error as Error).message);
-    } finally {
-      setCareerSaving(false);
-    }
-  };
+  const setContributeToCareerLeaderboard = (contributeToCareerLeaderboard: boolean) =>
+    run(async () => {
+      if (!params.tournamentId) return;
+      try {
+        params.setErrorText("");
+        const response = await apiPost<{ data: T }>("/tournaments/career-leaderboard", {
+          tournamentId: params.tournamentId,
+          contributeToCareerLeaderboard
+        });
+        params.apply(response.data);
+      } catch (error) {
+        params.setErrorText((error as Error).message);
+      }
+    });
 
   return { careerSaving, setContributeToCareerLeaderboard };
 }

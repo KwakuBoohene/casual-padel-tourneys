@@ -11,6 +11,7 @@ import { LiveTournamentPendingBanner } from "./LiveTournamentPendingBanner";
 interface LiveTournamentHeaderProps {
   tournament: LiveTournamentState;
   tournamentNameDraft: string;
+  savingName?: boolean;
   isEditingCompletedTournament: boolean;
   roundsCount: number;
   openEndedRounds?: boolean;
@@ -49,6 +50,7 @@ export function LiveTournamentHeader(props: LiveTournamentHeaderProps) {
       {props.isEditingCompletedTournament ? (
         <View style={{ gap: spacing.sm }}>
           <TextInput
+            editable={!props.savingName}
             value={props.tournamentNameDraft}
             onChangeText={props.onChangeTournamentName}
             style={{
@@ -62,6 +64,7 @@ export function LiveTournamentHeader(props: LiveTournamentHeaderProps) {
             }}
           />
           <Pressable
+            disabled={props.savingName}
             onPress={props.onSaveTournamentName}
             style={{
               minHeight: touch.minSecondary,
@@ -71,7 +74,9 @@ export function LiveTournamentHeader(props: LiveTournamentHeaderProps) {
               justifyContent: "center"
             }}
           >
-            <Text style={{ color: colors.onPrimary, fontWeight: "700" }}>Save tournament name</Text>
+            <Text style={{ color: colors.onPrimary, fontWeight: "700" }}>
+              {props.savingName ? "Saving…" : "Save tournament name"}
+            </Text>
           </Pressable>
         </View>
       ) : (

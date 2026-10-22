@@ -24,14 +24,17 @@ export interface AlertSheetProps {
   onDismiss: () => void;
   /** Defaults: false for warning/error, true for info/success. */
   dismissOnOverlay?: boolean;
+  busy?: boolean;
+  busyLabel?: string;
 }
 
-const VARIANT_COLOR_KEY: Record<AlertSheetVariant, "primary" | "danger" | "statusNext" | "statusCompleted"> = {
-  info: "primary",
-  warning: "statusNext",
-  error: "danger",
-  success: "statusCompleted"
-};
+const VARIANT_COLOR_KEY: Record<AlertSheetVariant, "primary" | "danger" | "statusNext" | "statusCompleted"> =
+  {
+    info: "primary",
+    warning: "statusNext",
+    error: "danger",
+    success: "statusCompleted"
+  };
 
 export function AlertSheet(props: AlertSheetProps) {
   const { colors } = useTheme();
@@ -43,8 +46,11 @@ export function AlertSheet(props: AlertSheetProps) {
   return (
     <BottomSheet
       visible={props.visible}
+      busy={props.busy}
       title={props.title}
-      onDismiss={props.onDismiss}
+      onDismiss={() => {
+        if (!props.busy) props.onDismiss();
+      }}
       dismissOnOverlay={dismissOnOverlay}
     >
       <View style={[styles.variantBar, { backgroundColor: barColor }]} />
@@ -52,6 +58,7 @@ export function AlertSheet(props: AlertSheetProps) {
       <View style={props.secondaryAction ? styles.actionsRow : styles.actionsColumn}>
         {props.secondaryAction ? (
           <Pressable
+            disabled={props.busy}
             onPress={props.secondaryAction.onPress}
             style={[styles.secondaryButton, { flex: 1 }]}
           >
@@ -59,16 +66,17 @@ export function AlertSheet(props: AlertSheetProps) {
           </Pressable>
         ) : null}
         <Pressable
+          disabled={props.busy}
           onPress={props.primaryAction.onPress}
           style={[
             styles.primaryButton,
-            props.primaryAction.destructive || props.variant === "error"
-              ? styles.primaryButtonDanger
-              : null,
+            props.primaryAction.destructive || props.variant === "error" ? styles.primaryButtonDanger : null,
             props.secondaryAction ? { flex: 1 } : null
           ]}
         >
-          <Text style={styles.primaryButtonLabel}>{props.primaryAction.label}</Text>
+          <Text style={styles.primaryButtonLabel} accessibilityLiveRegion="polite">
+            {props.busy ? (props.busyLabel ?? "Saving…") : props.primaryAction.label}
+          </Text>
         </Pressable>
       </View>
     </BottomSheet>

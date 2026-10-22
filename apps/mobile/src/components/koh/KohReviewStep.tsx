@@ -31,6 +31,7 @@ export function KohReviewStep(props: KohReviewStepProps) {
       subtitle={`${props.draft.name.trim()} · ${formatLabel(props.draft.matchFormat)} · ${deuceLabel(props.draft.deuceMode)}`}
       primaryLabel={props.submitting ? "Starting…" : "Start tournament"}
       primaryDisabled={!props.canStart || props.submitting}
+      busy={props.submitting}
       onPrimary={props.onStart}
       onBack={props.onBack}
     >

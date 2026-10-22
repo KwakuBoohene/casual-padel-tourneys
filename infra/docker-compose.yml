@@ -22,8 +22,8 @@ services:
     env_file:
       - ./.env
     environment:
-      # Server-side fetch from this container uses the Compose service name.
-      INTERNAL_API_BASE_URL: http://api:3004
+      # Written to runtime-config.json on startup; one image works across environments.
+      PUBLIC_API_BASE_URL: ${PUBLIC_API_BASE_URL:?Set the public API origin reachable by visitors}
 
     depends_on:
       - api

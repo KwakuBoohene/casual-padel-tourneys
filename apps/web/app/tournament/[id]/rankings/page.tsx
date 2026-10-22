@@ -1,19 +1,21 @@
+import { useParams } from "react-router-dom";
+import { usePublicData, DataStatus } from "../../../../lib/usePublicData";
 import { KohRankingsClient } from "./KohRankingsClient";
 import { isKohPublicHub } from "../kohTypes";
-import { internalApiBaseUrl, publicApiBaseUrl } from "../../../../lib/apiConfig";
+import { publicApiBaseUrl } from "../../../../lib/apiConfig";
 
-
-export default async function KohRankingsPage({ params }: { params: Promise<{ id: string }> }) {
-  const route = await params;
-  const response = await fetch(`${internalApiBaseUrl()}/public/${route.id}`, { cache: "no-store" });
-  if (!response.ok) {
+export default function KohRankingsPage() {
+  const route = useParams<{ id: string }>();
+  const state = usePublicData<unknown>(`/public/${encodeURIComponent(route.id!)}`);
+  if (state.loading || state.error) return <DataStatus state={state} />;
+  if (!state.data) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-padel-background text-padel-text px-5">
         <p className="text-padel-danger font-semibold">Tournament not found</p>
       </main>
     );
   }
-  const payload = (await response.json()) as { data: unknown };
+  const payload = { data: state.data };
   if (!isKohPublicHub(payload.data)) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-padel-background text-padel-text px-5">
@@ -29,7 +31,7 @@ export default async function KohRankingsPage({ params }: { params: Promise<{ id
 
   return (
     <KohRankingsClient
-      token={route.id}
+      token={route.id!}
       apiBaseUrl={publicApiBaseUrl()}
       courtCount={Math.max(1, payload.data.courts.length)}
     />

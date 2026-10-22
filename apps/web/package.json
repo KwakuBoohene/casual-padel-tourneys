@@ -3,18 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start -p 3005",
+    "dev": "vite --host 0.0.0.0 --port 3005",
+    "build": "tsc --noEmit && vite build",
+    "start": "vite preview --host 0.0.0.0 --port 3005",
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test --import tsx $(find tests -name '*.test.ts' | sort)"
   },
   "dependencies": {
     "@padel/shared": "*",
-    "next": "16.4.2",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "react-router-dom": "7.18.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.2.1",
@@ -22,6 +22,10 @@
     "@types/react-dom": "19.3.0",
     "autoprefixer": "10.4.27",
     "postcss": "8.5.31",
-    "tailwindcss": "4.2.1"
+    "tailwindcss": "4.2.1",
+    "vite": "7.3.7",
+    "@vitejs/plugin-react": "5.2.0",
+    "typescript": "5.9.3",
+    "@types/node": "24.12.0"
   }
 }

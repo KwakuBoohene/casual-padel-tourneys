@@ -17,6 +17,7 @@ export function KohEditUnitSheets(props: KohEditUnitSheetsProps) {
   const { colors } = useTheme();
   return (
     <BottomSheet
+      busy={props.saving}
       visible={Boolean(props.renamePlayerId)}
       title="Rename"
       onDismiss={props.onDismiss}
@@ -25,6 +26,7 @@ export function KohEditUnitSheets(props: KohEditUnitSheetsProps) {
         Fix a spelling mistake. Stats stay on the same player.
       </Text>
       <TextInput
+        editable={!props.saving}
         value={props.renameValue}
         onChangeText={props.onRenameValue}
         placeholder="Player name"

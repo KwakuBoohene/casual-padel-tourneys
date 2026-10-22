@@ -1,5 +1,10 @@
 import { Pressable, ScrollView, View } from "react-native";
-import { sortAfterHiding, standingsPageSize, visibleStandingsColumns, type StandingsLine } from "@padel/shared";
+import {
+  sortAfterHiding,
+  standingsPageSize,
+  visibleStandingsColumns,
+  type StandingsLine
+} from "@padel/shared";
 
 import { useEffect } from "react";
 
@@ -11,14 +16,12 @@ import { spacing, touch } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
 import { ListPager } from "../lists/ListPager";
 
-import {
-  NAME_AND_PADDING_W,
-  standingsStatsWidth
-} from "../../utilities/standings/columnWidth";
+import { NAME_AND_PADDING_W, standingsStatsWidth } from "../../utilities/standings/columnWidth";
 
 import { StandingsNameSlot, StandingsStatCells } from "./StandingsCells";
 
 export interface StandingsTableRow {
+  imported?: boolean;
   id: string;
   rank: number;
   name: string;
@@ -103,7 +106,7 @@ export function StandingsTable(props: StandingsTableProps) {
                   borderTopColor: colors.border
                 }}
               >
-                <StandingsNameSlot rank={row.rank} name={row.name} />
+                <StandingsNameSlot rank={row.rank} name={row.name} imported={row.imported} />
                 <StandingsStatCells columns={columns} line={row.line} />
               </View>
             );

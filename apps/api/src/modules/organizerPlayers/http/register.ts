@@ -6,6 +6,7 @@ import { registerOrganizerPlayerExportRoutes } from "./exportRoutes.js";
 import { registerOrganizerPlayerManagementRoutes } from "./managementRoutes.js";
 import { registerOrganizerPlayerRoutes } from "./playerRoutes.js";
 import { registerCareerShareRoutes } from "./shareRoutes.js";
+import { registerHistoricalImportRoutes } from "./historicalRoutes.js";
 
 export function createOrganizerPlayersDeps(): OrganizerPlayersDeps {
   return { repo: new PrismaOrganizerPlayerRepository() };
@@ -13,6 +14,7 @@ export function createOrganizerPlayersDeps(): OrganizerPlayersDeps {
 
 export function registerOrganizerPlayersModule(server: FastifyInstance): void {
   const deps = createOrganizerPlayersDeps();
+  registerHistoricalImportRoutes(server);
   registerOrganizerPlayerManagementRoutes(server, deps, "/organizers/:organizerId");
   registerOrganizerPlayerRoutes(server, deps, "/organizers/:organizerId");
   registerOrganizerPlayerExportRoutes(server, deps, "/organizers/:organizerId");

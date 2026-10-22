@@ -6,10 +6,7 @@ import {
   type StandingsSortState
 } from "@padel/shared";
 
-import {
-  standingsColumnWidth,
-  type StandingsColumn
-} from "../../utilities/standings/columnWidth";
+import { standingsColumnWidth, type StandingsColumn } from "../../utilities/standings/columnWidth";
 import { spacing } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
 
@@ -41,9 +38,7 @@ export function StandingsStatCells(props: StatCellsProps) {
           <Text
             key={col.key}
             numberOfLines={1}
-            accessibilityLabel={
-              props.header ? col.title : `${col.title} ${values?.[col.key] ?? ""}`
-            }
+            accessibilityLabel={props.header ? col.title : `${col.title} ${values?.[col.key] ?? ""}`}
             style={{
               width: standingsColumnWidth(col.key),
               textAlign: "right",
@@ -51,11 +46,7 @@ export function StandingsStatCells(props: StatCellsProps) {
               fontSize: props.header ? 10 : 12,
               fontWeight: (emphasised && !props.header) || active ? "700" : "600",
               letterSpacing: props.header ? 0.3 : 0,
-              color: active
-                ? colors.primary
-                : props.header || emphasised
-                  ? colors.text
-                  : colors.muted
+              color: active ? colors.primary : props.header || emphasised ? colors.text : colors.muted
             }}
           >
             {props.header ? `${col.header}${active ? CARET[active.direction] : ""}` : values?.[col.key]}
@@ -82,24 +73,40 @@ export function StandingsStatCells(props: StatCellsProps) {
   );
 }
 
-export function StandingsNameSlot(props: { rank?: number; name: string; header?: boolean }) {
+export function StandingsNameSlot(props: {
+  rank?: number;
+  name: string;
+  header?: boolean;
+  imported?: boolean;
+}) {
   const { colors } = useTheme();
   return (
     <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: spacing.sm, minWidth: 0 }}>
-      <Text style={{ width: RANK_W, color: colors.muted, fontWeight: "700", fontSize: props.header ? 10 : 13 }}>
+      <Text
+        style={{ width: RANK_W, color: colors.muted, fontWeight: "700", fontSize: props.header ? 10 : 13 }}
+      >
         {props.header ? "#" : props.rank}
       </Text>
-      <Text
-        numberOfLines={1}
-        style={{
-          flex: 1,
-          color: colors.text,
-          fontWeight: props.header ? "600" : "700",
-          fontSize: props.header ? 10 : 14
-        }}
-      >
-        {props.name}
-      </Text>
+      {props.imported ? (
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text numberOfLines={1} style={{ color: colors.text, fontWeight: "700", fontSize: 14 }}>
+            {props.name}
+          </Text>
+          <Text style={{ color: colors.muted, fontSize: 10 }}>Imported</Text>
+        </View>
+      ) : (
+        <Text
+          numberOfLines={1}
+          style={{
+            flex: 1,
+            color: colors.text,
+            fontWeight: props.header ? "600" : "700",
+            fontSize: props.header ? 10 : 14
+          }}
+        >
+          {props.name}
+        </Text>
+      )}
     </View>
   );
 }

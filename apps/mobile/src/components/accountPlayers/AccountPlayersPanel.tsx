@@ -13,6 +13,9 @@ import { useLeaderboardExport } from "../../hooks/exports/useLeaderboardExport";
 import { CareerShareSheet } from "./CareerShareSheet";
 import { useCareerShare } from "../../hooks/accountPlayers/useCareerShare";
 import { AccountPlayersHeader } from "./AccountPlayersHeader";
+import { HISTORICAL_NOTICE } from "@padel/shared";
+import { router } from "expo-router";
+import { AccessButton } from "../organizerAccess/AccessButton";
 
 interface AccountPlayersPanelProps {
   /** Base URL of the public viewer, for the share link. */
@@ -21,6 +24,7 @@ interface AccountPlayersPanelProps {
   onRange: (range: OrganizerPlayerRange) => void;
   rows: OrganizerPlayerLeaderboardRow[];
   loading: boolean;
+  importedEvents?: number;
   guestMessage: string | null;
   onSelect: (id: string) => void;
   onBack: () => void;
@@ -36,7 +40,9 @@ export function AccountPlayersPanel(props: AccountPlayersPanelProps) {
   const shareState = useCareerShare();
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView contentContainerStyle={{ padding: spacing.xl, gap: spacing.md, paddingBottom: spacing.xxl }}>
+      <ScrollView
+        contentContainerStyle={{ padding: spacing.xl, gap: spacing.md, paddingBottom: spacing.xxl }}
+      >
         <AccountPlayersHeader
           range={props.range}
           onRange={props.onRange}
@@ -44,6 +50,19 @@ export function AccountPlayersPanel(props: AccountPlayersPanelProps) {
           onShare={shareState.open}
           onExport={exportState.open}
         />
+        {!props.guestMessage ? (
+          <AccessButton
+            label="Import historical results"
+            secondary
+            onPress={() => router.push("/historical-results")}
+          />
+        ) : null}
+        {props.importedEvents ? (
+          <Text style={{ color: colors.muted, lineHeight: 22 }}>
+            {props.importedEvents} imported {props.importedEvents === 1 ? "event" : "events"}.{" "}
+            {HISTORICAL_NOTICE}
+          </Text>
+        ) : null}
         {props.guestMessage ? (
           <View
             style={{
@@ -81,6 +100,7 @@ export function AccountPlayersPanel(props: AccountPlayersPanelProps) {
               id: row.id,
               rank: row.rank,
               name: row.name,
+              imported: Boolean(row.coverage?.importedEvents),
               line: standingsLineFromRecord({
                 wins: row.matchesWon,
                 losses: row.matchesLost,

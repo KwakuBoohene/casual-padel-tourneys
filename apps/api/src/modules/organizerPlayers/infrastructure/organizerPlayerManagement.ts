@@ -4,6 +4,7 @@ import { archivedNameKey, nextUnarchiveDisplayName } from "../domain/archiveName
 import { normalizeOrganizerPlayerName } from "../domain/careerRange.js";
 import type { OrganizerManagedPlayerRow } from "../application/ports.js";
 import { mergeOrganizerPlayersInTx } from "./mergeOrganizerPlayers.js";
+import { listHistoricalContributions } from "./historicalContributions.js";
 
 export async function listManagedOrganizerPlayers(
   organizerId: string,
@@ -24,6 +25,15 @@ export async function listManagedOrganizerPlayers(
           _sum: { matchesWon: true, matchesLost: true, matchesDrawn: true }
         });
   const byId = new Map(totals.map((row) => [row.organizerPlayerId, row._sum]));
+  const historical = await listHistoricalContributions({ organizerId, since: null, activeOnly: false });
+  for (const row of historical) {
+    const current = byId.get(row.organizerPlayerId) ?? { matchesWon: 0, matchesLost: 0, matchesDrawn: 0 };
+    byId.set(row.organizerPlayerId, {
+      matchesWon: (current.matchesWon ?? 0) + row.matchesWon,
+      matchesLost: (current.matchesLost ?? 0) + row.matchesLost,
+      matchesDrawn: (current.matchesDrawn ?? 0) + row.matchesDrawn
+    });
+  }
   const taken = archived
     ? new Set(
         (
@@ -43,9 +53,7 @@ export async function listManagedOrganizerPlayers(
       matchesWon: sum?.matchesWon ?? 0,
       matchesLost: sum?.matchesLost ?? 0,
       matchesDrawn: sum?.matchesDrawn ?? 0,
-      ...(archived && taken
-        ? { suggestedRestoreName: nextUnarchiveDisplayName(player.name, taken) }
-        : {})
+      ...(archived && taken ? { suggestedRestoreName: nextUnarchiveDisplayName(player.name, taken) } : {})
     };
   });
 }
@@ -81,10 +89,7 @@ export async function unarchiveOrganizerPlayerRow(
     where: { organizerId, archivedAt: null },
     select: { nameNormalized: true }
   });
-  const name = nextUnarchiveDisplayName(
-    player.name,
-    new Set(active.map((row) => row.nameNormalized))
-  );
+  const name = nextUnarchiveDisplayName(player.name, new Set(active.map((row) => row.nameNormalized)));
   await prisma.organizerPlayer.update({
     where: { id: player.id },
     data: {

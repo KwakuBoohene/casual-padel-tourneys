@@ -73,7 +73,7 @@ export async function resolveOrganizerRequest(request: FastifyRequest): Promise<
   if (!request.user) return;
   const url = request.routeOptions.url ?? "";
   if (
-    !/^\/(tournaments|koh\/tournaments|players\/suggestions|me\/(players|career-share)|organizers\/[^/]+\/(players|career-share))/.test(
+    !/^\/(tournaments|koh\/tournaments|players\/suggestions|me\/(players|career-share)|organizers\/[^/]+\/(players|career-share|result-imports))/.test(
       url
     )
   )

@@ -31,6 +31,18 @@ export async function mergeOrganizerPlayersInTx(input: {
       })
     ]);
     if (!playerA || !playerB) throw notFound("Player not found.");
+    // Historical rows represent distinct event participants, not interchangeable match IDs.
+    const historical = await tx.historicalPlayerResult.findMany({
+      where: { organizerPlayerId: { in: [playerA.id, playerB.id] }, revision: { active: true } },
+      select: { organizerPlayerId: true, revisionId: true }
+    });
+    const revisionsA = new Set(
+      historical.filter((row) => row.organizerPlayerId === playerA.id).map((row) => row.revisionId)
+    );
+    if (historical.some((row) => row.organizerPlayerId === playerB.id && revisionsA.has(row.revisionId)))
+      throw validation(
+        "These players have distinct results in the same historical event. Correct its identity mapping before merging."
+      );
     if (playerA.archivedAt || playerB.archivedAt) {
       throw validation("Archived players cannot be merged.");
     }
@@ -45,13 +57,13 @@ export async function mergeOrganizerPlayersInTx(input: {
         select: { matchId: true }
       })
     ]);
-    if (!canMergeCareers(
-      deltasA.map((row) => row.matchId),
-      deltasB.map((row) => row.matchId)
-    )) {
-      throw validation(
-        "These players both have a result from the same match, so they cannot be merged."
-      );
+    if (
+      !canMergeCareers(
+        deltasA.map((row) => row.matchId),
+        deltasB.map((row) => row.matchId)
+      )
+    ) {
+      throw validation("These players both have a result from the same match, so they cannot be merged.");
     }
 
     const archivedAt = new Date();
@@ -79,6 +91,10 @@ export async function mergeOrganizerPlayersInTx(input: {
     });
     await tx.organizerPlayerStatDelta.updateMany({
       where: { organizerPlayerId: { in: [playerA.id, playerB.id] } },
+      data: { organizerPlayerId: id }
+    });
+    await tx.historicalPlayerResult.updateMany({
+      where: { organizerPlayerId: { in: [playerA.id, playerB.id] }, revision: { active: true } },
       data: { organizerPlayerId: id }
     });
     await tx.player.updateMany({

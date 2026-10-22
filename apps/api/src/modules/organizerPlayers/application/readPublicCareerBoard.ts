@@ -23,6 +23,7 @@ export async function readPublicCareerBoard(
   return {
     organizerName: organizer.name,
     range,
+    ...(board.importedEvents ? { importedEvents: board.importedEvents } : {}),
     // Identity ids are stripped: nothing on this page needs them, and leaving them out keeps a
     // visitor from probing the authenticated per-player routes.
     rows: board.rows.map(({ id: _id, ...row }) => row)

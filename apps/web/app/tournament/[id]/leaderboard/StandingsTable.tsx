@@ -18,6 +18,7 @@ import { StandingsHeaderRow } from "./StandingsHeaderRow";
 import { useStandingsColumns } from "./StandingsColumnsProvider";
 
 export type WebStandingsRow = {
+  imported?: boolean;
   id: string;
   rank: number;
   name: string;
@@ -70,13 +71,20 @@ export function WebStandingsTable(props: { rows: WebStandingsRow[] }) {
               return (
                 <tr key={row.id} className="border-t border-padel-border">
                   <td className="px-3 py-3 text-padel-muted font-bold">{row.rank}</td>
-                  <td className="px-2 py-3 font-semibold text-padel-text truncate max-w-[10rem]">{row.name}</td>
+                  <td className="px-2 py-3 font-semibold text-padel-text truncate max-w-[10rem]">
+                    {row.name}
+                    {row.imported ? (
+                      <span className="block text-[10px] font-normal text-padel-muted">Imported</span>
+                    ) : null}
+                  </td>
                   {columns.map((col) => (
                     <td
                       key={col.key}
                       className={[
                         "px-1.5 py-3 text-right tabular-nums",
-                        col.key === "gd" || col.key === "pts" ? "font-bold text-padel-text" : "text-padel-muted"
+                        col.key === "gd" || col.key === "pts"
+                          ? "font-bold text-padel-text"
+                          : "text-padel-muted"
                       ].join(" ")}
                     >
                       {cells[col.key]}

@@ -1,11 +1,15 @@
-import type {
-  OrganizerPlayerDetail,
-  OrganizerPlayerLeaderboard,
-  OrganizerPlayerRange
-} from "@padel/shared";
+import type { OrganizerPlayerDetail, OrganizerPlayerLeaderboard, OrganizerPlayerRange } from "@padel/shared";
 
-/** One credited match result for one career identity. */
+/** One career contribution: a credited match or an explicitly marked historical summary. */
 export interface CareerDelta {
+  historical?: {
+    importId: string;
+    date: string;
+    mode: string;
+    scoringMode: string;
+    sourceRank: number;
+    setsComplete: boolean;
+  };
   organizerPlayerId: string;
   organizerPlayerName: string;
   tournamentId: string;
@@ -36,10 +40,13 @@ export function isAmericanoPointsRow(row: {
 }
 
 function isAmericanoPointsDelta(delta: CareerDelta): boolean {
+  if (delta.historical) return delta.historical.scoringMode === "AMERICANO_POINTS";
   return isAmericanoPointsRow(delta);
 }
 
 interface AggregatedCareer {
+  importedEvents: Set<string>;
+  setsComplete: boolean;
   id: string;
   name: string;
   matchesWon: number;
@@ -56,6 +63,8 @@ interface AggregatedCareer {
 
 function emptyCareer(id: string, name: string): AggregatedCareer {
   return {
+    importedEvents: new Set(),
+    setsComplete: true,
     id,
     name,
     matchesWon: 0,
@@ -72,6 +81,10 @@ function emptyCareer(id: string, name: string): AggregatedCareer {
 }
 
 function addDelta(current: AggregatedCareer, delta: CareerDelta): void {
+  if (delta.historical) {
+    current.importedEvents.add(delta.historical.importId);
+    current.setsComplete &&= delta.historical.setsComplete;
+  }
   current.matchesWon += delta.matchesWon;
   current.matchesLost += delta.matchesLost;
   current.matchesDrawn += delta.matchesDrawn;
@@ -115,6 +128,16 @@ export function compareCareerRows(
 
 function toRow(row: AggregatedCareer, rank: number) {
   return {
+    ...(row.importedEvents.size
+      ? {
+          coverage: {
+            importedEvents: row.importedEvents.size,
+            setsComplete: row.setsComplete,
+            gamesComplete: true,
+            pointsComplete: true
+          }
+        }
+      : {}),
     rank,
     id: row.id,
     name: row.name,
@@ -145,11 +168,30 @@ export function buildLeaderboard(
     byPlayer.set(delta.organizerPlayerId, current);
   }
 
-  const rows = [...byPlayer.values()].sort(compareCareerRows).map((row, index) => toRow(row, index + 1));
-  return { range, rows };
+  // Group-wide completeness keeps the ordering transitive and avoids penalizing missing sets.
+  const groups = new Map<number, AggregatedCareer[]>();
+  for (const row of byPlayer.values())
+    groups.set(row.matchesWon, [...(groups.get(row.matchesWon) ?? []), row]);
+  const ordered = [...groups.entries()]
+    .sort(([a], [b]) => b - a)
+    .flatMap(([, group]) => {
+      const complete = group.every((row) => row.setsComplete);
+      return group.sort((a, b) =>
+        complete
+          ? compareCareerRows(a, b)
+          : b.gamesWon - a.gamesWon ||
+            b.americanoPointsWon - a.americanoPointsWon ||
+            a.name.localeCompare(b.name)
+      );
+    });
+  const rows = ordered.map((row, index) => toRow(row, index + 1));
+  const imported = new Set(deltas.flatMap((row) => (row.historical ? [row.historical.importId] : [])));
+  return { range, rows, ...(imported.size ? { importedEvents: imported.size } : {}) };
 }
 
 type EventAgg = {
+  sourceKind?: "HISTORICAL_SUMMARY";
+  importId?: string;
   tournamentId: string;
   tournamentName: string;
   matchesWon: number;
@@ -165,6 +207,9 @@ type EventAgg = {
 
 function emptyEvent(delta: CareerDelta): EventAgg {
   return {
+    ...(delta.historical
+      ? { sourceKind: "HISTORICAL_SUMMARY" as const, importId: delta.historical.importId }
+      : {}),
     tournamentId: delta.tournamentId,
     tournamentName: delta.tournamentName,
     matchesWon: 0,
@@ -207,6 +252,16 @@ export function buildDetail(
 
   return {
     id: player.id,
+    ...(totals.importedEvents.size
+      ? {
+          coverage: {
+            importedEvents: totals.importedEvents.size,
+            setsComplete: totals.setsComplete,
+            gamesComplete: true,
+            pointsComplete: true
+          }
+        }
+      : {}),
     name: player.name,
     range,
     matchesWon: totals.matchesWon,

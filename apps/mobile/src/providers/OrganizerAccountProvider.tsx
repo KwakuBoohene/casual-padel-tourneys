@@ -43,6 +43,8 @@ export function OrganizerAccountProvider({ children }: { children: ReactNode }) 
   const selectedRef = useRef<OrganizerAccount | null>(null);
   const actorRef = useRef(auth.currentUser?.id);
   actorRef.current = auth.currentUser?.id;
+  const userRef = useRef(auth.currentUser);
+  userRef.current = auth.currentUser;
   const apply = useCallback(
     (account: OrganizerAccount) => {
       setSelectedOrganizer(account);
@@ -73,18 +75,18 @@ export function OrganizerAccountProvider({ children }: { children: ReactNode }) 
   }, [auth.authToken, auth.currentUser, apply]);
   useEffect(() => {
     let cancelled = false;
+    const actor = userRef.current;
     setReady(false);
     selectedRef.current = null;
     setSelected(null);
     setAccounts([]);
-    if (!auth.authToken || !auth.currentUser) {
+    if (!auth.authToken || !actor) {
       setSelectedOrganizer(null);
       void queryClient.cancelQueries();
       queryClient.clear();
       setReady(true);
       return;
     }
-    const actor = auth.currentUser;
     void (async () => {
       try {
         const response = await fetchOrganizerAccounts();
@@ -108,7 +110,8 @@ export function OrganizerAccountProvider({ children }: { children: ReactNode }) 
     return () => {
       cancelled = true;
     };
-  }, [auth.authToken, auth.currentUser, apply, queryClient]);
+  // Reinitialize only for a login/identity change, not a verification/profile refresh.
+  }, [auth.authToken, auth.currentUser?.id, apply, queryClient]);
   useEffect(() => {
     setOrganizerAccessLostHandler(() => {
       if (actorRef.current && selectedRef.current)

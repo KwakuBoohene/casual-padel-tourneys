@@ -74,3 +74,4 @@ export const apiGet = <T>(path: string) => request<T>(path, "GET");
 export const apiPost = <T>(path: string, payload: unknown) => request<T>(path, "POST", payload);
 export const apiPut = <T>(path: string, payload: unknown) => request<T>(path, "PUT", payload);
 export const apiDelete = <T>(path: string) => request<T>(path, "DELETE");
+export const apiPatch = <T>(path: string, payload: unknown) => request<T>(path, "PATCH", payload);

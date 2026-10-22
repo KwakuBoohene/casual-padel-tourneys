@@ -25,10 +25,7 @@ export function AccountPlayersFlow(props: AccountPlayersFlowProps) {
   if (players.selectedId && players.detail) {
     return (
       <PageShell>
-        <AccountPlayerDetailPanel
-          detail={players.detail}
-          onBack={players.closeDetail}
-        />
+        <AccountPlayerDetailPanel detail={players.detail} onBack={players.closeDetail} />
       </PageShell>
     );
   }
@@ -41,6 +38,7 @@ export function AccountPlayersFlow(props: AccountPlayersFlowProps) {
         onRange={players.setRange}
         rows={players.board?.rows ?? []}
         loading={players.loading}
+        importedEvents={players.board?.importedEvents}
         guestMessage={players.guestMessage}
         onSelect={players.openDetail}
         onBack={props.onBack}

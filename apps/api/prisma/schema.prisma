@@ -75,6 +75,7 @@ model User {
   memberships            OrganizerMembership[] @relation("MembershipMember")
   organizerInvitations   OrganizerInvitation[]
   organizerActivities    OrganizerActivity[]
+  historicalImports      HistoricalResultImport[]
   tournaments            Tournament[]
   magicLinkTokens        MagicLinkToken[]
   opaqueRecord           OpaqueRecord?
@@ -196,6 +197,7 @@ model OrganizerPlayer {
   organizer      User      @relation(fields: [organizerId], references: [id], onDelete: Cascade)
   players        Player[]
   deltas         OrganizerPlayerStatDelta[]
+  historicalResults HistoricalPlayerResult[]
 
   @@unique([organizerId, nameNormalized])
   @@index([organizerId])
@@ -438,4 +440,72 @@ model OrganizerActivity {
   owner       User     @relation(fields: [organizerId], references: [id], onDelete: Cascade)
 
   @@index([organizerId, occurredAt, id])
+}
+
+model HistoricalResultImport {
+  id            String @id @default(cuid())
+  organizerId   String
+  eventKey      String
+  title         String
+  eventDate     DateTime @db.Date
+  mode          TournamentMode
+  variant       String?
+  scoringMode   ScoringMode
+  fingerprint   String
+  included      Boolean @default(true)
+  version       Int @default(1)
+  createdById    String
+  createdByName  String
+  createdAt     DateTime @default(now())
+  owner         User @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  revisions     HistoricalResultRevision[]
+
+  @@unique([organizerId, eventKey])
+  @@index([organizerId, eventDate])
+  @@index([organizerId, fingerprint])
+}
+
+model HistoricalResultRevision {
+  id              String @id @default(cuid())
+  importId        String
+  number          Int
+  active          Boolean @default(true)
+  requestKey      String @unique
+  actorId         String
+  actorName       String
+  reason          String
+  filename        String
+  fileHash        String
+  source          Json
+  createdAt       DateTime @default(now())
+  import          HistoricalResultImport @relation(fields: [importId], references: [id], onDelete: Cascade)
+  results         HistoricalPlayerResult[]
+
+  @@unique([importId, number])
+}
+
+model HistoricalPlayerResult {
+  id                    String @id @default(cuid())
+  revisionId            String
+  organizerPlayerId     String
+  rowNumber             Int
+  sourceName            String
+  sourceRank            Int
+  matchesWon            Int
+  matchesLost           Int
+  matchesDrawn          Int
+  gamesWon              Int?
+  gamesLost             Int?
+  setsWon               Int?
+  setsLost              Int?
+  americanoPointsWon    Int?
+  americanoPointsLost   Int?
+  sourcePoints          Int?
+  sourceFile            String
+  notes                 String
+  revision              HistoricalResultRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  player                OrganizerPlayer @relation(fields: [organizerPlayerId], references: [id], onDelete: Cascade)
+
+  @@unique([revisionId, organizerPlayerId])
+  @@index([organizerPlayerId])
 }

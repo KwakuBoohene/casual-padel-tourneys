@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 
 import type { AuthSession, AuthUser } from "../api/auth";
+import { fetchCurrentUser } from "../api/auth";
+import { getAuthToken } from "../api/client";
 import { clearAuthSession, loadStoredAuth, persistAuthSession } from "../api/authStorage";
 import { clearSessionExpiry } from "../api/sessionExpiry";
 import { logger } from "../logger";
@@ -43,6 +45,10 @@ export function useAuthSession() {
 
   const updateUser = useCallback(async (user: AuthUser) => {
     setCurrentUser(user);
+    if (user.emailVerified) {
+      setEmailVerifyRequired(false);
+      setVerifyBy(undefined);
+    }
     if (authToken) {
       try {
         await persistAuthSession(authToken, user);
@@ -51,6 +57,19 @@ export function useAuthSession() {
       }
     }
   }, [authToken]);
+
+  const refreshUser = useCallback(async () => {
+    if (!authToken || !currentUser || getAuthToken() !== authToken) return null;
+    const { user } = await fetchCurrentUser();
+    // A response from a previous login must not restore that login after sign-out/account switching.
+    if (getAuthToken() !== authToken || user.id !== currentUser.id) return null;
+    if (JSON.stringify(user) !== JSON.stringify(currentUser)) await updateUser(user);
+    if (user.emailVerified) {
+      setEmailVerifyRequired(false);
+      setVerifyBy(undefined);
+    }
+    return user;
+  }, [authToken, currentUser, updateUser]);
 
   const handleSignOut = useCallback(async () => {
     setAuthTokenState(null);
@@ -90,6 +109,7 @@ export function useAuthSession() {
     handleSignOut,
     handleSessionExpired,
     updateUser,
+    refreshUser,
     markEmailVerifyRequired,
     clearEmailVerifyRequired
   };

@@ -1,4 +1,4 @@
-import { apiPost } from "./client";
+import { apiGet, apiPost } from "./client";
 
 export type AuthUser = {
   id: string;
@@ -14,6 +14,10 @@ export type AuthSession = {
   token: string;
   user: AuthUser;
 };
+
+export async function fetchCurrentUser(): Promise<{ user: AuthUser }> {
+  return apiGet<{ user: AuthUser }>("/auth/me");
+}
 
 export async function signInWithGoogle(idToken: string): Promise<AuthSession> {
   return apiPost<AuthSession>("/auth/google", { idToken });

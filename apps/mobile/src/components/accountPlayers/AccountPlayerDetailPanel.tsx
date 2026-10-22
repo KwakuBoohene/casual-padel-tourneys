@@ -2,6 +2,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import {
   formatGameDiff,
   standingsLineFromRecord,
+  HISTORICAL_NOTICE,
   type OrganizerPlayerDetail,
   type OrganizerPlayerRange
 } from "@padel/shared";
@@ -32,12 +33,21 @@ export function AccountPlayerDetailPanel(props: AccountPlayerDetailPanelProps) {
         </Pressable>
         <Text style={[typography.title, { color: colors.text }]}>{detail.name}</Text>
         <Text style={{ color: colors.muted }}>{rangeLabel(detail.range)}</Text>
+        {detail.coverage?.importedEvents ? (
+          <Text style={{ color: colors.muted, lineHeight: 22 }}>
+            {detail.coverage.importedEvents} imported events. {HISTORICAL_NOTICE} Set totals:{" "}
+            {detail.coverage.setsComplete
+              ? `${detail.setsWon} won / ${detail.setsLost} lost`
+              : "N/A (incomplete historical data)"}
+          </Text>
+        ) : null}
         <StandingsTable
           rows={[
             {
               id: detail.id,
               rank: 1,
               name: detail.name,
+              imported: Boolean(detail.coverage?.importedEvents),
               line: standingsLineFromRecord({
                 wins: detail.matchesWon,
                 losses: detail.matchesLost,
@@ -61,7 +71,9 @@ export function AccountPlayerDetailPanel(props: AccountPlayerDetailPanelProps) {
         ) : (
           detail.recentEvents.map((event) => (
             <Text key={event.tournamentId} style={{ color: colors.text, lineHeight: 22 }}>
-              {event.tournamentName} · {event.matchesWon}–{event.matchesLost}
+              {event.tournamentName}
+              {event.sourceKind === "HISTORICAL_SUMMARY" ? " · Imported summary" : ""} · {event.matchesWon}–
+              {event.matchesLost}
               {event.americanoPointsWon + event.americanoPointsLost > 0
                 ? ` · PW(A) ${event.americanoPointsWon} PL(A) ${event.americanoPointsLost}`
                 : ` · GD ${formatGameDiff(event.gamesWon - event.gamesLost)}`}

@@ -1,9 +1,11 @@
 import { z } from "zod";
+import type { HistoricalCoverage } from "./historicalResults.js";
 
 export const organizerPlayerRangeSchema = z.enum(["month", "year", "all"]);
 export type OrganizerPlayerRange = z.infer<typeof organizerPlayerRangeSchema>;
 
 export interface OrganizerPlayerLeaderboardRow {
+  coverage?: HistoricalCoverage;
   rank: number;
   id: string;
   name: string;
@@ -23,6 +25,7 @@ export interface OrganizerPlayerLeaderboardRow {
 export interface PublicCareerBoardRow extends Omit<OrganizerPlayerLeaderboardRow, "id"> {}
 
 export interface PublicCareerBoard {
+  importedEvents?: number;
   organizerName: string;
   range: OrganizerPlayerRange;
   rows: PublicCareerBoardRow[];
@@ -34,11 +37,14 @@ export interface CareerShareResponse {
 }
 
 export interface OrganizerPlayerLeaderboard {
+  importedEvents?: number;
   range: OrganizerPlayerRange;
   rows: OrganizerPlayerLeaderboardRow[];
 }
 
 export interface OrganizerPlayerEventSummary {
+  sourceKind?: "HISTORICAL_SUMMARY";
+  importId?: string;
   tournamentId: string;
   tournamentName: string;
   matchesWon: number;
@@ -53,6 +59,7 @@ export interface OrganizerPlayerEventSummary {
 }
 
 export interface OrganizerPlayerDetail {
+  coverage?: HistoricalCoverage;
   id: string;
   name: string;
   range: OrganizerPlayerRange;

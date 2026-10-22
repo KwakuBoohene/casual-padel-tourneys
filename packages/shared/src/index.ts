@@ -26,3 +26,4 @@ export * from "./mexicano/ladder.js";
 export * from "./americano/teams.js";
 
 export * from "./schemas/organizerAccess.js";
+export * from "./schemas/historicalResults.js";

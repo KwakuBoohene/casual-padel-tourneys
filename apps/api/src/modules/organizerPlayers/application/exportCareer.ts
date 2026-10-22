@@ -12,6 +12,7 @@ import { rangeStart } from "../domain/careerRange.js";
 import { isAmericanoPointsRow } from "../domain/careerStats.js";
 import type { CareerMatchRow, OrganizerPlayersDeps } from "./ports.js";
 import { getOrganizerPlayerLeaderboard } from "./readOrganizerPlayers.js";
+import { HISTORICAL_NOTICE } from "@padel/shared";
 
 /** Beyond this the PDF stops being something anyone reads; truncation is announced, never silent. */
 export const CAREER_MATCHES_EXPORT_LIMIT = 5000;
@@ -61,6 +62,7 @@ export async function buildCareerExportDocument(
   }
 
   const { rows, note } = await careerMatchRows(deps, organizerId, range, now);
+  const historical = await historicalExportSection(deps, organizerId, range);
   return {
     title: "Account leaderboard",
     subtitle: subtitle(range, now),
@@ -76,7 +78,8 @@ export async function buildCareerExportDocument(
           occurredAt: row.occurredAt.toISOString()
         }))
       ),
-      { ...buildMatchesSection(toMatchExportRows(rows), "Matches"), note }
+      { ...buildMatchesSection(toMatchExportRows(rows), "Matches"), note },
+      ...(historical ? [historical] : [])
     ]
   };
 }
@@ -102,7 +105,7 @@ async function careerLeaderboardSection(
   heading?: string
 ): Promise<ExportSection> {
   const board = await getOrganizerPlayerLeaderboard(deps, organizerId, range);
-  return buildLeaderboardSection(
+  const section = buildLeaderboardSection(
     board.rows.map((row) => ({
       rank: row.rank,
       name: row.name,
@@ -116,6 +119,56 @@ async function careerLeaderboardSection(
     })),
     heading
   );
+  return board.importedEvents ? { ...section, note: HISTORICAL_NOTICE } : section;
+}
+
+async function historicalExportSection(
+  deps: OrganizerPlayersDeps,
+  organizerId: string,
+  range: OrganizerPlayerRange
+): Promise<ExportSection | null> {
+  const rows = (
+    await deps.repo.listDeltas({ organizerId, since: rangeStart(range), activeOnly: false })
+  ).filter((row) => row.historical);
+  if (!rows.length) return null;
+  return {
+    heading: "Imported historical results",
+    headers: [
+      "Date",
+      "Event",
+      "Mode",
+      "Player",
+      "Source rank",
+      "MP",
+      "W",
+      "L",
+      "D",
+      "GW",
+      "GL",
+      "SW",
+      "SL",
+      "PW(A)",
+      "PL(A)"
+    ],
+    rows: rows.map((row) => [
+      row.historical!.date.slice(0, 10),
+      row.tournamentName,
+      row.historical!.mode,
+      row.organizerPlayerName,
+      String(row.historical!.sourceRank),
+      String(row.matchesWon + row.matchesLost + row.matchesDrawn),
+      String(row.matchesWon),
+      String(row.matchesLost),
+      String(row.matchesDrawn),
+      row.historical!.scoringMode === "REGULAR" ? String(row.gamesWon) : "N/A",
+      row.historical!.scoringMode === "REGULAR" ? String(row.gamesLost) : "N/A",
+      row.historical!.setsComplete ? String(row.setsWon) : "N/A",
+      row.historical!.setsComplete ? String(row.setsLost) : "N/A",
+      String(row.americanoPointsWon),
+      String(row.americanoPointsLost)
+    ]),
+    note: HISTORICAL_NOTICE
+  };
 }
 
 async function careerMatchRows(
@@ -133,9 +186,15 @@ async function careerMatchRows(
   const truncated = fetched.length > CAREER_MATCHES_EXPORT_LIMIT;
   const rows = truncated ? fetched.slice(0, CAREER_MATCHES_EXPORT_LIMIT) : fetched;
 
-  const notes = [
-    "Includes players later archived — the match still happened, so it stays in this list."
-  ];
+  const notes = ["Includes players later archived — the match still happened, so it stays in this list."];
+  if (
+    (await deps.repo.listDeltas({ organizerId, since: rangeStart(range, now), activeOnly: false })).some(
+      (row) => row.historical
+    )
+  )
+    notes.push(
+      "Imported historical summaries are excluded from this match list because individual match details are unavailable."
+    );
   if (truncated) {
     notes.unshift(
       `Truncated to the ${CAREER_MATCHES_EXPORT_LIMIT} most recent matches. Narrow the range to see more.`

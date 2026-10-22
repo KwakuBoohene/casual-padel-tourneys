@@ -25,7 +25,7 @@ export default function AuthLayout() {
   const onMagic = pathname.includes("/auth/magic");
   const onVerify = pathname.includes("/verify");
 
-  if (signedIn && !auth.emailVerifyRequired && !onMagic) {
+  if (signedIn && !auth.emailVerifyRequired && !onVerify && !onMagic) {
     return <Redirect href="/tournaments" />;
   }
 

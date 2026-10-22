@@ -1,4 +1,5 @@
 import { prisma } from "../../../lib/prisma.js";
+import { listHistoricalContributions } from "./historicalContributions.js";
 import type {
   CareerDeltaQuery,
   CareerMatchQuery,
@@ -7,10 +8,7 @@ import type {
   OrganizerPlayerRepository
 } from "../application/ports.js";
 import type { CareerDelta } from "../domain/careerStats.js";
-import {
-  archiveOrganizerPlayerRows,
-  unarchiveOrganizerPlayerRows
-} from "./bulkOrganizerPlayerManagement.js";
+import { archiveOrganizerPlayerRows, unarchiveOrganizerPlayerRows } from "./bulkOrganizerPlayerManagement.js";
 import {
   archiveOrganizerPlayerRow,
   listManagedOrganizerPlayers,
@@ -104,6 +102,7 @@ export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepositor
       orderBy: { occurredAt: "desc" },
       select: {
         organizerPlayerId: true,
+        occurredAt: true,
         tournamentId: true,
         tournamentName: true,
         gamesWon: true,
@@ -119,7 +118,7 @@ export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepositor
       }
     });
 
-    return rows.map((row) => ({
+    const live: CareerDelta[] = rows.map((row) => ({
       organizerPlayerId: row.organizerPlayerId,
       organizerPlayerName: row.organizerPlayer.name,
       tournamentId: row.tournamentId,
@@ -134,6 +133,17 @@ export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepositor
       americanoPointsWon: row.americanoPointsWon,
       americanoPointsLost: row.americanoPointsLost
     }));
+    const historical = await listHistoricalContributions(query);
+    if (!historical.length) return live;
+    // Preserve native query order. Historical dates determine placement in recent events.
+    const dates = new Map<string, number>();
+    for (const row of rows)
+      if (!dates.has(row.tournamentId)) dates.set(row.tournamentId, row.occurredAt.getTime());
+    return [...live, ...historical].sort(
+      (a, b) =>
+        (b.historical ? Date.parse(b.historical.date) : (dates.get(b.tournamentId) ?? 0)) -
+        (a.historical ? Date.parse(a.historical.date) : (dates.get(a.tournamentId) ?? 0))
+    );
   }
 
   async findPlayer(
@@ -147,10 +157,7 @@ export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepositor
     return player ?? null;
   }
 
-  listManaged(
-    organizerId: string,
-    status: "active" | "archived"
-  ): Promise<OrganizerManagedPlayerRow[]> {
+  listManaged(organizerId: string, status: "active" | "archived"): Promise<OrganizerManagedPlayerRow[]> {
     return listManagedOrganizerPlayers(organizerId, status);
   }
 
@@ -162,10 +169,7 @@ export class PrismaOrganizerPlayerRepository implements OrganizerPlayerRepositor
     return archiveOrganizerPlayerRows(organizerId, playerIds);
   }
 
-  unarchivePlayer(
-    organizerId: string,
-    organizerPlayerId: string
-  ): Promise<{ id: string; name: string }> {
+  unarchivePlayer(organizerId: string, organizerPlayerId: string): Promise<{ id: string; name: string }> {
     return unarchiveOrganizerPlayerRow(organizerId, organizerPlayerId);
   }
 

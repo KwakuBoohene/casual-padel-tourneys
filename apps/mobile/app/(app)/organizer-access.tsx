@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, ScrollView, Text, TextInput, View } from "react-native";
 import { router } from "expo-router";
 import type { OrganizerAccessOverview } from "@padel/shared";
 import {
@@ -15,12 +15,15 @@ import { useTheme } from "../../src/theme/ThemeProvider";
 import { AccessButton } from "../../src/components/organizerAccess/AccessButton";
 import { AccessConfirm } from "../../src/components/organizerAccess/AccessConfirm";
 import { ActivityPanel } from "../../src/components/organizerAccess/ActivityPanel";
-import { PageShell } from "../../src/layout";
+import { PageShell, useBreakpoint } from "../../src/layout";
+import { useEmailVerificationRefresh } from "../../src/hooks/auth/useEmailVerificationRefresh";
 
 export default function OrganizerAccessScreen() {
+  useEmailVerificationRefresh();
   const account = useOrganizerAccount();
   const auth = useAuthSessionContext();
   const { colors } = useTheme();
+  const { isWide } = useBreakpoint();
   const [overview, setOverview] = useState<OrganizerAccessOverview | null>(null);
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
@@ -31,8 +34,8 @@ export default function OrganizerAccessScreen() {
     description: string;
     run: () => Promise<unknown>;
   } | null>(null);
-  const selected = account.selected!;
-  const owner = selected.role === "OWNER";
+  const selected = account.selected;
+  const owner = selected?.role === "OWNER";
   const load = useCallback(async () => {
     if (!account.selected || auth.currentUser?.isGuest) return;
     try {
@@ -62,23 +65,30 @@ export default function OrganizerAccessScreen() {
       setBusy(false);
     }
   };
+  if (!selected) {
+    return (
+      <PageShell>
+        <ActivityIndicator accessibilityLabel="Loading organizer access" color={colors.primary} />
+      </PageShell>
+    );
+  }
   return (
     <PageShell>
       <ScrollView
         contentContainerStyle={{
           width: "100%",
-          maxWidth: 680,
+          maxWidth: 1200,
           alignSelf: "center",
-          gap: 24,
-          padding: 20,
+          gap: 20,
+          padding: isWide ? 36 : 20,
           paddingBottom: 60
         }}
       >
         <View
           style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}
         >
-          <Text accessibilityRole="header" style={{ color: colors.text, fontSize: 26, fontWeight: "800" }}>
-            Organizer access
+          <Text accessibilityRole="header" style={{ color: colors.text, fontSize: isWide ? 34 : 26, fontWeight: "800" }}>
+            Organizer settings
           </Text>
           <AccessButton
             label="Back to tournaments"
@@ -87,37 +97,37 @@ export default function OrganizerAccessScreen() {
           />
         </View>
         <Text style={{ color: colors.muted }}>
-          Signed in as {auth.currentUser?.name} ({auth.currentUser?.email}). Each person keeps their own
-          login.
+          {isWide ? "Manage verification and everyone who can work in this organizer workspace." : `Signed in as ${auth.currentUser?.name} (${auth.currentUser?.email}). Each person keeps their own login.`}
         </Text>
-        <View style={{ gap: 12 }}>
-          <Text style={{ color: colors.text, fontSize: 20, fontWeight: "700" }}>Organizer accounts</Text>
-          {account.accounts.map((entry) => (
-            <View
-              key={entry.id}
-              style={{
-                padding: 16,
-                borderWidth: 1,
-                borderColor: colors.border,
-                borderRadius: 16,
-                gap: 10,
-                backgroundColor: colors.surface
-              }}
-            >
-              <Text style={{ color: colors.text, fontWeight: "700" }}>
-                {entry.id === auth.currentUser?.id
-                  ? "My organizer account"
-                  : `${entry.name}'s organizer account`}{" "}
-                · {entry.role === "OWNER" ? "Owner" : "Manager"}
-              </Text>
-              <AccessButton
-                label={entry.id === selected.id ? "Currently selected" : `Manage ${entry.name}'s account`}
-                secondary
-                disabled={entry.id === selected.id || busy}
-                onPress={() => account.select(entry)}
-              />
+        <View style={{ flexDirection: isWide ? "row" : "column", alignItems: "flex-start", gap: 24 }}>
+          {isWide ? (
+            <View style={{ width: 220, minHeight: 390, padding: 16, borderRadius: 16, backgroundColor: colors.surface, gap: 8 }}>
+              <Text style={{ color: colors.muted, fontSize: 11, fontWeight: "700", marginBottom: 8 }}>SETTINGS</Text>
+              {['Profile', 'Email & security', 'Organizer access', 'Activity'].map((label) => (
+                <View key={label} style={{ minHeight: 44, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: label === 'Organizer access' ? colors.surfaceAlt : "transparent" }}>
+                  <Text style={{ color: label === 'Organizer access' ? colors.primary : colors.muted, fontWeight: label === 'Organizer access' ? "700" : "500" }}>{label}</Text>
+                </View>
+              ))}
             </View>
-          ))}
+          ) : null}
+          <View style={{ flex: 1, width: "100%", gap: 20 }}>
+        <View style={{ padding: 16, borderRadius: 16, backgroundColor: colors.surface, gap: 8, flexDirection: isWide ? "row" : "column", alignItems: isWide ? "center" : "flex-start", justifyContent: "space-between" }}>
+          <View style={{ alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: colors.surfaceAlt }}>
+            <Text style={{ color: auth.currentUser?.emailVerified ? colors.connected : colors.statusNext, fontWeight: "700", fontSize: 12 }}>
+              ●  Email {auth.currentUser?.emailVerified ? "verified" : "verification required"}
+            </Text>
+          </View>
+          <Text style={{ color: colors.text, fontWeight: "600" }}>{auth.currentUser?.email}</Text>
+          {isWide ? <Text style={{ color: colors.muted, fontSize: 12 }}>{auth.currentUser?.emailVerified ? "Invitations are enabled" : "Verify email to enable invitations"}</Text> : null}
+        </View>
+        <View style={{ padding: 16, borderWidth: 1, borderColor: colors.border, borderRadius: 16, gap: 6, backgroundColor: colors.surface }}>
+          <Text style={{ color: colors.muted, fontSize: 12, fontWeight: "700" }}>CURRENT WORKSPACE</Text>
+          <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>
+            {owner ? "My organizer workspace" : selected.name}
+          </Text>
+          <Text style={{ color: colors.muted }}>
+            {owner ? "You are the owner." : "You have Manager access. The owner keeps control of membership and permanent deletion."}
+          </Text>
         </View>
         {auth.currentUser?.isGuest ? (
           <Text style={{ color: colors.muted }}>
@@ -126,7 +136,7 @@ export default function OrganizerAccessScreen() {
         ) : (
           <>
             <Text style={{ color: colors.text, fontSize: 20, fontWeight: "700" }}>
-              {owner ? "Managers and invitations" : "Your manager access"}
+              {owner ? "People with access" : "Your manager access"}
             </Text>
             <Text style={{ color: colors.muted }}>
               Managers can create and manage all existing and future tournaments, scores, players, career
@@ -140,7 +150,7 @@ export default function OrganizerAccessScreen() {
               />
             ) : null}
             {owner && account.enabled ? (
-              <View style={{ gap: 12 }}>
+              <View style={{ gap: 12, flexDirection: isWide ? "row" : "column", alignItems: isWide ? "center" : "stretch" }}>
                 <TextInput
                   accessibilityLabel="Manager email"
                   placeholder="Manager email"
@@ -156,7 +166,8 @@ export default function OrganizerAccessScreen() {
                     borderWidth: 1,
                     borderColor: colors.border,
                     padding: 14,
-                    backgroundColor: colors.surface
+                    backgroundColor: colors.surface,
+                    flex: isWide ? 1 : undefined
                   }}
                 />
                 <AccessButton
@@ -188,7 +199,7 @@ export default function OrganizerAccessScreen() {
             {overview?.members.map((member) => (
               <View
                 key={member.id}
-                style={{ padding: 16, borderWidth: 1, borderColor: colors.border, borderRadius: 16, gap: 10 }}
+                style={{ padding: 16, borderRadius: 16, gap: 10, backgroundColor: colors.surface }}
               >
                 <Text style={{ color: colors.text, fontWeight: "700" }}>{member.name} · Manager</Text>
                 <Text style={{ color: colors.muted }}>{member.email}</Text>
@@ -210,7 +221,7 @@ export default function OrganizerAccessScreen() {
             {overview?.invitations.map((invite) => (
               <View
                 key={invite.id}
-                style={{ padding: 16, gap: 10, borderWidth: 1, borderColor: colors.border, borderRadius: 16 }}
+                style={{ padding: 16, gap: 10, borderRadius: 16, backgroundColor: colors.surfaceAlt }}
               >
                 <Text style={{ color: colors.text, fontWeight: "700" }}>{invite.email}</Text>
                 <Text style={{ color: colors.muted }}>
@@ -243,6 +254,8 @@ export default function OrganizerAccessScreen() {
             />
           </>
         )}
+          </View>
+        </View>
         {message ? (
           <Text accessibilityRole="alert" style={{ color: colors.primary }}>
             {message}

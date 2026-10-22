@@ -25,6 +25,10 @@ export function teamMatchupCapacity(teamCount: number): number {
   return combinations2(teamCount);
 }
 
+export function teamGamesTarget(config: TournamentConfig, teamCount: number): number {
+  return Math.min(config.targetGamesPerPlayer ?? 4, Math.max(0, teamCount - 1));
+}
+
 /**
  * Distinct opponent teams a single Classic Americano player can face: any pair drawn from
  * the other players. This caps games per player before a rematch becomes unavoidable.
@@ -41,8 +45,9 @@ export function teamScheduleShape(config: TournamentConfig, teamCount: number): 
     return shapeFromMatches(capacity, matchesPerRound);
   }
   if (config.schedulingMode === "TARGET_GAMES") {
-    const target = Math.min(config.targetGamesPerPlayer ?? 4, Math.max(1, teamCount - 1));
-    const wanted = Math.ceil((teamCount * target) / 2);
+    const target = teamGamesTarget(config, teamCount);
+    // An odd number of appearances cannot form whole matches: leave one team a game short.
+    const wanted = Math.floor((teamCount * target) / 2);
     return shapeFromMatches(Math.min(wanted, capacity), matchesPerRound);
   }
   const timedRounds = estimateTournament(config).rounds;

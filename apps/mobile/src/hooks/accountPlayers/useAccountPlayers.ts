@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import type {
-  OrganizerPlayerDetail,
-  OrganizerPlayerLeaderboard,
-  OrganizerPlayerRange
-} from "@padel/shared";
+import { useFocusEffect } from "expo-router";
+import type { OrganizerPlayerDetail, OrganizerPlayerLeaderboard, OrganizerPlayerRange } from "@padel/shared";
 
 import { getAccountPlayerDetail, getAccountPlayerLeaderboard } from "../../api/accountPlayers";
 import { isEmailVerifyRequired } from "../../api/errors";
@@ -41,9 +38,11 @@ export function useAccountPlayers(params: {
     }
   }, [range, setErrorText, markEmailVerifyRequired]);
 
-  useEffect(() => {
-    void reloadBoard();
-  }, [reloadBoard]);
+  useFocusEffect(
+    useCallback(() => {
+      void reloadBoard();
+    }, [reloadBoard])
+  );
 
   useEffect(() => {
     if (!selectedId) {

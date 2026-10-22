@@ -12,7 +12,11 @@ function label(action: string) {
     INVITATION_ACCEPTED: "Accepted manager access",
     INVITATION_REVOKED: "Revoked an invitation",
     MANAGER_REMOVED: "Removed a manager",
-    MANAGER_LEFT: "Left organizer account"
+    MANAGER_LEFT: "Left organizer account",
+    HISTORICAL_IMPORT_CREATED: "Imported historical results",
+    HISTORICAL_IMPORT_CORRECTED: "Corrected historical results",
+    HISTORICAL_IMPORT_INCLUDED: "Included historical results",
+    HISTORICAL_IMPORT_EXCLUDED: "Excluded historical results"
   };
   if (names[action]) return names[action];
   if (action === "POST /tournaments") return "Created a tournament";

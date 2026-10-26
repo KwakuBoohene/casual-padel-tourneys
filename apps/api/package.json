@@ -33,10 +33,10 @@
     "pdfkit": "0.20.2"
   },
   "devDependencies": {
-    "@types/pdfkit": "0.17.6",
-    "eslint-plugin-boundaries": "7.2.0",
-    "prisma": "6.19.2",
-    "tsx": "4.23.12",
-    "typescript-eslint": "8.67.0"
+    "@types/pdfkit": "0.17.7",
+    "eslint-plugin-boundaries": "7.2.1",
+    "prisma": "7.10.1",
+    "tsx": "4.23.15",
+    "typescript-eslint": "8.72.0"
   }
 }

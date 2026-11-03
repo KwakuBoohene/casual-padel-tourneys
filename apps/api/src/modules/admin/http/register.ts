@@ -1,3 +1,6 @@
+import type { AdminReports } from "../application/reports.js";
+import { PrismaAdminReports } from "../infrastructure/PrismaAdminReports.js";
+import { registerReportingRoutes } from "./reportingRoutes.js";
 import { reportRequestError } from "../../../shared/http/sentryMonitoring.js";
 import { requestMagicLinkSchema } from "@padel/shared";
 import { requestAdminSignIn, type AdminSignInServices } from "../application/requestSignIn.js";
@@ -12,7 +15,8 @@ import { PrismaAdminAccessStore } from "../infrastructure/PrismaAdminAccessStore
 export function registerAdminModule(
   server: FastifyInstance,
   store: AdminAccessStore = new PrismaAdminAccessStore(),
-  services: AdminSignInServices = new PrismaAdminSignInServices()
+  services: AdminSignInServices = new PrismaAdminSignInServices(),
+  reports: AdminReports = new PrismaAdminReports()
 ): void {
   server.post(
     "/admin/sign-in",
@@ -51,9 +55,12 @@ export function registerAdminModule(
           .status(403)
           .send({ code: "ADMIN_ACCESS_DENIED", message: "Admin access is unavailable." });
       }
-      // Store only a server-owned route template; queries may contain private search text.
-      await store.recordRead(request.user!.id, request.routeOptions.url!, request.id);
+      // Audit only the route and a bounded opaque resource id, never private query/search text.
+      const target = (request.params as { id?: string }).id;
+      const targetId = target && /^[A-Za-z0-9_-]{1,128}$/.test(target) ? target : undefined;
+      await store.recordRead(request.user!.id, request.routeOptions.url!, request.id, targetId);
     });
+    registerReportingRoutes(admin, reports);
     admin.get(
       "/admin/access",
       async (request): Promise<AdminAccessResponse> => ({

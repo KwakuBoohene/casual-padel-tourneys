@@ -28,3 +28,5 @@ export * from "./americano/teams.js";
 export * from "./schemas/organizerAccess.js";
 export * from "./schemas/historicalResults.js";
 export type { AdminAccessResponse } from "./types/admin.js";
+export * from "./schemas/adminReporting.js";
+export type { AdminCoverage, AdminUserSummary, AdminTournamentSummary, AdminReport, AdminReportPage, AdminUserDetail, AdminTournamentDetail, AdminPeriodCounts, AdminOverview } from "./types/admin.js";

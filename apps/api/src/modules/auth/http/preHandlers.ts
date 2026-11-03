@@ -1,3 +1,4 @@
+import { redactUrl } from "../../../shared/http/requestContext.js";
 import type { FastifyReply, FastifyRequest } from "fastify";
 
 import { resolveOrganizerRequest } from "../../organizerAccess/infrastructure/access.js";
@@ -40,7 +41,7 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply):
     reply.status(401);
     logger.warn("requireAuth: missing or invalid Authorization header", {
       status: 401,
-      path: request.url,
+      path: redactUrl(request.url),
       method: request.method
     });
     throw new Error("Missing Authorization header.");
@@ -51,7 +52,7 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply):
     reply.status(401);
     logger.warn("requireAuth: token verification failed", {
       status: 401,
-      path: request.url,
+      path: redactUrl(request.url),
       method: request.method
     });
     throw new Error("Invalid or expired token.");

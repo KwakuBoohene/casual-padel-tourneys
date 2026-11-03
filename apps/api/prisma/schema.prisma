@@ -81,6 +81,7 @@ model User {
   magicLinkTokens        MagicLinkToken[]
   opaqueRecord           OpaqueRecord?
   organizerPlayers       OrganizerPlayer[]
+  @@index([createdAt, id])
 }
 
 enum MagicLinkPurpose {
@@ -153,6 +154,8 @@ model Tournament {
   pendingPlayers        PendingPlayer[]
   kohCourts             KohCourt[]
   kohPromotionRules     KohPromotionRule[]
+  @@index([createdAt, id])
+  @@index([organizerId, createdAt, id])
 }
 
 model Player {
@@ -251,6 +254,7 @@ model Round {
   isLocked     Boolean    @default(false)
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   matches      Match[]
+  @@index([tournamentId])
 }
 
 model Match {
@@ -268,6 +272,7 @@ model Match {
   voidedAt  DateTime?
   round     Round      @relation(fields: [roundId], references: [id], onDelete: Cascade)
   sets      MatchSet[]
+  @@index([roundId])
 }
 
 model MatchSet {
@@ -441,6 +446,7 @@ model OrganizerActivity {
   owner       User     @relation(fields: [organizerId], references: [id], onDelete: Cascade)
 
   @@index([organizerId, occurredAt, id])
+  @@index([actorUserId, occurredAt])
 }
 
 model HistoricalResultImport {

@@ -16,9 +16,14 @@ export class PrismaAdminAccessStore implements AdminAccessStore {
     );
   }
 
-  async recordRead(actorUserId: string, route: string, requestId: string): Promise<void> {
+  async recordRead(actorUserId: string, route: string, requestId: string, targetId?: string): Promise<void> {
     await prisma.adminAccessAudit.create({
-      data: { actorUserId, action: "admin.read", targetId: route, requestId }
+      data: {
+        actorUserId,
+        action: "admin.read",
+        targetId: targetId ? `${route}#${targetId}` : route,
+        requestId
+      }
     });
   }
 }

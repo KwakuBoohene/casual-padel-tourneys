@@ -258,9 +258,8 @@ EXPO_PUBLIC_SENTRY_TRACES_SAMPLE_RATE=0.1
 
 For local Expo export, set the variables before `npm run export:web --workspace @padel/mobile`. For Compose, put them in `infra/.env`; they are forwarded as Docker build arguments. For other Docker hosts, configure the same build arguments. Rebuild the mobile web image after changes: runtime environment changes alone do not update an exported JavaScript bundle. Never use a Sentry API/auth token in an `EXPO_PUBLIC_*` variable. Keep the API DSN on the API service.
 
-Staging checklist: open CPA web, trigger a controlled render failure and confirm the retry fallback; test an unhandled rejection and network failure; verify sanitized events and sampled request traces in the browser project. Confirm expected 4xx/aborts stay quiet. Configure production issue alerts for this project and verify a test notification. Live Sentry delivery, fallback appearance and notification receipt have not been verified locally.
+Staging checklist: open CPA web, trigger a controlled render failure and confirm the retry fallback; test an unhandled rejection and network failure; verify sanitized events and sampled request traces in the browser project. Confirm expected 4xx/aborts stay quiet. Configure production issue alerts for this project and verify a test notification. Verify event delivery, fallback behavior and notification receipt in staging before enabling production monitoring.
 
-Local validation: organizer typecheck/lint, all 142 organizer tests (including four monitoring cases), and Expo web export pass. Export used local Node 22.12 and reported Expo's existing >=22.13 runtime warning; use supported Node >=22.13 for production builds.
 
 ### Public viewer monitoring
 
@@ -277,7 +276,7 @@ VIEWER_SENTRY_TRACES_SAMPLE_RATE=0.1
 
 Compose already loads `infra/.env` into the viewer service. Recreate the viewer container after changing these values; its startup script writes JSON-encoded public settings into `runtime-config.json`. No image rebuild is required for Docker configuration changes. For local Vite or standalone static hosting, use the same variables in `apps/web/.env.local` before starting/building. Never put a Sentry API/auth token in these public settings. Existing API and CPA web DSNs are separate settings. Empty viewer DSN disables SDK initialization; initial config-download failures cannot report because the DSN has not loaded yet.
 
-Set a production-only issue alert and verify a controlled staging event, request trace and notification receipt. Local tests use in-memory transports and never send test telemetry to a real Sentry project. Home/deep-link retry UI were smoke-tested in the browser; live match rendering and actual Sentry delivery still need staging validation. Original-source maps remain a later CI/release tooling slice.
+Set a production-only issue alert and verify a controlled staging event, request trace and notification receipt. Verify live match rendering and Sentry delivery in staging. Original-source maps remain a later CI/release tooling slice.
 
 ### Private web source maps without release tagging
 
@@ -308,7 +307,7 @@ For local builds or a CI workflow that deploys the resulting static artifacts, e
 
 With all upload settings absent, builds run offline, inject IDs and remove private maps; error reporting still works but source resolution is unavailable. Partial settings or failed uploads stop the build and clean up maps. To turn uploads off, remove all upload settings together. Existing uploaded maps are retained in Sentry so older open pages can still resolve; do not manually remove old artifacts on each deployment.
 
-After configuring credentials, rebuild and trigger a controlled browser error in staging for each frontend. Confirm Sentry shows the original `.ts`/`.tsx` location rather than a minified bundle, and confirm `.map` files are not downloadable from either site. Initial local validation covers real CLI injection, actual SDK debug-ID preservation, both exports and private artifact cleanup. Actual authenticated uploads and Sentry symbolication have not been verified because no upload credentials are configured locally. Backend/native source maps are outside this browser-build slice.
+After configuring credentials, rebuild and trigger a controlled browser error in staging for each frontend. Confirm Sentry shows the original `.ts`/`.tsx` location rather than a minified bundle, and confirm `.map` files are not downloadable from either site. Verify authenticated uploads and Sentry source resolution after configuring the deployment credentials. Backend/native source maps are outside this browser-build slice.
 
 ## Padel viewer platform admin access
 
@@ -346,3 +345,7 @@ docker compose exec -T api npm run admin:production --workspace @padel/api -- pr
 ```
 
 To disable access, set the flag false and restart the API. Operator revoke/prune commands remain available while disabled; do not drop grant/audit tables as a routine rollback. Production migration, real-account bootstrap and actual email delivery require deployment verification.
+
+### Admin reporting APIs
+
+Apply the additive reporting-index migration through the normal migration procedure before deploying admin reporting changes. Existing admin runtime configuration remains sufficient.

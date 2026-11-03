@@ -2,9 +2,16 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), "PUBLIC_API_BASE_URL");
+  const env = loadEnv(mode, process.cwd(), ["PUBLIC_API_BASE_URL", "VIEWER_SENTRY_"]);
   const config = JSON.stringify({
-    apiBaseUrl: process.env.PUBLIC_API_BASE_URL ?? env.PUBLIC_API_BASE_URL ?? ""
+    apiBaseUrl: process.env.PUBLIC_API_BASE_URL ?? env.PUBLIC_API_BASE_URL ?? "",
+    sentry: {
+      dsn: process.env.VIEWER_SENTRY_DSN ?? env.VIEWER_SENTRY_DSN ?? "",
+      environment: process.env.VIEWER_SENTRY_ENVIRONMENT ?? env.VIEWER_SENTRY_ENVIRONMENT ?? mode,
+      release: process.env.VIEWER_SENTRY_RELEASE ?? env.VIEWER_SENTRY_RELEASE ?? "",
+      tracesSampleRate:
+        process.env.VIEWER_SENTRY_TRACES_SAMPLE_RATE ?? env.VIEWER_SENTRY_TRACES_SAMPLE_RATE ?? "0.1"
+    }
   });
   return {
     plugins: [

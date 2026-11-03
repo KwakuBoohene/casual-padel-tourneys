@@ -1,6 +1,8 @@
+import type { ViewerMonitoringConfig } from "./observability/sentry";
+
 declare global {
   interface Window {
-    __PADEL_CONFIG__?: { apiBaseUrl: string };
+    __PADEL_CONFIG__?: { apiBaseUrl: string; sentry?: ViewerMonitoringConfig };
   }
 }
 

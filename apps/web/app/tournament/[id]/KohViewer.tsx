@@ -1,3 +1,4 @@
+import { watchViewerConnection } from "../../../lib/observability/sentry";
 import { useEffect, useState } from "react";
 
 import { ConnectionStatus } from "./components/ConnectionStatus";
@@ -20,9 +21,9 @@ export function KohViewer({
 
   useEffect(() => {
     const wsBase = apiBaseUrl.replace(/^http/, "ws");
-    const socket = new WebSocket(
-      `${wsBase}/ws/tournaments/${initial.id}?token=${encodeURIComponent(token)}`
-    );
+    const socket = new WebSocket(`${wsBase}/ws/tournaments/${initial.id}?token=${encodeURIComponent(token)}`);
+
+    const stopMonitoring = watchViewerConnection(socket);
 
     socket.onopen = () => setConnected(true);
     socket.onclose = () => setConnected(false);
@@ -42,7 +43,10 @@ export function KohViewer({
       }
     };
 
-    return () => socket.close();
+    return () => {
+      stopMonitoring();
+      socket.close();
+    };
   }, [apiBaseUrl, initial.id, token]);
 
   return (

@@ -1,3 +1,4 @@
+import { viewerFetch, viewerJson } from "../../../../lib/observability/sentry";
 import { useEffect, useState } from "react";
 import type { KohRankingRow, KohRankingsBoard } from "@padel/shared";
 
@@ -7,11 +8,7 @@ function formatStats(row: KohRankingRow): string {
   return `${row.matchesWon}-${row.matchesLost} ${diff}${special}`;
 }
 
-export function KohRankingsClient(props: {
-  token: string;
-  apiBaseUrl: string;
-  courtCount: number;
-}) {
+export function KohRankingsClient(props: { token: string; apiBaseUrl: string; courtCount: number }) {
   const [scope, setScope] = useState<"court" | "all">("court");
   const [courtNumber, setCourtNumber] = useState(1);
   const [board, setBoard] = useState<KohRankingsBoard | null>(null);
@@ -25,11 +22,13 @@ export function KohRankingsClient(props: {
       setError(null);
       const query = scope === "court" ? `?courtNumber=${courtNumber}` : "";
       try {
-        const response = await fetch(`${props.apiBaseUrl}/public/${props.token}/rankings${query}`, {
+        const response = await viewerFetch(`${props.apiBaseUrl}/public/${props.token}/rankings${query}`, {
           cache: "no-store"
         });
         if (!response.ok) throw new Error("Could not load rankings.");
-        const payload = (await response.json()) as { data: KohRankingsBoard };
+        const payload = (await viewerJson<{ data: KohRankingsBoard }>(response)) as {
+          data: KohRankingsBoard;
+        };
         if (!cancelled) setBoard(payload.data);
       } catch (err) {
         if (!cancelled) setError((err as Error).message);
@@ -83,9 +82,7 @@ export function KohRankingsClient(props: {
                 type="button"
                 onClick={() => setCourtNumber(n)}
                 className={`min-h-10 px-3 rounded-full text-sm font-semibold shrink-0 ${
-                  courtNumber === n
-                    ? "bg-padel-primary text-padel-onPrimary"
-                    : "border border-padel-border"
+                  courtNumber === n ? "bg-padel-primary text-padel-onPrimary" : "border border-padel-border"
                 }`}
               >
                 {n}
@@ -110,9 +107,7 @@ export function KohRankingsClient(props: {
                 </p>
                 <p className="text-sm text-padel-muted">{formatStats(row)}</p>
               </div>
-              {row.weakest ? (
-                <span className="text-xs font-bold text-padel-primary">weakest</span>
-              ) : null}
+              {row.weakest ? <span className="text-xs font-bold text-padel-primary">weakest</span> : null}
             </li>
           ))}
         </ul>

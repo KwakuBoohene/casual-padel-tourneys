@@ -261,3 +261,20 @@ For local Expo export, set the variables before `npm run export:web --workspace 
 Staging checklist: open CPA web, trigger a controlled render failure and confirm the retry fallback; test an unhandled rejection and network failure; verify sanitized events and sampled request traces in the browser project. Confirm expected 4xx/aborts stay quiet. Configure production issue alerts for this project and verify a test notification. Live Sentry delivery, fallback appearance and notification receipt have not been verified locally.
 
 Local validation: organizer typecheck/lint, all 142 organizer tests (including four monitoring cases), and Expo web export pass. Export used local Node 22.12 and reported Expo's existing >=22.13 runtime warning; use supported Node >=22.13 for production builds.
+
+### Public viewer monitoring
+
+The Vite spectator viewer now reports browser/render failures, network/5xx/JSON load failures and sustained unexpected socket closes. Expected 4xx/expired shares, cancellation and intentional socket close are excluded. Repeated load/connection categories are limited to one report per minute. Anonymous diagnostics contain no identity, share URL, headers, bodies, breadcrumbs or player names; built asset filenames and line numbers survive. No replay, distributed trace propagation or original-source mapping is included yet.
+
+Create/select a browser project such as `cpa-viewer` and set the viewer service runtime variables:
+
+```env
+VIEWER_SENTRY_DSN=<public viewer project DSN>
+VIEWER_SENTRY_ENVIRONMENT=production
+VIEWER_SENTRY_RELEASE=<deployed revision>
+VIEWER_SENTRY_TRACES_SAMPLE_RATE=0.1
+```
+
+Compose already loads `infra/.env` into the viewer service. Recreate the viewer container after changing these values; its startup script writes JSON-encoded public settings into `runtime-config.json`. No image rebuild is required for Docker configuration changes. For local Vite or standalone static hosting, use the same variables in `apps/web/.env.local` before starting/building. Never put a Sentry API/auth token in these public settings. Existing API and CPA web DSNs are separate settings. Empty viewer DSN disables SDK initialization; initial config-download failures cannot report because the DSN has not loaded yet.
+
+Set a production-only issue alert and verify a controlled staging event, request trace and notification receipt. Local tests use in-memory transports and never send test telemetry to a real Sentry project. Home/deep-link retry UI were smoke-tested in the browser; live match rendering and actual Sentry delivery still need staging validation. Original-source maps remain a later CI/release tooling slice.

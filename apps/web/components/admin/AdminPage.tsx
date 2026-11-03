@@ -1,48 +1,188 @@
-import { Link, Navigate } from "react-router-dom";
+import { useState, type ReactNode } from "react";
+import type {
+  AdminOverview,
+  AdminReport,
+  AdminReportPage,
+  AdminUserDetail,
+  AdminUserSummary,
+  AdminTournamentDetail,
+  AdminTournamentSummary
+} from "@padel/shared";
+import { Link, Navigate, useLocation, useSearchParams } from "react-router-dom";
+import { adminLink, rangeParams, reportQuery, timestamp, weekRange } from "../../lib/admin/reportFilters";
 import { useAdminSession } from "./AdminSession";
+import { useAdminReport } from "./useAdminReport";
+import { AccountDetail, AccountList } from "./AccountReports";
+import { TournamentDetail, TournamentList } from "./TournamentReports";
+import { OverviewReport } from "./OverviewReport";
+import { ReportFilters } from "./ReportFilters";
+import { Coverage, Pager, ReportState } from "./ReportParts";
+import "./admin.css";
 
 export function AdminPage() {
   const session = useAdminSession();
   if (session.status === "signed-out") return <Navigate to="/admin/sign-in" replace />;
   return (
-    <main className="min-h-screen bg-padel-background text-padel-text px-6 pt-28 pb-12">
+    <main className="admin-workspace min-h-screen bg-padel-background text-padel-text px-4 py-10 sm:px-6">
       <section className="max-w-6xl mx-auto space-y-6">
         <p className="text-padel-primary text-sm font-bold">CASUAL PADEL · ADMIN</p>
-        <h1 className="text-3xl font-bold">
-          {session.status === "allowed"
-            ? "Platform overview"
-            : session.status === "checking"
-              ? "Checking admin access…"
-              : "Admin access unavailable"}
-        </h1>
         {session.status === "allowed" ? (
-          <div className="rounded-2xl border border-padel-border bg-padel-surface p-6 space-y-3">
-            <h2 className="text-xl font-semibold">Your admin workspace</h2>
-            <p className="text-padel-muted">
-              Account, tournament and activity reports will appear here as they become available.
-            </p>
-          </div>
-        ) : null}
-        {session.status === "denied" ? (
-          <p className="text-padel-muted">This account does not have active platform admin access.</p>
-        ) : null}
-        {session.status === "error" ? (
+          <Reports />
+        ) : (
           <>
-            <p className="text-padel-muted">Could not check access. Please try again.</p>
-            <button onClick={session.retry} className="min-h-12 rounded-xl border border-padel-border px-5">
-              Check access again
-            </button>
+            <h1 className="text-3xl font-bold">
+              {session.status === "checking" ? "Checking admin access…" : "Admin access unavailable"}
+            </h1>
+            {session.status === "denied" ? (
+              <p role="alert">This account does not have active platform admin access.</p>
+            ) : null}
+            {session.status === "error" ? <ReportState error={0} retry={session.retry} /> : null}
           </>
-        ) : null}
-        <div className="flex flex-wrap items-center gap-6">
-          <Link to="/" className="underline text-padel-muted">
-            Back to the viewer
-          </Link>
-          <button onClick={session.signOut} className="min-h-12 rounded-xl border border-padel-border px-5">
+        )}
+        <footer className="flex flex-wrap items-center gap-6">
+          <Link to="/">Back to the viewer</Link>
+          <button onClick={session.signOut} className="admin-control">
             Sign out
           </button>
-        </div>
+        </footer>
       </section>
     </main>
+  );
+}
+function Reports() {
+  const { pathname } = useLocation();
+  const [params] = useSearchParams();
+  const [fallback] = useState(weekRange);
+  const [revision, setRevision] = useState(0);
+  const retry = () => setRevision((n) => n + 1);
+  const match = /^\/admin(?:\/(users|tournaments)(?:\/([A-Za-z0-9_-]{1,128}))?)?\/?$/.exec(pathname);
+  const kind = match?.[1] === "users" ? "users" : match?.[1] === "tournaments" ? "tournaments" : "overview";
+  const id = match?.[2];
+  const range = rangeParams(params, fallback);
+  const context = new URLSearchParams(params);
+  range.forEach((value, key) => context.set(key, value));
+  // The overview always compares a bounded interval; unbounded history is list-only.
+  if (kind === "overview" && range.get("period") === "all")
+    return <Navigate to={adminLink("/admin", fallback)} replace />;
+  const query = reportQuery(kind, params, fallback);
+  const path = `/admin/${kind}${id ? `/${id}` : `?${query}`}`;
+  const title =
+    kind === "overview"
+      ? "Platform overview"
+      : kind === "users"
+        ? id
+          ? "Account details"
+          : "Accounts"
+        : id
+          ? "Tournament details"
+          : "Tournaments";
+  const request = { path: query === null && !id ? null : path, revision, retry };
+  return (
+    <>
+      <nav aria-label="Admin reports" className="flex flex-wrap gap-6">
+        {[
+          ["/admin", "Overview", "overview"],
+          ["/admin/users", "Accounts", "users"],
+          ["/admin/tournaments", "Tournaments", "tournaments"]
+        ].map(([to, text, section]) => (
+          <Link
+            key={to}
+            aria-current={kind === section ? "page" : undefined}
+            to={adminLink(to, section === "overview" && range.get("period") === "all" ? fallback : range)}
+          >
+            {text}
+          </Link>
+        ))}
+      </nav>
+      <div className="flex flex-wrap justify-between items-center gap-4">
+        <h1 className="text-3xl font-bold">{title}</h1>
+        <button className="admin-control" onClick={retry}>
+          Refresh report
+        </button>
+      </div>
+      {!match ? (
+        <p role="alert">Admin page not found.</p>
+      ) : (
+        <>
+          {id ? (
+            <Link to={adminLink(`/admin/${kind}`, params)}>
+              Back to {kind === "users" ? "accounts" : "tournaments"}
+            </Link>
+          ) : (
+            <ReportFilters key={params.toString()} kind={kind} fallback={fallback} />
+          )}
+          <p className="text-sm text-padel-muted">
+            {id
+              ? "Details show all retained data for this record. List creation range: "
+              : "Creation range: "}
+            {range.get("period") === "all"
+              ? "All retained history"
+              : `${timestamp(range.get("from"))} inclusive → ${timestamp(range.get("to"))} exclusive`}{" "}
+            · Africa/Accra
+          </p>
+          {query === null && !id ? (
+            <p role="alert">
+              Invalid filters. Provide increasing dates, no more than 366 days apart, and supported filter
+              values. Apply filters again to restart pagination.
+            </p>
+          ) : kind === "overview" ? (
+            <ReportView<AdminReport<AdminOverview>> {...request}>
+              {(report) => <OverviewReport data={report.data} range={range} />}
+            </ReportView>
+          ) : kind === "users" ? (
+            id ? (
+              <ReportView<AdminReport<AdminUserDetail>> {...request}>
+                {(report) => <AccountDetail data={report.data} range={range} />}
+              </ReportView>
+            ) : (
+              <ReportView<AdminReportPage<AdminUserSummary>> {...request}>
+                {(report) => (
+                  <>
+                    <AccountList data={report.data} range={context} />
+                    <Pager nextCursor={report.nextCursor} params={context} />
+                  </>
+                )}
+              </ReportView>
+            )
+          ) : id ? (
+            <ReportView<AdminReport<AdminTournamentDetail>> {...request}>
+              {(report) => <TournamentDetail data={report.data} range={range} />}
+            </ReportView>
+          ) : (
+            <ReportView<AdminReportPage<AdminTournamentSummary>> {...request}>
+              {(report) => (
+                <>
+                  <TournamentList data={report.data} range={context} />
+                  <Pager nextCursor={report.nextCursor} params={context} />
+                </>
+              )}
+            </ReportView>
+          )}
+        </>
+      )}
+    </>
+  );
+}
+function ReportView<T extends AdminReport<unknown>>({
+  path,
+  revision,
+  retry,
+  children
+}: {
+  path: string | null;
+  revision: number;
+  retry(): void;
+  children(report: T): ReactNode;
+}) {
+  const state = useAdminReport<T>(path, revision);
+  if (!state?.data) return <ReportState error={state?.error} retry={retry} />;
+  return (
+    <>
+      <div role="status" className="sr-only">
+        Report loaded
+      </div>
+      {children(state.data)}
+      <Coverage coverage={state.data.coverage} />
+    </>
   );
 }

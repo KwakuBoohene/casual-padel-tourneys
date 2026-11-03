@@ -9,6 +9,7 @@ interface SessionContext {
   signIn(token: string): void;
   signOut(): void;
   retry(): void;
+  request<T>(path: string, signal?: AbortSignal): Promise<T>;
 }
 const Context = createContext<SessionContext | null>(null);
 const key = "padelViewerAdminToken";
@@ -49,6 +50,30 @@ export function AdminSessionProvider({ children }: { children: ReactNode }) {
     setToken(candidate);
     setAttempt((n) => n + 1);
   }, []);
+  const request = useCallback(
+    async <T,>(path: string, signal?: AbortSignal): Promise<T> => {
+      if (!token) throw new AdminRequestError(401);
+      const current = generation.current;
+      try {
+        return await adminRequest<T>(path, { token, signal });
+      } catch (error) {
+        if (
+          !signal?.aborted &&
+          current === generation.current &&
+          error instanceof AdminRequestError &&
+          [401, 403].includes(error.status)
+        ) {
+          generation.current++;
+          storeToken(null);
+          setToken(null);
+          setActor(null);
+          setStatus(error.status === 401 ? "signed-out" : "denied");
+        }
+        throw error;
+      }
+    },
+    [token]
+  );
   useEffect(() => {
     if (!token) return;
     let active = true;
@@ -95,7 +120,9 @@ export function AdminSessionProvider({ children }: { children: ReactNode }) {
     };
   }, [token, attempt]);
   return (
-    <Context.Provider value={{ status, actorUserId, signIn, signOut, retry: () => setAttempt((n) => n + 1) }}>
+    <Context.Provider
+      value={{ status, actorUserId, signIn, signOut, request, retry: () => setAttempt((n) => n + 1) }}
+    >
       {children}
     </Context.Provider>
   );

@@ -1,0 +1,41 @@
+.admin-workspace .admin-panel {
+  border: 1px solid var(--color-padel-border);
+  border-radius: 1rem;
+  background: var(--color-padel-surface);
+  padding: 1.25rem;
+}
+.admin-workspace .admin-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border: 1px solid var(--color-padel-border);
+  border-radius: 0.6rem;
+  padding: 0.5rem 0.85rem;
+  background: var(--color-padel-surface);
+  color: var(--color-padel-text);
+}
+.admin-workspace label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+}
+.admin-workspace :is(input, select) {
+  min-width: 0;
+  max-width: 100%;
+}
+.admin-workspace :is(a, button, input, select):focus-visible {
+  outline: 2px solid var(--color-padel-primary) !important;
+  outline-offset: 3px;
+}
+.admin-workspace a:not(.admin-control) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.admin-workspace [aria-current="page"] {
+  color: var(--color-padel-primary);
+}
+.admin-workspace .admin-control:hover {
+  border-color: var(--color-padel-primary);
+}

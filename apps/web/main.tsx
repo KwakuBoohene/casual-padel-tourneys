@@ -1,9 +1,8 @@
 import { AdminSessionProvider } from "./components/admin/AdminSession";
-import { AdminPage } from "./components/admin/AdminPage";
 import { AdminSignIn } from "./components/admin/AdminSignIn";
 import { collectAdminMagicToken } from "./lib/admin/magicLink";
 import { captureViewerError, initViewerMonitoring } from "./lib/observability/sentry";
-import { Component, useEffect, type ReactNode } from "react";
+import { Component, lazy, Suspense, useEffect, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import RootLayout from "./app/layout";
@@ -13,6 +12,10 @@ import LeaderboardPage from "./app/tournament/[id]/leaderboard/page";
 import KohRankingsPage from "./app/tournament/[id]/rankings/page";
 import PublicCareerPage from "./app/c/[token]/page";
 import NotFound from "./app/not-found";
+
+const AdminPage = lazy(() =>
+  import("./components/admin/AdminPage").then((module) => ({ default: module.AdminPage }))
+);
 
 class ViewerErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -49,7 +52,20 @@ function ViewerRoutes() {
     <ViewerErrorBoundary key={location.pathname}>
       <Routes location={location}>
         <Route path="/admin/sign-in" element={<AdminSignIn />} />
-        <Route path="/admin/*" element={<AdminPage />} />
+        <Route
+          path="/admin/*"
+          element={
+            <Suspense
+              fallback={
+                <main className="p-6" role="status">
+                  Loading admin workspace…
+                </main>
+              }
+            >
+              <AdminPage />
+            </Suspense>
+          }
+        />
         <Route path="/" element={<HomePage />} />
         <Route path="/tournament/:id" element={<TournamentPage />} />
         <Route path="/tournament/:id/leaderboard" element={<LeaderboardPage />} />

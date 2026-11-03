@@ -15,7 +15,8 @@
     "test": "npm run test --workspaces --if-present",
     "simulate": "npm run simulate --workspace @padel/api",
     "db:generate": "npm run db:generate --workspace @padel/api",
-    "db:migrate": "npm run db:migrate --workspace @padel/api"
+    "db:migrate": "npm run db:migrate --workspace @padel/api",
+    "test:sourcemaps": "node --test scripts/sentry-sourcemaps.test.mjs"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"

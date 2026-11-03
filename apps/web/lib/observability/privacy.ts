@@ -6,6 +6,17 @@ function safeFilename(value: string | undefined): string | undefined {
   return path?.match(/\/assets\/([a-zA-Z0-9_.-]+\.[cm]?js)$/)?.[1];
 }
 
+function safeDebugMeta(event: Event): Event["debug_meta"] {
+  const images = event.debug_meta?.images?.flatMap((image) => {
+    if (image.type !== "sourcemap") return [];
+    const filename = safeFilename(image.code_file);
+    if (!filename || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(image.debug_id))
+      return [];
+    return [{ type: "sourcemap" as const, code_file: filename, debug_id: image.debug_id }];
+  });
+  return images?.length ? { images } : undefined;
+}
+
 export function sampleRate(value: string | undefined): number {
   if (!value?.trim()) return 0.1;
   const rate = Number(value);
@@ -17,6 +28,7 @@ export function sanitizeViewerError(event: ErrorEvent, hint?: EventHint): ErrorE
   const error = hint?.originalException;
   if (error instanceof Error && (error.name === "AbortError" || error.name === "ApiError")) return null;
   return {
+    debug_meta: safeDebugMeta(event),
     type: undefined,
     event_id: event.event_id,
     timestamp: event.timestamp,

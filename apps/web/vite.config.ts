@@ -30,6 +30,7 @@ export default defineConfig(({ mode }) => {
         }
       }
     ],
+    build: { sourcemap: true },
     server: { port: 3005 },
     preview: { port: 3005 }
   };

@@ -167,3 +167,111 @@ test("capture and fetch timing use sanitized envelopes without changing HTTP or 
     await Sentry.close();
   }
 });
+
+test("source map debug IDs survive privacy filtering without exposing page capabilities", () => {
+  const debugId = "01234567-1234-1234-1234-0123456789ab";
+  const event: Sentry.ErrorEvent = {
+    type: undefined,
+    debug_meta: {
+      images: [
+        {
+          type: "sourcemap",
+          code_file: "https://app.test/assets/app-123.js?token=SECRET",
+          debug_id: debugId
+        },
+        { type: "sourcemap", code_file: "https://app.test/tournament/SECRET.js", debug_id: debugId },
+        { type: "sourcemap", code_file: "https://app.test/assets/app-123.js", debug_id: "SECRET" }
+      ]
+    },
+    exception: {
+      values: [
+        {
+          stacktrace: {
+            frames: [{ filename: "https://app.test/assets/app-123.js?token=SECRET", lineno: 1, colno: 42 }]
+          }
+        }
+      ]
+    }
+  };
+  const clean = sanitizeViewerError(event);
+  assert.deepEqual(clean?.debug_meta?.images, [
+    { type: "sourcemap", code_file: "app-123.js", debug_id: debugId }
+  ]);
+  assert.equal(clean?.exception?.values?.[0].stacktrace?.frames?.[0].filename, "app-123.js");
+  assert.ok(!JSON.stringify(clean).includes("SECRET"));
+});
+
+test("an injected bundle retains its matching debug ID through the actual SDK event pipeline", async (t) => {
+  const { mkdtemp, writeFile, readFile, rm } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join, resolve } = await import("node:path");
+  const { createRequire } = await import("node:module");
+  const { spawnSync } = await import("node:child_process");
+  const { runInThisContext } = await import("node:vm");
+  const directory = await mkdtemp(join(tmpdir(), "cpa-debug-id-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const script = join(directory, "fixture.js");
+  await writeFile(script, 'throw new Error("PRIVATE");\n//# sourceMappingURL=fixture.js.map\n');
+  await writeFile(
+    `${script}.map`,
+    JSON.stringify({
+      version: 3,
+      file: "fixture.js",
+      sources: ["original.ts"],
+      sourcesContent: ['throw new Error("PRIVATE");'],
+      names: [],
+      mappings: "AAAA"
+    })
+  );
+  const require = createRequire(resolve(process.cwd(), "package.json"));
+  const injected = spawnSync(process.execPath, [
+    require.resolve("@sentry/cli/bin/sentry-cli"),
+    "sourcemaps",
+    "inject",
+    directory
+  ]);
+  assert.equal(injected.status, 0, injected.stderr.toString());
+  const map = JSON.parse(await readFile(`${script}.map`, "utf8")) as { debug_id?: string; debugId?: string };
+  const debugId = map.debug_id ?? map.debugId;
+  assert.ok(debugId);
+  const envelopes: unknown[] = [];
+  Sentry.init({
+    dsn: "https://public@example.com/1",
+    defaultIntegrations: false,
+    beforeSend: sanitizeViewerError,
+    transport: () => ({
+      send: async (envelope) => {
+        envelopes.push(envelope);
+        return {};
+      },
+      flush: async () => true
+    })
+  });
+  try {
+    try {
+      runInThisContext(await readFile(script, "utf8"), {
+        filename: "https://viewer.test/assets/fixture.js?token=SECRET"
+      });
+    } catch (error) {
+      Sentry.captureException(error);
+    }
+    await Sentry.flush(2000);
+    const items = envelopes.flatMap(
+      (value) => (value as [unknown, [Record<string, unknown>, Sentry.ErrorEvent][]])[1]
+    );
+    const event = items.find(([header]) => header.type === "event")?.[1];
+    assert.ok(
+      event?.debug_meta?.images?.some(
+        (image) =>
+          image.type === "sourcemap" && image.code_file === "fixture.js" && image.debug_id === debugId
+      )
+    );
+    assert.ok(
+      event?.exception?.values?.[0].stacktrace?.frames?.some((frame) => frame.filename === "fixture.js")
+    );
+    for (const secret of ["SECRET", "PRIVATE", "viewer.test"])
+      assert.ok(!JSON.stringify(envelopes).includes(secret));
+  } finally {
+    await Sentry.close();
+  }
+});

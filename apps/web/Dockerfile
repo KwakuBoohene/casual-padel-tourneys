@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -10,7 +11,11 @@ RUN npm ci --ignore-scripts --include=dev --workspace @padel/web --workspace @pa
 COPY tsconfig.base.json ./
 COPY packages/shared ./packages/shared
 COPY apps/web ./apps/web
-RUN npm run build --workspace @padel/shared && npm run build --workspace @padel/web
+COPY scripts ./scripts
+RUN npm run build --workspace @padel/shared
+ARG SENTRY_ORG=""
+ARG SENTRY_PROJECT=""
+RUN --mount=type=secret,id=sentry_auth_token npm run build --workspace @padel/web
 
 FROM nginx:stable-alpine
 RUN apk add --no-cache jq

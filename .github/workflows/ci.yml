@@ -49,5 +49,9 @@ jobs:
         run: npx prisma migrate deploy --schema apps/api/prisma/schema.prisma
       - name: Unit and integration tests
         run: npm run test
+      - name: Source map build tooling tests
+        run: npm run test:sourcemaps
+      - name: Export CPA web (offline source map validation)
+        run: npm run export:web --workspace @padel/mobile
       - name: Build
         run: npm run build

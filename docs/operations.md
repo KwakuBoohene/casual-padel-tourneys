@@ -278,3 +278,34 @@ VIEWER_SENTRY_TRACES_SAMPLE_RATE=0.1
 Compose already loads `infra/.env` into the viewer service. Recreate the viewer container after changing these values; its startup script writes JSON-encoded public settings into `runtime-config.json`. No image rebuild is required for Docker configuration changes. For local Vite or standalone static hosting, use the same variables in `apps/web/.env.local` before starting/building. Never put a Sentry API/auth token in these public settings. Existing API and CPA web DSNs are separate settings. Empty viewer DSN disables SDK initialization; initial config-download failures cannot report because the DSN has not loaded yet.
 
 Set a production-only issue alert and verify a controlled staging event, request trace and notification receipt. Local tests use in-memory transports and never send test telemetry to a real Sentry project. Home/deep-link retry UI were smoke-tested in the browser; live match rendering and actual Sentry delivery still need staging validation. Original-source maps remain a later CI/release tooling slice.
+
+### Private web source maps without release tagging
+
+Both browser builds now generate external maps and inject debug IDs. Debug IDs match each JavaScript bundle to its map; named releases are not required. The privacy filters preserve only validated debug IDs and their normalized bundle filenames, not full page URLs or identities. The CLI uploads the exact bundle/map pair before the map files and `sourceMappingURL` comments are removed from the served directory. The viewer also denies `.map` requests in Nginx. No release tags are generated and existing optional release variables can stay empty.
+
+Uploads require one-time deployment configuration:
+
+1. In Sentry, obtain the organization slug and the existing CPA web/public viewer project slugs. Create a private organization auth token permitted to upload source maps (`org:ci`). A project DSN cannot authenticate uploads. See [Sentry token scopes](https://docs.sentry.io/api/permissions/).
+2. Set nonsecret build settings in `infra/.env`:
+
+   ```env
+   SENTRY_ORG=your-org-slug
+   SENTRY_VIEWER_PROJECT=your-public-viewer-project
+   SENTRY_ORGANIZER_PROJECT=your-cpa-web-project
+   ```
+
+3. Provide `SENTRY_AUTH_TOKEN` as a secret in the deploying shell/CI. Do not put it in `infra/.env`: that file is loaded into running services. Do not use `VIEWER_*`, `VITE_*` or `EXPO_PUBLIC_*` for the upload token.
+4. Build with the secret override, from the `infra` directory:
+
+   ```sh
+   docker compose -f docker-compose.yml -f docker-compose.sentry.yml build web mobile
+   docker compose up -d --no-deps web mobile
+   ```
+
+   The override mounts the token only during image builds using BuildKit secrets, not build arguments or runtime environment variables. For another Docker build host, supply the secret as ID `sentry_auth_token` and pass `SENTRY_ORG` and the appropriate `SENTRY_PROJECT` as build args. The local ignored `deploy.sh` copy selects the override when `SENTRY_AUTH_TOKEN` is exported; if using the separate VPS deployment script, apply that same build-command change there before deployment.
+
+For local builds or a CI workflow that deploys the resulting static artifacts, export `SENTRY_AUTH_TOKEN`, `SENTRY_ORG` and `SENTRY_PROJECT`, then run the usual viewer build or CPA `export:web`. Do not upload maps from an unrelated CI build and then rebuild different JavaScript for production. The deployed files must be the same files processed and uploaded by the build step. The repository CI validates both builds offline; production uploads occur in the actual image build.
+
+With all upload settings absent, builds run offline, inject IDs and remove private maps; error reporting still works but source resolution is unavailable. Partial settings or failed uploads stop the build and clean up maps. To turn uploads off, remove all upload settings together. Existing uploaded maps are retained in Sentry so older open pages can still resolve; do not manually remove old artifacts on each deployment.
+
+After configuring credentials, rebuild and trigger a controlled browser error in staging for each frontend. Confirm Sentry shows the original `.ts`/`.tsx` location rather than a minified bundle, and confirm `.map` files are not downloadable from either site. Initial local validation covers real CLI injection, actual SDK debug-ID preservation, both exports and private artifact cleanup. Actual authenticated uploads and Sentry symbolication have not been verified because no upload credentials are configured locally. Backend/native source maps are outside this browser-build slice.

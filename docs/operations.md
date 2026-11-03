@@ -309,3 +309,40 @@ For local builds or a CI workflow that deploys the resulting static artifacts, e
 With all upload settings absent, builds run offline, inject IDs and remove private maps; error reporting still works but source resolution is unavailable. Partial settings or failed uploads stop the build and clean up maps. To turn uploads off, remove all upload settings together. Existing uploaded maps are retained in Sentry so older open pages can still resolve; do not manually remove old artifacts on each deployment.
 
 After configuring credentials, rebuild and trigger a controlled browser error in staging for each frontend. Confirm Sentry shows the original `.ts`/`.tsx` location rather than a minified bundle, and confirm `.map` files are not downloadable from either site. Initial local validation covers real CLI injection, actual SDK debug-ID preservation, both exports and private artifact cleanup. Actual authenticated uploads and Sentry symbolication have not been verified because no upload credentials are configured locally. Backend/native source maps are outside this browser-build slice.
+
+## Padel viewer platform admin access
+
+The private `/admin` portal is in the Vite Padel viewer (`apps/web`), not the Expo organizer. The organizer has no admin routes or menu entry. Reporting screens arrive separately. Access still requires a persisted, verified, non-guest user with an active `PlatformAdminGrant`; organizer ownership, manager membership and JWT claims never grant platform privileges.
+
+Deploy the additive migration first. With trusted operator/database access, identify the exact existing user ID, verify the person's identity/email verification, and grant or revoke access:
+
+```sh
+npm run admin --workspace @padel/api -- grant <user-id>
+npm run admin --workspace @padel/api -- revoke <user-id>
+# On the deployed Compose stack:
+docker compose exec -T api npm run admin:production --workspace @padel/api -- grant <user-id>
+docker compose exec -T api npm run admin:production --workspace @padel/api -- revoke <user-id>
+```
+
+Set these API runtime variables and restart/recreate the API:
+
+```env
+ADMIN_PORTAL_ENABLED=true
+ADMIN_WEB_BASE_URL=https://your-padel-viewer-origin
+```
+
+`ADMIN_WEB_BASE_URL` must be an HTTPS origin with no credentials, path, query or fragment. Loopback HTTP is allowed only outside production. The server constructs `/admin/sign-in#token=...`; callers cannot supply a redirect URL. Do not change the organizer's `AUTH_MAGIC_LINK_BASE_URL`. Existing mail-provider configuration delivers the admin sign-in email. Production remains disabled until the flag is explicitly enabled; a wrong/missing origin fails delivery without exposing account existence.
+
+Visit `<viewer origin>/admin`. The viewer offers email magic-link sign-in for existing accounts. `/admin/sign-in` email requests are rate-limited and always return the same accepted-email message, including for missing/unverified/guest/ungranted accounts or a disabled portal. No accounts are created. Eligible accounts receive a single-use 15-minute LOGIN token through the existing hashed token store. The browser removes the fragment before configuration loading, diagnostics and rendering, consumes it through the existing authentication endpoint, and checks `/admin/access` before displaying the shell. Expired/replayed links require a fresh link. Email scanners do not consume the token merely by requesting the page, because the token is in a fragment.
+
+The admin bearer session stays in memory and the viewer tab's sessionStorage, separate from organizer storage. Public viewer requests never receive its Authorization header. Closing the tab ends its stored session. On every private admin request, the server checks persisted access and records an audit before returning data; all admin responses are no-store. Viewer `/admin` pages also use no-referrer/no-store hosting headers. The viewer rechecks on focus, visibility and periodically; denial/sign-out clears session access and unmounts private content, and stale responses are discarded. Revocation takes effect at the next server authorization check; a request already authorized may finish.
+
+There is no grant-management HTTP endpoint. Grant/revoke commands are transactional and audited as operator actions (null actor, target user ID). Grants cascade on user deletion; audit history retains IDs. Admin read audits contain only actor ID, route template, timestamp and bounded request ID, never search text or response bodies. Database/audit failures fail closed. New admin reporting endpoints must use the same guarded registration.
+
+Retain audit rows for 12 months. Schedule the following bounded command hourly in the deployment host's maintenance scheduler; each invocation removes at most 1,000 expired rows. No host schedule is installed by this change:
+
+```sh
+docker compose exec -T api npm run admin:production --workspace @padel/api -- prune
+```
+
+To disable access, set the flag false and restart the API. Operator revoke/prune commands remain available while disabled; do not drop grant/audit tables as a routine rollback. Production migration, real-account bootstrap and actual email delivery require deployment verification.

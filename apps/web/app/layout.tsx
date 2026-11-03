@@ -1,3 +1,4 @@
+import { useAdminSession } from "../components/admin/AdminSession";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
@@ -6,6 +7,7 @@ import { ThemeToggle } from "../components/ThemeToggle";
 import "./globals.css";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const admin = useAdminSession();
   return (
     <ThemeProvider>
       <nav
@@ -92,7 +94,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </svg>
           <span style={{ fontWeight: 700, fontSize: "15px", letterSpacing: "-0.01em" }}>Casual Tourneys</span>
         </Link>
-        <ThemeToggle />
+        <div className="flex items-center gap-5">
+          {admin.status === "allowed" ? (
+            <Link to="/admin" className="text-sm font-semibold text-padel-primary">
+              Admin
+            </Link>
+          ) : null}
+          <ThemeToggle />
+        </div>
       </nav>
 
       {children}

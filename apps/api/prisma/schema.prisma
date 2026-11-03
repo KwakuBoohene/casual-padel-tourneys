@@ -58,6 +58,7 @@ enum KohGameWinMethod {
 }
 
 model User {
+  platformAdminGrant     PlatformAdminGrant?
   id                     String           @id @default(cuid())
   email                  String           @unique
   name                   String
@@ -508,4 +509,23 @@ model HistoricalPlayerResult {
 
   @@unique([revisionId, organizerPlayerId])
   @@index([organizerPlayerId])
+}
+
+model PlatformAdminGrant {
+  userId    String    @id
+  grantedAt DateTime  @default(now())
+  revokedAt DateTime?
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AdminAccessAudit {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  action      String
+  targetId    String?
+  requestId   String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actorUserId, createdAt])
 }

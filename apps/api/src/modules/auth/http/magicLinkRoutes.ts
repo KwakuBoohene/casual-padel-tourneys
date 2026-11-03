@@ -28,6 +28,7 @@ export function registerMagicLinkRoutes(server: FastifyInstance, deps: AuthModul
     "/auth/magic-link/consume",
     { config: AUTH_TOKEN_CONSUME_RATE_LIMIT },
     async (request: FastifyRequest, reply: FastifyReply) => {
+      reply.header("Cache-Control", "no-store");
       const parsed = consumeMagicLinkSchema.safeParse(request.body);
       if (!parsed.success) {
         reply.status(400);

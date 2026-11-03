@@ -1,6 +1,6 @@
 import { getMailer } from "../../../lib/mail/index.js";
 import type { AuthEmailKind, AuthNotifier } from "../application/ports.js";
-import { buildMagicLinkUrl, buildPasswordResetUrl } from "./authLinks.js";
+import { buildAdminSignInUrl, buildMagicLinkUrl, buildPasswordResetUrl } from "./authLinks.js";
 
 type Template = {
   subject: string;
@@ -10,6 +10,12 @@ type Template = {
 };
 
 const TEMPLATES: Record<AuthEmailKind, Template> = {
+  ADMIN_SIGN_IN: {
+    subject: "Your Casual Padel admin sign-in link",
+    lead: "Sign in to platform administration (expires in 15 minutes):",
+    cta: "Open admin sign-in",
+    link: buildAdminSignInUrl
+  },
   SIGN_IN: {
     subject: "Your Casual Padel sign-in link",
     lead: "Sign in with this link (expires in 15 minutes):",

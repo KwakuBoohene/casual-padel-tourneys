@@ -68,7 +68,7 @@ export interface MagicTokenStore {
   consumeReset(rawToken: string): Promise<{ userId: string } | null>;
 }
 
-export type AuthEmailKind = "SIGN_IN" | "VERIFY" | "ATTACH" | "PASSWORD_RESET";
+export type AuthEmailKind = "ADMIN_SIGN_IN" | "SIGN_IN" | "VERIFY" | "ATTACH" | "PASSWORD_RESET";
 
 export interface AuthNotifier {
   send(kind: AuthEmailKind, to: string, rawToken: string): Promise<void>;

@@ -1,3 +1,4 @@
+import { reportRequestError } from "./sentryMonitoring.js";
 import type { FastifyReply } from "fastify";
 
 import { logger } from "../../lib/logger.js";
@@ -9,6 +10,7 @@ import { AppError, isAppError } from "../kernel/appError.js";
  */
 export function mapAppError(reply: FastifyReply, error: unknown): { message: string } {
   if (isAppError(error)) {
+    if (error.httpStatus >= 500) reportRequestError(reply.request, error);
     reply.status(error.httpStatus);
     return {
       message: error.message,

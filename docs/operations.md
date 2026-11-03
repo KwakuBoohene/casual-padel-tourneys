@@ -170,7 +170,7 @@ for the King of the Court rename.
 
 - Use JSON logs for API.
 - Add health checks for API and web.
-- Integrate Sentry (later phase) for backend and web errors.
+- API Sentry capture is prepared locally; see activation below. Client reporting remains pending.
 - Add uptime alerting for API and viewer domains.
 
 ## Email (Mailer)
@@ -229,3 +229,16 @@ states are displayed in the existing theme. Theme and standings-column preferenc
 to use the same browser storage/cookie keys. Per-tournament server-rendered HTML is no longer
 provided. Build the image in CI and deploy the finished image to avoid build-time resource
 spikes on a small shared server. `/health` provides the viewer container's health check.
+
+## Sentry activation and alerts
+
+API capture and sampled request-duration tracing are prepared locally. Production monitoring is not active until a project DSN is configured and delivery verified. Hosted Sentry is optional; empty DSN leaves the SDK uninitialized. Console logs remain local.
+
+1. Create/select a Node project in Sentry. Set API runtime `SENTRY_DSN`, `SENTRY_ENVIRONMENT=production`, `SENTRY_RELEASE` to the deployment revision, and `SENTRY_TRACES_SAMPLE_RATE=0.1` initially. Compose already loads `infra/.env`. Invalid sample rates disable tracing; zero retains errors without traces. Use staging separately.
+2. Trigger a controlled failure in staging through a temporary protected test route and remove it afterward. Verify one issue, a request-duration trace, source stack locations, release and environment. Test fatal process failures only in a disposable staging instance.
+3. Configure production-filtered Sentry issue alerts for new and regressed errors, a recipient/channel, and repeat limits. After establishing a baseline, add error-volume alerts. Send a test notification and verify receipt. These account/project settings have not been provisioned by repository changes.
+4. Use Sentry issues for grouping, occurrence trends, regressions and affected users. Account IDs and request IDs are HMAC hashes using `JWT_SECRET`, never emails or raw identifiers. The same HMAC can correlate an account/local request log ID with Sentry; secret rotation changes identifiers.
+5. Verify privacy before activation: arbitrary messages, request data, breadcrumbs and source context are stripped. Stack filenames and line numbers remain. This trades message detail for privacy. Request spans contain route templates and status only; SQL, Redis and distributed browser tracing are not included in this slice.
+6. To disable reporting, clear the DSN and restart. Reporting outages must not fail successful tournament requests. Configure project retention and budgets in Sentry; proposed database telemetry retention is separate.
+
+Remaining integration: CPA Expo web/native and Vite viewer capture, CI source-map upload with a private auth token, browser/API trace propagation limited to the API origin, explicit caught WebSocket reporting, and production alert verification. Replay/profiling remain disabled. No public crash endpoint is added.

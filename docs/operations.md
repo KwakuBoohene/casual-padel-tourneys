@@ -241,4 +241,23 @@ API capture and sampled request-duration tracing are prepared locally. Productio
 5. Verify privacy before activation: arbitrary messages, request data, breadcrumbs and source context are stripped. Stack filenames and line numbers remain. This trades message detail for privacy. Request spans contain route templates and status only; SQL, Redis and distributed browser tracing are not included in this slice.
 6. To disable reporting, clear the DSN and restart. Reporting outages must not fail successful tournament requests. Configure project retention and budgets in Sentry; proposed database telemetry retention is separate.
 
-Remaining integration: CPA Expo web/native and Vite viewer capture, CI source-map upload with a private auth token, browser/API trace propagation limited to the API origin, explicit caught WebSocket reporting, and production alert verification. Replay/profiling remain disabled. No public crash endpoint is added.
+Remaining integration: native Expo and Vite viewer capture, CI source-map upload with a private auth token, browser/API trace propagation limited to the API origin, explicit caught WebSocket reporting, and production alert verification. Replay/profiling remain disabled. No public crash endpoint is added.
+
+### CPA web browser monitoring
+
+CPA web now has guarded browser error/unhandled-rejection capture, API-request duration traces and an Expo Router error fallback with retry. The integration only runs on web; native resolves a no-op module pending its own SDK integration. There is no session replay, DOM recording, navigation tracing or browser-to-API trace propagation in this slice. Expected API failures are server-owned; aborted requests are ignored and network failures are captured. Fetch/auth/cancellation behavior stays unchanged. Events contain no user identity; API Sentry events still provide hashed affected-user IDs. Error messages are replaced by safe labels, and stack filenames/line numbers remain. Readable original source stacks require the later source-map upload slice.
+
+Create/select a browser JavaScript project (for example `cpa-web`) and set these public build values:
+
+```env
+EXPO_PUBLIC_SENTRY_DSN=<browser project DSN>
+EXPO_PUBLIC_SENTRY_ENVIRONMENT=production
+EXPO_PUBLIC_SENTRY_RELEASE=<deployed revision>
+EXPO_PUBLIC_SENTRY_TRACES_SAMPLE_RATE=0.1
+```
+
+For local Expo export, set the variables before `npm run export:web --workspace @padel/mobile`. For Compose, put them in `infra/.env`; they are forwarded as Docker build arguments. For other Docker hosts, configure the same build arguments. Rebuild the mobile web image after changes: runtime environment changes alone do not update an exported JavaScript bundle. Never use a Sentry API/auth token in an `EXPO_PUBLIC_*` variable. Keep the API DSN on the API service.
+
+Staging checklist: open CPA web, trigger a controlled render failure and confirm the retry fallback; test an unhandled rejection and network failure; verify sanitized events and sampled request traces in the browser project. Confirm expected 4xx/aborts stay quiet. Configure production issue alerts for this project and verify a test notification. Live Sentry delivery, fallback appearance and notification receipt have not been verified locally.
+
+Local validation: organizer typecheck/lint, all 142 organizer tests (including four monitoring cases), and Expo web export pass. Export used local Node 22.12 and reported Expo's existing >=22.13 runtime warning; use supported Node >=22.13 for production builds.

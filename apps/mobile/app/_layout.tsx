@@ -12,6 +12,8 @@ import { useWebDocumentBackground } from "../src/layout/useWebDocumentBackground
 import { useWebFocusRing } from "../src/layout/useWebFocusRing";
 import { ThemeProvider, useTheme } from "../src/theme/ThemeProvider";
 
+export { ScreenErrorFallback as ErrorBoundary } from "../src/components/observability/ScreenErrorFallback";
+
 function RootChrome({ children }: { children: ReactNode }) {
   const { mode, colors } = useTheme();
   useWebDocumentBackground(colors.background);

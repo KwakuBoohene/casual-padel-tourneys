@@ -1,3 +1,4 @@
+import "./src/utilities/observability/sentryInit";
 import { registerRootComponent } from "expo";
 import { ExpoRoot } from "expo-router";
 

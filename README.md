@@ -99,7 +99,10 @@ See `.env.example`:
 - `docs/scheduling.md` - Scheduling engine and fairness algorithms
 - `docs/api.md` - REST API endpoints and WebSocket events
 - `docs/operations.md` - Deployment, migrations, backup/restore procedures
-- `docs/player-integration-feature.md` - Player integration feature documentation
+- `docs/regular-scoring.md` - Match length and scoring rules
+- `docs/career-leaderboard.md` - Cross-event leaderboard rules
+
+Feature plans, implementation notes and one-off verification reports belong in the local Git-ignored `plans/` folder.
 
 
 #testing push to deploy

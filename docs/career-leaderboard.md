@@ -163,4 +163,3 @@ flowchart TD
 ## Related
 
 - Module notes: [`apps/api/src/modules/organizerPlayers/README.md`](../apps/api/src/modules/organizerPlayers/README.md)
-- Epic: [`plans/implementation/backend/epic-15-career-leaderboard-system/`](../plans/implementation/backend/epic-15-career-leaderboard-system/README.md)

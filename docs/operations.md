@@ -78,22 +78,7 @@ The deploy script lives on the server at `/home/circleci/deployment-scripts/` (n
 4. Apply migration on production.
 5. Verify API health and round generation.
 
-### Current Migrations
-
-- `0001_init`: Initial schema (Tournament, Player, Round, Match)
-- `20260312112022`: Schema updates
-- `20260312130752_add_user_and_organizer`: User authentication and organizer relation
-- `20260313105650_add_scheduling_mode`: Scheduling mode variants
-- `20260316000000_add_guest_support`: Guest access support
-- `20260503000000_add_player_integration_support`: Player integration feature
-  - Adds `PendingPlayer` table for mid-tournament player additions
-  - Extends `Player` table with gender, handicap, integrationWave, integratedAt fields
-  - Extends `Tournament` table with integrationWaveCount, enableAutoIntegration, integrationThreshold
-  - Creates indexes for performance optimization
-- `20260813150000_auth_email_foundation`: Email auth foundation
-  - User `emailVerifiedAt` / `emailVerificationDueAt`
-  - `MagicLinkToken` (hashed one-time tokens)
-  - `OpaqueRecord` (password envelope storage; no hash column)
+Migration files are maintained in `apps/api/prisma/migrations/`. Use `prisma migrate status` to inspect the database's applied and pending migrations.
 
 ## Backup And Restore
 
@@ -170,7 +155,7 @@ for the King of the Court rename.
 
 - Use JSON logs for API.
 - Add health checks for API and web.
-- API Sentry capture is prepared locally; see activation below. Client reporting remains pending.
+- Configure optional Sentry reporting and verify delivery; see activation below.
 - Add uptime alerting for API and viewer domains.
 
 ## Email (Mailer)
@@ -232,7 +217,7 @@ spikes on a small shared server. `/health` provides the viewer container's healt
 
 ## Sentry activation and alerts
 
-API capture and sampled request-duration tracing are prepared locally. Production monitoring is not active until a project DSN is configured and delivery verified. Hosted Sentry is optional; empty DSN leaves the SDK uninitialized. Console logs remain local.
+Configure the API project DSN and verify error and trace delivery before relying on production monitoring. Hosted Sentry is optional; empty DSN leaves the SDK uninitialized. Console logs remain local.
 
 1. Create/select a Node project in Sentry. Set API runtime `SENTRY_DSN`, `SENTRY_ENVIRONMENT=production`, `SENTRY_RELEASE` to the deployment revision, and `SENTRY_TRACES_SAMPLE_RATE=0.1` initially. Compose already loads `infra/.env`. Invalid sample rates disable tracing; zero retains errors without traces. Use staging separately.
 2. Trigger a controlled failure in staging through a temporary protected test route and remove it afterward. Verify one issue, a request-duration trace, source stack locations, release and environment. Test fatal process failures only in a disposable staging instance.
@@ -241,11 +226,10 @@ API capture and sampled request-duration tracing are prepared locally. Productio
 5. Verify privacy before activation: arbitrary messages, request data, breadcrumbs and source context are stripped. Stack filenames and line numbers remain. This trades message detail for privacy. Request spans contain route templates and status only; SQL, Redis and distributed browser tracing are not included in this slice.
 6. To disable reporting, clear the DSN and restart. Reporting outages must not fail successful tournament requests. Configure project retention and budgets in Sentry; proposed database telemetry retention is separate.
 
-Remaining integration: native Expo and Vite viewer capture, CI source-map upload with a private auth token, browser/API trace propagation limited to the API origin, explicit caught WebSocket reporting, and production alert verification. Replay/profiling remain disabled. No public crash endpoint is added.
 
 ### CPA web browser monitoring
 
-CPA web now has guarded browser error/unhandled-rejection capture, API-request duration traces and an Expo Router error fallback with retry. The integration only runs on web; native resolves a no-op module pending its own SDK integration. There is no session replay, DOM recording, navigation tracing or browser-to-API trace propagation in this slice. Expected API failures are server-owned; aborted requests are ignored and network failures are captured. Fetch/auth/cancellation behavior stays unchanged. Events contain no user identity; API Sentry events still provide hashed affected-user IDs. Error messages are replaced by safe labels, and stack filenames/line numbers remain. Readable original source stacks require the later source-map upload slice.
+CPA web supports browser errors, unhandled rejections and API-request timing. This configuration applies to the web export; native monitoring is not enabled. Replay, DOM recording, navigation tracing and browser-to-API trace propagation are disabled. Expected API failures are server-owned; aborted requests are ignored and network failures are captured. Fetch/auth/cancellation behavior stays unchanged. Events contain no user identity; API Sentry events still provide hashed affected-user IDs. Error messages are replaced by safe labels, and stack filenames/line numbers remain. Configure private source-map uploads below to resolve original source locations.
 
 Create/select a browser JavaScript project (for example `cpa-web`) and set these public build values:
 
@@ -276,7 +260,7 @@ VIEWER_SENTRY_TRACES_SAMPLE_RATE=0.1
 
 Compose already loads `infra/.env` into the viewer service. Recreate the viewer container after changing these values; its startup script writes JSON-encoded public settings into `runtime-config.json`. No image rebuild is required for Docker configuration changes. For local Vite or standalone static hosting, use the same variables in `apps/web/.env.local` before starting/building. Never put a Sentry API/auth token in these public settings. Existing API and CPA web DSNs are separate settings. Empty viewer DSN disables SDK initialization; initial config-download failures cannot report because the DSN has not loaded yet.
 
-Set a production-only issue alert and verify a controlled staging event, request trace and notification receipt. Verify live match rendering and Sentry delivery in staging. Original-source maps remain a later CI/release tooling slice.
+Set a production-only issue alert and verify a controlled staging event, request trace and notification receipt. Verify live match rendering and Sentry delivery in staging. Configure private source-map uploads below to resolve original source locations.
 
 ### Private web source maps without release tagging
 
@@ -301,7 +285,7 @@ Uploads require one-time deployment configuration:
    docker compose up -d --no-deps web mobile
    ```
 
-   The override mounts the token only during image builds using BuildKit secrets, not build arguments or runtime environment variables. For another Docker build host, supply the secret as ID `sentry_auth_token` and pass `SENTRY_ORG` and the appropriate `SENTRY_PROJECT` as build args. The local ignored `deploy.sh` copy selects the override when `SENTRY_AUTH_TOKEN` is exported; if using the separate VPS deployment script, apply that same build-command change there before deployment.
+   The override mounts the token only during image builds using BuildKit secrets, not build arguments or runtime environment variables. For another Docker build host, supply the secret as ID `sentry_auth_token` and pass `SENTRY_ORG` and the appropriate `SENTRY_PROJECT` as build args. Configure the deployment script to use this build override when the private upload token is supplied.
 
 For local builds or a CI workflow that deploys the resulting static artifacts, export `SENTRY_AUTH_TOKEN`, `SENTRY_ORG` and `SENTRY_PROJECT`, then run the usual viewer build or CPA `export:web`. Do not upload maps from an unrelated CI build and then rebuild different JavaScript for production. The deployed files must be the same files processed and uploaded by the build step. The repository CI validates both builds offline; production uploads occur in the actual image build.
 

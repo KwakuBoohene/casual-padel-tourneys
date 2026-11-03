@@ -30,3 +30,6 @@ apps/mobile/android/*
 .env
 .env.*
 !.env.example
+
+# Local implementation notes and history-recovery archives are not deployment inputs.
+plans/

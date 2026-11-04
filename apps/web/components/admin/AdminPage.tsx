@@ -1,3 +1,4 @@
+import { SentryLink } from "./SentryLink";
 import { UsageOverview } from "./UsageOverview";
 import { ActivityReport } from "./ActivityReport";
 import { useState, type ReactNode } from "react";
@@ -106,6 +107,7 @@ function Reports() {
             {text}
           </Link>
         ))}
+        <SentryLink />
       </nav>
       <div className="flex flex-wrap justify-between items-center gap-4">
         <h1 className="text-3xl font-bold">{title}</h1>

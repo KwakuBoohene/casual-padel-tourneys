@@ -219,8 +219,8 @@ spikes on a small shared server. `/health` provides the viewer container's healt
 
 Configure the API project DSN and verify error and trace delivery before relying on production monitoring. Hosted Sentry is optional; empty DSN leaves the SDK uninitialized. Console logs remain local.
 
-1. Create/select a Node project in Sentry. Set API runtime `SENTRY_DSN`, `SENTRY_ENVIRONMENT=production`, `SENTRY_RELEASE` to the deployment revision, and `SENTRY_TRACES_SAMPLE_RATE=0.1` initially. Compose already loads `infra/.env`. Invalid sample rates disable tracing; zero retains errors without traces. Use staging separately.
-2. Trigger a controlled failure in staging through a temporary protected test route and remove it afterward. Verify one issue, a request-duration trace, source stack locations, release and environment. Test fatal process failures only in a disposable staging instance.
+1. Create/select a Node project in Sentry. Set API runtime `SENTRY_DSN`, `SENTRY_ENVIRONMENT=production`, and `SENTRY_TRACES_SAMPLE_RATE=0.1` initially. Compose already loads `infra/.env`. Invalid sample rates disable tracing; zero retains errors without traces. Use staging separately.
+2. Trigger a controlled failure in staging through a temporary protected test route and remove it afterward. Verify one issue, a request-duration trace, source stack locations and environment. Release tagging is not required. Test fatal process failures only in a disposable staging instance.
 3. Configure production-filtered Sentry issue alerts for new and regressed errors, a recipient/channel, and repeat limits. After establishing a baseline, add error-volume alerts. Send a test notification and verify receipt. These account/project settings have not been provisioned by repository changes.
 4. Use Sentry issues for grouping, occurrence trends, regressions and affected users. Account IDs and request IDs are HMAC hashes using `JWT_SECRET`, never emails or raw identifiers. The same HMAC can correlate an account/local request log ID with Sentry; secret rotation changes identifiers.
 5. Verify privacy before activation: arbitrary messages, request data, breadcrumbs and source context are stripped. Stack filenames and line numbers remain. This trades message detail for privacy. Request spans contain route templates and status only; SQL, Redis and distributed browser tracing are not included in this slice.
@@ -236,7 +236,6 @@ Create/select a browser JavaScript project (for example `cpa-web`) and set these
 ```env
 EXPO_PUBLIC_SENTRY_DSN=<browser project DSN>
 EXPO_PUBLIC_SENTRY_ENVIRONMENT=production
-EXPO_PUBLIC_SENTRY_RELEASE=<deployed revision>
 EXPO_PUBLIC_SENTRY_TRACES_SAMPLE_RATE=0.1
 ```
 
@@ -247,20 +246,35 @@ Staging checklist: open CPA web, trigger a controlled render failure and confirm
 
 ### Public viewer monitoring
 
-The Vite spectator viewer now reports browser/render failures, network/5xx/JSON load failures and sustained unexpected socket closes. Expected 4xx/expired shares, cancellation and intentional socket close are excluded. Repeated load/connection categories are limited to one report per minute. Anonymous diagnostics contain no identity, share URL, headers, bodies, breadcrumbs or player names; built asset filenames and line numbers survive. No replay, distributed trace propagation or original-source mapping is included yet.
+The Vite spectator viewer now reports browser/render failures, network/5xx/JSON load failures and sustained unexpected socket closes. Expected 4xx/expired shares, cancellation and intentional socket close are excluded. Repeated load/connection categories are limited to one report per minute. Anonymous diagnostics contain no identity, share URL, headers, bodies, breadcrumbs or player names; built asset filenames and line numbers survive. Replay and distributed trace propagation are disabled. Private source-map uploads are configured below.
 
 Create/select a browser project such as `cpa-viewer` and set the viewer service runtime variables:
 
 ```env
 VIEWER_SENTRY_DSN=<public viewer project DSN>
 VIEWER_SENTRY_ENVIRONMENT=production
-VIEWER_SENTRY_RELEASE=<deployed revision>
 VIEWER_SENTRY_TRACES_SAMPLE_RATE=0.1
 ```
 
 Compose already loads `infra/.env` into the viewer service. Recreate the viewer container after changing these values; its startup script writes JSON-encoded public settings into `runtime-config.json`. No image rebuild is required for Docker configuration changes. For local Vite or standalone static hosting, use the same variables in `apps/web/.env.local` before starting/building. Never put a Sentry API/auth token in these public settings. Existing API and CPA web DSNs are separate settings. Empty viewer DSN disables SDK initialization; initial config-download failures cannot report because the DSN has not loaded yet.
 
 Set a production-only issue alert and verify a controlled staging event, request trace and notification receipt. Verify live match rendering and Sentry delivery in staging. Configure private source-map uploads below to resolve original source locations.
+
+### Admin navigation to Sentry
+
+Set the viewer runtime `VIEWER_SENTRY_PROJECT_URL` to the HTTPS project UI URL. Environment examples contain this dummy value for replacement:
+
+```env
+VIEWER_SENTRY_PROJECT_URL=https://sentry.example.com/organizations/your-org/projects/your-project/
+```
+
+The placeholder uses a reserved example domain and does not connect to a real project. Replace it with a named project URL (for example `https://your-org.sentry.io/organizations/your-org/projects/your-project/`) or an issues URL with a numeric selector (`https://your-org.sentry.io/issues/?project=123456`). Remove other query filters. Never use a DSN, API URL or URL containing credentials/auth tokens. Empty or rejected values hide the link; invalid values are omitted from public runtime JSON. Like all browser configuration, an accepted navigation URL is public information.
+
+For Docker, set the variable on the viewer service and recreate the container. For local Vite, replace it in `apps/web/.env.local` and restart; static hosting needs a config update/rebuild. The link appears only after admin authorization, opens in a separate tab and sends no referrer, admin token or account filters. Sentry requires its own sign-in and project permissions; platform-admin grants do not grant Sentry access.
+
+Browser diagnostics remain anonymous. API affected-user IDs are HMAC hashes, so account pages do not offer automatic per-user Sentry links. Source maps use debug IDs; release tagging is unnecessary. Native crash reporting remains separate.
+
+Live verification is a deployment follow-up after replacing the placeholder: observe a controlled staging error and sampled trace, confirm uploaded maps resolve the original source frame, check the production environment filter on the issue alert, and confirm a test notification reaches its configured recipient. Local test transports and a working link do not establish those results.
 
 ### Private web source maps without release tagging
 

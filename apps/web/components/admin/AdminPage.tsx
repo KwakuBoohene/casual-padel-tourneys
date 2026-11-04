@@ -1,6 +1,9 @@
+import { UsageOverview } from "./UsageOverview";
+import { ActivityReport } from "./ActivityReport";
 import { useState, type ReactNode } from "react";
 import type {
   AdminOverview,
+  AdminActivity,
   AdminReport,
   AdminReportPage,
   AdminUserDetail,
@@ -55,8 +58,15 @@ function Reports() {
   const [fallback] = useState(weekRange);
   const [revision, setRevision] = useState(0);
   const retry = () => setRevision((n) => n + 1);
-  const match = /^\/admin(?:\/(users|tournaments)(?:\/([A-Za-z0-9_-]{1,128}))?)?\/?$/.exec(pathname);
-  const kind = match?.[1] === "users" ? "users" : match?.[1] === "tournaments" ? "tournaments" : "overview";
+  const match = /^\/admin(?:\/(users|tournaments|activity)(?:\/([A-Za-z0-9_-]{1,128}))?)?\/?$/.exec(pathname);
+  const kind =
+    match?.[1] === "activity"
+      ? "activity"
+      : match?.[1] === "users"
+        ? "users"
+        : match?.[1] === "tournaments"
+          ? "tournaments"
+          : "overview";
   const id = match?.[2];
   const range = rangeParams(params, fallback);
   const context = new URLSearchParams(params);
@@ -69,13 +79,15 @@ function Reports() {
   const title =
     kind === "overview"
       ? "Platform overview"
-      : kind === "users"
-        ? id
-          ? "Account details"
-          : "Accounts"
-        : id
-          ? "Tournament details"
-          : "Tournaments";
+      : kind === "activity"
+        ? "Observed activity"
+        : kind === "users"
+          ? id
+            ? "Account details"
+            : "Accounts"
+          : id
+            ? "Tournament details"
+            : "Tournaments";
   const request = { path: query === null && !id ? null : path, revision, retry };
   return (
     <>
@@ -83,7 +95,8 @@ function Reports() {
         {[
           ["/admin", "Overview", "overview"],
           ["/admin/users", "Accounts", "users"],
-          ["/admin/tournaments", "Tournaments", "tournaments"]
+          ["/admin/tournaments", "Tournaments", "tournaments"],
+          ["/admin/activity", "Activity", "activity"]
         ].map(([to, text, section]) => (
           <Link
             key={to}
@@ -114,7 +127,9 @@ function Reports() {
           <p className="text-sm text-padel-muted">
             {id
               ? "Details show all retained data for this record. List creation range: "
-              : "Creation range: "}
+              : kind === "activity"
+                ? "Activity range: "
+                : "Creation range: "}
             {range.get("period") === "all"
               ? "All retained history"
               : `${timestamp(range.get("from"))} inclusive → ${timestamp(range.get("to"))} exclusive`}{" "}
@@ -128,6 +143,15 @@ function Reports() {
           ) : kind === "overview" ? (
             <ReportView<AdminReport<AdminOverview>> {...request}>
               {(report) => <OverviewReport data={report.data} range={range} />}
+            </ReportView>
+          ) : kind === "activity" ? (
+            <ReportView<AdminReportPage<AdminActivity>> {...request}>
+              {(report) => (
+                <>
+                  <ActivityReport data={report.data} range={range} />
+                  <Pager nextCursor={report.nextCursor} params={context} />
+                </>
+              )}
             </ReportView>
           ) : kind === "users" ? (
             id ? (
@@ -158,6 +182,7 @@ function Reports() {
               )}
             </ReportView>
           )}
+          {kind === "overview" && query !== null ? <UsageOverview range={range} revision={revision} /> : null}
         </>
       )}
     </>

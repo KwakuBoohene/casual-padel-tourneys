@@ -6,7 +6,11 @@ import { timestamp } from "../../lib/admin/reportFilters";
 export function Coverage({ coverage }: { coverage: AdminCoverage }) {
   return (
     <aside className="admin-panel text-sm text-padel-muted">
-      <h2 className="font-semibold text-padel-text">Partial history · retained records</h2>
+      <h2 className="font-semibold text-padel-text">
+        {coverage.source === "observed-events"
+          ? "Observed history · partial coverage"
+          : "Partial history · retained records"}
+      </h2>
       <ul className="list-disc pl-5 space-y-1">
         {coverage.limitations.map((note) => (
           <li key={note}>{note}</li>

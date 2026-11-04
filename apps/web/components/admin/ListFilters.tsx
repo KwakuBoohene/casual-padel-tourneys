@@ -1,7 +1,41 @@
 export function ListFilters({ kind, params }: { kind: string; params: URLSearchParams }) {
   return (
     <>
-      {kind === "users" ? (
+      {kind === "activity" ? (
+        <>
+          <label>
+            Actor account ID
+            <input
+              className="admin-control"
+              name="actorUserId"
+              maxLength={128}
+              defaultValue={params.get("actorUserId") ?? ""}
+            />
+          </label>
+          <label>
+            Owner account ID
+            <input
+              className="admin-control"
+              name="ownerId"
+              maxLength={128}
+              defaultValue={params.get("ownerId") ?? ""}
+            />
+          </label>
+          <Select
+            name="kind"
+            title="Activity type"
+            value={params.get("kind")}
+            options={[
+              ["visit", "Visit"],
+              ["login", "Sign-in"],
+              ["account.created", "Account created"],
+              ["account.converted", "Guest converted"],
+              ["tournament.created", "Tournament created"],
+              ["business.action", "Business action"]
+            ]}
+          />
+        </>
+      ) : kind === "users" ? (
         <>
           <label>
             Search name, email or ID

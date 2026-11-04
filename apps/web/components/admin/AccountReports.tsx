@@ -45,6 +45,9 @@ export function AccountDetail({ data, range }: { data: AdminUserDetail; range: U
         }}
       />
       <div className="flex flex-wrap gap-4">
+        <Link className="admin-control" to={adminLink("/admin/activity", range, { actorUserId: data.id })}>
+          Observed account activity
+        </Link>
         <Link className="admin-control" to={adminLink("/admin/tournaments", range, { ownerId: data.id })}>
           Owned tournaments in selected range
         </Link>
@@ -56,7 +59,8 @@ export function AccountDetail({ data, range }: { data: AdminUserDetail; range: U
         </Link>
       </div>
       <p className="text-padel-muted text-sm">
-        Owned tournaments and actions performed are separate. Last activity is not yet observed.
+        Owned tournaments and actions performed are separate. Last activity reflects retained observations,
+        not a complete history.
       </p>
     </>
   );

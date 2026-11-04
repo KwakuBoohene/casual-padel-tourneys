@@ -1,3 +1,4 @@
+import { lastObservedActivity } from "../../usage/infrastructure/reportActivity.js";
 import type { Prisma } from "@prisma/client";
 import type { AdminUsersQuery, AdminTournamentsQuery } from "@padel/shared";
 import { prisma } from "../../../lib/prisma.js";
@@ -49,9 +50,10 @@ export class PrismaAdminReports implements AdminReports {
     });
     const more = rows.length > query.limit;
     const page = rows.slice(0, query.limit);
+    const activity = await lastObservedActivity(page.map((row) => row.id));
     return {
       coverage: reportCoverage,
-      data: page.map(userSummary),
+      data: page.map((row) => ({ ...userSummary(row), lastActivityAt: activity.get(row.id) ?? null })),
       nextCursor: more ? nextPageCursor("users", query, page.at(-1)) : null
     };
   }
@@ -59,7 +61,11 @@ export class PrismaAdminReports implements AdminReports {
     const row = await prisma.user.findUnique({ where: { id }, select: userSelect });
     if (!row) throw notFound("Account not found.");
     const performedActivityCount = await prisma.organizerActivity.count({ where: { actorUserId: id } });
-    return { coverage: reportCoverage, data: { ...userSummary(row), performedActivityCount } };
+    const activity = await lastObservedActivity([id]);
+    return {
+      coverage: reportCoverage,
+      data: { ...userSummary(row), lastActivityAt: activity.get(id) ?? null, performedActivityCount }
+    };
   }
   async tournaments(query: AdminTournamentsQuery) {
     const status: Prisma.TournamentWhereInput =

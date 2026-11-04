@@ -18,7 +18,9 @@ export function AdminSignIn() {
     const token = takeAdminMagicToken();
     if (token) {
       setBusy(true);
-      void adminRequest<{ token: string }>("/auth/magic-link/consume", { body: { token } })
+      void adminRequest<{ token: string }>("/auth/magic-link/consume", {
+        body: { token, clientSurface: "viewer-admin" }
+      })
         .then((result) => {
           if (current !== generation.current) return;
           signIn(result.token);

@@ -1,3 +1,4 @@
+import { registerUsageModule } from "./modules/usage/http/register.js";
 import { registerAdminModule } from "./modules/admin/http/register.js";
 import { registerSentryMonitoring } from "./shared/http/sentryMonitoring.js";
 import { registerOrganizerAccessRoutes } from "./modules/organizerAccess/http/routes.js";
@@ -66,6 +67,7 @@ export async function createApp() {
   logger.info("createApp: registering routes");
   registerOrganizerMutationWork(server);
   registerOpsRoutes(server);
+  registerUsageModule(server);
   registerAdminModule(server);
   registerOrganizerAccessRoutes(server);
   await registerAuthModule(server);

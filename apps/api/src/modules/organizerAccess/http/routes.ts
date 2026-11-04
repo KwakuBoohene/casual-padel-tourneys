@@ -1,3 +1,4 @@
+import { createObservedActivity } from "../../usage/infrastructure/observedActivity.js";
 import { pruneExpiredOrganizerActivity } from "../infrastructure/pruneActivity.js";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { inviteOrganizerManagerSchema, organizerInvitationTokenSchema } from "@padel/shared";
@@ -129,7 +130,7 @@ export function registerOrganizerAccessRoutes(server: FastifyInstance) {
         if (!row) throw notFound("Invitation not found.");
         if (row.acceptedAt) throw conflict("Invitation already accepted. Remove the manager instead.");
         await tx.organizerInvitation.update({ where: { id }, data: { revokedAt: new Date() } });
-        await tx.organizerActivity.create({
+        await createObservedActivity(tx, {
           data: {
             organizerId: context.organizerId,
             actorUserId: request.user!.id,
@@ -184,7 +185,7 @@ export function registerOrganizerAccessRoutes(server: FastifyInstance) {
             where: { id: row.id },
             data: { revokedAt: new Date(), revokedByUserId: actor.id }
           });
-          await tx.organizerActivity.create({
+          await createObservedActivity(tx, {
             data: {
               organizerId,
               actorUserId: actor.id,

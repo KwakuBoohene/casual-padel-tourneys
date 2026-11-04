@@ -1,3 +1,4 @@
+import { registerUsageReportingRoutes } from "../../usage/http/reportingRoutes.js";
 import type { AdminReports } from "../application/reports.js";
 import { PrismaAdminReports } from "../infrastructure/PrismaAdminReports.js";
 import { registerReportingRoutes } from "./reportingRoutes.js";
@@ -61,6 +62,7 @@ export function registerAdminModule(
       await store.recordRead(request.user!.id, request.routeOptions.url!, request.id, targetId);
     });
     registerReportingRoutes(admin, reports);
+    registerUsageReportingRoutes(admin);
     admin.get(
       "/admin/access",
       async (request): Promise<AdminAccessResponse> => ({

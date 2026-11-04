@@ -27,6 +27,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://padel:padel@localhost:5432/padel
       ADMIN_DB_TESTS: "true"
+      USAGE_DB_TESTS: "true"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

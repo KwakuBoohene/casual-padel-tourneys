@@ -3,7 +3,7 @@ export interface AdminAccessResponse {
 }
 
 export interface AdminCoverage {
-  source: "retained-records";
+  source: "retained-records" | "observed-events";
   historyComplete: false;
   unavailable: ("visits" | "activeUsers" | "lastActivity")[];
   limitations: string[];
@@ -16,7 +16,7 @@ export interface AdminUserSummary {
   verified: boolean;
   createdAt: string;
   ownedTournamentCount: number;
-  lastActivityAt: null;
+  lastActivityAt: string | null;
 }
 export interface AdminTournamentSummary {
   id: string;

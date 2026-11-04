@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { ListFilters, Select } from "./ListFilters";
 import { useSearchParams } from "react-router-dom";
-import { dateInput, rangeParams, weekRange } from "../../lib/admin/reportFilters";
+import { changeReportRange, dateInput, rangeParams, weekRange } from "../../lib/admin/reportFilters";
 
 export function ReportFilters({
   kind,
   fallback
 }: {
-  kind: "overview" | "users" | "tournaments";
+  kind: "overview" | "users" | "tournaments" | "activity";
   fallback: URLSearchParams;
 }) {
   const [params, setParams] = useSearchParams();
@@ -29,6 +29,8 @@ export function ReportFilters({
             next.set(field, new Date(`${value}Z`).toISOString());
           }
         for (const field of [
+          "actorUserId",
+          "kind",
           "q",
           "accountType",
           "verification",
@@ -47,7 +49,7 @@ export function ReportFilters({
       {kind !== "overview" ? (
         <Select
           name="period"
-          title="Creation range"
+          title={kind === "activity" ? "Activity range" : "Creation range"}
           value={range.get("period") ?? "range"}
           onChange={(value) => setAllHistory(value === "all")}
           options={[
@@ -81,7 +83,7 @@ export function ReportFilters({
         />
       </label>
       <ListFilters kind={kind} params={params} />
-      {kind !== "overview" ? (
+      {kind !== "overview" && kind !== "activity" ? (
         <Select
           name="sort"
           title="Creation order"
@@ -93,7 +95,11 @@ export function ReportFilters({
         />
       ) : null}
       <button className="admin-control font-semibold">Apply filters</button>
-      <button type="button" className="admin-control" onClick={() => setParams(weekRange())}>
+      <button
+        type="button"
+        className="admin-control"
+        onClick={() => setParams(changeReportRange(params, weekRange()))}
+      >
         This week
       </button>
     </form>

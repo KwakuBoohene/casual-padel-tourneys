@@ -333,3 +333,19 @@ To disable access, set the flag false and restart the API. Operator revoke/prune
 ### Admin reporting APIs
 
 Apply the additive reporting-index migration through the normal migration procedure before deploying admin reporting changes. Existing admin runtime configuration remains sufficient.
+
+## Organizer usage reporting
+
+Apply database migrations before enabling usage reporting. `USAGE_BUSINESS_ENABLED=true` on the API records successful account creation/conversion, sign-ins and organizer audit actions. `USAGE_VISITS_ENABLED=true` permits optional signed-in organizer screen visits; rebuild the organizer with `EXPO_PUBLIC_USAGE_VISITS_ENABLED=true` to expose the per-device opt-in control. All three flags default off. The public viewer sends no visit events. Turning off the device control cancels queued visit delivery; operational business observations have a separate server flag.
+
+Admin usage/activity reports use the existing admin grant and `ADMIN_PORTAL_ENABLED` checks. Visits are foreground screen transitions, not requests, background refreshes or sessions. A visit session expires after 30 minutes without foreground interaction; account switches rotate it. Cross-tab session coordination requires Web Locks and working local storage; optional visits fail closed where these are unavailable. Do not use observed active-account counts as a complete census of usage.
+
+Raw usage events retain opaque actor/owner/target references for 90 days. Anonymous daily counts retain no identities or session IDs and expire after 13 calendar months; admin read audits expire after 12 months. Reports label partial collection and retention gaps, and never reconstruct pre-collection or deleted history. Daily visit trends use full Africa/Accra calendar days, while exact metrics and activity filters use inclusive `from`/exclusive `to` timestamps. Device opt-out stops future visits and does not remove prior retained observations.
+
+The Compose `usage-maintenance` service runs bounded cleanup hourly. When deploying services separately, schedule this command hourly against the API container instead:
+
+```bash
+npm run maintenance:prune-usage --workspace @padel/api
+```
+
+Monitor command failures and database growth. Collection flags stop new observations without deleting existing reports. Database migrations and collection flags must be rolled out before enabling the organizer build flag.

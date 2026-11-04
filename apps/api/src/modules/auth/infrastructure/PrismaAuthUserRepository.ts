@@ -1,10 +1,6 @@
+import { recordUsageEvent, recordConversion } from "../../usage/infrastructure/recordEvent.js";
 import { prisma } from "../../../lib/prisma.js";
-import type {
-  AuthUserPatch,
-  AuthUserRecord,
-  AuthUserRepository,
-  NewAuthUser
-} from "../application/ports.js";
+import type { AuthUserPatch, AuthUserRecord, AuthUserRepository, NewAuthUser } from "../application/ports.js";
 import { toAuthUserRecord } from "./authUserMapper.js";
 
 export class PrismaAuthUserRepository implements AuthUserRepository {
@@ -29,12 +25,27 @@ export class PrismaAuthUserRepository implements AuthUserRepository {
   }
 
   async create(input: NewAuthUser): Promise<AuthUserRecord> {
-    const row = await prisma.user.create({ data: input });
+    const row = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({ data: input });
+      await recordUsageEvent(tx, {
+        id: `account:${user.id}`,
+        kind: "account.created",
+        surface: "organizer",
+        actorUserId: user.id,
+        targetId: user.id
+      });
+      return user;
+    });
     return toAuthUserRecord(row);
   }
 
   async update(id: string, patch: AuthUserPatch): Promise<AuthUserRecord> {
-    const row = await prisma.user.update({ where: { id }, data: patch });
+    const row = await prisma.$transaction(async (tx) => {
+      const before = await tx.user.findUniqueOrThrow({ where: { id }, select: { isGuest: true } });
+      const user = await tx.user.update({ where: { id }, data: patch });
+      await recordConversion(tx, before, user);
+      return user;
+    });
     return toAuthUserRecord(row);
   }
 
@@ -66,10 +77,13 @@ export class PrismaAuthUserRepository implements AuthUserRepository {
     const row = await prisma.$transaction(async (tx) => {
       await tx.opaqueRecord.deleteMany({ where: { userId } });
       await tx.opaqueRecord.create({ data: { userId, envelope } });
-      return tx.user.update({
+      const before = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { isGuest: true } });
+      const user = await tx.user.update({
         where: { id: userId },
         data: { emailVerifiedAt: verifiedAt, isGuest: false }
       });
+      await recordConversion(tx, before, user);
+      return user;
     });
     return toAuthUserRecord(row);
   }

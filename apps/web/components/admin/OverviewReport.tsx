@@ -43,9 +43,7 @@ export function OverviewReport({ data, range }: { data: AdminOverview; range: UR
           ),
           "Retained accounts · all time": (
             <Link to="/admin/users?period=all">{data.accounts.total.toLocaleString()}</Link>
-          ),
-          Visits: "Not yet observed",
-          "Active users": "Not yet observed"
+          )
         }}
       />
       <ReportTable

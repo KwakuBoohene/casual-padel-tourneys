@@ -1,3 +1,4 @@
+import { recordConversion } from "../../usage/infrastructure/recordEvent.js";
 import { createMagicToken, hashMagicToken } from "../../../lib/magicTokens.js";
 import { prisma } from "../../../lib/prisma.js";
 import type { AuthUserRecord, MagicTokenPurpose, MagicTokenStore } from "../application/ports.js";
@@ -44,10 +45,15 @@ export class PrismaMagicTokenStore implements MagicTokenStore {
         data: { consumedAt: now }
       });
       if (claimed.count !== 1) return null;
+      const before = await tx.user.findUniqueOrThrow({
+        where: { id: record.userId },
+        select: { isGuest: true }
+      });
       const user = await tx.user.update({
         where: { id: record.userId },
         data: { emailVerifiedAt: now, isGuest: false }
       });
+      await recordConversion(tx, before, user);
       return toAuthUserRecord(user);
     });
   }

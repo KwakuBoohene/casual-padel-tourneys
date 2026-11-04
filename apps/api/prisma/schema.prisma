@@ -535,3 +535,31 @@ model AdminAccessAudit {
   @@index([createdAt])
   @@index([actorUserId, createdAt])
 }
+
+// Opaque references deliberately survive deletion; raw identity-bearing observations expire after 90 days.
+model UsageEvent {
+  id          String @id
+  occurredAt  DateTime @default(now())
+  kind        String
+  surface     String
+  route       String?
+  sessionId   String?
+  actorUserId String?
+  ownerId     String?
+  targetId    String?
+  action      String?
+  @@index([occurredAt, id])
+  @@index([actorUserId, occurredAt])
+  @@index([kind, occurredAt])
+}
+model UsageDay {
+  day     DateTime @db.Date
+  surface String
+  kind    String
+  count   Int @default(0)
+  @@id([day, surface, kind])
+}
+model UsageCoverage {
+  source    String @id
+  startedAt DateTime @default(now())
+}

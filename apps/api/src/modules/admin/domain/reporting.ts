@@ -5,12 +5,12 @@ import { validation } from "../../../shared/kernel/appError.js";
 export const reportCoverage: AdminCoverage = {
   source: "retained-records",
   historyComplete: false,
-  unavailable: ["visits", "activeUsers", "lastActivity"],
+  unavailable: ["visits", "activeUsers"],
   limitations: [
     "Deleted records are not reconstructed.",
     "Guest/registered counts reflect current account classification, not immutable signup history.",
     "Activity counts cover retained organizer audit entries only; ownership and performed actions are distinct.",
-    "Visits, active users and last activity have not been instrumented."
+    "Usage reports cover organizer-only observations since collection began, subject to flags, consent and retention. Unknown last activity is not evidence of inactivity."
   ]
 };
 export function reportingRange(input: { from?: string; to?: string }, now = new Date()) {

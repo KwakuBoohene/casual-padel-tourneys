@@ -1,4 +1,9 @@
-import { adminOverviewQuerySchema, adminUsersQuerySchema, adminTournamentsQuerySchema } from "@padel/shared";
+import {
+  adminOverviewQuerySchema,
+  adminUsersQuerySchema,
+  adminTournamentsQuerySchema,
+  usageActivityQuerySchema
+} from "@padel/shared";
 
 export function weekRange(now = new Date()): URLSearchParams {
   const from = new Date(now);
@@ -22,7 +27,7 @@ export function adminLink(path: string, params: URLSearchParams, extra: Record<s
   return `${path}?${next}`;
 }
 export function reportQuery(
-  kind: "overview" | "users" | "tournaments",
+  kind: "overview" | "users" | "tournaments" | "activity",
   params: URLSearchParams,
   fallback: URLSearchParams
 ): string | null {
@@ -33,7 +38,9 @@ export function reportQuery(
       ? ["q", "accountType", "verification", "sort", "cursor"]
       : kind === "tournaments"
         ? ["ownerId", "mode", "variant", "status", "sort", "cursor"]
-        : [];
+        : kind === "activity"
+          ? ["actorUserId", "ownerId", "kind", "cursor"]
+          : [];
   for (const field of fields) if (params.get(field)) query.set(field, params.get(field)!);
   if (kind !== "overview") query.set("limit", "25");
   const schema =
@@ -41,7 +48,9 @@ export function reportQuery(
       ? adminUsersQuerySchema
       : kind === "tournaments"
         ? adminTournamentsQuerySchema
-        : adminOverviewQuerySchema;
+        : kind === "activity"
+          ? usageActivityQuerySchema
+          : adminOverviewQuerySchema;
   return schema.safeParse(Object.fromEntries(query)).success ? query.toString() : null;
 }
 export function dateInput(value: string): string {
@@ -54,4 +63,12 @@ export function timestamp(value: string | null): string {
 }
 export function label(value: string): string {
   return value.toLowerCase().replaceAll("_", " ").replaceAll("-", " ");
+}
+
+export function changeReportRange(params: URLSearchParams, range: URLSearchParams): URLSearchParams {
+  const next = new URLSearchParams(params);
+  next.delete("cursor");
+  next.delete("period");
+  range.forEach((value, key) => next.set(key, value));
+  return next;
 }

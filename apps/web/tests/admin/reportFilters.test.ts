@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   adminLink,
+  changeReportRange,
   dateInput,
   timestamp,
   rangeParams,
@@ -65,4 +66,23 @@ test("date controls and exact range labels normalize offsets to Accra and retain
   assert.equal(timestamp(null), "Not yet observed");
   assert.equal(dateInput("invalid"), "");
   assert.equal(timestamp("invalid"), "Invalid date");
+});
+
+test("activity filters stay scoped to the actor when changing ranges and never reuse a cursor", () => {
+  const original = new URLSearchParams({
+    actorUserId: "actor_1",
+    kind: "visit",
+    period: "all",
+    cursor: "old"
+  });
+  const next = changeReportRange(original, fallback);
+  assert.equal(next.get("actorUserId"), "actor_1");
+  assert.equal(next.get("kind"), "visit");
+  assert.equal(next.has("cursor"), false);
+  assert.equal(next.has("period"), false);
+  const query = new URLSearchParams(reportQuery("activity", next, fallback)!);
+  assert.equal(query.get("actorUserId"), "actor_1");
+  assert.equal(query.get("kind"), "visit");
+  assert.equal(query.get("limit"), "25");
+  assert.equal(query.has("sort"), false);
 });

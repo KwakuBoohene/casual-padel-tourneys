@@ -1,3 +1,4 @@
+import { UsageConsent } from "../../src/components/usage/UsageConsent";
 import { OrganizerAccountChrome } from "../../src/components/organizerAccess/OrganizerAccountChrome";
 import { useOrganizerAccount } from "../../src/providers/OrganizerAccountProvider";
 import type { ReactNode } from "react";
@@ -42,11 +43,13 @@ export default function AppLayout() {
   const account = useOrganizerAccount();
   return (
     <AppAuthGate>
-      <OrganizerAccountChrome>
-        <OrganizerSessionProvider key={account.selected?.id}>
-          <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }} />
-        </OrganizerSessionProvider>
-      </OrganizerAccountChrome>
+      <UsageConsent>
+        <OrganizerAccountChrome>
+          <OrganizerSessionProvider key={account.selected?.id}>
+            <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }} />
+          </OrganizerSessionProvider>
+        </OrganizerAccountChrome>
+      </UsageConsent>
     </AppAuthGate>
   );
 }

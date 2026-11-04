@@ -5,7 +5,8 @@ export const requestMagicLinkSchema = z.object({
 });
 
 export const consumeMagicLinkSchema = z.object({
-  token: z.string().trim().min(20).max(200)
+  token: z.string().trim().min(20).max(200),
+  clientSurface: z.enum(["organizer", "viewer-admin"]).optional()
 });
 
 const protocolCiphertext = z.string().trim().min(1).max(10_000);

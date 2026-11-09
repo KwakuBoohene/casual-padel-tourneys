@@ -2,7 +2,7 @@ import type { ViewerMonitoringConfig } from "./observability/sentry";
 
 declare global {
   interface Window {
-    __PADEL_CONFIG__?: { apiBaseUrl: string; sentry?: ViewerMonitoringConfig };
+    __PADEL_CONFIG__?: { apiBaseUrl: string; sentryProjectUrl?: string; sentry?: ViewerMonitoringConfig };
   }
 }
 
@@ -33,7 +33,7 @@ export function resolvePublicApiBaseUrl(raw: string | undefined, production = tr
 }
 
 export function publicApiBaseUrl(): string {
-  const origin = resolvePublicApiBaseUrl(window.__PADEL_CONFIG__?.apiBaseUrl, import.meta.env.PROD);
+  const origin = resolvePublicApiBaseUrl(window.__PADEL_CONFIG__?.apiBaseUrl, import.meta.env?.PROD ?? true);
   if (window.location.protocol === "https:" && origin.startsWith("http:")) {
     throw new Error("PUBLIC_API_BASE_URL must use HTTPS when the viewer uses HTTPS.");
   }

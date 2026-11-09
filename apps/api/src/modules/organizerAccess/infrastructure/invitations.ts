@@ -1,3 +1,4 @@
+import { createObservedActivity } from "../../usage/infrastructure/observedActivity.js";
 import { createHash, randomBytes } from "node:crypto";
 import { prisma } from "../../../lib/prisma.js";
 import { getMailer } from "../../../lib/mail/index.js";
@@ -23,9 +24,11 @@ export async function writeAccessActivity(
   action: string,
   targetId: string
 ) {
-  await prisma.organizerActivity.create({
-    data: { organizerId, actorUserId: actor.id, actorName: actor.name, action, targetId }
-  });
+  await prisma.$transaction((tx) =>
+    createObservedActivity(tx, {
+      data: { organizerId, actorUserId: actor.id, actorName: actor.name, action, targetId }
+    })
+  );
 }
 
 export async function sendInvitation(ownerId: string, email: string, invitationId?: string) {
@@ -97,7 +100,7 @@ export async function sendInvitation(ownerId: string, email: string, invitationI
         }
       });
     }
-    await tx.organizerActivity.create({
+    await createObservedActivity(tx, {
       data: {
         organizerId: ownerId,
         actorUserId: owner.id,
@@ -174,7 +177,7 @@ export async function acceptInvitation(actorId: string, token: string) {
       where: { id: invite.id },
       data: { acceptedAt: new Date(), acceptedByUserId: actorId }
     });
-    await tx.organizerActivity.create({
+    await createObservedActivity(tx, {
       data: {
         organizerId: invite.organizerId,
         actorUserId: actor.id,

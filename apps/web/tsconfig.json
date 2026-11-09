@@ -7,24 +7,14 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@padel/shared": [
-        "../../packages/shared/src/index.ts"
-      ]
+      "@padel/shared": ["../../packages/shared/src/index.ts"]
     },
     "isolatedModules": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "types": [
-      "vite/client"
-    ]
+    "types": ["vite/client"],
+    "resolveJsonModule": true
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    ".next"
-  ]
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "dist", ".next"]
 }

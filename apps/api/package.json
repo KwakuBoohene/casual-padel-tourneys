@@ -16,7 +16,10 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
-    "maintenance:prune-activity": "node dist/apps/api/src/maintenance/pruneOrganizerActivity.js"
+    "maintenance:prune-activity": "node dist/apps/api/src/maintenance/pruneOrganizerActivity.js",
+    "admin": "node --import tsx src/maintenance/platformAdmin.ts",
+    "admin:production": "node dist/apps/api/src/maintenance/platformAdmin.js",
+    "maintenance:prune-usage": "node dist/apps/api/src/maintenance/pruneUsage.js"
   },
   "dependencies": {
     "@fastify/cors": "11.3.1",

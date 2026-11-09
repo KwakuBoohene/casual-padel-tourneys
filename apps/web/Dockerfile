@@ -20,6 +20,7 @@ RUN --mount=type=secret,id=sentry_auth_token npm run build --workspace @padel/we
 FROM nginx:stable-alpine
 RUN apk add --no-cache jq
 COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
+COPY apps/web/sentry-project-url-pattern.json /etc/nginx/sentry-project-url-pattern.json
 COPY apps/web/40-viewer-config.sh /docker-entrypoint.d/40-viewer-config.sh
 RUN chmod +x /docker-entrypoint.d/40-viewer-config.sh
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html

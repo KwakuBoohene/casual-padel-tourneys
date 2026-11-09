@@ -1,6 +1,8 @@
+import { activityMetadata } from "../infrastructure/activityMetadata.js";
+import { createObservedActivity } from "../../usage/infrastructure/observedActivity.js";
 import type { FastifyInstance } from "fastify";
 import type { Prisma } from "@prisma/client";
-import { databaseClient, prisma } from "../../../lib/prisma.js";
+import { databaseClient } from "../../../lib/prisma.js";
 import { databaseWork } from "../../../lib/databaseContext.js";
 import { AppError } from "../../../shared/kernel/appError.js";
 import { sharedOrganizerAccessEnabled } from "../domain/policy.js";
@@ -103,44 +105,14 @@ export function registerOrganizerMutationWork(server: FastifyInstance): void {
               const value = await handler.call(this, request, reply);
               if (reply.statusCode >= 400) throw new RejectedMutation(value);
               const data = value as { data?: { id?: string } } | undefined;
-              const metadata: Prisma.JsonObject = {};
-              for (const key of [
-                "scoreA",
-                "scoreB",
-                "matchId",
-                "courtId",
-                "playerId",
-                "targetPlayerId",
-                "sourcePlayerId",
-                "matchTbA",
-                "matchTbB",
-                "contributeToCareerLeaderboard",
-                "expectedVersion"
-              ]) {
-                const entry = (request.body as Record<string, unknown> | undefined)?.[key];
-                if (["string", "number", "boolean"].includes(typeof entry))
-                  metadata[key] = entry as string | number | boolean;
-              }
-              if (beforeVersion !== undefined) metadata.beforeVersion = beforeVersion;
-              if (eventId) {
-                const after = await tx.tournament.findUnique({
-                  where: { id: eventId },
-                  select: { version: true }
-                });
-                if (after) metadata.afterVersion = after.version;
-              }
-              if (params.courtId) metadata.courtId = params.courtId;
-              if (beforeScore) metadata.beforeScore = beforeScore;
-              if (Array.isArray(input?.sets))
-                metadata.sets = input.sets.slice(0, 5).map((set) => {
-                  const row = set as Record<string, unknown>;
-                  return {
-                    setNumber: Number(row.setNumber),
-                    gamesA: Number(row.gamesA),
-                    gamesB: Number(row.gamesB)
-                  };
-                });
-              await prisma.organizerActivity.create({
+              const metadata = await activityMetadata(tx, {
+                eventId,
+                body: request.body,
+                params,
+                beforeVersion,
+                beforeScore
+              });
+              await createObservedActivity(tx, {
                 data: {
                   organizerId: context.organizerId,
                   actorUserId: context.actorUserId,

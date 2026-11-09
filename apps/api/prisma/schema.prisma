@@ -58,6 +58,7 @@ enum KohGameWinMethod {
 }
 
 model User {
+  platformAdminGrant     PlatformAdminGrant?
   id                     String           @id @default(cuid())
   email                  String           @unique
   name                   String
@@ -80,6 +81,7 @@ model User {
   magicLinkTokens        MagicLinkToken[]
   opaqueRecord           OpaqueRecord?
   organizerPlayers       OrganizerPlayer[]
+  @@index([createdAt, id])
 }
 
 enum MagicLinkPurpose {
@@ -152,6 +154,8 @@ model Tournament {
   pendingPlayers        PendingPlayer[]
   kohCourts             KohCourt[]
   kohPromotionRules     KohPromotionRule[]
+  @@index([createdAt, id])
+  @@index([organizerId, createdAt, id])
 }
 
 model Player {
@@ -250,6 +254,7 @@ model Round {
   isLocked     Boolean    @default(false)
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   matches      Match[]
+  @@index([tournamentId])
 }
 
 model Match {
@@ -267,6 +272,7 @@ model Match {
   voidedAt  DateTime?
   round     Round      @relation(fields: [roundId], references: [id], onDelete: Cascade)
   sets      MatchSet[]
+  @@index([roundId])
 }
 
 model MatchSet {
@@ -440,6 +446,7 @@ model OrganizerActivity {
   owner       User     @relation(fields: [organizerId], references: [id], onDelete: Cascade)
 
   @@index([organizerId, occurredAt, id])
+  @@index([actorUserId, occurredAt])
 }
 
 model HistoricalResultImport {
@@ -508,4 +515,51 @@ model HistoricalPlayerResult {
 
   @@unique([revisionId, organizerPlayerId])
   @@index([organizerPlayerId])
+}
+
+model PlatformAdminGrant {
+  userId    String    @id
+  grantedAt DateTime  @default(now())
+  revokedAt DateTime?
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AdminAccessAudit {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  action      String
+  targetId    String?
+  requestId   String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actorUserId, createdAt])
+}
+
+// Opaque references deliberately survive deletion; raw identity-bearing observations expire after 90 days.
+model UsageEvent {
+  id          String @id
+  occurredAt  DateTime @default(now())
+  kind        String
+  surface     String
+  route       String?
+  sessionId   String?
+  actorUserId String?
+  ownerId     String?
+  targetId    String?
+  action      String?
+  @@index([occurredAt, id])
+  @@index([actorUserId, occurredAt])
+  @@index([kind, occurredAt])
+}
+model UsageDay {
+  day     DateTime @db.Date
+  surface String
+  kind    String
+  count   Int @default(0)
+  @@id([day, surface, kind])
+}
+model UsageCoverage {
+  source    String @id
+  startedAt DateTime @default(now())
 }

@@ -1,3 +1,4 @@
+import { createObservedActivity } from "../../usage/infrastructure/observedActivity.js";
 import { createHash, randomUUID } from "node:crypto";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
@@ -509,7 +510,7 @@ export async function commitHistoricalImport(owner: string, actor: string, token
           results: { create: results }
         }
       });
-      await tx.organizerActivity.create({
+      await createObservedActivity(tx, {
         data: {
           organizerId: owner,
           actorUserId: actor,
@@ -543,7 +544,7 @@ export async function setHistoricalInclusion(
       where: { id },
       data: { included, version: { increment: 1 } }
     });
-    await tx.organizerActivity.create({
+    await createObservedActivity(tx, {
       data: {
         organizerId: owner,
         actorUserId: actor,

@@ -17,6 +17,7 @@ export function generateRequestId(): string {
 export function redactUrl(url: string): string {
   const [rawPath, ...rest] = url.split("?");
   const path = rawPath.replace(/^\/public\/[^/]+/, "/public/[redacted]");
+  if (rawPath.startsWith("/admin/")) return path;
   const rawQuery = rest.join("?");
   if (!rawQuery) {
     return path;

@@ -1,0 +1,1 @@
+"^https://[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?/(?:(?:organizations/[A-Za-z0-9_-]+/)?projects/[A-Za-z0-9_-]+/?|settings/[A-Za-z0-9_-]+/projects/[A-Za-z0-9_-]+/?|(?:organizations/[A-Za-z0-9_-]+/)?issues/\\?project=[0-9]+)$"

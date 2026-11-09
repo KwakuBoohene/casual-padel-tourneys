@@ -1,10 +1,7 @@
+import { recordConversion } from "../../usage/infrastructure/recordEvent.js";
 import { createMagicToken, hashMagicToken } from "../../../lib/magicTokens.js";
 import { prisma } from "../../../lib/prisma.js";
-import type {
-  AuthUserRecord,
-  MagicTokenPurpose,
-  MagicTokenStore
-} from "../application/ports.js";
+import type { AuthUserRecord, MagicTokenPurpose, MagicTokenStore } from "../application/ports.js";
 import { toAuthUserRecord } from "./authUserMapper.js";
 
 type TokenRow = {
@@ -17,19 +14,12 @@ type TokenRow = {
 
 function isRedeemable(row: TokenRow | null, allowed: MagicTokenPurpose[]): row is TokenRow {
   return Boolean(
-    row &&
-      !row.consumedAt &&
-      row.expiresAt.getTime() > Date.now() &&
-      allowed.includes(row.purpose)
+    row && !row.consumedAt && row.expiresAt.getTime() > Date.now() && allowed.includes(row.purpose)
   );
 }
 
 export class PrismaMagicTokenStore implements MagicTokenStore {
-  async issue(input: {
-    userId: string;
-    purpose: MagicTokenPurpose;
-    expiresAt: Date;
-  }): Promise<string> {
+  async issue(input: { userId: string; purpose: MagicTokenPurpose; expiresAt: Date }): Promise<string> {
     const { rawToken, tokenHash } = createMagicToken();
     await prisma.magicLinkToken.create({
       data: {
@@ -49,17 +39,23 @@ export class PrismaMagicTokenStore implements MagicTokenStore {
     }
 
     const now = new Date();
-    const [user] = await prisma.$transaction([
-      prisma.user.update({
+    return prisma.$transaction(async (tx) => {
+      const claimed = await tx.magicLinkToken.updateMany({
+        where: { id: record.id, consumedAt: null, expiresAt: { gt: now } },
+        data: { consumedAt: now }
+      });
+      if (claimed.count !== 1) return null;
+      const before = await tx.user.findUniqueOrThrow({
+        where: { id: record.userId },
+        select: { isGuest: true }
+      });
+      const user = await tx.user.update({
         where: { id: record.userId },
         data: { emailVerifiedAt: now, isGuest: false }
-      }),
-      prisma.magicLinkToken.update({
-        where: { id: record.id },
-        data: { consumedAt: now }
-      })
-    ]);
-    return toAuthUserRecord(user);
+      });
+      await recordConversion(tx, before, user);
+      return toAuthUserRecord(user);
+    });
   }
 
   async consumeReset(rawToken: string): Promise<{ userId: string } | null> {

@@ -22,9 +22,14 @@ export function OverviewReport({ data, range }: { data: AdminOverview; range: UR
       </p>
       <div className="grid gap-4 md:grid-cols-3">
         {metrics.map(([title, key, path, extra]) => (
-          <Link key={key} to={adminLink(path, range, extra)} className="admin-panel space-y-2">
-            <h2>{title}</h2>
-            <p className="text-3xl font-bold">{data.current[key].toLocaleString()}</p>
+          <Link key={key} to={adminLink(path, range, extra)} className="admin-panel hover:border-padel-primary">
+            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[0.875rem] font-[650] text-padel-muted">
+              <h2>{title}</h2>
+              <span className="rounded-2xl bg-(--admin-accent-surface) px-[0.55rem] py-[0.2rem] text-[0.625rem] text-padel-primary uppercase">
+                App DB
+              </span>
+            </div>
+            <p className="my-[0.35rem] text-4xl leading-[1.2] font-[750] tabular-nums">{data.current[key].toLocaleString()}</p>
             <p className="text-sm text-padel-muted">{comparison(data.current[key], data.previous[key])}</p>
           </Link>
         ))}

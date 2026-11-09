@@ -1,4 +1,4 @@
-import { SentryLink } from "./SentryLink";
+import { AdminShell } from "./AdminShell";
 import { UsageOverview } from "./UsageOverview";
 import { ActivityReport } from "./ActivityReport";
 import { useState, type ReactNode } from "react";
@@ -19,41 +19,29 @@ import { useAdminReport } from "./useAdminReport";
 import { AccountDetail, AccountList } from "./AccountReports";
 import { TournamentDetail, TournamentList } from "./TournamentReports";
 import { OverviewReport } from "./OverviewReport";
-import { ReportFilters } from "./ReportFilters";
+import { OverviewDateFilter, ReportFilters } from "./ReportFilters";
 import { Coverage, Pager, ReportState } from "./ReportParts";
 import "./admin.css";
+
+const reportTitle = "mt-[0.35rem] text-[clamp(1.875rem,3.1vw,2.75rem)] leading-[1.1] font-[750] tracking-tight";
 
 export function AdminPage() {
   const session = useAdminSession();
   if (session.status === "signed-out") return <Navigate to="/admin/sign-in" replace />;
+  if (session.status === "allowed") return <Reports signOut={session.signOut} />;
   return (
-    <main className="admin-workspace min-h-screen bg-padel-background text-padel-text px-4 py-10 sm:px-6">
-      <section className="max-w-6xl mx-auto space-y-6">
-        <p className="text-padel-primary text-sm font-bold">CASUAL PADEL · ADMIN</p>
-        {session.status === "allowed" ? (
-          <Reports />
-        ) : (
-          <>
-            <h1 className="text-3xl font-bold">
-              {session.status === "checking" ? "Checking admin access…" : "Admin access unavailable"}
-            </h1>
-            {session.status === "denied" ? (
-              <p role="alert">This account does not have active platform admin access.</p>
-            ) : null}
-            {session.status === "error" ? <ReportState error={0} retry={session.retry} /> : null}
-          </>
-        )}
-        <footer className="flex flex-wrap items-center gap-6">
-          <Link to="/">Back to the viewer</Link>
-          <button onClick={session.signOut} className="admin-control">
-            Sign out
-          </button>
-        </footer>
-      </section>
-    </main>
+    <AdminShell signOut={session.signOut}>
+      <h1 className={reportTitle}>
+        {session.status === "checking" ? "Checking admin access…" : "Admin access unavailable"}
+      </h1>
+      {session.status === "denied" ? (
+        <p role="alert">This account does not have active platform admin access.</p>
+      ) : null}
+      {session.status === "error" ? <ReportState error={0} retry={session.retry} /> : null}
+    </AdminShell>
   );
 }
-function Reports() {
+function Reports({ signOut }: { signOut(): void }) {
   const { pathname } = useLocation();
   const [params] = useSearchParams();
   const [fallback] = useState(weekRange);
@@ -91,30 +79,24 @@ function Reports() {
             : "Tournaments";
   const request = { path: query === null && !id ? null : path, revision, retry };
   return (
-    <>
-      <nav aria-label="Admin reports" className="flex flex-wrap gap-6">
-        {[
-          ["/admin", "Overview", "overview"],
-          ["/admin/users", "Accounts", "users"],
-          ["/admin/tournaments", "Tournaments", "tournaments"],
-          ["/admin/activity", "Activity", "activity"]
-        ].map(([to, text, section]) => (
-          <Link
-            key={to}
-            aria-current={kind === section ? "page" : undefined}
-            to={adminLink(to, section === "overview" && range.get("period") === "all" ? fallback : range)}
-          >
-            {text}
-          </Link>
-        ))}
-        <SentryLink />
-      </nav>
-      <div className="flex flex-wrap justify-between items-center gap-4">
-        <h1 className="text-3xl font-bold">{title}</h1>
-        <button className="admin-control" onClick={retry}>
-          Refresh report
-        </button>
-      </div>
+    <AdminShell navigation={{ kind, range, fallback }} signOut={signOut}>
+      <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+        <div>
+          <p className="admin-eyebrow text-padel-primary">{kind === "overview" ? "Reporting snapshot" : "Platform reports"}</p>
+          <h1 className={reportTitle}>{title}</h1>
+          {kind === "overview" && match ? (
+            <p className="mt-2 text-[0.9375rem] text-padel-muted">
+              Account growth, tournament creation, and observed organizer activity.
+            </p>
+          ) : null}
+        </div>
+        <div className="relative flex max-w-full flex-wrap items-center gap-2">
+          {kind === "overview" && match ? (
+            <OverviewDateFilter fallback={fallback} range={range} />
+          ) : null}
+          <button type="button" className="admin-control" onClick={retry}>Refresh report</button>
+        </div>
+      </header>
       {!match ? (
         <p role="alert">Admin page not found.</p>
       ) : (
@@ -123,9 +105,9 @@ function Reports() {
             <Link to={adminLink(`/admin/${kind}`, params)}>
               Back to {kind === "users" ? "accounts" : "tournaments"}
             </Link>
-          ) : (
+          ) : kind !== "overview" ? (
             <ReportFilters key={params.toString()} kind={kind} fallback={fallback} />
-          )}
+          ) : null}
           <p className="text-sm text-padel-muted">
             {id
               ? "Details show all retained data for this record. List creation range: "
@@ -187,7 +169,7 @@ function Reports() {
           {kind === "overview" && query !== null ? <UsageOverview range={range} revision={revision} /> : null}
         </>
       )}
-    </>
+    </AdminShell>
   );
 }
 function ReportView<T extends AdminReport<unknown>>({

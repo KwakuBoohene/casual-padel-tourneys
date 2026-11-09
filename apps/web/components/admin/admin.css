@@ -1,41 +1,91 @@
-.admin-workspace .admin-panel {
-  border: 1px solid var(--color-padel-border);
-  border-radius: 1rem;
-  background: var(--color-padel-surface);
-  padding: 1.25rem;
+.admin-workspace {
+  --color-padel-background: #111713;
+  --color-padel-surface: #1b251e;
+  --color-padel-surface-alt: #202d23;
+  --color-padel-text: #f2f7ee;
+  --color-padel-muted: #b3c4b6;
+  --color-padel-primary: #bceb77;
+  --color-padel-border: #33453a;
+  --admin-rail: #17201a;
+  --admin-accent-surface: #293b25;
+  --admin-brand: #c6ef76;
+
+  color-scheme: dark;
 }
-.admin-workspace .admin-control {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  border: 1px solid var(--color-padel-border);
-  border-radius: 0.6rem;
-  padding: 0.5rem 0.85rem;
-  background: var(--color-padel-surface);
-  color: var(--color-padel-text);
+
+[data-theme="light"] .admin-workspace {
+  --color-padel-background: #f4f6ef;
+  --color-padel-surface: #fff;
+  --color-padel-surface-alt: #f1f4ea;
+  --color-padel-text: #14221a;
+  --color-padel-muted: #526457;
+  --color-padel-primary: #326540;
+  --color-padel-border: #dde5d7;
+  --admin-rail: #edf1e5;
+  --admin-accent-surface: #e6f1e4;
+
+  color-scheme: light;
 }
+
+@layer components {
+  .admin-eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .admin-workspace .admin-panel {
+    border: 1px solid var(--color-padel-border);
+    border-radius: 0.875rem;
+    background: var(--color-padel-surface);
+    padding: 1.25rem;
+  }
+
+  .admin-workspace .admin-control {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    border: 1px solid var(--color-padel-border);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.85rem;
+    background: var(--color-padel-surface);
+    color: var(--color-padel-text);
+    font-size: 0.8125rem;
+  }
+}
+
+.admin-workspace :is(a, button, summary) {
+  cursor: pointer;
+}
+
 .admin-workspace label {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
   font-size: 0.875rem;
 }
+
 .admin-workspace :is(input, select) {
   min-width: 0;
   max-width: 100%;
 }
-.admin-workspace :is(a, button, input, select):focus-visible {
+
+.admin-workspace :is(a, button, input, select, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--color-padel-primary) !important;
   outline-offset: 3px;
 }
-.admin-workspace a:not(.admin-control) {
+
+.admin-workspace main a:not(.admin-control, .admin-panel) {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.admin-workspace [aria-current="page"] {
-  color: var(--color-padel-primary);
-}
+
 .admin-workspace .admin-control:hover {
   border-color: var(--color-padel-primary);
+}
+
+.admin-date-picker summary::-webkit-details-marker {
+  display: none;
 }

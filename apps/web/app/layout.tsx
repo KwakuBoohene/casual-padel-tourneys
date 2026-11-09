@@ -1,6 +1,6 @@
 import { useAdminSession } from "../components/admin/AdminSession";
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useMatch } from "react-router-dom";
 
 import { ThemeProvider } from "./ThemeProvider";
 import { ThemeToggle } from "../components/ThemeToggle";
@@ -8,6 +8,11 @@ import "./globals.css";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const admin = useAdminSession();
+  const adminRoute = useMatch("/admin/*");
+  const signInRoute = useMatch("/admin/sign-in");
+  if (adminRoute && !signInRoute)
+    return <ThemeProvider><div className="viewer-admin-route">{children}</div></ThemeProvider>;
+
   return (
     <ThemeProvider>
       <nav

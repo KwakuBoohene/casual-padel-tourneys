@@ -155,6 +155,10 @@ body {
   padding: 0;
 }
 
+body:has(.viewer-admin-route) {
+  padding-top: 0;
+}
+
 body {
   /* Reserve the fixed navigation height; unlayered resets override Tailwind utilities. */
   padding-top: 56px;

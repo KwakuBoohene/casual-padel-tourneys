@@ -1,14 +1,61 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ListFilters, Select } from "./ListFilters";
 import { useSearchParams } from "react-router-dom";
 import { changeReportRange, dateInput, rangeParams, weekRange } from "../../lib/admin/reportFilters";
+import { AdminIcon } from "./AdminIcon";
+
+const reportDateFormat = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "Africa/Accra"
+});
+
+export function OverviewDateFilter({ fallback, range }: { fallback: URLSearchParams; range: URLSearchParams }) {
+  const picker = useRef<HTMLDetailsElement>(null);
+  const from = Date.parse(range.get("from") ?? "");
+  const to = Date.parse(range.get("to") ?? "");
+  const label = to > from ? reportDateFormat.formatRange(from, to - 1) : "Edit dates";
+  const close = () => {
+    const details = picker.current;
+    if (!details?.open) return;
+    details.open = false;
+    details.querySelector("summary")?.focus();
+  };
+  return (
+    <details
+      className="admin-date-picker"
+      ref={picker}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") close();
+      }}
+    >
+      <summary className="admin-control list-none gap-1.5">
+        <AdminIcon name="calendar" />
+        <span className="sr-only">Report dates: </span>
+        {label}
+        <AdminIcon name="chevron" />
+      </summary>
+      <ReportFilters
+        kind="overview"
+        fallback={fallback}
+        onApply={close}
+        className="absolute start-0 top-[calc(100%+0.5rem)] z-5 w-[min(28rem,calc(100vw-2rem))] [box-shadow:0_8px_24px_#0002] md:start-auto md:end-0"
+      />
+    </details>
+  );
+}
 
 export function ReportFilters({
   kind,
-  fallback
+  fallback,
+  onApply,
+  className = ""
 }: {
   kind: "overview" | "users" | "tournaments" | "activity";
   fallback: URLSearchParams;
+  onApply?(): void;
+  className?: string;
 }) {
   const [params, setParams] = useSearchParams();
   const range = rangeParams(params, fallback);
@@ -16,7 +63,7 @@ export function ReportFilters({
   return (
     <form
       key={params.toString()}
-      className="admin-panel flex flex-wrap items-end gap-4"
+      className={`admin-panel flex flex-wrap items-end gap-4 ${className}`}
       onSubmit={(event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
@@ -44,6 +91,7 @@ export function ReportFilters({
           if (value) next.set(field, value);
         }
         setParams(next);
+        onApply?.();
       }}
     >
       {kind !== "overview" ? (
@@ -98,7 +146,10 @@ export function ReportFilters({
       <button
         type="button"
         className="admin-control"
-        onClick={() => setParams(changeReportRange(params, weekRange()))}
+        onClick={() => {
+          setParams(changeReportRange(params, weekRange()));
+          onApply?.();
+        }}
       >
         This week
       </button>

@@ -309,7 +309,7 @@ After configuring credentials, rebuild and trigger a controlled browser error in
 
 ## Padel viewer platform admin access
 
-The private `/admin` portal is in the Vite Padel viewer (`apps/web`), not the Expo organizer. The organizer has no admin routes or menu entry. Reporting screens arrive separately. Access still requires a persisted, verified, non-guest user with an active `PlatformAdminGrant`; organizer ownership, manager membership and JWT claims never grant platform privileges.
+The private `/admin` portal is in the Vite Padel viewer (`apps/web`). Access requires an existing, verified, non-guest account with an active `PlatformAdminGrant`.
 
 Deploy the additive migration first. With trusted operator/database access, identify the exact existing user ID, verify the person's identity/email verification, and grant or revoke access:
 
@@ -336,17 +336,13 @@ The admin bearer session stays in memory and the viewer tab's sessionStorage, se
 
 There is no grant-management HTTP endpoint. Grant/revoke commands are transactional and audited as operator actions (null actor, target user ID). Grants cascade on user deletion; audit history retains IDs. Admin read audits contain only actor ID, route template, timestamp and bounded request ID, never search text or response bodies. Database/audit failures fail closed. New admin reporting endpoints must use the same guarded registration.
 
-Retain audit rows for 12 months. Schedule the following bounded command hourly in the deployment host's maintenance scheduler; each invocation removes at most 1,000 expired rows. No host schedule is installed by this change:
-
-```sh
-docker compose exec -T api npm run admin:production --workspace @padel/api -- prune
-```
-
-To disable access, set the flag false and restart the API. Operator revoke/prune commands remain available while disabled; do not drop grant/audit tables as a routine rollback. Production migration, real-account bootstrap and actual email delivery require deployment verification.
+To disable access, set `ADMIN_PORTAL_ENABLED=false` and recreate the API container so it picks up the environment change. To revoke one account, use the operator command above. Keep the additive tables during rollback. The usage maintenance service also expires admin audit rows after 12 months.
 
 ### Admin reporting APIs
 
-Apply the additive reporting-index migration through the normal migration procedure before deploying admin reporting changes. Existing admin runtime configuration remains sufficient.
+For the first rollout, take and verify the pre-migration backup, apply the admin access, reporting index and usage migrations, then recreate the API and viewer and start `usage-maintenance`. Confirm the deployment script includes the maintenance service. Enable admin after the migrated API passes `/ready`.
+
+On the deployed viewer origin, request an admin magic link and verify it arrives via the configured mail provider and works once. Reload a nested admin page and verify it serves the viewer with `Cache-Control: no-store` and `Referrer-Policy: no-referrer`. Confirm the private API returns `Cache-Control: no-store`, a signed-out request is denied, and revoking a test grant clears private reports. Verify a normal organizer can still create and score a tournament and open its public share. See [Sentry activation and alerts](#sentry-activation-and-alerts) for the separate diagnostics checks.
 
 ## Organizer usage reporting
 
@@ -356,10 +352,12 @@ Admin usage/activity reports use the existing admin grant and `ADMIN_PORTAL_ENAB
 
 Raw usage events retain opaque actor/owner/target references for 90 days. Anonymous daily counts retain no identities or session IDs and expire after 13 calendar months; admin read audits expire after 12 months. Reports label partial collection and retention gaps, and never reconstruct pre-collection or deleted history. Daily visit trends use full Africa/Accra calendar days, while exact metrics and activity filters use inclusive `from`/exclusive `to` timestamps. Device opt-out stops future visits and does not remove prior retained observations.
 
-The Compose `usage-maintenance` service runs bounded cleanup hourly. When deploying services separately, schedule this command hourly against the API container instead:
+The Compose `usage-maintenance` service runs hourly. Check its first run with `docker compose logs usage-maintenance`. For a separate deployment, schedule the same command hourly against the API container:
 
 ```bash
 npm run maintenance:prune-usage --workspace @padel/api
 ```
 
-Monitor command failures and database growth. Collection flags stop new observations without deleting existing reports. Database migrations and collection flags must be rolled out before enabling the organizer build flag.
+Each invocation processes up to 20 batches of 1,000 rows per table. The job prunes raw events, anonymous daily totals and admin audit rows at their respective cutoffs. It logs the number pruned and exits nonzero on failure. Monitor the worker logs for `Usage cleanup failed.` and verify a successful run after fixing the cause.
+
+For a collection rollback, set `USAGE_VISITS_ENABLED=false` or `USAGE_BUSINESS_ENABLED=false` on the API and recreate it. Existing observations remain subject to normal retention. Rebuild the organizer with `EXPO_PUBLIC_USAGE_VISITS_ENABLED=false` to remove the opt-in control. To enable visits, apply the migrations and enable the server flag before rolling out the organizer build.

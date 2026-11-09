@@ -41,7 +41,7 @@ function fingerprint(kind: string, query: PageQuery) {
     .update(JSON.stringify([kind, filters]))
     .digest("hex");
 }
-export function pageBoundary(kind: string, query: PageQuery) {
+export function pageBoundary(kind: string, query: PageQuery, dateField: "createdAt" | "endedAt" = "createdAt") {
   if (!query.cursor) return {};
   try {
     const cursor = JSON.parse(Buffer.from(query.cursor, "base64url").toString()) as {
@@ -60,8 +60,8 @@ export function pageBoundary(kind: string, query: PageQuery) {
     const operator = query.sort === "newest" ? "lt" : "gt";
     return {
       OR: [
-        { createdAt: { [operator]: new Date(cursor.at) } },
-        { createdAt: new Date(cursor.at), id: { [operator]: cursor.id } }
+        { [dateField]: { [operator]: new Date(cursor.at) } },
+        { [dateField]: new Date(cursor.at), id: { [operator]: cursor.id } }
       ]
     };
   } catch {
@@ -71,14 +71,12 @@ export function pageBoundary(kind: string, query: PageQuery) {
 export function nextPageCursor(
   kind: string,
   query: PageQuery,
-  row: { id: string; createdAt: Date } | undefined
+  row: { id: string; at: Date }
 ) {
-  return row
-    ? Buffer.from(
-        JSON.stringify({ id: row.id, at: row.createdAt.toISOString(), filter: fingerprint(kind, query) })
-      ).toString("base64url")
-    : null;
+  return Buffer.from(
+    JSON.stringify({ id: row.id, at: row.at.toISOString(), filter: fingerprint(kind, query) })
+  ).toString("base64url");
 }
-export function createdIn(query: { from?: string; to?: string }) {
+export function dateRangeFilter(query: { from?: string; to?: string }) {
   return query.from && query.to ? { gte: new Date(query.from), lt: new Date(query.to) } : undefined;
 }

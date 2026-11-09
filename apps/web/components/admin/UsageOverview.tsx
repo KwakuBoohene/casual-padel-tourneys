@@ -3,20 +3,22 @@ import type { AdminReport, AdminUsage, UsageCounts } from "@padel/shared";
 import { Link } from "react-router-dom";
 import { adminLink, timestamp } from "../../lib/admin/reportFilters";
 import { useAdminReport } from "./useAdminReport";
-import { Cell, Coverage, ReportState, ReportTable } from "./ReportParts";
+import { Cell, CoverageNotes, ReportState, ReportTable } from "./ReportParts";
+import { ReportTooltip } from "./ReportTooltip";
 
 export function UsageOverview({ range, revision }: { range: URLSearchParams; revision: number }) {
   const [attempt, setAttempt] = useState(0);
   const retry = () => setAttempt((n) => n + 1);
   const state = useAdminReport<AdminReport<AdminUsage>>(`/admin/usage?${range}`, revision + attempt);
-  const data = state?.data?.data;
-  if (!data)
+  const report = state?.data;
+  if (!report)
     return (
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Organizer usage</h2>
         <ReportState error={state?.error} retry={retry} />
       </section>
     );
+  const { data, coverage } = report;
   const metrics: [string, keyof Omit<UsageCounts, "partial">, string][] = [
     ["Visits", "visits", "visit"],
     ["Active accounts", "activeUsers", ""],
@@ -26,20 +28,23 @@ export function UsageOverview({ range, revision }: { range: URLSearchParams; rev
   ];
   return (
     <section className="space-y-4" aria-label="Organizer usage">
-      <h2 className="text-2xl font-bold">Organizer usage</h2>
-      <p className="text-padel-muted text-sm">
-        Public viewer visits are not tracked. Visit collection {data.collecting.visits ? "enabled" : "paused"}
-        ; business observations {data.collecting.business ? "enabled" : "paused"}.{" "}
-        {data.current.partial
-          ? "Partial coverage: counts include only observations available in this range."
-          : "Counts cover observed usage in this range."}
-      </p>
-      <p className="text-padel-muted text-sm">
-        Visits observed since {data.starts.visits ? timestamp(data.starts.visits) : "not yet started"};
-        business observations since{" "}
-        {data.starts.business ? timestamp(data.starts.business) : "not yet started"}. Raw events available
-        from {timestamp(data.rawAvailableFrom)}.
-      </p>
+      <div className="flex items-center gap-1">
+        <h2 className="text-2xl font-bold">Organizer usage</h2>
+        <ReportTooltip label="Organizer usage details">
+          <p>
+            Visit collection is {data.collecting.visits ? "enabled" : "paused"}. Business observations are{" "}
+            {data.collecting.business ? "enabled" : "paused"}.
+          </p>
+          {data.current.partial && <p>Counts for the selected period have partial coverage.</p>}
+          {data.previous.partial && <p>Counts for the previous period have partial coverage.</p>}
+          <p>
+            Visits started: {data.starts.visits ? timestamp(data.starts.visits) : "Not yet started"}.<br />
+            Business observations started: {data.starts.business ? timestamp(data.starts.business) : "Not yet started"}.<br />
+            Raw events available from {timestamp(data.rawAvailableFrom)}.
+          </p>
+          <CoverageNotes coverage={coverage} />
+        </ReportTooltip>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {metrics.map(([title, key, kind]) => (
           <Link
@@ -53,7 +58,6 @@ export function UsageOverview({ range, revision }: { range: URLSearchParams; rev
             </p>
             <p className="text-sm text-padel-muted">
               Previous interval: {data.previous[key]?.toLocaleString() ?? "not available"}
-              {data.previous.partial ? " · partial coverage" : ""}
             </p>
           </Link>
         ))}
@@ -73,7 +77,6 @@ export function UsageOverview({ range, revision }: { range: URLSearchParams; rev
       ) : (
         <p>No daily visit observations are available in this range.</p>
       )}
-      <Coverage coverage={state.data!.coverage} />
     </section>
   );
 }

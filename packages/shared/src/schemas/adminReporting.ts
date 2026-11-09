@@ -41,6 +41,7 @@ export const adminUsersQuerySchema = z
 export const adminTournamentsQuerySchema = z
   .object({
     ...page,
+    dateBy: z.enum(["completed"]).optional(),
     ownerId: z.string().min(1).max(128).optional(),
     mode: z.enum(["AMERICANO", "MEXICANO", "KING_OF_THE_COURT"]).optional(),
     variant: z.enum(["CLASSIC", "MIXED", "TEAM"]).optional(),

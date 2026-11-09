@@ -3,20 +3,28 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { timestamp } from "../../lib/admin/reportFilters";
 
-export function Coverage({ coverage }: { coverage: AdminCoverage }) {
+export function AppDbBadge() {
   return (
-    <aside className="admin-panel text-sm text-padel-muted">
-      <h2 className="font-semibold text-padel-text">
+    <span className="rounded-2xl bg-(--admin-accent-surface) px-2 py-1 text-[0.625rem] font-semibold text-padel-primary uppercase">
+      App DB
+    </span>
+  );
+}
+
+export function CoverageNotes({ coverage }: { coverage: AdminCoverage }) {
+  return (
+    <>
+      <p className="font-semibold">
         {coverage.source === "observed-events"
           ? "Observed history · partial coverage"
           : "Partial history · retained records"}
-      </h2>
+      </p>
       <ul className="list-disc pl-5 space-y-1">
         {coverage.limitations.map((note) => (
           <li key={note}>{note}</li>
         ))}
       </ul>
-    </aside>
+    </>
   );
 }
 export function ReportState({ error, retry }: { error?: number; retry(): void }) {
@@ -39,16 +47,18 @@ export function ReportState({ error, retry }: { error?: number; retry(): void })
 export function ReportTable({
   title,
   columns,
-  children
+  children,
+  compact = false
 }: {
   title: string;
   columns: string[];
   children: ReactNode;
+  compact?: boolean;
 }) {
   return (
-    <div className="overflow-x-auto admin-panel" tabIndex={0} role="region" aria-label={title}>
+    <div className={compact ? "overflow-x-auto" : "overflow-x-auto admin-panel"} tabIndex={0} role="region" aria-label={title}>
       <table className="w-full text-left text-sm">
-        <caption className="text-left font-semibold text-base mb-4">{title}</caption>
+        <caption className={compact ? "sr-only" : "text-left font-semibold text-base mb-4"}>{title}</caption>
         <thead>
           <tr>
             {columns.map((column) => (
@@ -85,9 +95,9 @@ export function Pager({ nextCursor, params }: { nextCursor: string | null; param
     if (cursor) next.set("cursor", cursor);
     return `?${next}`;
   }
+  if (!nextCursor && !params.has("cursor")) return null;
   return (
     <nav aria-label="Report pages" className="flex flex-wrap gap-4 items-center">
-      <span className="text-sm text-padel-muted">Up to 25 records per page</span>
       {params.has("cursor") ? (
         <Link className="admin-control" to={page()}>
           First page
@@ -97,9 +107,7 @@ export function Pager({ nextCursor, params }: { nextCursor: string | null; param
         <Link className="admin-control" to={page(nextCursor)}>
           Next page
         </Link>
-      ) : (
-        <span className="text-sm text-padel-muted">End of results</span>
-      )}
+      ) : null}
     </nav>
   );
 }

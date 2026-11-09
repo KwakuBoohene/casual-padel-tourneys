@@ -2,6 +2,7 @@ import type { AdminTournamentDetail, AdminTournamentSummary } from "@padel/share
 import { Link } from "react-router-dom";
 import { adminLink, label } from "../../lib/admin/reportFilters";
 import { Cell, Fields, ReportTable, timestamp } from "./ReportParts";
+import { ReportTooltip } from "./ReportTooltip";
 
 function Owner({ owner, range }: { owner: AdminTournamentSummary["owner"]; range: URLSearchParams }) {
   return owner ? (
@@ -12,12 +13,16 @@ function Owner({ owner, range }: { owner: AdminTournamentSummary["owner"]; range
     <>Owner unavailable</>
   );
 }
-export function TournamentList({ data, range }: { data: AdminTournamentSummary[]; range: URLSearchParams }) {
+export function TournamentList({ data, range, byCompletion }: {
+  data: AdminTournamentSummary[];
+  range: URLSearchParams;
+  byCompletion: boolean;
+}) {
   if (!data.length) return <p role="status">No tournaments match these filters.</p>;
   return (
     <ReportTable
-      title="Tournaments · created in selected range"
-      columns={["Tournament", "Mode / variant", "Status", "Owner", "Created", "Players"]}
+      title={`Tournaments · ${byCompletion ? "completed" : "created"} in selected range`}
+      columns={["Tournament", "Mode / variant", "Status", "Owner", byCompletion ? "Completed" : "Created", "Players"]}
     >
       {data.map((tournament) => (
         <tr key={tournament.id}>
@@ -33,7 +38,7 @@ export function TournamentList({ data, range }: { data: AdminTournamentSummary[]
           <Cell>
             <Owner owner={tournament.owner} range={range} />
           </Cell>
-          <Cell>{timestamp(tournament.createdAt)}</Cell>
+          <Cell>{timestamp(byCompletion ? tournament.endedAt : tournament.createdAt)}</Cell>
           <Cell>{tournament.playerCount}</Cell>
         </tr>
       ))}
@@ -43,7 +48,13 @@ export function TournamentList({ data, range }: { data: AdminTournamentSummary[]
 export function TournamentDetail({ data, range }: { data: AdminTournamentDetail; range: URLSearchParams }) {
   return (
     <>
-      <h2 className="text-2xl font-bold break-words">{data.name || "Unnamed tournament"}</h2>
+      <div className="flex items-center gap-1">
+        <h2 className="min-w-0 text-2xl font-bold wrap-break-word">{data.name || "Unnamed tournament"}</h2>
+        <ReportTooltip label="Tournament statistics details">
+          <p>Match counts include ordinary and King of the Court matches. Recorded matches include voided matches, while completed matches exclude them.</p>
+          <p>Roster players are counted separately from accounts. Completing a tournament requires explicitly ending it.</p>
+        </ReportTooltip>
+      </div>
       <Fields
         values={{
           "Tournament ID": data.id,
@@ -57,15 +68,11 @@ export function TournamentDetail({ data, range }: { data: AdminTournamentDetail;
           "Roster players": data.playerCount,
           Courts: data.courtCount,
           "Ordinary rounds": data.roundCount,
-          "Recorded matches · includes voided": data.matchCounts.recorded,
-          "Completed matches · excludes voided": data.matchCounts.completed,
+          "Recorded matches": data.matchCounts.recorded,
+          "Completed matches": data.matchCounts.completed,
           "Voided matches": data.matchCounts.voided
         }}
       />
-      <p className="text-padel-muted text-sm">
-        Match counts include ordinary and King of the Court matches. Roster players are not account counts.
-        Completion requires explicitly ending the tournament.
-      </p>
     </>
   );
 }

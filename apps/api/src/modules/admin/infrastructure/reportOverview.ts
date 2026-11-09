@@ -11,15 +11,17 @@ export async function reportOverview(input: {
     async (tx) => {
       const counts = async (from: Date, to: Date): Promise<AdminPeriodCounts> => {
         const createdAt = { gte: from, lt: to };
-        const [registeredAccountsCreated, guestAccountsCreated, tournamentsCreated] = await Promise.all([
+        const [registeredAccountsCreated, guestAccountsCreated, tournamentsCreated, tournamentsCompleted] = await Promise.all([
           tx.user.count({ where: { createdAt, isGuest: false } }),
           tx.user.count({ where: { createdAt, isGuest: true } }),
-          tx.tournament.count({ where: { createdAt } })
+          tx.tournament.count({ where: { createdAt } }),
+          tx.tournament.count({ where: { endedAt: { gte: from, lt: to } } })
         ]);
         return {
           registeredAccountsCreated,
           guestAccountsCreated,
           tournamentsCreated,
+          tournamentsCompleted,
           visits: null,
           activeUsers: null
         };
@@ -35,14 +37,18 @@ export async function reportOverview(input: {
           _count: { _all: true },
           orderBy: [{ mode: "asc" }, { variant: "asc" }]
         }),
-        tx.$queryRaw<{ day: Date; registered: bigint; guests: bigint; tournaments: bigint }[]>`
-        SELECT day, SUM(registered)::bigint AS registered, SUM(guests)::bigint AS guests, SUM(tournaments)::bigint AS tournaments FROM (
+        tx.$queryRaw<{ day: Date; registered: bigint; guests: bigint; tournaments: bigint; completed: bigint }[]>`
+        SELECT day, SUM(registered)::bigint AS registered, SUM(guests)::bigint AS guests,
+          SUM(tournaments)::bigint AS tournaments, SUM(completed)::bigint AS completed FROM (
           SELECT DATE_TRUNC('day', "createdAt") AS day, COUNT(*) FILTER (WHERE NOT "isGuest") AS registered,
-            COUNT(*) FILTER (WHERE "isGuest") AS guests, 0::bigint AS tournaments
+            COUNT(*) FILTER (WHERE "isGuest") AS guests, 0::bigint AS tournaments, 0::bigint AS completed
           FROM "User" WHERE "createdAt" >= ${range.from} AND "createdAt" < ${range.to} GROUP BY 1
           UNION ALL
-          SELECT DATE_TRUNC('day', "createdAt"), 0::bigint, 0::bigint, COUNT(*)
+          SELECT DATE_TRUNC('day', "createdAt"), 0::bigint, 0::bigint, COUNT(*), 0::bigint
           FROM "Tournament" WHERE "createdAt" >= ${range.from} AND "createdAt" < ${range.to} GROUP BY 1
+          UNION ALL
+          SELECT DATE_TRUNC('day', "endedAt"), 0::bigint, 0::bigint, 0::bigint, COUNT(*)
+          FROM "Tournament" WHERE "endedAt" >= ${range.from} AND "endedAt" < ${range.to} GROUP BY 1
         ) events GROUP BY day ORDER BY day`
       ]);
       const daily: AdminOverview["daily"] = [];
@@ -56,7 +62,8 @@ export async function reportOverview(input: {
           date,
           registeredAccountsCreated: Number(row?.registered ?? 0),
           guestAccountsCreated: Number(row?.guests ?? 0),
-          tournamentsCreated: Number(row?.tournaments ?? 0)
+          tournamentsCreated: Number(row?.tournaments ?? 0),
+          tournamentsCompleted: Number(row?.completed ?? 0)
         });
         cursor.setUTCDate(cursor.getUTCDate() + 1);
       }

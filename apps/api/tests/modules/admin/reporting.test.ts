@@ -26,7 +26,7 @@ test("Accra week-to-date and cursor boundaries preserve equal duration and filte
   );
   assert.equal(reportingRange({}, new Date("2026-11-08T23:59:00Z")).from.getTime(), range.from.getTime());
   const query = { limit: 2, sort: "newest" as const };
-  const cursor = nextPageCursor("users", query, { id: "row", createdAt: range.from })!;
+  const cursor = nextPageCursor("users", query, { id: "row", at: range.from });
   assert.ok(pageBoundary("users", { ...query, cursor }).OR);
   assert.throws(() => pageBoundary("users", { ...query, sort: "oldest", cursor }));
   assert.throws(() => pageBoundary("tournaments", { ...query, cursor }));
@@ -132,7 +132,7 @@ test(
           pointsPerMatch: 24,
           publicToken: `${id}-SECRET-PUBLIC`,
           createdAt: i === 5 ? new Date("2035-01-07T01:00:00Z") : i === 6 ? new Date(to) : createdAt,
-          endedAt: i === 0 ? createdAt : null
+          endedAt: i === 0 ? createdAt : i === 5 ? new Date(from) : i === 6 ? new Date(to) : null
         }))
       });
       for (const index of [1, 4])
@@ -182,8 +182,11 @@ test(
       assert.equal(overview.current.registeredAccountsCreated, 3);
       assert.equal(overview.current.guestAccountsCreated, 1);
       assert.equal(overview.current.tournamentsCreated, 5);
+      assert.equal(overview.current.tournamentsCompleted, 2);
+      assert.equal(overview.daily[0].tournamentsCompleted, 2);
       assert.equal(overview.previous.registeredAccountsCreated, 1);
       assert.equal(overview.previous.tournamentsCreated, 1);
+      assert.equal(overview.previous.tournamentsCompleted, 0);
       assert.equal(overview.current.visits, null);
       assert.equal(
         overview.daily.reduce(
@@ -220,6 +223,13 @@ test(
         new Set([...tourPage.data, ...tourNext.data].map((row: { id: string }) => row.id)).size,
         5
       );
+      const completedFilter = { ownerId, dateBy: "completed", limit: "1" };
+      const completedPage = await get(`/admin/tournaments?${query(completedFilter)}`);
+      const completedNext = await get(`/admin/tournaments?${query({ ...completedFilter, cursor: completedPage.nextCursor })}`);
+      assert.equal(completedPage.data[0].id, tournaments[0]);
+      assert.equal(completedNext.data[0].id, tournaments[5]);
+      assert.equal(completedNext.nextCursor, null);
+      await get(`/admin/tournaments?${query({ ownerId, cursor: completedPage.nextCursor })}`, 400);
 
       assert.equal((await get(`/admin/users/${guestId}`)).data.email, null);
       assert.equal((await get(`/admin/users/${ownerId}`)).data.ownedTournamentCount, 7);

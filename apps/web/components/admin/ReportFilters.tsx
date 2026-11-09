@@ -82,6 +82,7 @@ export function ReportFilters({
           "accountType",
           "verification",
           "ownerId",
+          "dateBy",
           "mode",
           "variant",
           "status",
@@ -97,7 +98,7 @@ export function ReportFilters({
       {kind !== "overview" ? (
         <Select
           name="period"
-          title={kind === "activity" ? "Activity range" : "Creation range"}
+          title="Report range"
           value={range.get("period") ?? "range"}
           onChange={(value) => setAllHistory(value === "all")}
           options={[

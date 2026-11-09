@@ -9,6 +9,7 @@
   --admin-rail: #17201a;
   --admin-accent-surface: #293b25;
   --admin-brand: #c6ef76;
+  --admin-chart-completed: #bca8fa;
 
   color-scheme: dark;
 }
@@ -23,6 +24,7 @@
   --color-padel-border: #dde5d7;
   --admin-rail: #edf1e5;
   --admin-accent-surface: #e6f1e4;
+  --admin-chart-completed: #6650ca;
 
   color-scheme: light;
 }

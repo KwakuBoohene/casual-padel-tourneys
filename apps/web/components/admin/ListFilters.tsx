@@ -69,6 +69,13 @@ export function ListFilters({ kind, params }: { kind: string; params: URLSearchP
       ) : kind === "tournaments" ? (
         <>
           <label>
+            Filter by date
+            <select name="dateBy" className="admin-control" defaultValue={params.get("dateBy") ?? ""}>
+              <option value="">Created</option>
+              <option value="completed">Completed</option>
+            </select>
+          </label>
+          <label>
             Owner account ID
             <input
               className="admin-control"

@@ -170,7 +170,7 @@ for the King of the Court rename.
 
 - Use JSON logs for API.
 - Add health checks for API and web.
-- Integrate Sentry (later phase) for backend and web errors.
+- API Sentry capture is prepared locally; see activation below. Client reporting remains pending.
 - Add uptime alerting for API and viewer domains.
 
 ## Email (Mailer)
@@ -229,3 +229,83 @@ states are displayed in the existing theme. Theme and standings-column preferenc
 to use the same browser storage/cookie keys. Per-tournament server-rendered HTML is no longer
 provided. Build the image in CI and deploy the finished image to avoid build-time resource
 spikes on a small shared server. `/health` provides the viewer container's health check.
+
+## Sentry activation and alerts
+
+API capture and sampled request-duration tracing are prepared locally. Production monitoring is not active until a project DSN is configured and delivery verified. Hosted Sentry is optional; empty DSN leaves the SDK uninitialized. Console logs remain local.
+
+1. Create/select a Node project in Sentry. Set API runtime `SENTRY_DSN`, `SENTRY_ENVIRONMENT=production`, `SENTRY_RELEASE` to the deployment revision, and `SENTRY_TRACES_SAMPLE_RATE=0.1` initially. Compose already loads `infra/.env`. Invalid sample rates disable tracing; zero retains errors without traces. Use staging separately.
+2. Trigger a controlled failure in staging through a temporary protected test route and remove it afterward. Verify one issue, a request-duration trace, source stack locations, release and environment. Test fatal process failures only in a disposable staging instance.
+3. Configure production-filtered Sentry issue alerts for new and regressed errors, a recipient/channel, and repeat limits. After establishing a baseline, add error-volume alerts. Send a test notification and verify receipt. These account/project settings have not been provisioned by repository changes.
+4. Use Sentry issues for grouping, occurrence trends, regressions and affected users. Account IDs and request IDs are HMAC hashes using `JWT_SECRET`, never emails or raw identifiers. The same HMAC can correlate an account/local request log ID with Sentry; secret rotation changes identifiers.
+5. Verify privacy before activation: arbitrary messages, request data, breadcrumbs and source context are stripped. Stack filenames and line numbers remain. This trades message detail for privacy. Request spans contain route templates and status only; SQL, Redis and distributed browser tracing are not included in this slice.
+6. To disable reporting, clear the DSN and restart. Reporting outages must not fail successful tournament requests. Configure project retention and budgets in Sentry; proposed database telemetry retention is separate.
+
+Remaining integration: native Expo and Vite viewer capture, CI source-map upload with a private auth token, browser/API trace propagation limited to the API origin, explicit caught WebSocket reporting, and production alert verification. Replay/profiling remain disabled. No public crash endpoint is added.
+
+### CPA web browser monitoring
+
+CPA web now has guarded browser error/unhandled-rejection capture, API-request duration traces and an Expo Router error fallback with retry. The integration only runs on web; native resolves a no-op module pending its own SDK integration. There is no session replay, DOM recording, navigation tracing or browser-to-API trace propagation in this slice. Expected API failures are server-owned; aborted requests are ignored and network failures are captured. Fetch/auth/cancellation behavior stays unchanged. Events contain no user identity; API Sentry events still provide hashed affected-user IDs. Error messages are replaced by safe labels, and stack filenames/line numbers remain. Readable original source stacks require the later source-map upload slice.
+
+Create/select a browser JavaScript project (for example `cpa-web`) and set these public build values:
+
+```env
+EXPO_PUBLIC_SENTRY_DSN=<browser project DSN>
+EXPO_PUBLIC_SENTRY_ENVIRONMENT=production
+EXPO_PUBLIC_SENTRY_RELEASE=<deployed revision>
+EXPO_PUBLIC_SENTRY_TRACES_SAMPLE_RATE=0.1
+```
+
+For local Expo export, set the variables before `npm run export:web --workspace @padel/mobile`. For Compose, put them in `infra/.env`; they are forwarded as Docker build arguments. For other Docker hosts, configure the same build arguments. Rebuild the mobile web image after changes: runtime environment changes alone do not update an exported JavaScript bundle. Never use a Sentry API/auth token in an `EXPO_PUBLIC_*` variable. Keep the API DSN on the API service.
+
+Staging checklist: open CPA web, trigger a controlled render failure and confirm the retry fallback; test an unhandled rejection and network failure; verify sanitized events and sampled request traces in the browser project. Confirm expected 4xx/aborts stay quiet. Configure production issue alerts for this project and verify a test notification. Live Sentry delivery, fallback appearance and notification receipt have not been verified locally.
+
+Local validation: organizer typecheck/lint, all 142 organizer tests (including four monitoring cases), and Expo web export pass. Export used local Node 22.12 and reported Expo's existing >=22.13 runtime warning; use supported Node >=22.13 for production builds.
+
+### Public viewer monitoring
+
+The Vite spectator viewer now reports browser/render failures, network/5xx/JSON load failures and sustained unexpected socket closes. Expected 4xx/expired shares, cancellation and intentional socket close are excluded. Repeated load/connection categories are limited to one report per minute. Anonymous diagnostics contain no identity, share URL, headers, bodies, breadcrumbs or player names; built asset filenames and line numbers survive. No replay, distributed trace propagation or original-source mapping is included yet.
+
+Create/select a browser project such as `cpa-viewer` and set the viewer service runtime variables:
+
+```env
+VIEWER_SENTRY_DSN=<public viewer project DSN>
+VIEWER_SENTRY_ENVIRONMENT=production
+VIEWER_SENTRY_RELEASE=<deployed revision>
+VIEWER_SENTRY_TRACES_SAMPLE_RATE=0.1
+```
+
+Compose already loads `infra/.env` into the viewer service. Recreate the viewer container after changing these values; its startup script writes JSON-encoded public settings into `runtime-config.json`. No image rebuild is required for Docker configuration changes. For local Vite or standalone static hosting, use the same variables in `apps/web/.env.local` before starting/building. Never put a Sentry API/auth token in these public settings. Existing API and CPA web DSNs are separate settings. Empty viewer DSN disables SDK initialization; initial config-download failures cannot report because the DSN has not loaded yet.
+
+Set a production-only issue alert and verify a controlled staging event, request trace and notification receipt. Local tests use in-memory transports and never send test telemetry to a real Sentry project. Home/deep-link retry UI were smoke-tested in the browser; live match rendering and actual Sentry delivery still need staging validation. Original-source maps remain a later CI/release tooling slice.
+
+### Private web source maps without release tagging
+
+Both browser builds now generate external maps and inject debug IDs. Debug IDs match each JavaScript bundle to its map; named releases are not required. The privacy filters preserve only validated debug IDs and their normalized bundle filenames, not full page URLs or identities. The CLI uploads the exact bundle/map pair before the map files and `sourceMappingURL` comments are removed from the served directory. The viewer also denies `.map` requests in Nginx. No release tags are generated and existing optional release variables can stay empty.
+
+Uploads require one-time deployment configuration:
+
+1. In Sentry, obtain the organization slug and the existing CPA web/public viewer project slugs. Create a private organization auth token permitted to upload source maps (`org:ci`). A project DSN cannot authenticate uploads. See [Sentry token scopes](https://docs.sentry.io/api/permissions/).
+2. Set nonsecret build settings in `infra/.env`:
+
+   ```env
+   SENTRY_ORG=your-org-slug
+   SENTRY_VIEWER_PROJECT=your-public-viewer-project
+   SENTRY_ORGANIZER_PROJECT=your-cpa-web-project
+   ```
+
+3. Provide `SENTRY_AUTH_TOKEN` as a secret in the deploying shell/CI. Do not put it in `infra/.env`: that file is loaded into running services. Do not use `VIEWER_*`, `VITE_*` or `EXPO_PUBLIC_*` for the upload token.
+4. Build with the secret override, from the `infra` directory:
+
+   ```sh
+   docker compose -f docker-compose.yml -f docker-compose.sentry.yml build web mobile
+   docker compose up -d --no-deps web mobile
+   ```
+
+   The override mounts the token only during image builds using BuildKit secrets, not build arguments or runtime environment variables. For another Docker build host, supply the secret as ID `sentry_auth_token` and pass `SENTRY_ORG` and the appropriate `SENTRY_PROJECT` as build args. The local ignored `deploy.sh` copy selects the override when `SENTRY_AUTH_TOKEN` is exported; if using the separate VPS deployment script, apply that same build-command change there before deployment.
+
+For local builds or a CI workflow that deploys the resulting static artifacts, export `SENTRY_AUTH_TOKEN`, `SENTRY_ORG` and `SENTRY_PROJECT`, then run the usual viewer build or CPA `export:web`. Do not upload maps from an unrelated CI build and then rebuild different JavaScript for production. The deployed files must be the same files processed and uploaded by the build step. The repository CI validates both builds offline; production uploads occur in the actual image build.
+
+With all upload settings absent, builds run offline, inject IDs and remove private maps; error reporting still works but source resolution is unavailable. Partial settings or failed uploads stop the build and clean up maps. To turn uploads off, remove all upload settings together. Existing uploaded maps are retained in Sentry so older open pages can still resolve; do not manually remove old artifacts on each deployment.
+
+After configuring credentials, rebuild and trigger a controlled browser error in staging for each frontend. Confirm Sentry shows the original `.ts`/`.tsx` location rather than a minified bundle, and confirm `.map` files are not downloadable from either site. Initial local validation covers real CLI injection, actual SDK debug-ID preservation, both exports and private artifact cleanup. Actual authenticated uploads and Sentry symbolication have not been verified because no upload credentials are configured locally. Backend/native source maps are outside this browser-build slice.

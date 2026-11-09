@@ -1,0 +1,93 @@
+import type { ErrorEvent, Event, EventHint } from "@sentry/browser";
+
+function safeFilename(value: string | undefined): string | undefined {
+  const path = value?.split(/[?#]/)[0];
+  return path?.match(/\/_expo\/static\/js\/web\/([a-zA-Z0-9_.-]+\.js)$/)?.[1];
+}
+
+function safeDebugMeta(event: Event): Event["debug_meta"] {
+  const images = event.debug_meta?.images?.flatMap((image) => {
+    if (image.type !== "sourcemap") return [];
+    const filename = safeFilename(image.code_file);
+    if (!filename || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(image.debug_id))
+      return [];
+    return [{ type: "sourcemap" as const, code_file: filename, debug_id: image.debug_id }];
+  });
+  return images?.length ? { images } : undefined;
+}
+
+export function sampleRate(value: string | undefined): number {
+  if (!value?.trim()) return 0.1;
+  const rate = Number(value);
+  return Number.isFinite(rate) && rate >= 0 && rate <= 1 ? rate : 0;
+}
+
+/** Expected HTTP failures are handled by the UI; API 5xx failures are captured by the server. */
+export function sanitizeBrowserError(event: ErrorEvent, hint?: EventHint): ErrorEvent | null {
+  const error = hint?.originalException;
+  if (error instanceof Error && (error.name === "AbortError" || error.name === "ApiError")) return null;
+  return {
+    debug_meta: safeDebugMeta(event),
+    type: undefined,
+    event_id: event.event_id,
+    timestamp: event.timestamp,
+    platform: "javascript",
+    level: event.level,
+    release: event.release,
+    environment: event.environment,
+    tags: { source: "cpa-web" },
+    contexts: event.contexts?.trace
+      ? {
+          trace: {
+            trace_id: event.contexts.trace.trace_id,
+            span_id: event.contexts.trace.span_id
+          }
+        }
+      : undefined,
+    exception: {
+      values: event.exception?.values?.map((exception) => ({
+        type: ["TypeError", "RangeError", "ReferenceError", "SyntaxError"].includes(exception.type ?? "")
+          ? exception.type
+          : "Error",
+        value: "Unexpected CPA web failure",
+        mechanism: exception.mechanism
+          ? { type: "generic", handled: exception.mechanism.handled }
+          : undefined,
+        stacktrace: {
+          frames: exception.stacktrace?.frames?.map((frame) => ({
+            filename: safeFilename(frame.filename),
+            lineno: frame.lineno,
+            colno: frame.colno,
+            in_app: frame.in_app
+          }))
+        }
+      }))
+    }
+  };
+}
+
+/** Only our explicit fetch spans are sent; no browser URLs, DOM details or request payloads. */
+export function sanitizeBrowserTrace(event: Event): Event & { type: "transaction" } {
+  return {
+    type: "transaction",
+    event_id: event.event_id,
+    timestamp: event.timestamp,
+    start_timestamp: event.start_timestamp,
+    platform: "javascript",
+    transaction: "API request",
+    release: event.release,
+    environment: event.environment,
+    tags: { source: "cpa-web" },
+    spans: [],
+    contexts: event.contexts?.trace
+      ? {
+          trace: {
+            trace_id: event.contexts.trace.trace_id,
+            span_id: event.contexts.trace.span_id,
+            op: "http.client",
+            status: event.contexts.trace.status
+          }
+        }
+      : undefined
+  };
+}

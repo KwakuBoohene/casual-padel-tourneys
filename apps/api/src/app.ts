@@ -1,3 +1,4 @@
+import { registerSentryMonitoring } from "./shared/http/sentryMonitoring.js";
 import { registerOrganizerAccessRoutes } from "./modules/organizerAccess/http/routes.js";
 import { registerOrganizerMutationWork } from "./modules/organizerAccess/http/mutationWork.js";
 import Fastify from "fastify";
@@ -59,6 +60,7 @@ export async function createApp() {
   }
   server.decorate("subscriptions", mountSocketHub(server));
   registerRequestId(server);
+  registerSentryMonitoring(server);
   registerAppErrorHandler(server);
   logger.info("createApp: registering routes");
   registerOrganizerMutationWork(server);

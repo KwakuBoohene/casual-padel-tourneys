@@ -1,3 +1,4 @@
+import { watchViewerConnection } from "../../../lib/observability/sentry";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 
@@ -38,9 +39,9 @@ export function LiveTournament({
 
   useEffect(() => {
     const wsBase = apiBaseUrl.replace(/^http/, "ws");
-    const socket = new WebSocket(
-      `${wsBase}/ws/tournaments/${initial.id}?token=${encodeURIComponent(token)}`
-    );
+    const socket = new WebSocket(`${wsBase}/ws/tournaments/${initial.id}?token=${encodeURIComponent(token)}`);
+
+    const stopMonitoring = watchViewerConnection(socket);
 
     socket.onopen = () => {
       setIsConnected(true);
@@ -73,7 +74,10 @@ export function LiveTournament({
       }
     };
 
-    return () => socket.close();
+    return () => {
+      stopMonitoring();
+      socket.close();
+    };
   }, [apiBaseUrl, initial.id, token, onConnectionChange]);
 
   const playerById = useMemo(() => {
@@ -91,9 +95,7 @@ export function LiveTournament({
     if (isMexicano) {
       // Prefer the first unresolved round (newly generated next round), else latest.
       // Voided matches count as resolved, or a closed night would stick on an abandoned round.
-      const incomplete = sorted.find((round) =>
-        round.matches.some((match) => !isMatchResolved(match))
-      );
+      const incomplete = sorted.find((round) => round.matches.some((match) => !isMatchResolved(match)));
       return (incomplete ?? sorted[sorted.length - 1]).roundNumber;
     }
 
@@ -124,9 +126,7 @@ export function LiveTournament({
   const matchesPlayerQuery = (match: TournamentViewModel["rounds"][number]["matches"][number]) => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
-    const names = [...match.teamA, ...match.teamB].map(
-      (id) => playerById.get(id)?.name.toLowerCase() || ""
-    );
+    const names = [...match.teamA, ...match.teamB].map((id) => playerById.get(id)?.name.toLowerCase() || "");
     return names.some((name) => name.includes(query));
   };
 
@@ -158,10 +158,7 @@ export function LiveTournament({
 
   const filteredMatchCount = useMemo(
     () =>
-      tournament.rounds.reduce(
-        (count, round) => count + round.matches.filter(matchesPlayerQuery).length,
-        0
-      ),
+      tournament.rounds.reduce((count, round) => count + round.matches.filter(matchesPlayerQuery).length, 0),
     [tournament.rounds, searchQuery, playerById]
   );
 

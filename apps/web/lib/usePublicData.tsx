@@ -1,3 +1,4 @@
+import { viewerFetch, viewerJson } from "./observability/sentry";
 import { useEffect, useState } from "react";
 import { publicApiBaseUrl } from "./apiConfig";
 
@@ -12,7 +13,7 @@ export function usePublicData<T>(path: string) {
     setState({ path, data: null, loading: true, error: null });
     void (async () => {
       try {
-        const response = await fetch(`${publicApiBaseUrl()}${path}`, {
+        const response = await viewerFetch(`${publicApiBaseUrl()}${path}`, {
           cache: "no-store",
           signal: controller.signal
         });
@@ -22,7 +23,7 @@ export function usePublicData<T>(path: string) {
           return;
         }
         if (!response.ok) throw new Error("Could not load the viewer. Please try again.");
-        const payload = (await response.json()) as { data: T };
+        const payload = (await viewerJson<{ data: T }>(response)) as { data: T };
         if (!controller.signal.aborted) setState({ path, data: payload.data, loading: false, error: null });
       } catch (error) {
         if (!controller.signal.aborted)

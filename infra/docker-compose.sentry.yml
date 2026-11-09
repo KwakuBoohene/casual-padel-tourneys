@@ -1,0 +1,14 @@
+# Opt-in build-only credentials; export SENTRY_AUTH_TOKEN in the deploying shell.
+# Use alongside docker-compose.yml when private uploads are configured.
+services:
+  web:
+    build:
+      secrets:
+        - sentry_auth_token
+  mobile:
+    build:
+      secrets:
+        - sentry_auth_token
+secrets:
+  sentry_auth_token:
+    environment: SENTRY_AUTH_TOKEN

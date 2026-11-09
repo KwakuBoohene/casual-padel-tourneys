@@ -1,3 +1,4 @@
+import { monitoredFetch } from "../utilities/observability/sentry";
 import { ApiError } from "./errors";
 import { notifyAuthFailure } from "./sessionExpiry";
 import {
@@ -33,7 +34,7 @@ async function request<T>(path: string, method: string, payload?: unknown): Prom
   const controller = new AbortController();
   const finish = personal ? () => {} : trackOrganizerRequest(controller, method !== "GET");
   try {
-    const response = await fetch(`${apiBaseUrl}${resolvedPath}`, {
+    const response = await monitoredFetch(`${apiBaseUrl}${resolvedPath}`, {
       method,
       signal: controller.signal,
       headers: {

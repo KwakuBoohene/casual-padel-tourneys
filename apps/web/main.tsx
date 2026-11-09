@@ -1,3 +1,4 @@
+import { captureViewerError, initViewerMonitoring } from "./lib/observability/sentry";
 import { Component, useEffect, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
@@ -13,6 +14,9 @@ class ViewerErrorBoundary extends Component<{ children: ReactNode }, { failed: b
   state = { failed: false };
   static getDerivedStateFromError() {
     return { failed: true };
+  }
+  componentDidCatch(error: Error) {
+    captureViewerError(error, "render");
   }
   render() {
     if (this.state.failed)
@@ -55,6 +59,7 @@ async function bootstrap() {
   const response = await fetch("/runtime-config.json", { cache: "no-store" });
   if (!response.ok) throw new Error("Could not load viewer configuration. Please reload to try again.");
   window.__PADEL_CONFIG__ = await response.json();
+  initViewerMonitoring(window.__PADEL_CONFIG__?.sentry);
   createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <RootLayout>
@@ -64,6 +69,7 @@ async function bootstrap() {
   );
 }
 void bootstrap().catch((error: unknown) => {
+  captureViewerError(error, "bootstrap");
   const root = document.getElementById("root")!;
   root.setAttribute("role", "alert");
   root.textContent = error instanceof Error ? error.message : "Could not start the viewer.";

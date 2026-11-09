@@ -19,6 +19,9 @@ services:
     build:
       context: ..
       dockerfile: apps/web/Dockerfile
+      args:
+        SENTRY_ORG: ${SENTRY_ORG:-}
+        SENTRY_PROJECT: ${SENTRY_VIEWER_PROJECT:-}
     env_file:
       - ./.env
     environment:
@@ -34,6 +37,13 @@ services:
     build:
       context: ..
       dockerfile: apps/mobile/Dockerfile
+      args:
+        SENTRY_ORG: ${SENTRY_ORG:-}
+        SENTRY_PROJECT: ${SENTRY_ORGANIZER_PROJECT:-}
+        EXPO_PUBLIC_SENTRY_DSN: ${EXPO_PUBLIC_SENTRY_DSN:-}
+        EXPO_PUBLIC_SENTRY_ENVIRONMENT: ${EXPO_PUBLIC_SENTRY_ENVIRONMENT:-production}
+        EXPO_PUBLIC_SENTRY_RELEASE: ${EXPO_PUBLIC_SENTRY_RELEASE:-}
+        EXPO_PUBLIC_SENTRY_TRACES_SAMPLE_RATE: ${EXPO_PUBLIC_SENTRY_TRACES_SAMPLE_RATE:-0.1}
     env_file:
       - ./.env
     depends_on:

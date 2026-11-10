@@ -2,7 +2,7 @@ import type { ViewerMonitoringConfig } from "./observability/sentry";
 
 declare global {
   interface Window {
-    __PADEL_CONFIG__?: { apiBaseUrl: string; sentryProjectUrl?: string; sentry?: ViewerMonitoringConfig };
+    __PADEL_CONFIG__?: { apiBaseUrl: string; ga4Enabled?: boolean; sentryProjectUrl?: string; sentry?: ViewerMonitoringConfig };
   }
 }
 

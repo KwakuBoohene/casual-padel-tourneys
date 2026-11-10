@@ -1,3 +1,4 @@
+import { ViewerPageView } from "../../../components/analytics/ViewerAnalytics";
 import { Link } from "react-router-dom";
 import { useCallback, useState } from "react";
 
@@ -30,6 +31,7 @@ export function TournamentViewer({
 
   return (
     <main className="min-h-screen bg-padel-background text-padel-text px-5 py-8 md:px-10 md:py-8">
+      <ViewerPageView page="scoreboard" />
       <header className="mb-6 space-y-3 max-w-6xl mx-auto">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">

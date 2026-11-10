@@ -1,3 +1,4 @@
+import { ViewerPageView } from "../../../../components/analytics/ViewerAnalytics";
 import { useParams } from "react-router-dom";
 import { usePublicData, DataStatus } from "../../../../lib/usePublicData";
 import { LeaderboardHeaderActions } from "../../../../components/LeaderboardHeaderActions";
@@ -44,6 +45,7 @@ export default function LeaderboardPage() {
 
   return (
     <main className="min-h-screen bg-padel-background text-padel-text px-5 py-8 md:px-10 md:py-10">
+      <ViewerPageView page="leaderboard" />
       <StandingsColumnsProvider initial={initialColumns}>
       <header className="mb-8 flex flex-col gap-3 md:flex-row md:items-center md:justify-between max-w-3xl mx-auto w-full">
         <div className="space-y-2">

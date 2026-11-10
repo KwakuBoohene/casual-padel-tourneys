@@ -1,3 +1,4 @@
+import { ViewerAnalytics } from "./components/analytics/ViewerAnalytics";
 import { AdminSessionProvider } from "./components/admin/AdminSession";
 import { AdminSignIn } from "./components/admin/AdminSignIn";
 import { collectAdminMagicToken } from "./lib/admin/magicLink";
@@ -87,7 +88,7 @@ async function bootstrap() {
     <BrowserRouter>
       <AdminSessionProvider>
         <RootLayout>
-          <ViewerRoutes />
+          <ViewerAnalytics><ViewerRoutes /></ViewerAnalytics>
         </RootLayout>
       </AdminSessionProvider>
     </BrowserRouter>

@@ -12,8 +12,7 @@ export function UsageConsent({ children }: { children: ReactNode }) {
       <View style={{ padding: 12, gap: 8, backgroundColor: colors.surface }}>
         <Text style={{ color: colors.muted, fontSize: 12 }}>
           Optional organizer usage analytics: {usage.consent ? "On" : "Off"}. Reports include visited screen
-          types and your signed-in account, without screen contents or share links. Public viewer visits are
-          never tracked. Turning this off stops future visits; successful account and tournament actions may
+          types and your signed-in account, without screen contents or share links. This setting controls first-party Organizer reporting. Turning it off stops future visits; successful account and tournament actions may
           still appear in operational reporting.
         </Text>
         <View style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 12 }}>

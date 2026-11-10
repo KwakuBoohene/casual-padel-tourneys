@@ -1,3 +1,4 @@
+import { useGa4Wizard } from "../../../hooks/analytics/useGa4Wizard";
 import { formatTournamentMode } from "../../../utilities/organizer/formatLabels";
 import type { useCreateTournament } from "../../../hooks/organizer/useCreateTournament";
 
@@ -13,6 +14,13 @@ export function OrganizerCreateWizard({
 }: {
   create: Create;
 }) {
+  const step = {
+    NAME: "name",
+    OPTIONS: "options",
+    PLAYERS: "players",
+    SETTINGS: create.settingsPhase === "MODE" ? "scoring_mode" : "settings"
+  } as const;
+  useGa4Wizard(step[create.wizardStep]);
   const modeLabel = formatTournamentMode(create.mode);
 
   if (create.wizardStep === "NAME") {

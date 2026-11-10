@@ -1,3 +1,4 @@
+import { useGa4Wizard } from "../../hooks/analytics/useGa4Wizard";
 import { AlertSheet, ErrorAlertSheet } from "../sheets";
 import { useKohCreateWizard } from "../../hooks/koh/useKohCreateWizard";
 import type { KohTournamentHub } from "../../types/koh/create";
@@ -19,6 +20,12 @@ export function KohCreateFlow(props: KohCreateFlowProps) {
     onCancel: props.onCancel,
     onStarted: props.onStarted
   });
+
+  const steps = {
+    NAME: "name", PAIRING: "pairing", FORMAT: "format", DEUCE: "deuce",
+    COURTS: "courts", PROMOTION: "promotion", ASSIGN: "assign", REVIEW: "review"
+  } as const;
+  useGa4Wizard(steps[wizard.step]);
 
   return (
     <>

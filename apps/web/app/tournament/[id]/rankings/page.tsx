@@ -1,3 +1,4 @@
+import { ViewerPageView } from "../../../../components/analytics/ViewerAnalytics";
 import { useParams } from "react-router-dom";
 import { usePublicData, DataStatus } from "../../../../lib/usePublicData";
 import { KohRankingsClient } from "./KohRankingsClient";
@@ -30,10 +31,13 @@ export default function KohRankingsPage() {
   }
 
   return (
-    <KohRankingsClient
-      token={route.id!}
-      apiBaseUrl={publicApiBaseUrl()}
-      courtCount={Math.max(1, payload.data.courts.length)}
-    />
+    <>
+      <ViewerPageView page="leaderboard" />
+      <KohRankingsClient
+        token={route.id!}
+        apiBaseUrl={publicApiBaseUrl()}
+        courtCount={Math.max(1, payload.data.courts.length)}
+      />
+    </>
   );
 }

@@ -1,3 +1,4 @@
+import { OrganizerGa4 } from "../../src/components/analytics/OrganizerGa4";
 import { UsageConsent } from "../../src/components/usage/UsageConsent";
 import { OrganizerAccountChrome } from "../../src/components/organizerAccess/OrganizerAccountChrome";
 import { useOrganizerAccount } from "../../src/providers/OrganizerAccountProvider";
@@ -43,13 +44,15 @@ export default function AppLayout() {
   const account = useOrganizerAccount();
   return (
     <AppAuthGate>
-      <UsageConsent>
-        <OrganizerAccountChrome>
-          <OrganizerSessionProvider key={account.selected?.id}>
-            <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }} />
-          </OrganizerSessionProvider>
-        </OrganizerAccountChrome>
-      </UsageConsent>
+      <OrganizerGa4>
+        <UsageConsent>
+          <OrganizerAccountChrome>
+            <OrganizerSessionProvider key={account.selected?.id}>
+              <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }} />
+            </OrganizerSessionProvider>
+          </OrganizerAccountChrome>
+        </UsageConsent>
+      </OrganizerGa4>
     </AppAuthGate>
   );
 }

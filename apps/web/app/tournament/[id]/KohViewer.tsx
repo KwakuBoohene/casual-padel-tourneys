@@ -1,3 +1,4 @@
+import { ViewerPageView } from "../../../components/analytics/ViewerAnalytics";
 import { watchViewerConnection } from "../../../lib/observability/sentry";
 import { useEffect, useState } from "react";
 
@@ -51,6 +52,7 @@ export function KohViewer({
 
   return (
     <main className="min-h-screen bg-padel-background text-padel-text px-5 py-8 md:px-10">
+      <ViewerPageView page="tournament_overview" />
       <header className="mb-6 space-y-3 max-w-6xl mx-auto">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">

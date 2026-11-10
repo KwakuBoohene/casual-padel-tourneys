@@ -346,7 +346,7 @@ On the deployed viewer origin, request an admin magic link and verify it arrives
 
 ## Organizer usage reporting
 
-Apply database migrations before enabling usage reporting. `USAGE_BUSINESS_ENABLED=true` on the API records successful account creation/conversion, sign-ins and organizer audit actions. `USAGE_VISITS_ENABLED=true` permits optional signed-in organizer screen visits; rebuild the organizer with `EXPO_PUBLIC_USAGE_VISITS_ENABLED=true` to expose the per-device opt-in control. All three flags default off. The public viewer sends no visit events. Turning off the device control cancels queued visit delivery; operational business observations have a separate server flag.
+Apply database migrations before starting the API. Usage reporting defaults to on. The API records successful account creation and conversion, sign-ins, organizer audit actions, and signed-in organizer screen visits. Organizers can turn off screen visits on their device from **Usage analytics** in the workspace menu. A saved opt-out takes precedence over the default. Turning off the device control cancels queued visit delivery. The public viewer sends no visit events.
 
 Admin usage/activity reports use the existing admin grant and `ADMIN_PORTAL_ENABLED` checks. Visits are foreground screen transitions, not requests, background refreshes or sessions. A visit session expires after 30 minutes without foreground interaction; account switches rotate it. Cross-tab session coordination requires Web Locks and working local storage; optional visits fail closed where these are unavailable. Do not use observed active-account counts as a complete census of usage.
 
@@ -360,4 +360,4 @@ npm run maintenance:prune-usage --workspace @padel/api
 
 Each invocation processes up to 20 batches of 1,000 rows per table. The job prunes raw events, anonymous daily totals and admin audit rows at their respective cutoffs. It logs the number pruned and exits nonzero on failure. Monitor the worker logs for `Usage cleanup failed.` and verify a successful run after fixing the cause.
 
-For a collection rollback, set `USAGE_VISITS_ENABLED=false` or `USAGE_BUSINESS_ENABLED=false` on the API and recreate it. Existing observations remain subject to normal retention. Rebuild the organizer with `EXPO_PUBLIC_USAGE_VISITS_ENABLED=false` to remove the opt-in control. To enable visits, apply the migrations and enable the server flag before rolling out the organizer build.
+To disable collection, set `USAGE_VISITS_ENABLED=false` or `USAGE_BUSINESS_ENABLED=false` on the API and recreate it. Existing observations remain subject to normal retention. Rebuild the organizer with `EXPO_PUBLIC_USAGE_VISITS_ENABLED=false` to disable visit reporting in the client and hide the device control.

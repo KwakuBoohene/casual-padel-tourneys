@@ -5,12 +5,15 @@ import { useOrganizerAccount } from "../../providers/OrganizerAccountProvider";
 import { useTheme } from "../../theme/ThemeProvider";
 import { pendingOrganizerWrites } from "../../api/organizerContext";
 import { InstallOrganizerApp } from "../InstallOrganizerApp";
+import { UsageConsent } from "../usage/UsageConsent";
+import { useUsageVisits } from "../../hooks/usage/useUsageVisits";
 import { BottomSheet } from "../sheets";
 import { radius, spacing } from "../../theme";
 import { useBreakpoint } from "../../layout";
 
 export function OrganizerAccountChrome({ children }: { children: ReactNode }) {
   const account = useOrganizerAccount();
+  const usage = useUsageVisits();
   const { colors } = useTheme();
   const { isWide } = useBreakpoint();
   const [open, setOpen] = useState(false);
@@ -40,10 +43,11 @@ export function OrganizerAccountChrome({ children }: { children: ReactNode }) {
       </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="Personal profile" onPress={() => { setOpen(false); router.push("/profile"); }} style={{ minHeight: 52, paddingHorizontal: spacing.md, borderRadius: radius.md, justifyContent: "center" }}><Text style={{ color: colors.text }}>♙  Personal profile</Text></Pressable>
       <InstallOrganizerApp />
+      {usage.enabled ? <UsageConsent consent={usage.consent} onChange={usage.choose} /> : null}
     </>
   );
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }} onTouchStart={usage.enabled ? usage.track : undefined}>
       <View style={{ minHeight: 72, paddingHorizontal: isWide ? 48 : spacing.lg, paddingVertical: spacing.sm, backgroundColor: colors.surface, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 52 }}>
           <Text style={{ color: colors.primary, fontWeight: "800", fontSize: isWide ? 15 : 13 }}>CASUAL PADEL</Text>

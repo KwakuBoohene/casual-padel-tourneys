@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { VisitClient } from "../../utilities/usage/VisitClient";
 const consentKey = "padel-organizer-usage-consent-v1";
 export function useUsageConsent(enabled: boolean) {
-  const [consent, setConsent] = useState(false);
+  const [consent, setConsent] = useState<boolean | null>(null);
   const generation = useRef(0);
   const choose = useCallback((value: boolean) => {
     generation.current++;
@@ -19,11 +19,17 @@ export function useUsageConsent(enabled: boolean) {
       void AsyncStorage.getItem(consentKey)
         .then((value: string | null) => {
           if (active && current === generation.current) {
-            if (value !== "yes") live.current?.stop();
-            setConsent(value === "yes");
+            const allowed = value === null || value === "yes";
+            if (!allowed) live.current?.stop();
+            setConsent(allowed);
           }
         })
-        .catch(() => {});
+        .catch(() => {
+          if (active && current === generation.current) {
+            live.current?.stop();
+            setConsent(false);
+          }
+        });
     };
     load();
     if (Platform.OS === "web") window.addEventListener("storage", load);

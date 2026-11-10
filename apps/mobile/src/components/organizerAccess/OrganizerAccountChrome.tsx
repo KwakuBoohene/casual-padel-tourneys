@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import { useOrganizerAccount } from "../../providers/OrganizerAccountProvider";
 import { useTheme } from "../../theme/ThemeProvider";
 import { pendingOrganizerWrites } from "../../api/organizerContext";
+import { InstallOrganizerApp } from "../InstallOrganizerApp";
 import { BottomSheet } from "../sheets";
 import { radius, spacing } from "../../theme";
 import { useBreakpoint } from "../../layout";
@@ -38,6 +39,7 @@ export function OrganizerAccountChrome({ children }: { children: ReactNode }) {
         <Text style={{ color: colors.text, fontWeight: "700" }}>⚙  Organizer settings</Text><Text style={{ color: colors.muted }}>→</Text>
       </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="Personal profile" onPress={() => { setOpen(false); router.push("/profile"); }} style={{ minHeight: 52, paddingHorizontal: spacing.md, borderRadius: radius.md, justifyContent: "center" }}><Text style={{ color: colors.text }}>♙  Personal profile</Text></Pressable>
+      <InstallOrganizerApp />
     </>
   );
   return (

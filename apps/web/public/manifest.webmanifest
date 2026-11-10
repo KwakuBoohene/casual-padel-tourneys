@@ -1,0 +1,15 @@
+{
+  "id": "/",
+  "name": "Casual Padel Tourneys Viewer",
+  "short_name": "Padel Viewer",
+  "description": "Follow live padel scores and tournament standings.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    { "src": "/icons/app-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/app-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

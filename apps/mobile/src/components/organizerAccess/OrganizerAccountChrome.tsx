@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
-import { router } from "expo-router";
+import { Link, router, usePathname } from "expo-router";
 import { useOrganizerAccount } from "../../providers/OrganizerAccountProvider";
 import { useTheme } from "../../theme/ThemeProvider";
 import { pendingOrganizerWrites } from "../../api/organizerContext";
@@ -11,11 +11,18 @@ import { BottomSheet } from "../sheets";
 import { radius, spacing } from "../../theme";
 import { useBreakpoint } from "../../layout";
 
+const organizerLinks = [
+  { label: "Tournaments", href: "/tournaments" },
+  { label: "Players", href: "/profile/players" },
+  { label: "Leaderboard", href: "/account-players" }
+] as const;
+
 export function OrganizerAccountChrome({ children }: { children: ReactNode }) {
   const account = useOrganizerAccount();
   const usage = useUsageVisits();
   const { colors } = useTheme();
   const { isWide } = useBreakpoint();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   if (!account.ready || !account.selected)
     return <ActivityIndicator style={{ flex: 1 }} color={colors.primary} />;
@@ -51,7 +58,27 @@ export function OrganizerAccountChrome({ children }: { children: ReactNode }) {
       <View style={{ minHeight: 72, paddingHorizontal: isWide ? 48 : spacing.lg, paddingVertical: spacing.sm, backgroundColor: colors.surface, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 52 }}>
           <Text style={{ color: colors.primary, fontWeight: "800", fontSize: isWide ? 15 : 13 }}>CASUAL PADEL</Text>
-          {isWide ? <Text style={{ color: colors.muted, fontSize: 14 }}>Tournaments     Players     Leaderboard</Text> : null}
+          {isWide ? (
+            <View role="navigation" accessibilityLabel="Organizer navigation" style={{ flexDirection: "row", gap: spacing.lg }}>
+              {organizerLinks.map(({ label, href }) => {
+                const active = pathname === href || pathname.startsWith(`${href}/`);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    style={{
+                      paddingVertical: spacing.md,
+                      color: active ? colors.primary : colors.text,
+                      fontSize: 14,
+                      fontWeight: active ? "700" : "500"
+                    }}
+                  >
+                    {label}
+                  </Link>
+                );
+              })}
+            </View>
+          ) : null}
         </View>
         <Pressable
           accessibilityRole="button"

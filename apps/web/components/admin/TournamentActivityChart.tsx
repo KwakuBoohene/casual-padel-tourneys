@@ -1,26 +1,28 @@
 import type { AdminOverview } from "@padel/shared";
+import { useState } from "react";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Link } from "react-router-dom";
 import { adminLink } from "../../lib/admin/reportFilters";
 import { AppDbBadge, Cell, ReportTable } from "./ReportParts";
 
 const axisDate = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "Africa/Accra" });
+function formatAxisDate(date: string): string {
+  return axisDate.format(new Date(date));
+}
+
 const series = [
   { key: "tournamentsCreated", label: "Created", color: "var(--color-padel-primary)" },
   { key: "tournamentsCompleted", label: "Completed", color: "var(--admin-chart-completed)" }
 ] as const;
 
 export function TournamentActivityChart({ daily, range }: { daily: AdminOverview["daily"]; range: AdminOverview["range"] }) {
-  const left = 48;
-  const top = 16;
-  const plotHeight = 152;
-  const baseline = top + plotHeight;
-  const width = Math.max(520, left + daily.length * 24 + 12);
-  const plotWidth = width - left - 12;
-  const spacing = plotWidth / Math.max(1, daily.length);
-  const barWidth = Math.min(22, spacing * 0.29);
+  const chartWidth = Math.max(520, 60 + daily.length * 24);
+  const [width, setWidth] = useState(520);
+  const scale = width / chartWidth;
+  const axisTick = { fill: "var(--color-padel-muted)", fontSize: Math.max(10, 12 * scale) };
   const maximum = Math.max(0, ...daily.flatMap((day) => series.map(({ key }) => day[key] ?? 0)));
   const tickStep = Math.max(1, Math.ceil(maximum / 4));
-  const labelInterval = Math.max(1, Math.ceil(64 / spacing));
+  const ticks = [0, 1, 2, 3, 4].map((tick) => tick * tickStep);
   const hasCompletionData = daily.every((day) => day.tournamentsCompleted !== undefined);
 
   return (
@@ -39,43 +41,56 @@ export function TournamentActivityChart({ daily, range }: { daily: AdminOverview
         ))}
       </ul>
       <div className="mt-2 overflow-x-auto" role="region" aria-label="Daily tournament chart" tabIndex={0}>
-        <svg aria-hidden="true" viewBox={`0 0 ${width} 200`} className="block h-auto w-full"
-          style={daily.length > 14 ? { minWidth: width } : undefined}>
-          {[0, 1, 2, 3, 4].map((tick) => {
-            const y = baseline - (tick * plotHeight) / 4;
-            return (
-              <g key={tick}>
-                <text x={left - 8} y={y + 4} textAnchor="end" className="fill-padel-muted text-[17px] tabular-nums sm:text-xs">
-                  {(tick * tickStep).toLocaleString()}
-                </text>
-                <line x1={left} x2={width - 12} y1={y} y2={y} className="stroke-padel-border" />
-              </g>
-            );
-          })}
-          {daily.map((day, index) => {
-            const x = left + (index + 0.5) * spacing;
-            return (
-              <g key={day.date}>
-                {series.map(({ key, label, color }, i) => {
-                  const count = day[key];
-                  if (!count) return null;
-                  const height = (count / (4 * tickStep)) * plotHeight;
-                  return (
-                    <rect key={key} x={i === 0 ? x - barWidth - 2 : x + 2} y={baseline - height}
-                      width={barWidth} height={height} rx={2} fill={color}>
-                      <title>{`${day.date} · ${label}: ${count.toLocaleString()}`}</title>
-                    </rect>
-                  );
-                })}
-                {index % labelInterval === 0 && (
-                  <text x={x} y={baseline + 21} textAnchor="middle" className="fill-padel-muted text-[17px] sm:text-xs">
-                    {axisDate.format(new Date(day.date))}
-                  </text>
-                )}
-              </g>
-            );
-          })}
-        </svg>
+        <div aria-hidden="true" style={daily.length > 14 ? { minWidth: chartWidth } : undefined}>
+          <ResponsiveContainer width="100%" aspect={chartWidth / 200} onResize={(nextWidth) => setWidth(nextWidth)}>
+            <BarChart
+              data={daily}
+              margin={{ top: 16 * scale, right: 12 * scale, bottom: 0, left: 0 }}
+              barGap={4 * scale}
+              barCategoryGap="18%"
+              maxBarSize={22 * scale}
+              accessibilityLayer={false}
+            >
+              <CartesianGrid vertical={false} syncWithTicks stroke="var(--color-padel-border)" />
+              <XAxis
+                dataKey="date"
+                tick={axisTick}
+                tickFormatter={formatAxisDate}
+                axisLine={false}
+                tickLine={false}
+                tickMargin={8 * scale}
+                height={32 * scale}
+                minTickGap={5}
+              />
+              <YAxis
+                domain={[0, 4 * tickStep]}
+                ticks={ticks}
+                tick={axisTick}
+                tickFormatter={(value: number) => value.toLocaleString()}
+                axisLine={false}
+                tickLine={false}
+                tickMargin={8 * scale}
+                width={48 * scale}
+              />
+              <Tooltip
+                cursor={false}
+                isAnimationActive={false}
+                labelFormatter={(date) => typeof date === "string" ? formatAxisDate(date) : date}
+                formatter={(value) => typeof value === "number" ? value.toLocaleString() : value}
+                contentStyle={{
+                  background: "var(--color-padel-surface)",
+                  border: "1px solid var(--color-padel-border)",
+                  borderRadius: "0.5rem",
+                  color: "var(--color-padel-text)",
+                  fontSize: "0.875rem"
+                }}
+              />
+              {series.map(({ key, label, color }) => (
+                <Bar key={key} dataKey={key} name={label} fill={color} radius={2 * scale} isAnimationActive={false} />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
       {!hasCompletionData && <p className="text-sm text-padel-muted">Completion counts are unavailable for this report.</p>}
       <details className="mt-2 text-sm">

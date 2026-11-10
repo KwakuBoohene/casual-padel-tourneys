@@ -15,7 +15,8 @@
     "@sentry/browser": "11.10.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
-    "react-router-dom": "7.18.4"
+    "react-router-dom": "7.18.4",
+    "recharts": "3.10.1"
   },
   "devDependencies": {
     "@sentry/cli": "3.8.2",

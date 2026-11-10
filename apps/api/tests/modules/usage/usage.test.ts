@@ -143,8 +143,11 @@ test(
         ).statusCode,
         413
       );
-      const from = new Date(Date.now() - 60_000).toISOString(),
-        to = new Date(Date.now() + 60_000).toISOString();
+      const from = new Date(Date.now() - 60_000).toISOString();
+      // Isolate the distinct-account assertion from other test files writing current usage.
+      const distinctFrom = new Date(Date.now() + 3_600_000);
+      const to = new Date(distinctFrom.getTime() + 60_000).toISOString();
+      const distinctRange = { from: distinctFrom.toISOString(), to };
       await prisma.$transaction(async (tx) => {
         await createObservedActivity(tx, {
           data: {
@@ -153,7 +156,8 @@ test(
             actorName: "PRIVATE-ACTOR-NAME",
             action: "HISTORICAL_IMPORT_CREATED",
             targetId: `${prefix}-import`,
-            metadata: { private: "PRIVATE-IMPORT-DATA" }
+            metadata: { private: "PRIVATE-IMPORT-DATA" },
+            occurredAt: distinctFrom
           }
         });
         await recordUsageEvent(tx, {
@@ -161,23 +165,22 @@ test(
           kind: "tournament.created",
           surface: "organizer",
           actorUserId: owner.id,
-          targetId: "deleted-tournament"
+          targetId: "deleted-tournament",
+          occurredAt: distinctFrom
         });
       });
       const report = await reportUsage({ from, to });
-      assert.ok((report.data.current.activeUsers ?? 0) >= 2);
+      assert.equal((await reportUsage(distinctRange)).data.current.activeUsers, 2);
       await prisma.$transaction((tx) =>
         recordUsageEvent(tx, {
           id: `${prefix}-repeat-actor`,
           kind: "business.action",
           surface: "organizer",
-          actorUserId: actor.id
+          actorUserId: actor.id,
+          occurredAt: distinctFrom
         })
       );
-      assert.equal(
-        (await reportUsage({ from, to })).data.current.activeUsers,
-        report.data.current.activeUsers
-      );
+      assert.equal((await reportUsage(distinctRange)).data.current.activeUsers, 2);
       assert.equal(report.data.current.visits, 1);
       assert.equal(report.data.current.partial, true);
       const page = await reportActivity({ from, to, actorUserId: actor.id, limit: 1 });

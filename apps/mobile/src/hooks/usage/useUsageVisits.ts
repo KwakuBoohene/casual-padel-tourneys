@@ -11,7 +11,7 @@ import { VisitClient } from "../../utilities/usage/VisitClient";
 
 const sessionKey = "padel-organizer-usage-session-v1";
 export function useUsageVisits() {
-  const enabled = process.env.EXPO_PUBLIC_USAGE_VISITS_ENABLED === "true";
+  const enabled = (process.env.EXPO_PUBLIC_USAGE_VISITS_ENABLED ?? "true") === "true";
   const pathname = usePathname();
   const { authToken, currentUser } = useAuthSessionContext();
   const actorId = currentUser?.id;

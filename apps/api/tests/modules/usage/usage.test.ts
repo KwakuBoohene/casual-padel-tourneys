@@ -28,12 +28,14 @@ const profile = (id: string) => ({
   emailVerifiedAt: new Date()
 });
 test("disabled visit collection performs no persistence and admin usage routes still require grants", async () => {
-  const previous = process.env.USAGE_VISITS_ENABLED;
-  process.env.USAGE_VISITS_ENABLED = "false";
+  const previousVisitsEnabled = process.env.USAGE_VISITS_ENABLED;
+  const previousJwtSecret = process.env.JWT_SECRET;
   const app = Fastify();
-  registerUsageModule(app);
-  registerAdminModule(app, { isAdmin: async () => false, recordRead: async () => assert.fail() });
   try {
+    process.env.USAGE_VISITS_ENABLED = "false";
+    process.env.JWT_SECRET = "usage-test-only";
+    registerUsageModule(app);
+    registerAdminModule(app, { isAdmin: async () => false, recordRead: async () => assert.fail() });
     assert.equal(
       (await app.inject({ method: "POST", url: "/usage/visits", payload: { anything: true } })).statusCode,
       202
@@ -41,9 +43,11 @@ test("disabled visit collection performs no persistence and admin usage routes s
     for (const url of ["/admin/usage", "/admin/activity"])
       assert.equal((await app.inject({ url })).statusCode, 401);
   } finally {
+    if (previousVisitsEnabled === undefined) delete process.env.USAGE_VISITS_ENABLED;
+    else process.env.USAGE_VISITS_ENABLED = previousVisitsEnabled;
+    if (previousJwtSecret === undefined) delete process.env.JWT_SECRET;
+    else process.env.JWT_SECRET = previousJwtSecret;
     await app.close();
-    if (previous === undefined) delete process.env.USAGE_VISITS_ENABLED;
-    else process.env.USAGE_VISITS_ENABLED = previous;
   }
 });
 test(

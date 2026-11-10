@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
 import { ThemeProvider } from "./ThemeProvider";
+import { InstallApp } from "../components/InstallApp";
 import { ThemeToggle } from "../components/ThemeToggle";
 import "./globals.css";
 
@@ -11,6 +12,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider>
       <nav
+        className="gap-2 px-3 sm:px-6"
         style={{
           position: "fixed",
           top: 0,
@@ -21,7 +23,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "0 24px",
           background: "var(--color-padel-surface)",
           borderBottom: "1px solid var(--color-padel-border)",
           backdropFilter: "blur(12px)"
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       >
         <Link
           to="/"
+          className="min-w-0"
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -38,6 +40,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         >
           <svg
+            className="shrink-0"
             width="22"
             height="28"
             viewBox="0 0 22 28"
@@ -92,9 +95,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               strokeLinejoin="round"
             />
           </svg>
-          <span style={{ fontWeight: 700, fontSize: "15px", letterSpacing: "-0.01em" }}>Casual Tourneys</span>
+          <span className="truncate" style={{ fontWeight: 700, fontSize: "15px", letterSpacing: "-0.01em" }}>Casual Tourneys</span>
         </Link>
-        <div className="flex items-center gap-5">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-5">
+          <InstallApp />
           {admin.status === "allowed" ? (
             <Link to="/admin" className="text-sm font-semibold text-padel-primary">
               Admin

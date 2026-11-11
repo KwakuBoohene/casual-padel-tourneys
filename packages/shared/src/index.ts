@@ -29,6 +29,7 @@ export * from "./schemas/organizerAccess.js";
 export * from "./schemas/historicalResults.js";
 export type { AdminAccessResponse } from "./types/admin.js";
 export * from "./schemas/adminReporting.js";
+export type * from "./types/ga4Reporting.js";
 export type {
   AdminCoverage,
   AdminUserSummary,

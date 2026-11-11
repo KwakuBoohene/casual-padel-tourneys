@@ -36,19 +36,31 @@ export default function OrganizerAccessScreen() {
   } | null>(null);
   const selected = account.selected;
   const owner = selected?.role === "OWNER";
-  const load = useCallback(async () => {
-    if (!account.selected || auth.currentUser?.isGuest) return;
-    try {
-      setOverview((await fetchOrganizerAccess(account.selected.id)).data);
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }, [account.selected, auth.currentUser?.isGuest]);
+  /** Fetches the overview; results are applied only while `isCurrent()` holds, so stale responses are dropped. */
+  const fetchOverview = useCallback(
+    async (isCurrent: () => boolean) => {
+      if (!account.selected || auth.currentUser?.isGuest) return;
+      await fetchOrganizerAccess(account.selected.id).then(
+        (response) => {
+          if (isCurrent()) setOverview(response.data);
+        },
+        (e: unknown) => {
+          if (isCurrent()) setError((e as Error).message);
+        }
+      );
+    },
+    [account.selected, auth.currentUser?.isGuest]
+  );
+  const load = useCallback(() => fetchOverview(() => true), [fetchOverview]);
   const { refresh } = account;
   useEffect(() => {
-    void load();
+    let active = true;
+    void fetchOverview(() => active);
     void refresh().catch(() => {});
-  }, [load, refresh]);
+    return () => {
+      active = false;
+    };
+  }, [fetchOverview, refresh]);
   const run = async (action: () => Promise<unknown>) => {
     if (busy) return;
     setBusy(true);

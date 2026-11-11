@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import type { LiveTournamentState } from "../../../types/organizer/tournament";
 import { areAllMatchesResolved, countUnfinishedMatches } from "@padel/shared";
@@ -26,11 +26,13 @@ export function useLiveRounds(liveTournament: LiveTournamentState | null) {
     [sortedRounds, selectedRoundIndex]
   );
 
-  useEffect(() => {
-    if (!liveTournament || !activeRound) return;
-    const idx = sortedRounds.findIndex((r) => r.id === activeRound.id);
+  // Every tournament update jumps the round picker back to the round in play.
+  const [syncedTournament, setSyncedTournament] = useState<LiveTournamentState | null>(null);
+  if (liveTournament !== syncedTournament) {
+    setSyncedTournament(liveTournament);
+    const idx = activeRound ? sortedRounds.findIndex((r) => r.id === activeRound.id) : -1;
     if (idx >= 0) setSelectedRoundIndex(idx);
-  }, [liveTournament, activeRound, sortedRounds]);
+  }
 
   const latestRound = sortedRounds[sortedRounds.length - 1] ?? null;
   const isLatestRoundComplete = Boolean(

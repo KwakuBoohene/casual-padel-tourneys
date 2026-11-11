@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
 import { spacing, touch } from "../../theme";
@@ -30,11 +30,11 @@ export function ScoreEntrySideRow(props: ScoreEntrySideRowProps) {
   const [text, setText] = useState(props.value === null ? "" : String(props.value));
   const current = props.value ?? 0;
 
-  useEffect(() => {
-    if (!focused) {
-      setText(props.value === null ? "" : String(props.value));
-    }
-  }, [props.value, focused]);
+  // While not editing, the field mirrors the committed score.
+  const committedText = props.value === null ? "" : String(props.value);
+  if (!focused && text !== committedText) {
+    setText(committedText);
+  }
 
   const commitText = (raw: string) => {
     const cleaned = digitsOnly(raw);

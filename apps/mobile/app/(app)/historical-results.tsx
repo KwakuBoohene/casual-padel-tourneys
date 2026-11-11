@@ -106,8 +106,19 @@ export default function HistoricalResultsScreen() {
     setImports((await listHistoricalResults(owner)).data);
   }, [owner]);
   useEffect(() => {
-    void load().catch((error) => setError(error.message));
-  }, [load]);
+    let active = true;
+    listHistoricalResults(owner).then(
+      (response) => {
+        if (active) setImports(response.data);
+      },
+      (error: Error) => {
+        if (active) setError(error.message);
+      }
+    );
+    return () => {
+      active = false;
+    };
+  }, [owner]);
   const run = async (action: () => Promise<void>) => {
     if (busy) return;
     setBusy(true);

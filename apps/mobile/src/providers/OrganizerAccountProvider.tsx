@@ -1,4 +1,13 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode
+} from "react";
 import { AppState, Modal, Text, View } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
@@ -36,15 +45,29 @@ export function OrganizerAccountProvider({ children }: { children: ReactNode }) 
   const { colors } = useTheme();
   const [accounts, setAccounts] = useState<OrganizerAccount[]>([]);
   const [selected, setSelected] = useState<OrganizerAccount | null>(null);
-  const [ready, setReady] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [notice, setNotice] = useState("");
   const [pending, setPending] = useState<OrganizerAccount | null>(null);
   const selectedRef = useRef<OrganizerAccount | null>(null);
   const actorRef = useRef(auth.currentUser?.id);
-  actorRef.current = auth.currentUser?.id;
   const userRef = useRef(auth.currentUser);
-  userRef.current = auth.currentUser;
+  // Layout effects run before any passive effect or async continuation reads these.
+  useLayoutEffect(() => {
+    actorRef.current = auth.currentUser?.id;
+    userRef.current = auth.currentUser;
+  });
+  // A login/identity change (not a verification/profile refresh) resets the account list.
+  const identity = auth.authToken && auth.currentUser ? `${auth.currentUser.id}:${auth.authToken}` : null;
+  // Signed out is immediately ready; a signed-in identity is ready once its accounts have loaded.
+  const [loadedIdentity, setLoadedIdentity] = useState<string | null>(null);
+  const ready = identity === null || loadedIdentity === identity;
+  const [shownIdentity, setShownIdentity] = useState(identity);
+  if (shownIdentity !== identity) {
+    setShownIdentity(identity);
+    setLoadedIdentity(null);
+    setSelected(null);
+    setAccounts([]);
+  }
   const apply = useCallback(
     (account: OrganizerAccount) => {
       setSelectedOrganizer(account);
@@ -76,15 +99,11 @@ export function OrganizerAccountProvider({ children }: { children: ReactNode }) 
   useEffect(() => {
     let cancelled = false;
     const actor = userRef.current;
-    setReady(false);
     selectedRef.current = null;
-    setSelected(null);
-    setAccounts([]);
-    if (!auth.authToken || !actor) {
+    if (!identity || !actor) {
       setSelectedOrganizer(null);
       void queryClient.cancelQueries();
       queryClient.clear();
-      setReady(true);
       return;
     }
     void (async () => {
@@ -104,14 +123,14 @@ export function OrganizerAccountProvider({ children }: { children: ReactNode }) 
           capabilities: { manage: true, deleteTournament: true, manageMembers: true }
         });
       } finally {
-        if (!cancelled) setReady(true);
+        if (!cancelled) setLoadedIdentity(identity);
       }
     })();
     return () => {
       cancelled = true;
     };
   // Reinitialize only for a login/identity change, not a verification/profile refresh.
-  }, [auth.authToken, auth.currentUser?.id, apply, queryClient]);
+  }, [identity, apply, queryClient]);
   useEffect(() => {
     setOrganizerAccessLostHandler(() => {
       if (actorRef.current && selectedRef.current)

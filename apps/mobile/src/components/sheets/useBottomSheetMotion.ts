@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { Dimensions } from "react-native";
 import { Gesture } from "react-native-gesture-handler";
 import {
@@ -15,6 +15,7 @@ const DISMISS_DISTANCE = 120;
 const DISMISS_VELOCITY = 900;
 const OPEN_SPRING = { damping: 22, stiffness: 220, mass: 0.9 };
 const CLOSE_MS = 220;
+const CLOSE_TIMING = { duration: CLOSE_MS, easing: Easing.in(Easing.cubic) };
 
 export function useBottomSheetMotion(input: {
   visible: boolean;
@@ -22,54 +23,56 @@ export function useBottomSheetMotion(input: {
   onDismiss: () => void;
 }) {
   const [mounted, setMounted] = useState(input.visible);
-  const closingRef = useRef(false);
+  const [shownVisible, setShownVisible] = useState(input.visible);
+  const closing = useSharedValue(false);
   const translateY = useSharedValue(SCREEN_HEIGHT);
   const overlayOpacity = useSharedValue(0);
   const dragStartY = useSharedValue(0);
-  const onDismissRef = useRef(input.onDismiss);
-  onDismissRef.current = input.onDismiss;
+  // Counts user-initiated dismissals; the parent is told after commit, with its latest callback.
+  const [dismissals, setDismissals] = useState(0);
+  const notifyDismiss = useEffectEvent(() => input.onDismiss());
+  useEffect(() => {
+    if (dismissals > 0) notifyDismiss();
+  }, [dismissals]);
+
+  // Opening mounts the sheet in the same render; closing unmounts only after the exit animation.
+  if (input.visible !== shownVisible) {
+    setShownVisible(input.visible);
+    if (input.visible) setMounted(true);
+  }
 
   const finishClose = (thenDismiss: boolean) => {
-    closingRef.current = false;
+    closing.set(false);
     setMounted(false);
-    if (thenDismiss) {
-      onDismissRef.current();
-    }
+    if (thenDismiss) setDismissals((count) => count + 1);
   };
 
   const animateClosed = (thenDismiss: boolean) => {
     "worklet";
-    overlayOpacity.value = withTiming(0, { duration: CLOSE_MS });
-    translateY.value = withTiming(
-      SCREEN_HEIGHT,
-      { duration: CLOSE_MS, easing: Easing.in(Easing.cubic) },
-      (finished?: boolean) => {
-        if (finished) {
-          runOnJS(finishClose)(thenDismiss);
-        }
-      }
+    overlayOpacity.set(withTiming(0, { duration: CLOSE_MS }));
+    translateY.set(
+      withTiming(SCREEN_HEIGHT, CLOSE_TIMING, (finished?: boolean) => {
+        if (finished) runOnJS(finishClose)(thenDismiss);
+      })
     );
   };
 
   const beginClose = (thenDismiss: boolean) => {
-    if (closingRef.current) {
-      return;
-    }
-    closingRef.current = true;
+    if (closing.get()) return;
+    closing.set(true);
     animateClosed(thenDismiss);
   };
 
   useEffect(() => {
     if (input.visible) {
-      closingRef.current = false;
-      setMounted(true);
-      translateY.value = SCREEN_HEIGHT;
-      overlayOpacity.value = 0;
-      translateY.value = withSpring(0, OPEN_SPRING);
-      overlayOpacity.value = withTiming(1, { duration: 180 });
+      closing.set(false);
+      translateY.set(SCREEN_HEIGHT);
+      overlayOpacity.set(0);
+      translateY.set(withSpring(0, OPEN_SPRING));
+      overlayOpacity.set(withTiming(1, { duration: 180 }));
       return;
     }
-    if (mounted && !closingRef.current) {
+    if (mounted && !closing.get()) {
       beginClose(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- drive open/close from visible
@@ -80,12 +83,12 @@ export function useBottomSheetMotion(input: {
     .activeOffsetY(8)
     .failOffsetX([-24, 24])
     .onBegin(() => {
-      dragStartY.value = translateY.value;
+      dragStartY.set(translateY.get());
     })
     .onUpdate((event) => {
-      const next = Math.max(0, dragStartY.value + event.translationY);
-      translateY.value = next;
-      overlayOpacity.value = 1 - Math.min(1, next / SCREEN_HEIGHT) * 0.7;
+      const next = Math.max(0, dragStartY.get() + event.translationY);
+      translateY.set(next);
+      overlayOpacity.set(1 - Math.min(1, next / SCREEN_HEIGHT) * 0.7);
     })
     .onEnd((event) => {
       const shouldDismiss =
@@ -94,16 +97,16 @@ export function useBottomSheetMotion(input: {
         runOnJS(beginClose)(true);
         return;
       }
-      translateY.value = withSpring(0, OPEN_SPRING);
-      overlayOpacity.value = withTiming(1, { duration: 160 });
+      translateY.set(withSpring(0, OPEN_SPRING));
+      overlayOpacity.set(withTiming(1, { duration: 160 }));
     });
 
   const sheetStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }]
+    transform: [{ translateY: translateY.get() }]
   }));
 
   const overlayStyle = useAnimatedStyle(() => ({
-    opacity: overlayOpacity.value
+    opacity: overlayOpacity.get()
   }));
 
   return {

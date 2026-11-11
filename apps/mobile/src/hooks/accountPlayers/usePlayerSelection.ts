@@ -1,14 +1,17 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { OrganizerPlayerStatus } from "@padel/shared";
 
 export function usePlayerSelection(status: OrganizerPlayerStatus) {
   const [selecting, setSelecting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectionStatus, setSelectionStatus] = useState(status);
 
-  useEffect(() => {
+  // Switching between active/archived lists drops any selection made on the old list.
+  if (status !== selectionStatus) {
+    setSelectionStatus(status);
     setSelecting(false);
     setSelectedIds([]);
-  }, [status]);
+  }
 
   const toggle = (id: string) => {
     setSelectedIds((current) =>

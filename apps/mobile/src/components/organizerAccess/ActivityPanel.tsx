@@ -36,25 +36,46 @@ export function ActivityPanel({ organizerId }: { organizerId: string }) {
   const [cursor, setCursor] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  /** Fetches a page; results are applied only while `isCurrent()` holds, so stale responses are dropped. */
+  const fetchPage = useCallback(
+    (next: string | undefined, isCurrent: () => boolean) =>
+      fetchOrganizerActivity(organizerId, next)
+        .then(
+          (response) => {
+            if (!isCurrent()) return;
+            setRows((rows) => (next ? [...rows, ...response.data] : response.data));
+            setCursor(response.nextCursor);
+            setError("");
+          },
+          (e: unknown) => {
+            if (isCurrent()) setError((e as Error).message);
+          }
+        )
+        .finally(() => {
+          if (isCurrent()) setLoading(false);
+        }),
+    [organizerId]
+  );
   const load = useCallback(
     async (next?: string) => {
       setLoading(true);
-      try {
-        const response = await fetchOrganizerActivity(organizerId, next);
-        setRows((rows) => (next ? [...rows, ...response.data] : response.data));
-        setCursor(response.nextCursor);
-        setError("");
-      } catch (e) {
-        setError((e as Error).message);
-      } finally {
-        setLoading(false);
-      }
+      await fetchPage(next, () => true);
     },
-    [organizerId]
+    [fetchPage]
   );
+  // Switching organizer shows the loading state immediately, before the fetch effect runs.
+  const [requestedOrganizer, setRequestedOrganizer] = useState<string | null>(null);
+  if (requestedOrganizer !== organizerId) {
+    setRequestedOrganizer(organizerId);
+    setLoading(true);
+  }
   useEffect(() => {
-    void load();
-  }, [load]);
+    let active = true;
+    void fetchPage(undefined, () => active);
+    return () => {
+      active = false;
+    };
+  }, [fetchPage]);
   return (
     <View style={{ gap: 12 }}>
       <Text style={{ color: colors.text, fontSize: 20, fontWeight: "700" }}>Activity</Text>

@@ -24,62 +24,70 @@ export function usePlayerManagement(params: {
   const [pending, setPending] = useState<OrganizerManagedPlayer[]>([]);
   const [renaming, setRenaming] = useState<OrganizerManagedPlayer | null>(null);
 
+  const reportError = useCallback(
+    (error: unknown) =>
+      isEmailVerifyRequired(error) ? markEmailVerifyRequired(error.verifyBy) : setErrorText((error as Error).message),
+    [setErrorText, markEmailVerifyRequired]
+  );
+
+  /** Fetches the list; results are applied only while `isCurrent()` holds, so stale responses are dropped. */
+  const load = useCallback(
+    (isCurrent: () => boolean) => {
+      setErrorText("");
+      return listManagedPlayers(status)
+        .then(
+          (data) => {
+            if (!isCurrent()) return;
+            setGuestMessage(data.guest ? (data.message ?? "Attach an account to manage players.") : null);
+            setPlayers(data.guest ? [] : data.players);
+          },
+          (error: unknown) => isCurrent() && reportError(error)
+        )
+        .finally(() => isCurrent() && setLoading(false));
+    },
+    [status, setErrorText, reportError]
+  );
+
   const reload = useCallback(async () => {
     setLoading(true);
-    try {
-      setErrorText("");
-      const data = await listManagedPlayers(status);
-      if (data.guest) {
-        setGuestMessage(data.message ?? "Attach an account to manage players.");
-        setPlayers([]);
-      } else {
-        setGuestMessage(null);
-        setPlayers(data.players);
-      }
-    } catch (error) {
-      if (isEmailVerifyRequired(error)) markEmailVerifyRequired(error.verifyBy);
-      else setErrorText((error as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }, [status, setErrorText, markEmailVerifyRequired]);
+    await load(() => true);
+  }, [load]);
+
+  // Switching lists shows the loading state immediately, before the fetch effect runs.
+  const [requestedStatus, setRequestedStatus] = useState<OrganizerPlayerStatus | null>(null);
+  if (requestedStatus !== status) {
+    setRequestedStatus(status);
+    setLoading(true);
+  }
 
   useEffect(() => {
-    void reload();
-  }, [reload]);
+    let active = true;
+    void load(() => active);
+    return () => {
+      active = false;
+    };
+  }, [load]);
 
   const afterChange = async () => {
     await queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.playerSuggestions() });
     await reload();
   };
 
-  const confirmArchive = async () => {
+  /** Applies an archive/unarchive to the players awaiting confirmation; resolves to whether it succeeded. */
+  const confirmPending = async (change: (playerIds: string[]) => Promise<unknown>) => {
     if (pending.length === 0) return false;
     try {
-      await archiveAccountPlayers(pending.map((player) => player.id));
+      await change(pending.map((player) => player.id));
       setPending([]);
       await afterChange();
       return true;
     } catch (error) {
-      if (isEmailVerifyRequired(error)) markEmailVerifyRequired(error.verifyBy);
-      else setErrorText((error as Error).message);
+      reportError(error);
       return false;
     }
   };
-
-  const confirmUnarchive = async () => {
-    if (pending.length === 0) return false;
-    try {
-      await unarchiveAccountPlayers(pending.map((player) => player.id));
-      setPending([]);
-      await afterChange();
-      return true;
-    } catch (error) {
-      if (isEmailVerifyRequired(error)) markEmailVerifyRequired(error.verifyBy);
-      else setErrorText((error as Error).message);
-      return false;
-    }
-  };
+  const confirmArchive = () => confirmPending(archiveAccountPlayers);
+  const confirmUnarchive = () => confirmPending(unarchiveAccountPlayers);
 
   const confirmRename = async (name: string) => {
     if (!renaming) return;
@@ -88,8 +96,7 @@ export function usePlayerManagement(params: {
       setRenaming(null);
       await afterChange();
     } catch (error) {
-      if (isEmailVerifyRequired(error)) markEmailVerifyRequired(error.verifyBy);
-      else setErrorText((error as Error).message);
+      reportError(error);
     }
   };
 

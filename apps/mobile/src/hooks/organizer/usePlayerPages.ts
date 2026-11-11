@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 export const PLAYERS_PER_PAGE = 8;
 
@@ -19,9 +19,10 @@ export function usePlayerPages(playerCount: number) {
   const pageCount = playerPageCount(playerCount);
   const [pageIndex, setPageIndex] = useState(0);
 
-  useEffect(() => {
-    setPageIndex((current) => Math.min(current, pageCount - 1));
-  }, [pageCount]);
+  // Clamp during render when players are removed, so an out-of-range page is never shown.
+  if (pageIndex > pageCount - 1) {
+    setPageIndex(pageCount - 1);
+  }
 
   const range = useMemo(
     () => playerPageRange(playerCount, pageIndex),

@@ -1,7 +1,7 @@
 import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   requestMagicLink as requestMagicLinkApi,
@@ -17,6 +17,10 @@ WebBrowser.maybeCompleteAuthSession();
 const APP_SCHEME = "padel";
 
 export type SignInView = "methods" | "magic";
+
+function idTokenOf(response: AuthSession.AuthSessionResult | null): string | undefined {
+  return response?.type === "success" ? response.params.id_token : undefined;
+}
 
 interface UseSignInParams {
   onSignedIn: (session: AuthSessionResult) => void;
@@ -42,28 +46,28 @@ export function useSignIn(params: UseSignInParams) {
   const [magicSentMessage, setMagicSentMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const exchangeIdToken = useCallback(
-    async (idToken: string) => {
+  // React to each new Google response once: show progress for a token, or the failure message.
+  const [seenResponse, setSeenResponse] = useState<typeof response>(null);
+  if (response !== seenResponse) {
+    setSeenResponse(response);
+    if (idTokenOf(response)) {
       setGoogleLoading(true);
-      try {
-        onSignedIn(await signInWithGoogle(idToken));
-      } catch (error) {
-        logger.error("useSignIn: Google exchange failed", { error });
-        setErrorMessage(error instanceof Error ? error.message : "Could not sign in with Google.");
-      } finally {
-        setGoogleLoading(false);
-      }
-    },
-    [onSignedIn]
-  );
-
-  useEffect(() => {
-    if (response?.type === "success" && response.params.id_token) {
-      void exchangeIdToken(response.params.id_token);
     } else if (response?.type === "error") {
       setErrorMessage("Google sign-in did not complete. Please try again.");
     }
-  }, [response, exchangeIdToken]);
+  }
+
+  useEffect(() => {
+    const idToken = idTokenOf(response);
+    if (!idToken) return;
+    signInWithGoogle(idToken)
+      .then(onSignedIn)
+      .catch((error: unknown) => {
+        logger.error("useSignIn: Google exchange failed", { error });
+        setErrorMessage(error instanceof Error ? error.message : "Could not sign in with Google.");
+      })
+      .finally(() => setGoogleLoading(false));
+  }, [response, onSignedIn]);
 
   async function continueAsGuest() {
     setGuestLoading(true);

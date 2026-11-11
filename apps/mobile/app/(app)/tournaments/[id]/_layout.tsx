@@ -23,26 +23,22 @@ function TournamentLoadGate({ children }: { children: ReactNode }) {
   const [message, setMessage] = useState("");
   const loadGen = useRef(0);
 
-  useEffect(() => {
-    if (!id) {
-      setStatus("error");
-      setMessage("Missing tournament id.");
-      return;
-    }
-
-    if (org.liveTournament?.id === id) {
-      setStatus("ready");
-      return;
-    }
-
-    if (org.kohHub?.id === id) {
-      setStatus("koh");
-      return;
-    }
-
-    const gen = ++loadGen.current;
-    setStatus("loading");
+  // Each id/edit combination starts from what the session already has open; anything else loads.
+  const routeKey = `${id ?? ""}:${editMode ? "edit" : "view"}`;
+  const [shownRouteKey, setShownRouteKey] = useState<string | null>(null);
+  if (shownRouteKey !== routeKey) {
+    setShownRouteKey(routeKey);
     setMessage("");
+    if (id && org.liveTournament?.id === id) setStatus("ready");
+    else if (id && org.kohHub?.id === id) setStatus("koh");
+    else setStatus("loading");
+  }
+
+  useEffect(() => {
+    // Any route change invalidates an in-flight open for the previous route.
+    const gen = ++loadGen.current;
+    // A missing id redirects during render; an already-open tournament needs no request.
+    if (!id || org.liveTournament?.id === id || org.kohHub?.id === id) return;
 
     void (async () => {
       const result = await org.openTournament(id, editMode);

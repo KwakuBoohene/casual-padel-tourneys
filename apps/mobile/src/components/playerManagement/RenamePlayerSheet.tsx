@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Text, TextInput } from "react-native";
 import type { OrganizerManagedPlayer } from "@padel/shared";
 
@@ -12,10 +12,14 @@ export function RenamePlayerSheet(props: {
   onCancel: () => void;
 }) {
   const { colors } = useTheme();
-  const [name, setName] = useState("");
-  useEffect(() => {
+  const [name, setName] = useState(props.player?.name ?? "");
+  const [namedPlayer, setNamedPlayer] = useState(props.player);
+
+  // Opening the sheet for a different player starts from that player's current name.
+  if (props.player !== namedPlayer) {
+    setNamedPlayer(props.player);
     setName(props.player?.name ?? "");
-  }, [props.player]);
+  }
 
   return (
     <BottomSheet visible={Boolean(props.player)} title="Rename player" onDismiss={props.onCancel}>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { KohCourtChange } from "@padel/shared";
 
 import type { KohTournamentHub } from "../../types/koh/create";
@@ -66,12 +66,11 @@ export function useKohLive(params: UseKohLiveParams) {
     onHub: (hub) => applyHub(hub, score.scoreUiOpen)
   });
 
-  useEffect(() => {
-    if (!score.scoreUiOpen && queuedCourtChange) {
-      setPendingCourtChange(queuedCourtChange);
-      setQueuedCourtChange(null);
-    }
-  }, [score.scoreUiOpen, queuedCourtChange]);
+  // A promotion that arrived while scores were open is shown once the score UI closes.
+  if (!score.scoreUiOpen && queuedCourtChange) {
+    setPendingCourtChange(queuedCourtChange);
+    setQueuedCourtChange(null);
+  }
 
   const runMut = async (
     fn: () => Promise<KohTournamentHub | null>,

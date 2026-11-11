@@ -1,5 +1,5 @@
 import { useUsageConsent } from "./useUsageConsent";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { AppState, Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { randomUUID } from "expo-crypto";
@@ -15,8 +15,7 @@ export function useUsageVisits() {
   const pathname = usePathname();
   const { authToken, currentUser } = useAuthSessionContext();
   const actorId = currentUser?.id;
-  const { consent, setConsent, live } = useUsageConsent(enabled);
-  const [client, setClient] = useState<VisitClient | null>(null);
+  const { consent, setConsent, live: liveRef } = useUsageConsent(enabled);
   useEffect(() => {
     if (!enabled || !consent || !authToken || !actorId) return;
     const browser = Platform.OS === "web";
@@ -42,8 +41,7 @@ export function useUsageVisits() {
       },
       actorId
     );
-    live.current = instance;
-    setClient(instance);
+    liveRef.current = instance;
     const hide = () => {
       if (!visible()) instance.pause();
     };
@@ -54,8 +52,10 @@ export function useUsageVisits() {
       listener.remove();
       if (browser) document.removeEventListener("visibilitychange", hide);
     };
-  }, [enabled, consent, authToken, actorId, live]);
+  }, [enabled, consent, authToken, actorId, liveRef]);
+  // Runs after the effect above, so it tracks with the client created for the current consent and actor.
   useEffect(() => {
+    const client = liveRef.current;
     if (!client || !consent) return;
     const route = usageRoute(pathname);
     if (!route) {
@@ -82,13 +82,13 @@ export function useUsageVisits() {
         document.removeEventListener("visibilitychange", track);
       }
     };
-  }, [client, consent, pathname]);
+  }, [enabled, consent, authToken, actorId, pathname, liveRef]);
   function choose(value: boolean) {
-    if (!value) client?.stop();
+    if (!value) liveRef.current?.stop();
     setConsent(value);
     void AsyncStorage.setItem("padel-organizer-usage-consent-v1", value ? "yes" : "no").catch(() => {
       setConsent(false);
-      client?.stop();
+      liveRef.current?.stop();
     });
     if (!value) void AsyncStorage.removeItem(sessionKey).catch(() => {});
   }
@@ -98,6 +98,7 @@ export function useUsageVisits() {
     choose,
     track: () => {
       const route = usageRoute(pathname);
+      const client = liveRef.current;
       if (client && consent && route) void client.visit(route);
     }
   };

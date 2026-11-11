@@ -19,13 +19,19 @@ export function useScoreDraftPersistence(tournamentId: string | undefined) {
   const storageKey = tournamentId ? scoreDraftStorageKey(tournamentId) : undefined;
   const [scoreInputs, setScoreInputs] = useState<ScoreDraftMap>({});
   const [scoreDraftHydratedTournamentId, setScoreDraftHydratedTournamentId] = useState<string | null>(null);
+  const [draftKey, setDraftKey] = useState(storageKey);
 
-  useEffect(() => {
-    if (!tournamentId || !storageKey) {
+  // Leaving a tournament clears its drafts straight away, before anything can render them.
+  if (draftKey !== storageKey) {
+    setDraftKey(storageKey);
+    if (!storageKey) {
       setScoreInputs({});
       setScoreDraftHydratedTournamentId(null);
-      return;
     }
+  }
+
+  useEffect(() => {
+    if (!tournamentId || !storageKey) return;
 
     let cancelled = false;
     const loadDraftScores = async () => {

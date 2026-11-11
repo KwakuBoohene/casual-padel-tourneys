@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import type { PlayerGender, TournamentVariant } from "@padel/shared";
 
@@ -21,16 +21,30 @@ interface AddPlayerSheetProps {
 
 export function AddPlayerSheet(props: AddPlayerSheetProps) {
   const { colors } = useTheme();
-  const [name, setName] = useState("");
-  const [gender, setGender] = useState<PlayerGender | undefined>(undefined);
+  const [name, setName] = useState(props.visible ? (props.initialName ?? "") : "");
+  const [gender, setGender] = useState<PlayerGender | undefined>(
+    props.visible ? props.initialGender : undefined
+  );
+  const [seed, setSeed] = useState({
+    visible: props.visible,
+    initialName: props.initialName,
+    initialGender: props.initialGender
+  });
   const isMixed = props.variant === "MIXED";
   const canSave = name.trim().length > 0 && (!isMixed || Boolean(gender));
 
-  useEffect(() => {
-    if (!props.visible) return;
-    setName(props.initialName ?? "");
-    setGender(props.initialGender);
-  }, [props.visible, props.initialName, props.initialGender]);
+  // Re-seed the form whenever the sheet opens or is pointed at a different player.
+  if (
+    seed.visible !== props.visible ||
+    seed.initialName !== props.initialName ||
+    seed.initialGender !== props.initialGender
+  ) {
+    setSeed({ visible: props.visible, initialName: props.initialName, initialGender: props.initialGender });
+    if (props.visible) {
+      setName(props.initialName ?? "");
+      setGender(props.initialGender);
+    }
+  }
 
   return (
     <BottomSheet visible={props.visible} title={props.title ?? "Add player"} onDismiss={props.onDismiss}>

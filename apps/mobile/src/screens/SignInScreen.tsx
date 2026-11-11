@@ -3,6 +3,7 @@ import { Text, View } from "react-native";
 import type { AuthSession } from "../api/auth";
 import { useBreakpoint } from "../layout";
 import { spacing, typography } from "../theme";
+import { InstallOrganizerApp } from "../components/InstallOrganizerApp";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { useTheme } from "../theme/ThemeProvider";
 
@@ -66,6 +67,8 @@ export function SignInScreen(props: SignInScreenProps) {
           />
         )}
       </View>
+
+      <InstallOrganizerApp />
 
       <AuthErrorSheet
         visible={Boolean(signIn.errorMessage)}

@@ -11,6 +11,11 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./webInstall": {
+      "types": "./dist/webInstall.d.ts",
+      "import": "./dist/webInstall.js",
+      "default": "./dist/webInstall.js"
+    },
     "./theme": {
       "types": "./dist/theme/tokens.d.ts",
       "import": "./dist/theme/tokens.js",

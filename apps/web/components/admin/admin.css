@@ -10,6 +10,12 @@
   --admin-accent-surface: #293b25;
   --admin-brand: #c6ef76;
   --admin-chart-completed: #bca8fa;
+  --admin-ga4: #c4afff;
+  --admin-ga4-badge: #392c53;
+  --admin-ga4-secondary: #bceb77;
+  --admin-ga4-third: #ffc29d;
+  --admin-sentry: #ffc29d;
+  --admin-sentry-badge: #493024;
 
   color-scheme: dark;
 }
@@ -25,6 +31,12 @@
   --admin-rail: #edf1e5;
   --admin-accent-surface: #e6f1e4;
   --admin-chart-completed: #6650ca;
+  --admin-ga4: #6955c9;
+  --admin-ga4-badge: #eee9ff;
+  --admin-ga4-secondary: #326540;
+  --admin-ga4-third: #9d4c24;
+  --admin-sentry: #9d4c24;
+  --admin-sentry-badge: #faebde;
 
   color-scheme: light;
 }
@@ -91,3 +103,21 @@
 .admin-date-picker summary::-webkit-details-marker {
   display: none;
 }
+
+.ga4-badge { color: var(--admin-ga4); background: var(--admin-ga4-badge); }
+.ga4-dot { display: inline-block; width: 0.5rem; height: 0.5rem; margin-right: 0.4rem; border-radius: 50%; background: var(--admin-ga4); }
+.ga4-dot-prior { background: var(--color-padel-muted); }
+.ga4-device-0 { background: var(--admin-ga4); }
+.ga4-device-1 { background: var(--admin-ga4-secondary); }
+.ga4-device-2 { background: var(--admin-ga4-third); }
+.ga4-device-3 { background: var(--color-padel-muted); }
+.ga4-realtime { background: #203d2b; color: #f0f8ec; --color-padel-muted: #c3d4c7; }
+
+.admin-workspace .ga4-organizer-primary {
+  background: #203d2b;
+  color: #f0f8ec;
+  --color-padel-muted: #c3d4c7;
+}
+
+.admin-sentry-badge { color: var(--admin-sentry); background: var(--admin-sentry-badge); }
+.admin-workspace main .admin-sentry-link { color: var(--admin-sentry); }

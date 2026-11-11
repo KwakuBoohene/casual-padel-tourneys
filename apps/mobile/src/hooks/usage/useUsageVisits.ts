@@ -12,10 +12,11 @@ import { VisitClient } from "../../utilities/usage/VisitClient";
 const sessionKey = "padel-organizer-usage-session-v1";
 export function useUsageVisits() {
   const enabled = (process.env.EXPO_PUBLIC_USAGE_VISITS_ENABLED ?? "true") === "true";
+  const ga4Enabled = Platform.OS === "web" && process.env.EXPO_PUBLIC_ORGANIZER_GA4_ENABLED === "true";
   const pathname = usePathname();
   const { authToken, currentUser } = useAuthSessionContext();
   const actorId = currentUser?.id;
-  const { consent, setConsent, live: liveRef } = useUsageConsent(enabled);
+  const { consent, setConsent, live: liveRef } = useUsageConsent(enabled || ga4Enabled);
   useEffect(() => {
     if (!enabled || !consent || !authToken || !actorId) return;
     const browser = Platform.OS === "web";
@@ -93,7 +94,7 @@ export function useUsageVisits() {
     if (!value) void AsyncStorage.removeItem(sessionKey).catch(() => {});
   }
   return {
-    enabled: enabled && Boolean(authToken && currentUser),
+    enabled: (enabled || ga4Enabled) && Boolean(authToken && currentUser),
     consent,
     choose,
     track: () => {

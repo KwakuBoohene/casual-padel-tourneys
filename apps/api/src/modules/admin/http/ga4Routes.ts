@@ -10,6 +10,11 @@ export function registerGa4Routes(admin: FastifyInstance, reports: Ga4Reports): 
     if (!query.success) throw validation("Invalid analytics range.");
     return reports.viewer(query.data);
   });
+  admin.get("/admin/ga4/organizer", async (request) => {
+    const query = adminOverviewQuerySchema.safeParse(request.query);
+    if (!query.success) throw validation("Invalid analytics range.");
+    return reports.organizer(query.data);
+  });
   admin.get("/admin/ga4/viewer/realtime", async (request) => {
     if (Object.keys(request.query as object).length) throw validation("Unexpected realtime filters.");
     return reports.viewerRealtime();

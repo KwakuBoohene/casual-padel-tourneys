@@ -2,10 +2,9 @@ import type { AdminOverview } from "@padel/shared";
 import { Link } from "react-router-dom";
 import { adminLink, label } from "../../lib/admin/reportFilters";
 import { AppDbBadge, Cell, Fields, ReportTable } from "./ReportParts";
-import { RecentOrganizerActivity } from "./RecentOrganizerActivity";
 import { TournamentActivityChart } from "./TournamentActivityChart";
 
-export function OverviewReport({ data, range, revision }: { data: AdminOverview; range: URLSearchParams; revision: number }) {
+export function OverviewReport({ data, range }: { data: AdminOverview; range: URLSearchParams }) {
   const metrics = [
     ["Tournaments created", "tournamentsCreated", "/admin/tournaments", {}],
     ["Tournaments completed", "tournamentsCompleted", "/admin/tournaments", { dateBy: "completed" }],
@@ -43,10 +42,7 @@ export function OverviewReport({ data, range, revision }: { data: AdminOverview;
           );
         })}
       </div>
-      <div className="grid items-start gap-4 xl:grid-cols-[3fr_2fr]">
-        <TournamentActivityChart daily={data.daily} range={data.range} />
-        <RecentOrganizerActivity range={range} revision={revision} />
-      </div>
+      <TournamentActivityChart daily={data.daily} range={data.range} />
       <Fields
         values={{
           "Retained registered accounts · all time": (

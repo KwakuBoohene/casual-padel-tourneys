@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { OrganizerGa4Action } from "@padel/shared";
 
-export function OrganizerGa4({ children }: { children: ReactNode }) {
+export function OrganizerGa4({ children }: { children: ReactNode; allowed: boolean | null }) {
   return <>{children}</>;
 }
 

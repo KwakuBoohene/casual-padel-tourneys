@@ -19,7 +19,15 @@ import themeNight from "./assets/theme-night.svg";
 import tournamentsDay from "./assets/tournaments-day.svg";
 import tournamentsNight from "./assets/tournaments-night.svg";
 
+import viewerDay from "./assets/viewer-day.svg";
+import viewerNight from "./assets/viewer-night.svg";
+
+import organizerDay from "./assets/organizer-day.svg";
+import organizerNight from "./assets/organizer-night.svg";
+
 const icons = {
+  organizer: [organizerDay, organizerNight],
+  viewer: [viewerDay, viewerNight],
   accounts: [accountsDay, accountsNight],
   activity: [activityDay, activityNight],
   brand: [brand, brand],

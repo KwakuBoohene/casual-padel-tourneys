@@ -1,7 +1,12 @@
 import type { ReactNode } from "react";
 import { resolveSentryProjectUrl } from "../../lib/admin/sentryProject";
 
-export function SentryLink({ className, icon }: { className?: string; icon?: ReactNode }) {
+export function SentryLink({ className, icon, label = "Sentry errors & traces", endIcon }: {
+  className?: string;
+  icon?: ReactNode;
+  label?: string;
+  endIcon?: ReactNode;
+}) {
   const url = resolveSentryProjectUrl(window.__PADEL_CONFIG__?.sentryProjectUrl);
   if (!url) return null;
   return (
@@ -14,7 +19,8 @@ export function SentryLink({ className, icon }: { className?: string; icon?: Rea
       title="Sentry manages its own sign-in and project permissions."
     >
       {icon}
-      <span>Sentry errors &amp; traces <span aria-hidden="true">↗</span></span>
+      <span>{label} {!endIcon && <span aria-hidden="true">↗</span>}</span>
+      {endIcon}
       <span className="sr-only"> (opens in a new tab)</span>
     </a>
   );

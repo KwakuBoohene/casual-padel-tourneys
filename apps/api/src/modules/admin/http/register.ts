@@ -2,6 +2,9 @@ import { registerUsageReportingRoutes } from "../../usage/http/reportingRoutes.j
 import type { AdminReports } from "../application/reports.js";
 import { PrismaAdminReports } from "../infrastructure/PrismaAdminReports.js";
 import { registerReportingRoutes } from "./reportingRoutes.js";
+import { registerGa4Routes } from "./ga4Routes.js";
+import type { Ga4Reports } from "../application/ga4Reports.js";
+import { createGa4Reports } from "../infrastructure/createGa4Reports.js";
 import { reportRequestError } from "../../../shared/http/sentryMonitoring.js";
 import { requestMagicLinkSchema } from "@padel/shared";
 import { requestAdminSignIn, type AdminSignInServices } from "../application/requestSignIn.js";
@@ -17,7 +20,8 @@ export function registerAdminModule(
   server: FastifyInstance,
   store: AdminAccessStore = new PrismaAdminAccessStore(),
   services: AdminSignInServices = new PrismaAdminSignInServices(),
-  reports: AdminReports = new PrismaAdminReports()
+  reports: AdminReports = new PrismaAdminReports(),
+  ga4Reports: Ga4Reports = createGa4Reports()
 ): void {
   server.post(
     "/admin/sign-in",
@@ -63,6 +67,7 @@ export function registerAdminModule(
     });
     registerReportingRoutes(admin, reports);
     registerUsageReportingRoutes(admin);
+    registerGa4Routes(admin, ga4Reports);
     admin.get(
       "/admin/access",
       async (request): Promise<AdminAccessResponse> => ({

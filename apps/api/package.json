@@ -39,7 +39,7 @@
   "devDependencies": {
     "@types/pdfkit": "0.17.7",
     "eslint-plugin-boundaries": "7.4.2",
-    "prisma": "6.19.2",
+    "prisma": "7.10.1",
     "tsx": "4.23.15",
     "typescript-eslint": "8.72.1"
   }

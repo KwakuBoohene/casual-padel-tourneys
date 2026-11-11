@@ -49,6 +49,7 @@ export interface AdminPeriodCounts {
   registeredAccountsCreated: number;
   guestAccountsCreated: number;
   tournamentsCreated: number;
+  tournamentsCompleted?: number;
   visits: null;
   activeUsers: null;
 }
@@ -62,6 +63,7 @@ export interface AdminOverview {
     registeredAccountsCreated: number;
     guestAccountsCreated: number;
     tournamentsCreated: number;
+    tournamentsCompleted?: number;
   }[];
   tournamentsByModeVariant: { mode: string; variant: string; count: number }[];
 }

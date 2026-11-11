@@ -1,33 +1,51 @@
 import type { AdminOverview } from "@padel/shared";
 import { Link } from "react-router-dom";
 import { adminLink, label } from "../../lib/admin/reportFilters";
-import { Cell, Fields, ReportTable, timestamp } from "./ReportParts";
+import { AppDbBadge, Cell, Fields, ReportTable } from "./ReportParts";
+import { RecentOrganizerActivity } from "./RecentOrganizerActivity";
+import { TournamentActivityChart } from "./TournamentActivityChart";
 
-export function OverviewReport({ data, range }: { data: AdminOverview; range: URLSearchParams }) {
+export function OverviewReport({ data, range, revision }: { data: AdminOverview; range: URLSearchParams; revision: number }) {
   const metrics = [
+    ["Tournaments created", "tournamentsCreated", "/admin/tournaments", {}],
+    ["Tournaments completed", "tournamentsCompleted", "/admin/tournaments", { dateBy: "completed" }],
     [
-      "Registered accounts created",
+      "New registered accounts",
       "registeredAccountsCreated",
       "/admin/users",
       { accountType: "registered" }
     ],
-    ["Guest accounts created", "guestAccountsCreated", "/admin/users", { accountType: "guest" }],
-    ["Tournaments created", "tournamentsCreated", "/admin/tournaments", {}]
+    ["Guest accounts created", "guestAccountsCreated", "/admin/users", { accountType: "guest" }]
   ] as const;
   return (
     <>
-      <p className="text-sm text-padel-muted">
-        Comparison: {timestamp(data.range.previousFrom)} inclusive → {timestamp(data.range.previousTo)}{" "}
-        exclusive. Same duration as selected range.
-      </p>
-      <div className="grid gap-4 md:grid-cols-3">
-        {metrics.map(([title, key, path, extra]) => (
-          <Link key={key} to={adminLink(path, range, extra)} className="admin-panel space-y-2">
-            <h2>{title}</h2>
-            <p className="text-3xl font-bold">{data.current[key].toLocaleString()}</p>
-            <p className="text-sm text-padel-muted">{comparison(data.current[key], data.previous[key])}</p>
-          </Link>
-        ))}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {metrics.map(([title, key, path, extra]) => {
+          const current = data.current[key];
+          const previous = data.previous[key];
+          const contents = (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-sm font-semibold text-padel-muted">
+                <h2>{title}</h2>
+                <AppDbBadge />
+              </div>
+              <p className="my-1 text-3xl leading-tight font-bold tabular-nums">{current?.toLocaleString() ?? "Unavailable"}</p>
+              <p className="text-sm text-padel-muted">
+                {current === undefined ? "Completion data unavailable" : previous === undefined
+                  ? "Previous period unavailable" : comparison(current, previous)}
+              </p>
+            </>
+          );
+          return current === undefined ? <div key={key} className="admin-panel">{contents}</div> : (
+            <Link key={key} to={adminLink(path, range, extra)} className="admin-panel hover:border-padel-primary">
+              {contents}
+            </Link>
+          );
+        })}
+      </div>
+      <div className="grid items-start gap-4 xl:grid-cols-[3fr_2fr]">
+        <TournamentActivityChart daily={data.daily} range={data.range} />
+        <RecentOrganizerActivity range={range} revision={revision} />
       </div>
       <Fields
         values={{
@@ -46,19 +64,6 @@ export function OverviewReport({ data, range }: { data: AdminOverview; range: UR
           )
         }}
       />
-      <ReportTable
-        title="Daily creation trends · Africa/Accra"
-        columns={["Day", "Registered", "Guests", "Tournaments"]}
-      >
-        {data.daily.map((day) => (
-          <tr key={day.date}>
-            <Cell>{day.date}</Cell>
-            <Cell>{day.registeredAccountsCreated}</Cell>
-            <Cell>{day.guestAccountsCreated}</Cell>
-            <Cell>{day.tournamentsCreated}</Cell>
-          </tr>
-        ))}
-      </ReportTable>
       {data.tournamentsByModeVariant.length ? (
         <ReportTable title="Tournaments created by mode" columns={["Mode", "Variant", "Created"]}>
           {data.tournamentsByModeVariant.map((group) => (

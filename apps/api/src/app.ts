@@ -1,3 +1,4 @@
+import { registerGa4Collection } from "./modules/usage/http/ga4.js";
 import { registerUsageModule } from "./modules/usage/http/register.js";
 import { registerAdminModule } from "./modules/admin/http/register.js";
 import { registerSentryMonitoring } from "./shared/http/sentryMonitoring.js";
@@ -68,6 +69,7 @@ export async function createApp() {
   registerOrganizerMutationWork(server);
   registerOpsRoutes(server);
   registerUsageModule(server);
+  registerGa4Collection(server);
   registerAdminModule(server);
   registerOrganizerAccessRoutes(server);
   await registerAuthModule(server);

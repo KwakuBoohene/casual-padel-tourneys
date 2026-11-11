@@ -10,14 +10,15 @@ function Account({ id, range }: { id: string | null; range: URLSearchParams }) {
     <>Unavailable</>
   );
 }
+export function ActivityTarget({ event, range }: { event: AdminActivity; range: URLSearchParams }) {
+  const { targetId, kind, action } = event;
+  if (targetId && (kind === "tournament.created" || /^(POST|PUT|PATCH|DELETE) \/(koh\/)?tournaments/.test(action ?? ""))) {
+    return <Link to={adminLink(`/admin/tournaments/${encodeURIComponent(targetId)}`, range)}>{targetId}</Link>;
+  }
+  return <>{targetId ?? "—"}</>;
+}
 export function ActivityReport({ data, range }: { data: AdminActivity[]; range: URLSearchParams }) {
-  if (!data.length)
-    return (
-      <p role="status">
-        No observed activity matches these filters. Events before collection or outside retention are
-        unavailable.
-      </p>
-    );
+  if (!data.length) return <p role="status">No observed activity matches these filters.</p>;
   return (
     <ReportTable
       title="Observed organizer activity · last 90 days"
@@ -37,15 +38,7 @@ export function ActivityReport({ data, range }: { data: AdminActivity[]; range: 
             <Account id={event.ownerId} range={range} />
           </Cell>
           <Cell>
-            {event.targetId &&
-            (event.kind === "tournament.created" ||
-              /^(POST|PUT|PATCH|DELETE) \/(koh\/)?tournaments/.test(event.action ?? "")) ? (
-              <Link to={adminLink(`/admin/tournaments/${encodeURIComponent(event.targetId)}`, range)}>
-                {event.targetId}
-              </Link>
-            ) : (
-              (event.targetId ?? "—")
-            )}
+            <ActivityTarget event={event} range={range} />
           </Cell>
         </tr>
       ))}

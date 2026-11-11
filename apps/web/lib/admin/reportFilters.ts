@@ -37,7 +37,7 @@ export function reportQuery(
     kind === "users"
       ? ["q", "accountType", "verification", "sort", "cursor"]
       : kind === "tournaments"
-        ? ["ownerId", "mode", "variant", "status", "sort", "cursor"]
+        ? ["dateBy", "ownerId", "mode", "variant", "status", "sort", "cursor"]
         : kind === "activity"
           ? ["actorUserId", "ownerId", "kind", "cursor"]
           : [];

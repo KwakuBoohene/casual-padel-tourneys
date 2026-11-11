@@ -4,6 +4,7 @@ import { Redirect, useLocalSearchParams } from "expo-router";
 import type { TournamentMode } from "@padel/shared";
 
 import { OrganizerCreateWizard } from "../../src/components/organizer/create/OrganizerCreateWizard";
+import { useOrganizerGa4 } from "../../src/components/analytics/OrganizerGa4";
 import { useCreateTournament } from "../../src/hooks/organizer/useCreateTournament";
 import { PageShell } from "../../src/layout";
 import { useOrganizerSession } from "../../src/providers/OrganizerSessionProvider";
@@ -18,6 +19,7 @@ function parseMode(value: string | string[] | undefined): TournamentMode | null 
 export default function CreateTournamentRoute() {
   const { colors } = useTheme();
   const org = useOrganizerSession();
+  const sendAnalytics = useOrganizerGa4();
   const params = useLocalSearchParams<{ mode?: string | string[] }>();
   const [boot, setBoot] = useState<"pending" | "ready" | "reject">("pending");
 
@@ -26,7 +28,10 @@ export default function CreateTournamentRoute() {
     suggestedPlayerNames: org.suggestedPlayerNames,
     setErrorText: org.setErrorText,
     markEmailVerifyRequired: org.markEmailVerifyRequired,
-    adoptTournament: org.adoptTournament
+    adoptTournament: (data, editMode) => {
+      org.adoptTournament(data, editMode);
+      sendAnalytics({ event: "creation_succeeded" });
+    }
   });
 
   useLayoutEffect(() => {

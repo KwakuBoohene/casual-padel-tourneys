@@ -3,8 +3,9 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), ["PUBLIC_API_BASE_URL", "VIEWER_SENTRY_"]);
+  const env = loadEnv(mode, process.cwd(), ["PUBLIC_API_BASE_URL", "VIEWER_SENTRY_", "VIEWER_GA4_ENABLED"]);
   const config = JSON.stringify({
+    ga4Enabled: (process.env.VIEWER_GA4_ENABLED ?? env.VIEWER_GA4_ENABLED) === "true",
     apiBaseUrl: process.env.PUBLIC_API_BASE_URL ?? env.PUBLIC_API_BASE_URL ?? "",
     sentryProjectUrl:
       resolveSentryProjectUrl(process.env.VIEWER_SENTRY_PROJECT_URL ?? env.VIEWER_SENTRY_PROJECT_URL) ?? "",

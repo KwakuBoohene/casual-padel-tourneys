@@ -4,7 +4,7 @@ import type { AdminUsersQuery, AdminTournamentsQuery } from "@padel/shared";
 import { prisma } from "../../../lib/prisma.js";
 import { notFound } from "../../../shared/kernel/appError.js";
 import type { AdminReports } from "../application/reports.js";
-import { createdIn, nextPageCursor, pageBoundary, reportCoverage } from "../domain/reporting.js";
+import { dateRangeFilter, nextPageCursor, pageBoundary, reportCoverage } from "../domain/reporting.js";
 import {
   userSelect,
   tournamentSelect,
@@ -20,7 +20,7 @@ export class PrismaAdminReports implements AdminReports {
     const q = query.q?.replace(/[\\%_]/g, "\\$&");
     const where: Prisma.UserWhereInput = {
       AND: [
-        { createdAt: createdIn(query) },
+        { createdAt: dateRangeFilter(query) },
         pageBoundary("users", query),
         ...(query.accountType ? [{ isGuest: query.accountType === "guest" }] : []),
         ...(query.verification === "verified"
@@ -51,10 +51,11 @@ export class PrismaAdminReports implements AdminReports {
     const more = rows.length > query.limit;
     const page = rows.slice(0, query.limit);
     const activity = await lastObservedActivity(page.map((row) => row.id));
+    const last = page.at(-1);
     return {
       coverage: reportCoverage,
       data: page.map((row) => ({ ...userSummary(row), lastActivityAt: activity.get(row.id) ?? null })),
-      nextCursor: more ? nextPageCursor("users", query, page.at(-1)) : null
+      nextCursor: more && last ? nextPageCursor("users", query, { id: last.id, at: last.createdAt }) : null
     };
   }
   async user(id: string) {
@@ -68,6 +69,8 @@ export class PrismaAdminReports implements AdminReports {
     };
   }
   async tournaments(query: AdminTournamentsQuery) {
+    const dateField = query.dateBy === "completed" ? "endedAt" : "createdAt";
+    const dateRange = dateRangeFilter(query);
     const status: Prisma.TournamentWhereInput =
       query.status === "completed"
         ? { endedAt: { not: null } }
@@ -77,26 +80,29 @@ export class PrismaAdminReports implements AdminReports {
             ? { endedAt: null, NOT: startedTournament }
             : {};
     const where: Prisma.TournamentWhereInput = {
-      createdAt: createdIn(query),
+      [dateField]: dateField === "endedAt" ? { ...dateRange, not: null } : dateRange,
       organizerId: query.ownerId,
       mode: query.mode,
       variant: query.variant,
-      AND: [status, pageBoundary("tournaments", query)]
+      AND: [status, pageBoundary("tournaments", query, dateField)]
     };
     const direction = query.sort === "newest" ? "desc" : "asc";
     const rows = await prisma.tournament.findMany({
       where,
       select: tournamentSelect,
-      orderBy: [{ createdAt: direction }, { id: direction }],
+      orderBy: [{ [dateField]: direction }, { id: direction }],
       take: query.limit + 1
     });
     const more = rows.length > query.limit;
     const page = rows.slice(0, query.limit);
     const started = await this.startedIds(page.map((row) => row.id));
+    const last = page.at(-1);
+    const lastDate = last?.[dateField];
     return {
       coverage: reportCoverage,
       data: page.map((row) => tournamentSummary(row, started.has(row.id))),
-      nextCursor: more ? nextPageCursor("tournaments", query, page.at(-1)) : null
+      nextCursor:
+        more && last && lastDate ? nextPageCursor("tournaments", query, { id: last.id, at: lastDate }) : null
     };
   }
   private async startedIds(ids: string[]): Promise<Set<string>> {

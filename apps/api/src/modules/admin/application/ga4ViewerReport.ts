@@ -43,6 +43,10 @@ export function viewerRequests(window: Ga4Window): Ga4ReportRequest[] {
       dimensions: [{ name: "deviceCategory" }],
       metrics: [{ name: "sessions" }],
       limit: 10
+    },
+    {
+      dateRanges: [range(window.previousFrom, window.previousTo)],
+      dimensions: [{ name: "date" }], metrics: [{ name: "sessions" }], limit: 400
     }
   ];
 }

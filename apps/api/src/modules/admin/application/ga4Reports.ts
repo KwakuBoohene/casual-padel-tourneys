@@ -60,8 +60,8 @@ export class Ga4Reports {
   }
 
   private async loadViewer(client: Ga4DataClient, property: string, window: Ga4Window) {
-    const [totals, daily, channels, devices] = await client.batchRunReports(property, viewerRequests(window));
-    if (!totals || !daily || !channels || !devices) throw new Ga4ProviderError("failed", "Incomplete GA4 batch.");
+    const [totals, daily, channels, devices, previousDaily] = await client.batchRunReports(property, viewerRequests(window));
+    if (!totals || !daily || !channels || !devices || !previousDaily) throw new Ga4ProviderError("failed", "Incomplete GA4 batch.");
     const notes: string[] = [];
     let pageTypes: Ga4ViewerReport["pageTypes"] = null;
     let pageReport = null;
@@ -73,12 +73,13 @@ export class Ga4Reports {
       notes.push("Views by page type are unavailable until the page_type dimension is registered in GA4.");
     }
     if (window.provisional) notes.push("Recent days may change while GA4 finishes processing.");
-    const partial = isPartial(pageReport ? [totals, daily, channels, devices, pageReport] : [totals, daily, channels, devices]);
+    const partial = isPartial(pageReport ? [totals, daily, channels, devices, previousDaily, pageReport] : [totals, daily, channels, devices, previousDaily]);
     if (partial) notes.push("GA4 withheld or grouped some rows (thresholding or an 'other' row).");
     return {
       data: {
         totals: parseTotals(totals),
         daily: parseDaily(daily, window),
+        previousDaily: parseDaily(previousDaily, { ...window, from: window.previousFrom, to: window.previousTo }),
         channels: parseChannels(channels),
         devices: parseDevices(devices),
         pageTypes,
@@ -102,7 +103,7 @@ export class Ga4Reports {
       return { ...base, availability: "not_configured", notes: ["GA4 reporting is not configured for this surface."] };
     }
     // Keyed by environment, property, report shape and date range so surfaces never share entries.
-    const key = [this.options.environment, property, shape, window?.from, window?.to].join("|");
+    const key = [this.options.environment, property, shape, window?.from, window?.to, "v2"].join("|");
     try {
       const result = await this.cache.get(key, ttlMs, () => load(client, property));
       return {

@@ -7,6 +7,7 @@ import { SentryLink } from "./SentryLink";
 
 const reports = [
   { kind: "overview", path: "/admin", label: "Overview", icon: "overview" },
+  { kind: "viewer", path: "/admin/viewer", label: "Viewer traffic", icon: "viewer" },
   { kind: "tournaments", path: "/admin/tournaments", label: "Tournaments", icon: "tournaments" },
   { kind: "users", path: "/admin/users", label: "Accounts", icon: "accounts" },
   { kind: "activity", path: "/admin/activity", label: "Activity", icon: "activity" }
@@ -56,7 +57,7 @@ export function AdminShell({
                   aria-current={navigation.kind === kind ? "page" : undefined}
                   to={adminLink(
                     path,
-                    kind === "overview" && navigation.range.get("period") === "all"
+                    (kind === "overview" || kind === "viewer") && navigation.range.get("period") === "all"
                       ? navigation.fallback
                       : navigation.range
                   )}

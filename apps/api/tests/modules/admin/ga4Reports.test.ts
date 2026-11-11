@@ -34,7 +34,8 @@ class FakeClient implements Ga4DataClient {
       { rows: [row(["date_range_0"], [40, 55, 120, 0.62]), row(["date_range_1"], [30, 44, 90, 0.5])] },
       { rows: [row(["20261109"], [20]), row(["20261111"], [35])] },
       { rows: [row(["Direct"], [10]), row(["Organic Search"], [30]), row(["Weird"], [5]), row(["(not set)"], [10])] },
-      { rows: [row(["mobile"], [40]), row(["desktop"], [10]), row(["smart tv"], [5])] }
+      { rows: [row(["mobile"], [40]), row(["desktop"], [10]), row(["smart tv"], [5])] },
+      { rows: [row(["20261106"], [18]), row(["20261108"], [26])] }
     ];
   }
   async runReport(property: string, request: Ga4ReportRequest): Promise<Ga4ReportResponse> {
@@ -81,6 +82,15 @@ test("viewer report maps provider data, fills day gaps and buckets unknown value
     { date: "2026-11-09", sessions: 20 },
     { date: "2026-11-10", sessions: 0 },
     { date: "2026-11-11", sessions: 35 }
+  ]);
+  assert.deepEqual(data.previousDaily, [
+    { date: "2026-11-06", sessions: 18 },
+    { date: "2026-11-07", sessions: 0 },
+    { date: "2026-11-08", sessions: 26 }
+  ]);
+  assert.equal(client.calls[0].requests.length, 5);
+  assert.deepEqual(client.calls[0].requests[4].dateRanges, [
+    { startDate: "2026-11-06", endDate: "2026-11-08" }
   ]);
   assert.deepEqual(data.channels.map((c) => [c.channel, c.sessions]), [
     ["Organic Search", 30], ["Direct", 10], ["Unassigned", 10], ["Other", 5]

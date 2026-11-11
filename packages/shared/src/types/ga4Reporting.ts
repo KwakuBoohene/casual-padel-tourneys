@@ -62,6 +62,8 @@ export interface Ga4PageTypePoint {
 export interface Ga4ViewerReport {
   totals: { current: Ga4Totals; previous: Ga4Totals };
   daily: Ga4DailyPoint[];
+  /** Equal-length prior calendar window for the comparison trend. */
+  previousDaily: Ga4DailyPoint[];
   channels: Ga4ChannelPoint[];
   devices: Ga4DevicePoint[];
   /** Null when the page-type custom dimension is not registered or the report failed. */

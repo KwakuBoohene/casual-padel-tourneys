@@ -24,7 +24,7 @@
     "@sentry/browser": "11.11.0",
     "@serenity-kit/opaque": "1.1.0",
     "@shopify/flash-list": "2.3.3",
-    "@tanstack/react-query": "5.107.0",
+    "@tanstack/react-query": "5.107.1",
     "babel-preset-expo": "~58.0.24",
     "expo": "58.0.23",
     "expo-auth-session": "58.0.17",

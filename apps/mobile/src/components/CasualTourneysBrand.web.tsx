@@ -3,7 +3,7 @@ import { useTheme } from "../theme/ThemeProvider";
 export function CasualTourneysBrand({ fontSize = 15 }: { fontSize?: number }) {
   const { colors } = useTheme();
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 9, minWidth: 0, color: colors.text }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 9, minWidth: 0, flexShrink: 0, fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif", color: colors.text }}>
       <svg width="22" height="28" viewBox="0 0 22 28" fill="none" aria-hidden="true" style={{ color: colors.primary, flexShrink: 0 }}>
         <rect x="1" y="1" width="20" height="17" rx="6" stroke="currentColor" strokeWidth="2" />
         <line x1="7.5" y1="1" x2="7.5" y2="18" stroke="currentColor" strokeWidth="0.9" strokeOpacity="0.65" />

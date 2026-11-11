@@ -80,12 +80,12 @@ export function OrganizerAccountChrome({ children }: { children: ReactNode }) {
             </View>
           ) : null}
         </View>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, flexShrink: 1 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, flexShrink: 1, minWidth: 0 }}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Organizer workspace: ${selectedLabel}. Switch workspace`}
           onPress={() => setOpen(true)}
-          style={{ height: 44, width: isWide ? 378 : undefined, maxWidth: isWide ? 378 : 260, paddingHorizontal: 14, borderRadius: isWide ? radius.md : radius.pill, backgroundColor: colors.surfaceAlt, flexDirection: "row", alignItems: "center", justifyContent: isWide ? "center" : "flex-start", gap: 10 }}
+          style={{ height: 44, width: isWide ? 378 : undefined, maxWidth: isWide ? 378 : 260, flexShrink: 1, minWidth: 0, paddingHorizontal: 14, borderRadius: isWide ? radius.md : radius.pill, backgroundColor: colors.surfaceAlt, flexDirection: "row", alignItems: "center", justifyContent: isWide ? "center" : "flex-start", gap: 10 }}
         >
           <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center" }}>
             <Text style={{ color: colors.primary, fontWeight: "800", fontSize: 10 }}>{selected.name.slice(0, 2).toUpperCase()}</Text>

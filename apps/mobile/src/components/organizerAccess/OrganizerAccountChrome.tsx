@@ -5,6 +5,7 @@ import { useOrganizerAccount } from "../../providers/OrganizerAccountProvider";
 import { useTheme } from "../../theme/ThemeProvider";
 import { pendingOrganizerWrites } from "../../api/organizerContext";
 import { InstallOrganizerApp } from "../InstallOrganizerApp";
+import { CasualTourneysBrand } from "../CasualTourneysBrand";
 import { UsageConsent } from "../usage/UsageConsent";
 import { useUsageVisits } from "../../hooks/usage/useUsageVisits";
 import { BottomSheet } from "../sheets";
@@ -49,7 +50,6 @@ export function OrganizerAccountChrome({ children }: { children: ReactNode }) {
         <Text style={{ color: colors.text, fontWeight: "700" }}>⚙  Organizer settings</Text><Text style={{ color: colors.muted }}>→</Text>
       </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="Personal profile" onPress={() => { setOpen(false); router.push("/profile"); }} style={{ minHeight: 52, paddingHorizontal: spacing.md, borderRadius: radius.md, justifyContent: "center" }}><Text style={{ color: colors.text }}>♙  Personal profile</Text></Pressable>
-      <InstallOrganizerApp />
       {usage.enabled ? <UsageConsent consent={usage.consent} onChange={usage.choose} /> : null}
     </>
   );
@@ -57,7 +57,7 @@ export function OrganizerAccountChrome({ children }: { children: ReactNode }) {
     <View style={{ flex: 1, backgroundColor: colors.background }} onTouchStart={usage.enabled ? usage.track : undefined}>
       <View style={{ minHeight: 72, paddingHorizontal: isWide ? 48 : spacing.lg, paddingVertical: spacing.sm, backgroundColor: colors.surface, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 52 }}>
-          <Text style={{ color: colors.primary, fontWeight: "800", fontSize: isWide ? 15 : 13 }}>CASUAL PADEL</Text>
+          <CasualTourneysBrand fontSize={isWide ? 15 : 13} />
           {isWide ? (
             <View role="navigation" accessibilityLabel="Organizer navigation" style={{ flexDirection: "row", gap: spacing.lg }}>
               {organizerLinks.map(({ label, href }) => {
@@ -80,6 +80,7 @@ export function OrganizerAccountChrome({ children }: { children: ReactNode }) {
             </View>
           ) : null}
         </View>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, flexShrink: 1 }}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Organizer workspace: ${selectedLabel}. Switch workspace`}
@@ -92,6 +93,8 @@ export function OrganizerAccountChrome({ children }: { children: ReactNode }) {
           <Text numberOfLines={1} style={{ color: colors.text, fontWeight: "700", fontSize: 12, flexShrink: 1 }}>{selectedLabel}</Text>
           <View style={{ width: 20, height: 20, alignItems: "center", justifyContent: "center" }}><Text style={{ color: colors.muted, fontSize: 16, lineHeight: 16 }}>▾</Text></View>
         </Pressable>
+        <InstallOrganizerApp compact />
+        </View>
       </View>
       {selected.role === "MANAGER" ? (
         <View style={{ margin: spacing.lg, marginBottom: 0, borderLeftWidth: 4, borderLeftColor: colors.statusNext, borderRadius: radius.lg, backgroundColor: colors.surface, padding: spacing.lg, gap: 4 }}>

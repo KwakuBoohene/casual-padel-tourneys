@@ -2,13 +2,14 @@ import type {
   Ga4Availability,
   Ga4ReportEnvelope,
   Ga4ReportSurface,
+  Ga4OrganizerReport,
   Ga4ViewerRealtime,
   Ga4ViewerReport,
   Ga4Window
 } from "@padel/shared";
 import { ga4Window } from "../domain/ga4Window.js";
 import { Ga4Cache } from "./ga4Cache.js";
-import { Ga4ProviderError, type Ga4DataClient } from "./ga4DataClient.js";
+import { Ga4ProviderError, type Ga4DataClient, type Ga4ReportRequest, type Ga4ReportResponse } from "./ga4DataClient.js";
 import {
   isPartial,
   pageTypeRequest,
@@ -19,6 +20,8 @@ import {
   parseTotals,
   viewerRequests
 } from "./ga4ViewerReport.js";
+
+import { creationStepsRequest, featureRequest, organizerRequests, parseCreationSteps, parseFeatures, parseMilestones } from "./ga4OrganizerReport.js";
 
 const HISTORICAL_TTL_MS = 15 * 60_000;
 const REALTIME_TTL_MS = 60_000;
@@ -46,6 +49,42 @@ export class Ga4Reports {
     return this.run("viewer", window, "report", HISTORICAL_TTL_MS, (client, property) =>
       this.loadViewer(client, property, window)
     );
+  }
+
+  async organizer(input: { from?: string; to?: string }): Promise<Ga4ReportEnvelope<Ga4OrganizerReport>> {
+    const window = ga4Window(input, this.now());
+    return this.run("organizer", window, "organizer-report", HISTORICAL_TTL_MS, async (client, property) => {
+      const batch = await client.batchRunReports(property, organizerRequests(window));
+      const [totals, daily, devices, previousDaily, milestones] = batch;
+      if (!totals || !daily || !devices || !previousDaily || !milestones)
+        throw new Ga4ProviderError("failed", "Incomplete GA4 batch.");
+      const notes = [
+        "Organizer web usage covers devices with Usage analytics enabled; it does not represent all organizer accounts or native app usage.",
+        "Creation milestones are independent event counts, not an ordered funnel or unique tournament counts.",
+        "Active users can appear in several feature areas; feature users must not be added together."
+      ];
+      const optional = async <T>(request: Ga4ReportRequest, parse: (report: Ga4ReportResponse) => T, label: string): Promise<T | null> => {
+        try {
+          const report = await client.runReport(property, request);
+          batch.push(report);
+          return parse(report);
+        } catch (error) {
+          if (error instanceof Ga4ProviderError && error.kind === "quota") throw error;
+          notes.push(`${label} are unavailable. Check the GA4 custom dimension registration and provider status.`);
+          return null;
+        }
+      };
+      const features = await optional(featureRequest(window), parseFeatures, "Feature areas");
+      const creationSteps = await optional(creationStepsRequest(window), parseCreationSteps, "Creation steps");
+      const partial = isPartial(batch);
+      if (partial) notes.push("GA4 withheld or grouped some rows (thresholding or an 'other' row).");
+      if (window.provisional) notes.push("Recent days may change while GA4 finishes processing.");
+      return { data: {
+        totals: parseTotals(totals), daily: parseDaily(daily, window),
+        previousDaily: parseDaily(previousDaily, { ...window, from: window.previousFrom, to: window.previousTo }),
+        devices: parseDevices(devices), features, milestones: parseMilestones(milestones), creationSteps, partial
+      }, notes };
+    });
   }
 
   async viewerRealtime(): Promise<Ga4ReportEnvelope<Ga4ViewerRealtime>> {
@@ -103,7 +142,7 @@ export class Ga4Reports {
       return { ...base, availability: "not_configured", notes: ["GA4 reporting is not configured for this surface."] };
     }
     // Keyed by environment, property, report shape and date range so surfaces never share entries.
-    const key = [this.options.environment, property, shape, window?.from, window?.to, "v2"].join("|");
+    const key = [this.options.environment, surface, property, shape, window?.from, window?.to, "v2"].join("|");
     try {
       const result = await this.cache.get(key, ttlMs, () => load(client, property));
       return {

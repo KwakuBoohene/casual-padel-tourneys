@@ -1,4 +1,4 @@
-import { Switch, Text, View } from "react-native";
+import { Platform, Switch, Text, View } from "react-native";
 import { useTheme } from "../../theme/ThemeProvider";
 import { spacing } from "../../theme";
 
@@ -24,8 +24,10 @@ export function UsageConsent({
         />
       </View>
       <Text style={{ color: colors.muted, fontSize: 12 }}>
-        Shares screen types and your organizer account. Turning this off stops future screen visits from
-        this device. Account and tournament actions are reported separately.
+        {Platform.OS === "web"
+          ? "Shares screen types and setup progress, including with Google Analytics when enabled, and screen visits linked to your organizer account. Turning this off stops future usage analytics from this device."
+          : "Shares screen types and your organizer account. Turning this off stops future screen visits from this device."}
+        {" "}Account and tournament actions are reported separately.
       </Text>
     </View>
   );

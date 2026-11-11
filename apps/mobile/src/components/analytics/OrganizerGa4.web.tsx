@@ -1,11 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
 import { usePathname } from "expo-router";
-import { Switch, Text, View } from "react-native";
 import { createGa4Consent, ga4Device, type OrganizerGa4Action } from "@padel/shared";
 import { getAuthToken } from "../../api/client";
 import { sendOrganizerGa4 } from "../../api/ga4.web";
 import { useAuthSessionContext } from "../../providers/AuthSessionProvider";
-import { useTheme } from "../../theme/ThemeProvider";
+import { syncOrganizerConsent } from "../../utilities/analytics/organizerConsent";
 import { organizerFeature } from "../../utilities/analytics/organizerFeature";
 
 const Context = createContext<((action: OrganizerGa4Action) => boolean)>(() => false);
@@ -17,16 +16,15 @@ const browserStorage = (kind: "localStorage" | "sessionStorage") => ({
   delete: (key: string) => { window[kind].removeItem(key); return true; }
 });
 
-export function OrganizerGa4({ children }: { children: ReactNode }) {
+export function OrganizerGa4({ children, allowed }: { children: ReactNode; allowed: boolean | null }) {
   const { currentUser, authToken } = useAuthSessionContext();
   if (process.env.EXPO_PUBLIC_ORGANIZER_GA4_ENABLED !== "true" || !currentUser || !authToken) return <>{children}</>;
-  return <SignedInAnalytics key={currentUser.id} actor={currentUser.id} token={authToken}>{children}</SignedInAnalytics>;
+  return <SignedInAnalytics key={currentUser.id} actor={currentUser.id} token={authToken} allowed={allowed}>{children}</SignedInAnalytics>;
 }
 
-function SignedInAnalytics({ children, actor, token }: { children: ReactNode; actor: string; token: string }) {
+function SignedInAnalytics({ children, actor, token, allowed }: { children: ReactNode; actor: string; token: string; allowed: boolean | null }) {
   const path = usePathname();
   const feature = organizerFeature(path);
-  const { colors } = useTheme();
   const consent = useMemo(() => createGa4Consent(`padel-organizer-ga4-v1:${actor}`, {
     consent: browserStorage("localStorage"),
     session: browserStorage("sessionStorage"),
@@ -34,7 +32,10 @@ function SignedInAnalytics({ children, actor, token }: { children: ReactNode; ac
     now: Date.now,
     device: () => ga4Device(navigator.userAgent, navigator.maxTouchPoints)
   }), [actor]);
-  const [allowed, setAllowed] = useState(() => consent.choice() === "allowed");
+  useLayoutEffect(() => {
+    // The shared Usage analytics choice owns consent; the GA4 store only holds its anonymous identity.
+    syncOrganizerConsent(consent, allowed);
+  }, [allowed, consent]);
   const previous = useRef<string | null>(null);
   const active = useRef(true);
   const featureRef = useRef(feature);
@@ -44,11 +45,8 @@ function SignedInAnalytics({ children, actor, token }: { children: ReactNode; ac
   }, [feature]);
   useEffect(() => {
     active.current = true;
-    const update = () => setAllowed(consent.choice() === "allowed");
-    window.addEventListener("storage", update);
     return () => {
       active.current = false;
-      window.removeEventListener("storage", update);
     };
   }, [consent]);
   const send = useCallback((action: OrganizerGa4Action): boolean => {
@@ -67,19 +65,6 @@ function SignedInAnalytics({ children, actor, token }: { children: ReactNode; ac
   }, [allowed, feature, path, send]);
   return (
     <Context.Provider value={send}>
-      {feature && (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, backgroundColor: colors.surface }}>
-          <Switch
-            accessibilityLabel="Allow Google Analytics for Organizer web"
-            value={allowed}
-            onValueChange={(value) => {
-              consent.choose(value);
-              setAllowed(consent.choice() === "allowed");
-            }}
-          />
-          <Text style={{ color: colors.text, flex: 1 }}>Share screen types and setup progress with Google Analytics (optional)</Text>
-        </View>
-      )}
       {children}
     </Context.Provider>
   );

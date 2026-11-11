@@ -4,6 +4,7 @@ import { Link, router, usePathname } from "expo-router";
 import { useOrganizerAccount } from "../../providers/OrganizerAccountProvider";
 import { useTheme } from "../../theme/ThemeProvider";
 import { pendingOrganizerWrites } from "../../api/organizerContext";
+import { OrganizerGa4 } from "../analytics/OrganizerGa4";
 import { InstallOrganizerApp } from "../InstallOrganizerApp";
 import { CasualTourneysBrand } from "../CasualTourneysBrand";
 import { UsageConsent } from "../usage/UsageConsent";
@@ -54,69 +55,71 @@ export function OrganizerAccountChrome({ children }: { children: ReactNode }) {
     </>
   );
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }} onTouchStart={usage.enabled ? usage.track : undefined}>
-      <View style={{ minHeight: 72, paddingHorizontal: isWide ? 48 : spacing.lg, paddingVertical: spacing.sm, backgroundColor: colors.surface, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 52 }}>
-          <CasualTourneysBrand fontSize={isWide ? 15 : 13} />
-          {isWide ? (
-            <View role="navigation" accessibilityLabel="Organizer navigation" style={{ flexDirection: "row", gap: spacing.lg }}>
-              {organizerLinks.map(({ label, href }) => {
-                const active = pathname === href || pathname.startsWith(`${href}/`);
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    style={{
-                      paddingVertical: spacing.md,
-                      color: active ? colors.primary : colors.text,
-                      fontSize: 14,
-                      fontWeight: active ? "700" : "500"
-                    }}
-                  >
-                    {label}
-                  </Link>
-                );
-              })}
-            </View>
-          ) : null}
-        </View>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, flexShrink: 1, minWidth: 0 }}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Organizer workspace: ${selectedLabel}. Switch workspace`}
-          onPress={() => setOpen(true)}
-          style={{ height: 44, width: isWide ? 378 : undefined, maxWidth: isWide ? 378 : 260, flexShrink: 1, minWidth: 0, paddingHorizontal: 14, borderRadius: isWide ? radius.md : radius.pill, backgroundColor: colors.surfaceAlt, flexDirection: "row", alignItems: "center", justifyContent: isWide ? "center" : "flex-start", gap: 10 }}
-        >
-          <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center" }}>
-            <Text style={{ color: colors.primary, fontWeight: "800", fontSize: 10 }}>{selected.name.slice(0, 2).toUpperCase()}</Text>
+    <OrganizerGa4 allowed={usage.consent}>
+      <InstallOrganizerApp />
+      <View style={{ flex: 1, backgroundColor: colors.background }} onTouchStart={usage.enabled ? usage.track : undefined}>
+        <View style={{ minHeight: 72, paddingHorizontal: isWide ? 48 : spacing.lg, paddingVertical: spacing.sm, backgroundColor: colors.surface, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 52 }}>
+            <CasualTourneysBrand fontSize={isWide ? 15 : 13} />
+            {isWide ? (
+              <View role="navigation" accessibilityLabel="Organizer navigation" style={{ flexDirection: "row", gap: spacing.lg }}>
+                {organizerLinks.map(({ label, href }) => {
+                  const active = pathname === href || pathname.startsWith(`${href}/`);
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      style={{
+                        paddingVertical: spacing.md,
+                        color: active ? colors.primary : colors.text,
+                        fontSize: 14,
+                        fontWeight: active ? "700" : "500"
+                      }}
+                    >
+                      {label}
+                    </Link>
+                  );
+                })}
+              </View>
+            ) : null}
           </View>
-          <Text numberOfLines={1} style={{ color: colors.text, fontWeight: "700", fontSize: 12, flexShrink: 1 }}>{selectedLabel}</Text>
-          <View style={{ width: 20, height: 20, alignItems: "center", justifyContent: "center" }}><Text style={{ color: colors.muted, fontSize: 16, lineHeight: 16 }}>▾</Text></View>
-        </Pressable>
-        <InstallOrganizerApp compact />
-        </View>
-      </View>
-      {selected.role === "MANAGER" ? (
-        <View style={{ margin: spacing.lg, marginBottom: 0, borderLeftWidth: 4, borderLeftColor: colors.statusNext, borderRadius: radius.lg, backgroundColor: colors.surface, padding: spacing.lg, gap: 4 }}>
-          <Text style={{ color: colors.statusNext, fontWeight: "700" }}>You’re managing {selected.name}</Text>
-          <Text style={{ color: colors.muted, fontSize: 12 }}>Changes are recorded under your personal login.</Text>
-        </View>
-      ) : null}
-      {account.notice ? <Text accessibilityRole="alert" style={{ color: colors.danger, padding: spacing.md }}>{account.notice}</Text> : null}
-      <View style={{ flex: 1 }}>{children}</View>
-
-      {isWide ? (
-        <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-          <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.35)" }} onPress={() => setOpen(false)}>
-            <Pressable onPress={(event) => event.stopPropagation()} style={{ position: "absolute", top: 64, right: 48, width: 378, padding: spacing.lg, gap: spacing.md, borderRadius: radius.lg, backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.border }}>
-              <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>Organizer workspaces</Text>
-              {switcherContent}
-            </Pressable>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, flexShrink: 1, minWidth: 0 }}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Organizer workspace: ${selectedLabel}. Switch workspace`}
+            onPress={() => setOpen(true)}
+            style={{ height: 44, width: isWide ? 378 : undefined, maxWidth: isWide ? 378 : 260, flexShrink: 1, minWidth: 0, paddingHorizontal: 14, borderRadius: isWide ? radius.md : radius.pill, backgroundColor: colors.surfaceAlt, flexDirection: "row", alignItems: "center", justifyContent: isWide ? "center" : "flex-start", gap: 10 }}
+          >
+            <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center" }}>
+              <Text style={{ color: colors.primary, fontWeight: "800", fontSize: 10 }}>{selected.name.slice(0, 2).toUpperCase()}</Text>
+            </View>
+            <Text numberOfLines={1} style={{ color: colors.text, fontWeight: "700", fontSize: 12, flexShrink: 1 }}>{selectedLabel}</Text>
+            <View style={{ width: 20, height: 20, alignItems: "center", justifyContent: "center" }}><Text style={{ color: colors.muted, fontSize: 16, lineHeight: 16 }}>▾</Text></View>
           </Pressable>
-        </Modal>
-      ) : (
-        <BottomSheet visible={open} title="Organizer workspaces" onDismiss={() => setOpen(false)} maxWidth={440}>{switcherContent}</BottomSheet>
-      )}
-    </View>
+          </View>
+        </View>
+        {selected.role === "MANAGER" ? (
+          <View style={{ margin: spacing.lg, marginBottom: 0, borderLeftWidth: 4, borderLeftColor: colors.statusNext, borderRadius: radius.lg, backgroundColor: colors.surface, padding: spacing.lg, gap: 4 }}>
+            <Text style={{ color: colors.statusNext, fontWeight: "700" }}>You’re managing {selected.name}</Text>
+            <Text style={{ color: colors.muted, fontSize: 12 }}>Changes are recorded under your personal login.</Text>
+          </View>
+        ) : null}
+        {account.notice ? <Text accessibilityRole="alert" style={{ color: colors.danger, padding: spacing.md }}>{account.notice}</Text> : null}
+        <View style={{ flex: 1 }}>{children}</View>
+
+        {isWide ? (
+          <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+            <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.35)" }} onPress={() => setOpen(false)}>
+              <Pressable onPress={(event) => event.stopPropagation()} style={{ position: "absolute", top: 64, right: 48, width: 378, padding: spacing.lg, gap: spacing.md, borderRadius: radius.lg, backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.border }}>
+                <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>Organizer workspaces</Text>
+                {switcherContent}
+              </Pressable>
+            </Pressable>
+          </Modal>
+        ) : (
+          <BottomSheet visible={open} title="Organizer workspaces" onDismiss={() => setOpen(false)} maxWidth={440}>{switcherContent}</BottomSheet>
+        )}
+      </View>
+    </OrganizerGa4>
   );
 }

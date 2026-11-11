@@ -19,7 +19,8 @@ export function useUsageConsent(enabled: boolean) {
       void AsyncStorage.getItem(consentKey)
         .then((value: string | null) => {
           if (active && current === generation.current) {
-            const allowed = value === null || value === "yes";
+            // Web sharing includes GA4, so an unset choice must not opt in.
+            const allowed = value === "yes" || (Platform.OS !== "web" && value === null);
             if (!allowed) live.current?.stop();
             setConsent(allowed);
           }

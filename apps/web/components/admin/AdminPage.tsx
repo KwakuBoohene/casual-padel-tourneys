@@ -18,6 +18,7 @@ import { useAdminSession } from "./AdminSession";
 import { useAdminReport } from "./useAdminReport";
 import { AccountDetail, AccountList } from "./AccountReports";
 import { TournamentDetail, TournamentList } from "./TournamentReports";
+import { OrganizerUsage } from "./OrganizerUsage";
 import { ViewerIntelligence } from "./ViewerIntelligence";
 import { OverviewReport } from "./OverviewReport";
 import { OverviewDateFilter, ReportFilters } from "./ReportFilters";
@@ -49,9 +50,10 @@ function Reports({ signOut }: { signOut(): void }) {
   const [fallback] = useState(weekRange);
   const [revision, setRevision] = useState(0);
   const retry = () => setRevision((n) => n + 1);
-  const routeMatch = /^\/admin(?:\/(users|tournaments|activity|viewer)(?:\/([A-Za-z0-9_-]{1,128}))?)?\/?$/.exec(pathname);
-  const match = routeMatch?.[1] === "viewer" && routeMatch[2] ? null : routeMatch;
+  const routeMatch = /^\/admin(?:\/(users|tournaments|activity|viewer|organizer)(?:\/([A-Za-z0-9_-]{1,128}))?)?\/?$/.exec(pathname);
+  const match = (routeMatch?.[1] === "viewer" || routeMatch?.[1] === "organizer") && routeMatch[2] ? null : routeMatch;
   const kind =
+    match?.[1] === "organizer" ? "organizer" :
     match?.[1] === "viewer" ? "viewer" :
     match?.[1] === "activity"
       ? "activity"
@@ -68,17 +70,18 @@ function Reports({ signOut }: { signOut(): void }) {
   const rangeLabel = {
     overview: "Reporting",
     viewer: "Audience",
+    organizer: "Usage",
     activity: "Activity",
     users: "Creation",
     tournaments: byCompletion ? "Completion" : "Creation"
   }[kind];
   // The overview always compares a bounded interval; unbounded history is list-only.
-  if ((kind === "overview" || kind === "viewer") && range.get("period") === "all")
-    return <Navigate to={adminLink(kind === "viewer" ? "/admin/viewer" : "/admin", fallback)} replace />;
-  const query = reportQuery(kind === "viewer" ? "overview" : kind, params, fallback);
+  if ((kind === "overview" || kind === "viewer" || kind === "organizer") && range.get("period") === "all")
+    return <Navigate to={adminLink(kind === "overview" ? "/admin" : `/admin/${kind}`, fallback)} replace />;
+  const query = reportQuery(kind === "viewer" || kind === "organizer" ? "overview" : kind, params, fallback);
   const path = `/admin/${kind}${id ? `/${id}` : `?${query}`}`;
   const title =
-    kind === "viewer" ? "Viewer intelligence" : kind === "overview"
+    kind === "organizer" ? "Organizer usage" : kind === "viewer" ? "Viewer intelligence" : kind === "overview"
       ? "Platform overview"
       : kind === "activity"
         ? "Observed activity"
@@ -95,7 +98,7 @@ function Reports({ signOut }: { signOut(): void }) {
       <>
         <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
           <div>
-            <p className="admin-eyebrow text-padel-primary">{kind === "viewer" ? "Audience report" : kind === "overview" ? "Reporting snapshot" : "Platform reports"}</p>
+            <p className="admin-eyebrow text-padel-primary">{kind === "organizer" ? "Product usage" : kind === "viewer" ? "Audience report" : kind === "overview" ? "Reporting snapshot" : "Platform reports"}</p>
             <div className="flex items-center gap-1">
               <h1 className={reportTitle}>{title}</h1>
               {match && (query !== null || id) ? (
@@ -114,7 +117,7 @@ function Reports({ signOut }: { signOut(): void }) {
             </div>
           </div>
           <div className="relative flex max-w-full flex-wrap items-center gap-2">
-            {(kind === "overview" || kind === "viewer") && match ? <OverviewDateFilter fallback={fallback} range={range} /> : null}
+            {(kind === "overview" || kind === "viewer" || kind === "organizer") && match ? <OverviewDateFilter fallback={fallback} range={range} /> : null}
             <button type="button" className="admin-control" onClick={retry}>Refresh report</button>
           </div>
         </header>
@@ -122,10 +125,11 @@ function Reports({ signOut }: { signOut(): void }) {
           <Link to={adminLink(`/admin/${kind}`, params)}>
             Back to {kind === "users" ? "accounts" : "tournaments"}
           </Link>
-        ) : kind !== "overview" && kind !== "viewer" ? (
+        ) : kind !== "overview" && kind !== "viewer" && kind !== "organizer" ? (
           <ReportFilters key={params.toString()} kind={kind} fallback={fallback} />
         ) : null)}
         {kind === "viewer" && <p className="text-sm text-padel-muted">See how people discover the Viewer and which tournament pages they use.</p>}
+        {kind === "organizer" && <p className="text-sm text-padel-muted">See which tools organizers use and how they move through tournament creation.</p>}
         {content}
         {kind === "overview" && match && query !== null ? <ViewerIntelligence query={query} range={range} revision={revision} retry={retry} compact /> : null}
         {kind === "overview" && match && query !== null ? <UsageOverview range={range} revision={revision} /> : null}
@@ -148,6 +152,8 @@ function Reports({ signOut }: { signOut(): void }) {
     );
   } else if (kind === "viewer") {
     content = frame(<ViewerIntelligence query={query!} range={range} revision={revision} retry={retry} />);
+  } else if (kind === "organizer") {
+    content = frame(<OrganizerUsage query={query!} range={range} revision={revision} retry={retry} />);
   } else if (kind === "overview") {
     content = report<AdminOverview>(
       (data) => <OverviewReport data={data} range={range} revision={revision} />,

@@ -37,3 +37,20 @@ test("trends align prior calendar days by position and never fabricate missing p
     [null, null]
   );
 });
+
+test("Organizer milestones remain independent counts and missing dimensions are unavailable", async () => {
+  const { organizerMilestones, featureLabels } = await import("../../lib/admin/ga4Presentation");
+  const data = {
+    milestones: [{ event: "creation_started", count: 3 }, { event: "creation_succeeded", count: 5 }],
+    creationSteps: [{ step: "players", count: 12 }, { step: "review", count: 7 }]
+  } as import("@padel/shared").Ga4OrganizerReport;
+  assert.deepEqual(organizerMilestones(data), [
+    { label: "Wizard opened", count: 3 },
+    { label: "Players step reached", count: 12 },
+    { label: "Review step reached", count: 7 },
+    { label: "Tournament created", count: 5 }
+  ]);
+  assert.deepEqual(organizerMilestones({ ...data, creationSteps: null }).map((point) => point.count), [3, null, null, 5]);
+  assert.deepEqual(organizerMilestones({ ...data, milestones: [], creationSteps: [] }).map((point) => point.count), [0, 0, 0, 0]);
+  assert.equal(featureLabels.live_scoring, "Live scoring");
+});

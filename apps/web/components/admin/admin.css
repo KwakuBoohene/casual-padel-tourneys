@@ -108,3 +108,9 @@
 .ga4-device-2 { background: var(--admin-ga4-third); }
 .ga4-device-3 { background: var(--color-padel-muted); }
 .ga4-realtime { background: #203d2b; color: #f0f8ec; --color-padel-muted: #c3d4c7; }
+
+.admin-workspace .ga4-organizer-primary {
+  background: #203d2b;
+  color: #f0f8ec;
+  --color-padel-muted: #c3d4c7;
+}

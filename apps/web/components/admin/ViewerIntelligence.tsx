@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { adminLink } from "../../lib/admin/reportFilters";
 import { count, pageLabels, share } from "../../lib/admin/ga4Presentation";
 import { Cell, ReportState, ReportTable } from "./ReportParts";
-import { Ga4Badge, Ga4Metrics, Ga4Notes } from "./Ga4Parts";
+import { Ga4Badge, Ga4DeviceMix, Ga4Metrics, Ga4Notes } from "./Ga4Parts";
 import { Ga4SessionChart } from "./Ga4SessionChart";
 import { useAdminReport } from "./useAdminReport";
 
@@ -157,38 +157,7 @@ function ViewerBreakdown({ data, provisional }: { data: Ga4ViewerReport; provisi
           </ReportTable>
         )}
       </section>
-      <section className="admin-panel">
-        <div className="flex justify-between gap-2">
-          <h2 className="text-lg font-bold">Device mix</h2>
-          <Ga4Badge />
-        </div>
-        <p className="mb-5 text-xs text-padel-muted">Share of Viewer sessions · GA4 total</p>
-        <div className="mb-5 flex h-4 gap-1 overflow-hidden rounded" aria-hidden="true">
-          {data.devices.map(({ device, sessions }, index) => (
-            <div
-              key={device}
-              className={`ga4-device ga4-device-${index % 4}`}
-              style={{
-                width: `${data.totals.current.sessions > 0 ? Math.min(100, (sessions / data.totals.current.sessions) * 100) : 0}%`
-              }}
-            />
-          ))}
-        </div>
-        <ul className="grid gap-3 text-sm">
-          {data.devices.map(({ device, sessions }, index) => (
-            <li className="flex justify-between gap-3" key={device}>
-              <span className="capitalize">
-                <span className={`ga4-dot ga4-device ga4-device-${index % 4}`} />
-                {device}
-              </span>
-              <span className="tabular-nums">
-                {count(sessions)} · {share(sessions, data.totals.current.sessions)}
-              </span>
-            </li>
-          ))}
-        </ul>
-        {!data.devices.length && <p>No device data reported.</p>}
-      </section>
+      <Ga4DeviceMix devices={data.devices} sessions={data.totals.current.sessions} surface="Viewer" />
     </div>
   );
 }

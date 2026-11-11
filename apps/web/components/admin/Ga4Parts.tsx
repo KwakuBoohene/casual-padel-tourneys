@@ -1,5 +1,5 @@
-import type { Ga4ReportEnvelope, Ga4Totals } from "@padel/shared";
-import { comparison, count, percent } from "../../lib/admin/ga4Presentation";
+import type { Ga4DevicePoint, Ga4ReportEnvelope, Ga4Totals } from "@padel/shared";
+import { comparison, count, percent, share } from "../../lib/admin/ga4Presentation";
 import { timestamp } from "../../lib/admin/reportFilters";
 
 export function Ga4Badge() {
@@ -75,5 +75,36 @@ export function Ga4Metrics({
         );
       })}
     </div>
+  );
+}
+
+export function Ga4DeviceMix({ devices, sessions, surface }: {
+  devices: Ga4DevicePoint[];
+  sessions: number;
+  surface: "Viewer" | "Organizer web";
+}) {
+  return (
+    <section className="admin-panel">
+      <div className="flex justify-between gap-2">
+        <h2 className="text-lg font-bold">Device mix</h2>
+        <Ga4Badge />
+      </div>
+      <p className="mb-5 text-xs text-padel-muted">Share of {surface} sessions · GA4 total</p>
+      <div className="mb-5 flex h-4 gap-1 overflow-hidden rounded" aria-hidden="true">
+        {devices.map(({ device, sessions: value }, index) => (
+          <div key={device} className={`ga4-device ga4-device-${index % 4}`}
+            style={{ width: `${sessions > 0 ? Math.min(100, (value / sessions) * 100) : 0}%` }} />
+        ))}
+      </div>
+      <ul className="grid gap-3 text-sm">
+        {devices.map(({ device, sessions: value }, index) => (
+          <li className="flex justify-between gap-3" key={device}>
+            <span className="capitalize"><span className={`ga4-dot ga4-device ga4-device-${index % 4}`} />{device}</span>
+            <span className="tabular-nums">{count(value)} · {share(value, sessions)}</span>
+          </li>
+        ))}
+      </ul>
+      {!devices.length && <p>No device data reported.</p>}
+    </section>
   );
 }

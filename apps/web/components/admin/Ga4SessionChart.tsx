@@ -17,12 +17,16 @@ const dayLabel = (date: string) =>
   new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "Africa/Accra" }).format(
     new Date(date)
   );
-export function Ga4SessionChart({ data, provisional }: { data: Ga4ViewerReport; provisional?: boolean }) {
+export function Ga4SessionChart({ data, provisional, organizer = false }: {
+  data: Pick<Ga4ViewerReport, "daily" | "previousDaily">;
+  provisional?: boolean;
+  organizer?: boolean;
+}) {
   const points = sessionTrend(data);
   return (
     <section className="admin-panel min-w-0">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-lg font-bold">Sessions over time</h2>
+        <h2 className="text-lg font-bold">{organizer ? "Organizer usage over time" : "Sessions over time"}</h2>
         <Ga4Badge />
       </div>
       <p className="text-xs text-padel-muted">
@@ -74,8 +78,9 @@ export function Ga4SessionChart({ data, provisional }: { data: Ga4ViewerReport; 
               dataKey="sessions"
               name="This period"
               stroke="var(--admin-ga4)"
-              fill="var(--admin-ga4)"
-              fillOpacity={0.14}
+              fill={organizer ? "var(--admin-ga4-badge)" : "var(--admin-ga4)"}
+              fillOpacity={organizer ? 1 : 0.14}
+              dot={organizer ? { r: 3, fill: "var(--color-padel-surface)", strokeWidth: 2 } : false}
               strokeWidth={2}
               isAnimationActive={false}
             />
@@ -100,7 +105,7 @@ export function Ga4SessionChart({ data, provisional }: { data: Ga4ViewerReport; 
       <details className="mt-3 text-sm">
         <summary className="font-semibold text-padel-primary">View daily session values</summary>
         <ReportTable
-          title="Daily Viewer sessions"
+          title={organizer ? "Daily Organizer web sessions" : "Daily Viewer sessions"}
           columns={["Day", "Sessions", "Prior day", "Prior sessions"]}
           compact
         >

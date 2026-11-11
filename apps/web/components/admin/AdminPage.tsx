@@ -18,6 +18,8 @@ import { useAdminSession } from "./AdminSession";
 import { useAdminReport } from "./useAdminReport";
 import { AccountDetail, AccountList } from "./AccountReports";
 import { TournamentDetail, TournamentList } from "./TournamentReports";
+import { RecentOrganizerActivity } from "./RecentOrganizerActivity";
+import { PlatformHealth } from "./PlatformHealth";
 import { OrganizerUsage } from "./OrganizerUsage";
 import { ViewerIntelligence } from "./ViewerIntelligence";
 import { OverviewReport } from "./OverviewReport";
@@ -131,6 +133,12 @@ function Reports({ signOut }: { signOut(): void }) {
         {kind === "viewer" && <p className="text-sm text-padel-muted">See how people discover the Viewer and which tournament pages they use.</p>}
         {kind === "organizer" && <p className="text-sm text-padel-muted">See which tools organizers use and how they move through tournament creation.</p>}
         {content}
+        {kind === "overview" && match && query !== null ? (
+          <div className="grid items-start gap-4 xl:grid-cols-[3fr_2fr]">
+            <RecentOrganizerActivity range={range} revision={revision} />
+            <PlatformHealth query={query} revision={revision} retry={retry} />
+          </div>
+        ) : null}
         {kind === "overview" && match && query !== null ? <ViewerIntelligence query={query} range={range} revision={revision} retry={retry} compact /> : null}
         {kind === "overview" && match && query !== null ? <UsageOverview range={range} revision={revision} /> : null}
       </>
@@ -156,7 +164,7 @@ function Reports({ signOut }: { signOut(): void }) {
     content = frame(<OrganizerUsage query={query!} range={range} revision={revision} retry={retry} />);
   } else if (kind === "overview") {
     content = report<AdminOverview>(
-      (data) => <OverviewReport data={data} range={range} revision={revision} />,
+      (data) => <OverviewReport data={data} range={range} />,
       ({ range }) => (
         <p>
           Comparison: {timestamp(range.previousFrom)} inclusive → {timestamp(range.previousTo)} exclusive.

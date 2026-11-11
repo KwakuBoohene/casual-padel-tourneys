@@ -14,6 +14,8 @@
   --admin-ga4-badge: #392c53;
   --admin-ga4-secondary: #bceb77;
   --admin-ga4-third: #ffc29d;
+  --admin-sentry: #ffc29d;
+  --admin-sentry-badge: #493024;
 
   color-scheme: dark;
 }
@@ -33,6 +35,8 @@
   --admin-ga4-badge: #eee9ff;
   --admin-ga4-secondary: #326540;
   --admin-ga4-third: #9d4c24;
+  --admin-sentry: #9d4c24;
+  --admin-sentry-badge: #faebde;
 
   color-scheme: light;
 }
@@ -114,3 +118,6 @@
   color: #f0f8ec;
   --color-padel-muted: #c3d4c7;
 }
+
+.admin-sentry-badge { color: var(--admin-sentry); background: var(--admin-sentry-badge); }
+.admin-workspace main .admin-sentry-link { color: var(--admin-sentry); }

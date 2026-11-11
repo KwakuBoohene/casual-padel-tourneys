@@ -2,17 +2,20 @@ import { registerUsageReportingRoutes } from "../../usage/http/reportingRoutes.j
 import type { AdminReports } from "../application/reports.js";
 import { PrismaAdminReports } from "../infrastructure/PrismaAdminReports.js";
 import { registerReportingRoutes } from "./reportingRoutes.js";
+import type { SentryHealth } from "../application/sentryHealth.js";
+import { createSentryHealth } from "../infrastructure/createSentryHealth.js";
 import { registerGa4Routes } from "./ga4Routes.js";
 import type { Ga4Reports } from "../application/ga4Reports.js";
 import { createGa4Reports } from "../infrastructure/createGa4Reports.js";
 import { reportRequestError } from "../../../shared/http/sentryMonitoring.js";
-import { requestMagicLinkSchema } from "@padel/shared";
+import { adminOverviewQuerySchema, requestMagicLinkSchema } from "@padel/shared";
 import { requestAdminSignIn, type AdminSignInServices } from "../application/requestSignIn.js";
 import { PrismaAdminSignInServices } from "../infrastructure/PrismaAdminSignInServices.js";
 import { AUTH_EMAIL_SEND_RATE_LIMIT } from "../../auth/http/rateLimits.js";
 import type { FastifyInstance } from "fastify";
 import type { AdminAccessResponse } from "@padel/shared";
 import { requireAuth } from "../../../lib/auth.js";
+import { validation } from "../../../shared/kernel/appError.js";
 import type { AdminAccessStore } from "../application/access.js";
 import { PrismaAdminAccessStore } from "../infrastructure/PrismaAdminAccessStore.js";
 
@@ -21,7 +24,8 @@ export function registerAdminModule(
   store: AdminAccessStore = new PrismaAdminAccessStore(),
   services: AdminSignInServices = new PrismaAdminSignInServices(),
   reports: AdminReports = new PrismaAdminReports(),
-  ga4Reports: Ga4Reports = createGa4Reports()
+  ga4Reports: Ga4Reports = createGa4Reports(),
+  sentryHealth: SentryHealth = createSentryHealth()
 ): void {
   server.post(
     "/admin/sign-in",
@@ -68,6 +72,11 @@ export function registerAdminModule(
     registerReportingRoutes(admin, reports);
     registerUsageReportingRoutes(admin);
     registerGa4Routes(admin, ga4Reports);
+    admin.get("/admin/health", async (request) => {
+      const query = adminOverviewQuerySchema.safeParse(request.query);
+      if (!query.success) throw validation("Invalid health range.");
+      return sentryHealth.summary(query.data);
+    });
     admin.get(
       "/admin/access",
       async (request): Promise<AdminAccessResponse> => ({

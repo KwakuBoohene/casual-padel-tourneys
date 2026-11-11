@@ -361,3 +361,27 @@ npm run maintenance:prune-usage --workspace @padel/api
 Each invocation processes up to 20 batches of 1,000 rows per table. The job prunes raw events, anonymous daily totals and admin audit rows at their respective cutoffs. It logs the number pruned and exits nonzero on failure. Monitor the worker logs for `Usage cleanup failed.` and verify a successful run after fixing the cause.
 
 To disable collection, set `USAGE_VISITS_ENABLED=false` or `USAGE_BUSINESS_ENABLED=false` on the API and recreate it. Existing observations remain subject to normal retention. Rebuild the organizer with `EXPO_PUBLIC_USAGE_VISITS_ENABLED=false` to disable visit reporting in the client and hide the device control.
+
+### Admin Platform health summary
+
+The private Overview reads `GET /admin/health` independently of App DB and GA4 reports. It uses the existing platform-admin grant and read audit. The server returns aggregates only; issue titles, event payloads, project identifiers and tokens stay out of the response. Existing Sentry SDK privacy filters, ingestion settings and alerts are unchanged.
+
+Configure these **API runtime** variables in Coolify, then recreate the API resource:
+
+| Variable | Value |
+| --- | --- |
+| `SENTRY_HEALTH_ENABLED` | `false` initially; `true` enables summary reads independently of ingestion/GA4 |
+| `SENTRY_HEALTH_TOKEN` | Secret read token with `event:read`, restricted to the intended projects; do not reuse a source-map upload token |
+| `SENTRY_HEALTH_ORG` | Organization slug |
+| `SENTRY_HEALTH_PROJECT_IDS` | Explicit comma-separated numeric production project IDs, maximum 10; `-1` is rejected |
+| `SENTRY_HEALTH_ENVIRONMENT` | Exact production environment name; default `production` |
+| `SENTRY_HEALTH_BASE_URL` | HTTPS API origin for the organization, default `https://sentry.io`; set the proper regional/self-hosted origin when required |
+| `SENTRY_HEALTH_FIRST_SEEN_VERIFIED` | Keep `false` until a known project window confirms the returned `firstSeen` is lifetime/environment first-seen rather than the first matching event inside the selected window |
+
+The read is limited to five pages of 100 error issues and one eight-second timeout. The API deduplicates issue IDs, caches successful summaries for five minutes, and can serve the last successful snapshot for up to 30 minutes after a failed refresh. Missing configuration, denied permissions, rate limits and failures remain local to the card. Incomplete pagination or project coverage makes numeric counts lower bounds. Deleted issues and data outside retention cannot be reconstructed.
+
+“Issues observed” means distinct error issues returned for activity within the selected environment, project allowlist and time window. It includes resolved issues that had matching activity, not only currently unresolved issues. “New issues” remains unavailable by default. Before enabling its verification flag, compare known old, new, boundary-time and staging-first/production-later issues with Sentry for **every configured project**. If the response field is window-relative or its environmental scope cannot be established, leave the flag off. Missing first-seen timestamps also keep the metric unavailable. Regressions remain unavailable: a current issue status does not prove a regression occurred within the selected dates.
+
+The card reuses the validated public `VIEWER_SENTRY_PROJECT_URL` link on the **Viewer runtime resource**. That link grants no Sentry permissions and does not automatically inherit the dashboard date/project/environment filters. None of the new `SENTRY_HEALTH_*` settings belongs on either frontend. Turning `SENTRY_HEALTH_ENABLED=false` and recreating the API disables summary reads without changing error ingestion or source-map uploads.
+
+Provider references: [Organization Issues API](https://docs.sentry.io/api/events/list-an-organizations-issues/), [pagination](https://docs.sentry.io/api/pagination/), [read scopes](https://docs.sentry.io/api/permissions/). See ignored epic 35 ticket 06 for rollout order and the deployment evidence checklist.

@@ -44,11 +44,13 @@ export function useAccountPlayers(params: {
     }, [reloadBoard])
   );
 
+  // Clearing the selection (including after a failed load) drops the stale detail.
+  if (!selectedId && detail) {
+    setDetail(null);
+  }
+
   useEffect(() => {
-    if (!selectedId) {
-      setDetail(null);
-      return;
-    }
+    if (!selectedId) return;
     let cancelled = false;
     void (async () => {
       setLoading(true);

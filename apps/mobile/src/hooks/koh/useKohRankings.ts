@@ -16,26 +16,51 @@ export function useKohRankings(params: {
   const [loading, setLoading] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
 
+  /** Fetches the board; results are applied only while `isCurrent()` holds, so stale responses are dropped. */
+  const load = useCallback(
+    (isCurrent: () => boolean) => {
+      setErrorText("");
+      return getKohRankings(tournamentId, scope === "court" ? courtNumber : undefined)
+        .then(
+          (data) => {
+            if (isCurrent()) setBoard(data);
+          },
+          (error: unknown) => {
+            if (!isCurrent()) return;
+            if (isEmailVerifyRequired(error)) {
+              markEmailVerifyRequired(error.verifyBy);
+            } else {
+              setErrorText((error as Error).message);
+            }
+          }
+        )
+        .finally(() => {
+          if (isCurrent()) setLoading(false);
+        });
+    },
+    [tournamentId, courtNumber, scope, setErrorText, markEmailVerifyRequired]
+  );
+
   const reload = useCallback(async () => {
     setLoading(true);
-    try {
-      setErrorText("");
-      const data = await getKohRankings(tournamentId, scope === "court" ? courtNumber : undefined);
-      setBoard(data);
-    } catch (error) {
-      if (isEmailVerifyRequired(error)) {
-        markEmailVerifyRequired(error.verifyBy);
-      } else {
-        setErrorText((error as Error).message);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [tournamentId, courtNumber, scope, setErrorText, markEmailVerifyRequired]);
+    await load(() => true);
+  }, [load]);
+
+  // Changing court or scope shows the loading state immediately, before the fetch effect runs.
+  const requestKey = `${tournamentId}:${courtNumber}:${scope}`;
+  const [requestedKey, setRequestedKey] = useState<string | null>(null);
+  if (requestedKey !== requestKey) {
+    setRequestedKey(requestKey);
+    setLoading(true);
+  }
 
   useEffect(() => {
-    void reload();
-  }, [reload]);
+    let active = true;
+    void load(() => active);
+    return () => {
+      active = false;
+    };
+  }, [load]);
 
   return {
     scope,

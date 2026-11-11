@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { standingsPageCount, standingsPageRange } from "@padel/shared";
 
 export function usePagedSlice(itemCount: number, pageSize: number) {
   const pageCount = standingsPageCount(itemCount, pageSize);
   const [pageIndex, setPageIndex] = useState(0);
 
-  useEffect(() => {
-    setPageIndex((current) => Math.min(current, pageCount - 1));
-  }, [pageCount]);
+  // Clamp during render when the list shrinks, so an out-of-range page is never shown.
+  if (pageIndex > pageCount - 1) {
+    setPageIndex(pageCount - 1);
+  }
 
   const range = useMemo(
     () => standingsPageRange(itemCount, pageIndex, pageSize),

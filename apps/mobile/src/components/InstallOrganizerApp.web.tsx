@@ -11,7 +11,7 @@ import { Pressable, Text } from "react-native";
 import { spacing } from "../theme";
 import { useTheme } from "../theme/ThemeProvider";
 
-export function InstallOrganizerApp() {
+export function InstallOrganizerApp({ compact = false }: { compact?: boolean }) {
   const { colors } = useTheme();
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -27,9 +27,9 @@ export function InstallOrganizerApp() {
       <Pressable
         accessibilityRole="button"
         onPress={handleInstall}
-        style={{ minHeight: 44, paddingHorizontal: spacing.md, justifyContent: "center" }}
+        style={{ minHeight: 44, paddingHorizontal: compact ? 4 : spacing.md, justifyContent: "center", flexShrink: 0 }}
       >
-        <Text style={{ color: colors.primary, fontWeight: "700" }}>Install app</Text>
+        <Text numberOfLines={1} style={{ color: colors.primary, fontWeight: "700", fontSize: compact ? 12 : undefined }}>Install app</Text>
       </Pressable>
       <dialog
         ref={dialog}
@@ -46,7 +46,7 @@ export function InstallOrganizerApp() {
           font: "14px/1.5 system-ui, sans-serif"
         }}
       >
-        <h2 id={titleId} style={{ fontSize: 18, margin: 0 }}>Install Padel Organizer</h2>
+        <h2 id={titleId} style={{ fontSize: 18, margin: 0 }}>Install Casual Tourneys</h2>
         {webInstallInstructions(navigator).map((step) => <p key={step}>{step}</p>)}
         <p style={{ color: colors.muted }}>{webInstallBrowserHint}</p>
         <form method="dialog" style={{ display: "flex", justifyContent: "flex-end" }}>

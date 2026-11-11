@@ -14,38 +14,39 @@ export default function MagicLinkRoute() {
 
   const [status, setStatus] = useState<"working" | "error">("working");
   const [message, setMessage] = useState<string | undefined>();
+  const missingToken = !token?.trim();
 
-  const consume = useCallback(
-    async (value: string) => {
-      setStatus("working");
-      setMessage(undefined);
-      try {
-        const session = await consumeMagicLink(value);
-        clearEmailVerifyRequired();
-        await handleSignedIn(session);
-        router.replace(await destinationAfterSignIn());
-      } catch (error) {
-        setStatus("error");
-        setMessage(error instanceof Error ? error.message : "Invalid or expired sign-in link.");
-      }
-    },
+  const redeem = useCallback(
+    (value: string) =>
+      consumeMagicLink(value)
+        .then(async (session) => {
+          clearEmailVerifyRequired();
+          await handleSignedIn(session);
+          router.replace(await destinationAfterSignIn());
+        })
+        .catch((error: unknown) => {
+          setStatus("error");
+          setMessage(error instanceof Error ? error.message : "Invalid or expired sign-in link.");
+        }),
     [clearEmailVerifyRequired, handleSignedIn]
   );
 
   useEffect(() => {
-    if (!token?.trim()) {
-      setStatus("error");
-      setMessage("Missing sign-in token.");
-      return;
-    }
-    void consume(token.trim());
-  }, [token, consume]);
+    if (!token || missingToken) return;
+    void redeem(token.trim());
+  }, [token, missingToken, redeem]);
+
+  const retry = (value: string) => {
+    setStatus("working");
+    setMessage(undefined);
+    void redeem(value.trim());
+  };
 
   return (
     <MagicLinkConsumeScreen
-      status={status}
-      message={message}
-      onRetry={token ? () => void consume(token.trim()) : undefined}
+      status={missingToken ? "error" : status}
+      message={missingToken ? "Missing sign-in token." : message}
+      onRetry={token ? () => retry(token) : undefined}
       onDismiss={() => router.replace("/sign-in")}
     />
   );

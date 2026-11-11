@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
 import { isSessionExpiryLatched } from "../../api/sessionExpiry";
 import { useAuthSessionContext } from "../../providers/AuthSessionProvider";
@@ -25,10 +25,7 @@ export function useOrganizerScreen() {
   const viewerBaseUrl = process.env.EXPO_PUBLIC_VIEWER_BASE_URL ?? "http://localhost:3000";
   const createIntentRef = useRef<CreateRouteIntent | null>(null);
   const liveCallbacks = useRef({
-    openTournament: (async () => "error") as (
-      tournamentId: string,
-      editMode?: boolean
-    ) => Promise<OpenOrganizerResult>,
+    openTournament: (async () => "error") as (tournamentId: string, editMode?: boolean) => Promise<OpenOrganizerResult>,
     onTournamentDeleted: (_id: string) => {}
   });
 
@@ -67,19 +64,19 @@ export function useOrganizerScreen() {
       openAmericano: live.openTournament
     });
 
-  liveCallbacks.current = {
-    openTournament: openTournamentSmart,
-    onTournamentDeleted: (id) => {
-      if (live.liveTournament?.id === id) {
-        live.setLiveTournament(null);
-        router.replace("/tournaments");
+  // Refresh the late-bound callbacks after each commit; they are only invoked from events and effects.
+  useLayoutEffect(() => {
+    liveCallbacks.current = {
+      openTournament: openTournamentSmart,
+      onTournamentDeleted: (id) => {
+        const wasLive = live.liveTournament?.id === id;
+        const wasKoh = koh.kohHub?.id === id;
+        if (wasLive) live.setLiveTournament(null);
+        if (wasKoh) koh.clearKohHub();
+        if (wasLive || wasKoh) router.replace("/tournaments");
       }
-      if (koh.kohHub?.id === id) {
-        koh.clearKohHub();
-        router.replace("/tournaments");
-      }
-    }
-  };
+    };
+  });
 
   return {
     ...estimator,

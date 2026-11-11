@@ -161,12 +161,12 @@ test("Team Mexicano advance keeps pairs together", () => {
   const advanced = advanceMexicanoRound(tournament.id);
   assert.equal(advanced.rounds.length, 2);
   for (const match of advanced.rounds[1].matches) {
-    const pairA = tournament.fixedPairs!.find(
+    const pairA: unknown = tournament.fixedPairs!.find(
       (pair) =>
         (pair.playerAId === match.teamA[0] && pair.playerBId === match.teamA[1]) ||
         (pair.playerAId === match.teamA[1] && pair.playerBId === match.teamA[0])
     );
-    const pairB = tournament.fixedPairs!.find(
+    const pairB: unknown = tournament.fixedPairs!.find(
       (pair) =>
         (pair.playerAId === match.teamB[0] && pair.playerBId === match.teamB[1]) ||
         (pair.playerAId === match.teamB[1] && pair.playerBId === match.teamB[0])

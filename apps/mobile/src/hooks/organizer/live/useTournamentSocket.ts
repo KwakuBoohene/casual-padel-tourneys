@@ -1,5 +1,5 @@
 import { rememberTournamentVersion } from "../../../api/organizerContext";
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent } from "react";
 
 import type { LiveTournamentState } from "../../../types/organizer/tournament";
 import { parseTournamentSocketMessage } from "../../../utilities/realtime/tournamentSocketMessage";
@@ -16,10 +16,9 @@ export function useTournamentSocket(params: {
   onTournament: (data: LiveTournamentState) => void;
   onDeleted?: (tournamentId: string) => void;
 }): void {
-  const onTournamentRef = useRef(params.onTournament);
-  const onDeletedRef = useRef(params.onDeleted);
-  onTournamentRef.current = params.onTournament;
-  onDeletedRef.current = params.onDeleted;
+  // Effect events always see the latest callbacks without reconnecting the socket.
+  const onTournament = useEffectEvent((data: LiveTournamentState) => params.onTournament(data));
+  const onDeleted = useEffectEvent((tournamentId: string) => params.onDeleted?.(tournamentId));
 
   useEffect(() => {
     if (!params.enabled || !params.tournamentId || !params.publicToken) {
@@ -53,11 +52,11 @@ export function useTournamentSocket(params: {
         const parsed = parseTournamentSocketMessage(String(event.data));
         if (parsed.kind === "tournament") {
           rememberTournamentVersion(parsed.data);
-          onTournamentRef.current(parsed.data);
+          onTournament(parsed.data);
           return;
         }
         if (parsed.kind === "deleted") {
-          onDeletedRef.current?.(parsed.tournamentId);
+          onDeleted(parsed.tournamentId);
         }
       };
 

@@ -37,23 +37,16 @@ export default function CreateTournamentRoute() {
   useLayoutEffect(() => {
     org.setErrorText("");
     const intent = org.consumeCreateIntent();
-    if (intent?.kind === "mode") {
-      create.startCreateWithMode(intent.mode);
-      setBoot("ready");
-      return;
-    }
-    if (intent?.kind === "estimator") {
-      create.startCreateFromEstimator(intent.draft);
-      setBoot("ready");
-      return;
-    }
     const mode = parseMode(params.mode);
-    if (mode) {
-      create.startCreateWithMode(mode);
-      setBoot("ready");
-      return;
-    }
-    setBoot("reject");
+    let started = true;
+    if (intent?.kind === "mode") create.startCreateWithMode(intent.mode);
+    else if (intent?.kind === "estimator") create.startCreateFromEstimator(intent.draft);
+    else if (mode) create.startCreateWithMode(mode);
+    else started = false;
+    // The intent is a one-shot value consumed here, so this cannot move into render or a state
+    // initializer (Strict Mode would consume it twice). A layout effect commits before paint.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setBoot(started ? "ready" : "reject");
     // Boot once from intent / ?mode= on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -1,5 +1,5 @@
 import { rememberTournamentVersion } from "../../api/organizerContext";
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent } from "react";
 
 import type { KohTournamentHub } from "../../types/koh/create";
 
@@ -11,8 +11,8 @@ export function useKohTournamentSocket(params: {
   enabled: boolean;
   onHub: (hub: KohTournamentHub) => void;
 }): void {
-  const onHubRef = useRef(params.onHub);
-  onHubRef.current = params.onHub;
+  // An effect event always sees the latest callback without reconnecting the socket.
+  const onHub = useEffectEvent((hub: KohTournamentHub) => params.onHub(hub));
 
   useEffect(() => {
     if (!params.enabled || !params.tournamentId || !params.publicToken) {
@@ -31,7 +31,7 @@ export function useKohTournamentSocket(params: {
         const inner = parsed?.payload?.payload;
         if (inner && typeof inner === "object" && "courts" in inner && "config" in inner) {
           rememberTournamentVersion(inner);
-          onHubRef.current(inner);
+          onHub(inner);
         }
       } catch {
         // ignore malformed frames

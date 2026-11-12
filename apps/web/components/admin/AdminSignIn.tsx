@@ -81,7 +81,7 @@ export function AdminSignIn() {
           </label>
           <button
             disabled={busy}
-            className="min-h-12 w-full rounded-xl bg-padel-primary text-padel-onPrimary font-semibold disabled:opacity-50"
+            className="min-h-12 w-full rounded-xl bg-padel-primary text-padel-on-primary font-semibold disabled:opacity-50"
           >
             {busy ? "Please wait…" : "Email me a sign-in link"}
           </button>

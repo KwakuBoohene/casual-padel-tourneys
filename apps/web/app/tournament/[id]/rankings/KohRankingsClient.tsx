@@ -56,7 +56,7 @@ export function KohRankingsClient(props: { token: string; apiBaseUrl: string; co
             onClick={() => setScope("court")}
             className={`flex-1 min-h-12 rounded-full font-semibold ${
               scope === "court"
-                ? "bg-padel-primary text-padel-onPrimary"
+                ? "bg-padel-primary text-padel-on-primary"
                 : "border border-padel-border bg-padel-surface"
             }`}
           >
@@ -67,7 +67,7 @@ export function KohRankingsClient(props: { token: string; apiBaseUrl: string; co
             onClick={() => setScope("all")}
             className={`flex-1 min-h-12 rounded-full font-semibold ${
               scope === "all"
-                ? "bg-padel-primary text-padel-onPrimary"
+                ? "bg-padel-primary text-padel-on-primary"
                 : "border border-padel-border bg-padel-surface"
             }`}
           >
@@ -82,7 +82,7 @@ export function KohRankingsClient(props: { token: string; apiBaseUrl: string; co
                 type="button"
                 onClick={() => setCourtNumber(n)}
                 className={`min-h-10 px-3 rounded-full text-sm font-semibold shrink-0 ${
-                  courtNumber === n ? "bg-padel-primary text-padel-onPrimary" : "border border-padel-border"
+                  courtNumber === n ? "bg-padel-primary text-padel-on-primary" : "border border-padel-border"
                 }`}
               >
                 {n}

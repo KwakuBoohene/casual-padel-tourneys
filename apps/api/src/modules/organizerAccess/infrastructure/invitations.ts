@@ -2,6 +2,7 @@ import { createObservedActivity } from "../../usage/infrastructure/observedActiv
 import { createHash, randomBytes } from "node:crypto";
 import { prisma } from "../../../lib/prisma.js";
 import { getMailer } from "../../../lib/mail/index.js";
+import { renderEmail } from "../../../lib/mail/layout.js";
 import { AppError, conflict, forbidden, notFound } from "../../../shared/kernel/appError.js";
 import { requirePersistedVerifiedUser } from "./access.js";
 import { sharedOrganizerAccessEnabled } from "../domain/policy.js";
@@ -118,7 +119,17 @@ export async function sendInvitation(ownerId: string, email: string, invitationI
     await getMailer().send({
       to: email,
       subject: `${owner.name} invited you to manage padel tournaments`,
-      text: `${owner.name} invited you as a Manager of their organizer account. You can create and manage all their tournaments, player careers and exports. Sign in with ${email}, verify your email, and accept explicitly. This invitation expires in seven days.\n\n${url.toString()}`,
+      ...renderEmail({
+        preheader: `${owner.name} invited you to help run their padel tournaments.`,
+        heading: "You're invited to manage tournaments",
+        paragraphs: [
+          `${owner.name} invited you as a Manager of their Casual Padel organizer account. You'll be able to create and manage all their tournaments, player careers and exports.`,
+          `To accept, sign in with ${email}, verify your email, then confirm the invitation.`
+        ],
+        cta: { label: "View invitation", url: url.toString() },
+        note: "This invitation expires in 7 days.",
+        footer: "If you weren't expecting this invitation, you can ignore this email. Nothing will change."
+      }),
       sensitive: true
     });
   } catch {

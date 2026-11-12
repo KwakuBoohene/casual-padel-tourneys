@@ -84,7 +84,7 @@ export function KohViewer({
                 onClick={() => setCourtIndex(index)}
                 className={`min-h-12 px-4 rounded-full border text-sm font-semibold shrink-0 ${
                   index === courtIndex
-                    ? "bg-padel-primary text-padel-onPrimary border-padel-primary"
+                    ? "bg-padel-primary text-padel-on-primary border-padel-primary"
                     : "bg-padel-surface text-padel-text border-padel-border"
                 }`}
               >

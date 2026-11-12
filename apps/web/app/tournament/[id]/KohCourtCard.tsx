@@ -5,9 +5,9 @@ export function KohCourtCard({ court }: { court: KohPublicCourt }) {
   return (
     <article className="rounded-2xl border border-padel-border bg-padel-surface overflow-hidden">
       <header className="bg-padel-primary px-4 py-3">
-        <h2 className="text-[17px] font-bold text-padel-onPrimary">Court {court.courtNumber}</h2>
+        <h2 className="text-[17px] font-bold text-padel-on-primary">Court {court.courtNumber}</h2>
         {court.tempSwap ? (
-          <p className="text-xs font-semibold text-padel-onPrimary/80 mt-1">
+          <p className="text-xs font-semibold text-padel-on-primary/80 mt-1">
             Temp swap · {court.tempSwap.slot}
           </p>
         ) : null}

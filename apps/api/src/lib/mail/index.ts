@@ -1,4 +1,5 @@
 import { ConsoleMailer } from "./consoleMailer.js";
+import { normalizeFromAddress } from "./fromAddress.js";
 import { MailgunMailer } from "./mailgunMailer.js";
 import type { Mailer } from "./types.js";
 
@@ -35,7 +36,7 @@ export function createMailerFromEnv(): Mailer {
     return new MailgunMailer({
       apiKey: requireEnv("MAILGUN_API_KEY"),
       domain: requireEnv("MAILGUN_DOMAIN"),
-      from: requireEnv("MAIL_FROM"),
+      from: normalizeFromAddress(requireEnv("MAIL_FROM")),
       apiBaseUrl: process.env.MAILGUN_API_BASE_URL?.trim() || undefined
     });
   }

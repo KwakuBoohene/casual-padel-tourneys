@@ -1,12 +1,14 @@
 import {
   buildLeaderboardSection,
+  type MatchScheduleDocument,
   buildTournamentMatchesSection,
-  type ExportScope,
-  type ExportTable
+  type ExportTable,
+  type TournamentExportScope
 } from "@padel/shared";
 
 import type { TournamentState } from "../../../types/state.js";
 import { buildTournamentExportRows } from "../domain/exportRows.js";
+import { buildMatchSchedule } from "../domain/matchSchedule.js";
 
 function scoringLabel(tournament: TournamentState): string {
   if ((tournament.config.scoringMode ?? "AMERICANO_POINTS") === "REGULAR") {
@@ -33,9 +35,19 @@ function subtitleFor(tournament: TournamentState): string {
  */
 export function buildTournamentExportTable(
   tournament: TournamentState,
-  scope: ExportScope = "full"
+  scope: TournamentExportScope = "full"
 ): ExportTable {
   const playerNameById = new Map(tournament.players.map((player) => [player.id, player.name]));
+  const matches = (): ReturnType<typeof buildTournamentMatchesSection> =>
+    buildTournamentMatchesSection({
+      rounds: tournament.rounds,
+      playerNameById,
+      scoringMode: tournament.config.scoringMode
+    });
+  if (scope === "schedule") {
+    // CSV of the printable schedule: the matchups alone, no standings.
+    return { title: tournament.config.name, subtitle: subtitleFor(tournament), sections: [matches()] };
+  }
   const leaderboard = buildLeaderboardSection(
     buildTournamentExportRows(tournament),
     scope === "full" ? "Leaderboard" : undefined
@@ -46,13 +58,11 @@ export function buildTournamentExportTable(
   return {
     title: tournament.config.name,
     subtitle: subtitleFor(tournament),
-    sections: [
-      leaderboard,
-      buildTournamentMatchesSection({
-        rounds: tournament.rounds,
-        playerNameById,
-        scoringMode: tournament.config.scoringMode
-      })
-    ]
+    sections: [leaderboard, matches()]
   };
+}
+
+/** The printable round-by-round matchups (`scope=schedule`, PDF). */
+export function buildTournamentSchedule(tournament: TournamentState): MatchScheduleDocument {
+  return buildMatchSchedule(tournament);
 }

@@ -362,3 +362,63 @@ test("the organizer export requires auth", async () => {
     assert.equal(response.statusCode, 401);
   });
 });
+
+test("scope=schedule PDF is the printable matchups, named as a schedule", async () => {
+  await withApp(async (app) => {
+    const token = signUser("export-owner-schedule");
+    const tournament = await createTournament(app, token);
+    const response = await app.inject({
+      method: "GET",
+      url: `/tournaments/${tournament.id}/export?format=pdf&scope=schedule`,
+      headers: { authorization: `Bearer ${token}` }
+    });
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.headers["content-type"], "application/pdf");
+    assert.match(
+      response.headers["content-disposition"] as string,
+      /attachment; filename="export-night-schedule-\d{4}-\d{2}-\d{2}\.pdf"/
+    );
+    assert.ok(response.rawPayload.subarray(0, 5).toString() === "%PDF-");
+  });
+});
+
+test("scope=schedule CSV lists the matchups without the leaderboard", async () => {
+  await withApp(async (app) => {
+    const token = signUser("export-owner-schedule-csv");
+    const tournament = await createTournament(app, token);
+    const response = await app.inject({
+      method: "GET",
+      url: `/tournaments/${tournament.id}/export?format=csv&scope=schedule`,
+      headers: { authorization: `Bearer ${token}` }
+    });
+    assert.equal(response.statusCode, 200);
+    const lines = rows(response.body);
+    assert.equal(lines.includes("Leaderboard"), false);
+    assert.ok(lines.some((line) => line.startsWith("Round,Court,Team A,Team B")));
+  });
+});
+
+test("the public share link serves the schedule too", async () => {
+  await withApp(async (app) => {
+    const token = signUser("export-owner-schedule-public");
+    const tournament = await createTournament(app, token);
+    const response = await app.inject({
+      method: "GET",
+      url: `/public/${tournament.publicToken}/export?format=pdf&scope=schedule`
+    });
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.headers["content-type"], "application/pdf");
+  });
+});
+
+test("the career export does not accept the tournament-only schedule scope", async () => {
+  await withApp(async (app) => {
+    const token = signUser("export-owner-schedule-career");
+    const response = await app.inject({
+      method: "GET",
+      url: "/me/players/leaderboard/export?format=csv&range=year&scope=schedule",
+      headers: { authorization: `Bearer ${token}` }
+    });
+    assert.equal(response.statusCode, 400);
+  });
+});

@@ -22,3 +22,11 @@ test("the guard narrows correctly", () => {
   assert.equal(isExportScope("nope"), false);
   assert.equal(isExportScope(undefined), false);
 });
+
+test("tournament exports also accept schedule; career scope does not", async () => {
+  const { parseTournamentExportScope } = await import("../../src/export/exportScope.js");
+  assert.equal(parseTournamentExportScope("schedule"), "schedule");
+  assert.equal(parseTournamentExportScope(undefined), "full");
+  assert.throws(() => parseTournamentExportScope("everything"), /Supported: leaderboard, full, schedule/);
+  assert.throws(() => parseExportScope("schedule"), /Supported: leaderboard, full/);
+});

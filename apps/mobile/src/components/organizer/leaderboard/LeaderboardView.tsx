@@ -104,7 +104,8 @@ export function LeaderboardView(props: LeaderboardViewProps) {
         visible={exportState.visible}
         choices={[
           { dataset: "tournament", scope: "leaderboard", label: "Leaderboard only" },
-          { dataset: "tournament", scope: "full", label: "Leaderboard + matches" }
+          { dataset: "tournament", scope: "full", label: "Leaderboard + matches" },
+          { dataset: "tournament", scope: "schedule", label: "Printable schedule" }
         ]}
         exporting={exportState.exporting}
         error={exportState.error}

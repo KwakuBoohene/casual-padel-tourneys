@@ -47,3 +47,4 @@ export type { AdminUsage, AdminActivity, UsageCounts } from "./types/usage.js";
 export * from "./schemas/ga4.js";
 export * from "./utils/ga4Session.js";
 export type { SentryHealthReport } from "./types/sentryHealth.js";
+export * from "./export/matchSchedule.js";

@@ -1,4 +1,4 @@
-import { exportFileName, type ExportScope, type OrganizerPlayerRange } from "@padel/shared";
+import { exportFileName, type OrganizerPlayerRange, type TournamentExportScope } from "@padel/shared";
 
 export type ExportFormat = "csv" | "pdf";
 
@@ -8,8 +8,11 @@ export type ExportDataset = "tournament" | "careerLeaderboard" | "careerMatches"
 export interface ExportRequest {
   dataset: ExportDataset;
   format: ExportFormat;
-  /** Leaderboard only, or the leaderboard plus everything behind it. Defaults to full. */
-  scope?: ExportScope;
+  /**
+   * Leaderboard only, the leaderboard plus everything behind it (default), or — tournaments only —
+   * the printable round-by-round schedule.
+   */
+  scope?: TournamentExportScope;
   /** Required for the tournament dataset. */
   tournamentId?: string;
   /** Required for the account datasets. */
@@ -40,12 +43,7 @@ export function exportCacheFileName(
   name: string,
   isoTimestamp: string
 ): string {
-  const kind =
-    request.dataset === "careerMatches"
-      ? "matches"
-      : (request.scope ?? "full") === "full"
-        ? "full"
-        : "leaderboard";
+  const kind = request.dataset === "careerMatches" ? "matches" : (request.scope ?? "full");
   const base = exportFileName(kind, name, isoTimestamp, request.format);
   const stamp = isoTimestamp.replace(/[^0-9]/g, "").slice(8, 14);
   return base.replace(new RegExp(`\\.${request.format}$`), `-${stamp}.${request.format}`);
@@ -67,6 +65,7 @@ export function exportSheetSubtitle(
 ): string {
   const full = (request.scope ?? "full") === "full";
   if (request.dataset === "tournament") {
+    if (request.scope === "schedule") return "Every round's matchups with score boxes, ready to print.";
     return full ? "Standings, plus every round, match and score." : "Standings only.";
   }
   const range = RANGE_LABEL[request.range ?? "year"];

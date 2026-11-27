@@ -155,3 +155,10 @@ test("the sheet copy distinguishes the two scopes", () => {
     /with its tournaments and matches/i
   );
 });
+
+test("the printable schedule asks for scope=schedule and names its cache file", () => {
+  const request = { dataset: "tournament", format: "pdf", tournamentId: "t_1", scope: "schedule" } as const;
+  assert.equal(exportRequestPath(request), "/tournaments/t_1/export?format=pdf&scope=schedule");
+  assert.match(exportCacheFileName(request, "Tuesday Night", "2026-08-19T18:30:00.000Z"), /^tuesday-night-schedule-2026-08-19-\d{6}\.pdf$/);
+  assert.match(exportSheetSubtitle({ dataset: "tournament", scope: "schedule" }), /ready to print/i);
+});

@@ -10,7 +10,7 @@ export interface OrganizerAccount {
   id: string;
   name: string;
   role: OrganizerRole;
-  capabilities: { manage: boolean; deleteTournament: boolean; manageMembers: boolean };
+  capabilities: { manage: boolean; deleteTournament: boolean; deleteDraft?: boolean; manageMembers: boolean };
 }
 export interface OrganizerAccessOverview {
   owner: { id: string; name: string };

@@ -14,6 +14,7 @@ import { registerAuthModule } from "./modules/auth/http/register.js";
 import { registerKohModule } from "./modules/koh/http/register.js";
 import { registerOrganizerPlayersModule } from "./modules/organizerPlayers/http/register.js";
 import { registerTournamentModule } from "./modules/tournament/http/register.js";
+import { registerTournamentDraftModule } from "./modules/tournamentDraft/http/register.js";
 import { mountSocketHub } from "./realtime/socketHub.js";
 import { logger, resolveApiLogLevel } from "./lib/logger.js";
 import { registerAppErrorHandler } from "./shared/http/errorHandler.js";
@@ -75,6 +76,7 @@ export async function createApp() {
   await registerAuthModule(server);
   await registerTournamentModule(server);
   await registerKohModule(server);
+  registerTournamentDraftModule(server);
   registerOrganizerPlayersModule(server);
   logger.info("createApp: server ready");
   return server;

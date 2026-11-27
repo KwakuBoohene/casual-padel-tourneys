@@ -81,6 +81,9 @@ model User {
   magicLinkTokens        MagicLinkToken[]
   opaqueRecord           OpaqueRecord?
   organizerPlayers       OrganizerPlayer[]
+  ownedDrafts            TournamentDraft[] @relation("DraftOwner")
+  createdDrafts          TournamentDraft[] @relation("DraftCreatedBy")
+  updatedDrafts          TournamentDraft[] @relation("DraftUpdatedBy")
   @@index([createdAt, id])
 }
 
@@ -562,4 +565,30 @@ model UsageDay {
 model UsageCoverage {
   source    String @id
   startedAt DateTime @default(now())
+}
+
+/**
+ * Tournament setup saved before start. Payload = partial create body (`tournamentDraftPayloadSchema`).
+ * Never visible on /public routes; starting it runs the normal create path.
+ */
+model TournamentDraft {
+  id                   String         @id @default(cuid())
+  organizerId          String
+  /** Denormalized from payload for list queries. */
+  name                 String         @default("")
+  mode                 TournamentMode
+  payload              Json
+  version              Int            @default(0)
+  keepAccessAfterStart Boolean        @default(true)
+  createdById          String?
+  updatedById          String?
+  startedTournamentId  String?        @unique
+  deletedAt            DateTime?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  organizer            User           @relation("DraftOwner", fields: [organizerId], references: [id], onDelete: Cascade)
+  createdBy            User?          @relation("DraftCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy            User?          @relation("DraftUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([organizerId, deletedAt, startedTournamentId, updatedAt])
 }

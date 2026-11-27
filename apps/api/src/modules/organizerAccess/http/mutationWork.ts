@@ -50,9 +50,12 @@ export function registerOrganizerMutationWork(server: FastifyInstance): void {
                 beforeVersion = rows[0]?.version;
                 const shared =
                   sharedOrganizerAccessEnabled() &&
-                  (context.role === "MANAGER" ||
+                  (context.role !== "OWNER" ||
                     (await tx.organizerMembership.count({
                       where: { organizerId: context.organizerId, revokedAt: null }
+                    })) > 0 ||
+                    (await tx.tournamentCollaborator.count({
+                      where: { tournamentId: eventId, revokedAt: null }
                     })) > 0);
                 if (shared && request.method !== "DELETE" && !Number.isInteger(body?.expectedVersion)) {
                   throw new AppError("CONFLICT", 409, "Refresh your app to use shared editing safely.", {

@@ -1,5 +1,5 @@
 import type { FastifyRequest } from "fastify";
-import type { OrganizerRole } from "@padel/shared";
+import type { DraftRole } from "@padel/shared";
 import { prisma } from "../../../lib/prisma.js";
 import { AppError, forbidden, notFound } from "../../../shared/kernel/appError.js";
 import {
@@ -7,12 +7,14 @@ import {
   sharedOrganizerAccessEnabled,
   type OrganizerOperation
 } from "../domain/policy.js";
+import { resolveDraftEditor, resolveTournamentEditor } from "./draftEditorAccess.js";
 
 export interface OrganizerContext {
   actorUserId: string;
   organizerId: string;
   ownerName: string;
-  role: OrganizerRole;
+  /** EDITOR only appears on `/drafts/:id…` routes (per-draft collaborator). */
+  role: DraftRole;
 }
 declare module "fastify" {
   interface FastifyRequest {
@@ -96,7 +98,35 @@ export async function resolveOrganizerRequest(request: FastifyRequest): Promise<
       ? await draftOwner(params.id)
       : undefined;
   if (resourceOwner) {
-    await resolveAccess(request.user.id, resourceOwner.organizerId);
+    try {
+      await resolveAccess(request.user.id, resourceOwner.organizerId);
+    } catch (error) {
+      const editor =
+        isDraft && params.id
+          ? await resolveDraftEditor({
+              actorUserId: request.user.id,
+              draftId: params.id,
+              organizerId: resourceOwner.organizerId,
+              url,
+              method: request.method
+            })
+          : tournamentId
+            ? await resolveTournamentEditor({
+                actorUserId: request.user.id,
+                tournamentId,
+                organizerId: resourceOwner.organizerId,
+                method: request.method
+              })
+            : null;
+      if (!editor) throw error;
+      // An editor's app may still have their own account selected.
+      if (header && header !== resourceOwner.organizerId && header !== request.user.id)
+        throw new AppError("CONFLICT", 409, `Selected organizer does not own this ${resourceOwner.label}.`, {
+          code: "ORGANIZER_CONTEXT_MISMATCH"
+        });
+      request.organizerContext = editor;
+      return;
+    }
     if (header && header !== resourceOwner.organizerId)
       throw new AppError("CONFLICT", 409, `Selected organizer does not own this ${resourceOwner.label}.`, {
         code: "ORGANIZER_CONTEXT_MISMATCH"
@@ -108,7 +138,13 @@ export async function resolveOrganizerRequest(request: FastifyRequest): Promise<
     });
   }
   const operation: OrganizerOperation =
-    request.method !== "DELETE" ? "manage" : isDraft ? "deleteDraft" : isTournament ? "deleteTournament" : "manage";
+    request.method !== "DELETE"
+      ? "manage"
+      : url === "/drafts/:id"
+        ? "deleteDraft"
+        : isTournament
+          ? "deleteTournament"
+          : "manage";
   request.organizerContext = await resolveAccess(request.user.id, selected, operation);
 }
 

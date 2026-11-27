@@ -48,9 +48,15 @@ export async function createDraft(repo: DraftRepository, actor: DraftActor, body
   return toDraftDetail(record, actor.role);
 }
 
-export async function listDrafts(repo: DraftRepository, actor: DraftActor) {
-  const records = await repo.listOpen(actor.organizerId);
-  return records.map((record) => toDraftSummary(record, actor.role));
+/** Account drafts, plus (on the caller's own account) drafts shared with them as an editor. */
+export async function listDrafts(repo: DraftRepository, actor: DraftActor, sharingEnabled: boolean) {
+  const own = (await repo.listOpen(actor.organizerId)).map((record) => toDraftSummary(record, actor.role));
+  if (!sharingEnabled || actor.organizerId !== actor.actorUserId) return own;
+  const ownIds = new Set(own.map((row) => row.id));
+  const shared = (await repo.listCollaborating(actor.actorUserId))
+    .filter((record) => !ownIds.has(record.id))
+    .map((record) => toDraftSummary(record, "EDITOR"));
+  return [...own, ...shared];
 }
 
 export async function getDraft(repo: DraftRepository, actor: DraftActor, id: string): Promise<DraftDetail> {

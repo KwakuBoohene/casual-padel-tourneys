@@ -1,3 +1,4 @@
+import { sharedOrganizerAccessEnabled } from "../../organizerAccess/domain/policy.js";
 import { organizerId } from "../../organizerAccess/infrastructure/access.js";
 import type { FastifyInstance } from "fastify";
 import { isKingOfTheCourtMode } from "@padel/shared";
@@ -22,7 +23,16 @@ export function registerTournamentQueryRoutes(server: FastifyInstance, deps: Tou
     if (!request.user) {
       return { data: [] };
     }
-    const data = await deps.repo.listByOrganizer(organizerId(request));
+    const own = await deps.repo.listByOrganizer(organizerId(request));
+    // On their own account, also show events a co-organizer kept access to after a shared draft started.
+    const personal = organizerId(request) === request.user.id && sharedOrganizerAccessEnabled();
+    const ownIds = new Set(own.map((row) => row.id));
+    const shared = personal
+      ? (await deps.repo.listCollaborating(request.user.id))
+          .filter((row) => !ownIds.has(row.id))
+          .map((row) => ({ ...row, accessRole: "EDITOR" as const }))
+      : [];
+    const data = [...own, ...shared];
     request.log.info({ count: data.length }, "GET /tournaments");
     logger.debug("GET /tournaments", { organizerId: organizerId(request), count: data.length });
     return { data };

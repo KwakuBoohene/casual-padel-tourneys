@@ -8,6 +8,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { requireOrganizerAccess } from "../../../lib/auth.js";
 import { mapAppError } from "../../../shared/http/mapAppError.js";
 import { forbidden } from "../../../shared/kernel/appError.js";
+import { sharedOrganizerAccessEnabled } from "../../organizerAccess/domain/policy.js";
 import { organizerId } from "../../organizerAccess/infrastructure/access.js";
 import {
   createDraft,
@@ -19,6 +20,7 @@ import {
 } from "../application/draftUseCases.js";
 import { startDraft } from "../application/startDraft.js";
 import { draftRepository } from "../infrastructure/PrismaDraftRepository.js";
+import { registerDraftPeopleRoutes } from "./peopleRoutes.js";
 import { createDraftTournamentStarter } from "./tournamentStarter.js";
 
 const CREATE_RATE_LIMIT = { rateLimit: { max: 30, timeWindow: "5 minutes" } } as const;
@@ -48,9 +50,12 @@ export function registerTournamentDraftModule(server: FastifyInstance): void {
   const repo = draftRepository;
   const starter = createDraftTournamentStarter(server);
   const guard = { preHandler: requireOrganizerAccess };
+  registerDraftPeopleRoutes(server);
 
   server.get("/drafts", guard, (request, reply) =>
-    respond(reply, async () => ({ data: await listDrafts(repo, actorOf(request)) }))
+    respond(reply, async () => ({
+      data: await listDrafts(repo, actorOf(request), sharedOrganizerAccessEnabled())
+    }))
   );
 
   server.post("/drafts", { ...guard, config: CREATE_RATE_LIMIT }, (request, reply) =>

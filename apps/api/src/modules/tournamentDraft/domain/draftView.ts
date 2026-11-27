@@ -21,6 +21,9 @@ export interface DraftRecord {
   startedTournamentId: string | null;
   updatedAt: Date;
   updatedBy: { id: string; name: string } | null;
+  owner: { id: string; name: string };
+  /** Active per-draft editors. */
+  editors: { id: string; name: string }[];
 }
 
 export interface DraftDetail {
@@ -75,6 +78,22 @@ export function toDraftDetail(record: DraftRecord, role: DraftRole): DraftDetail
   };
 }
 
+export function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const letters = parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : (parts[0] ?? "?").slice(0, 2);
+  return letters.toUpperCase();
+}
+
+/** Avatars for list rows: empty unless the draft is shared with at least one editor. */
+function collaboratorsOf(record: DraftRecord): TournamentDraftSummary["collaborators"] {
+  if (record.editors.length === 0) return [];
+  return [record.owner, ...record.editors].map((person) => ({
+    userId: person.id,
+    name: person.name,
+    initials: initialsOf(person.name)
+  }));
+}
+
 export function toDraftSummary(record: DraftRecord, role: DraftRole): TournamentDraftSummary {
   const payload = parseStoredPayload(record);
   const readiness = getDraftReadiness(payload);
@@ -89,7 +108,7 @@ export function toDraftSummary(record: DraftRecord, role: DraftRole): Tournament
     version: record.version,
     updatedAt: record.updatedAt.toISOString(),
     updatedBy: record.updatedBy ?? UNKNOWN_EDITOR,
-    collaborators: [],
+    collaborators: collaboratorsOf(record),
     readiness: { ready: readiness.ready, ...(readiness.blockingReason ? { blockingReason: readiness.blockingReason } : {}) }
   };
 }

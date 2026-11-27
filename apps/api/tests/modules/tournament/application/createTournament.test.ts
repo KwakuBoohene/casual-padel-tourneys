@@ -16,6 +16,9 @@ function memoryRepo(): TournamentRepository & { store: Map<string, TournamentSta
     async getByPublicToken(token) {
       return [...store.values()].find((t) => t.publicToken === token) ?? null;
     },
+    async listCollaborating() {
+      return [];
+    },
     async listByOrganizer(organizerId) {
       return [...store.values()].filter((t) => t.organizerId === organizerId);
     },

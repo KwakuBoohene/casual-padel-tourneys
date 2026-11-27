@@ -51,5 +51,12 @@ export async function startDraft(
 
   const tournament = await deps.starter.start(draft.organizerId, draftToCreateBodies(payload));
   if (!(await deps.repo.markStarted(id, expectedVersion as number, tournament.id))) throw versionConflict();
+  if (draft.keepAccessAfterStart) {
+    await deps.repo.grantTournamentAccess({
+      tournamentId: tournament.id,
+      sourceDraftId: id,
+      userIds: draft.editors.map((editor) => editor.id)
+    });
+  }
   return { tournament, alreadyStarted: false };
 }

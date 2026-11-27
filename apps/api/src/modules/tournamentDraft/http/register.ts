@@ -17,7 +17,9 @@ import {
   updateDraft,
   type DraftActor
 } from "../application/draftUseCases.js";
+import { startDraft } from "../application/startDraft.js";
 import { draftRepository } from "../infrastructure/PrismaDraftRepository.js";
+import { createDraftTournamentStarter } from "./tournamentStarter.js";
 
 const CREATE_RATE_LIMIT = { rateLimit: { max: 30, timeWindow: "5 minutes" } } as const;
 
@@ -44,6 +46,7 @@ const idOf = (request: FastifyRequest) => (request.params as { id: string }).id;
 
 export function registerTournamentDraftModule(server: FastifyInstance): void {
   const repo = draftRepository;
+  const starter = createDraftTournamentStarter(server);
   const guard = { preHandler: requireOrganizerAccess };
 
   server.get("/drafts", guard, (request, reply) =>
@@ -62,6 +65,14 @@ export function registerTournamentDraftModule(server: FastifyInstance): void {
     respond(reply, async () => ({
       data: await updateDraft(repo, actorOf(request), idOf(request), request.body)
     }))
+  );
+
+  /** Same `{ data }` shape as `POST /tournaments`, plus `alreadyStarted` for idempotent retries. */
+  server.post("/drafts/:id/start", guard, (request, reply) =>
+    respond(reply, async () => {
+      const result = await startDraft({ repo, starter }, actorOf(request), idOf(request), request.body);
+      return { data: result.tournament, alreadyStarted: result.alreadyStarted };
+    })
   );
 
   server.delete("/drafts/:id", guard, (request, reply) =>

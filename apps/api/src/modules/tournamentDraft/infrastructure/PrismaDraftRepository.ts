@@ -64,6 +64,19 @@ export const draftRepository: DraftRepository = {
     return result.count === 1;
   },
 
+  async lockForStart(id) {
+    await prisma.$queryRaw`SELECT "id" FROM "TournamentDraft" WHERE "id" = ${id} FOR UPDATE`;
+    return prisma.tournamentDraft.findFirst({ where: { id, deletedAt: null }, select: draftSelect });
+  },
+
+  async markStarted(id, expectedVersion, tournamentId) {
+    const result = await prisma.tournamentDraft.updateMany({
+      where: { id, version: expectedVersion, deletedAt: null, startedTournamentId: null },
+      data: { startedTournamentId: tournamentId, version: { increment: 1 } }
+    });
+    return result.count === 1;
+  },
+
   async softDelete(id) {
     const result = await prisma.tournamentDraft.updateMany({
       where: { id, deletedAt: null, startedTournamentId: null },

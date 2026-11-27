@@ -6,6 +6,7 @@ import { requireOrganizerAccess } from "../../../lib/auth.js";
 import { mapAppError } from "../../../shared/http/mapAppError.js";
 import { handleCreateKohTournament } from "../../koh/http/createKoh.js";
 import { createTournament } from "../application/createTournament.js";
+import { toTournamentConfig } from "../application/toTournamentConfig.js";
 import type { TournamentModuleDeps } from "../application/ports.js";
 import { ensureOrganizerUser } from "../infrastructure/ensureOrganizerUser.js";
 
@@ -28,11 +29,6 @@ export function registerTournamentCreateRoutes(server: FastifyInstance, deps: To
       reply.status(400);
       return { errors: parsed.error.flatten() };
     }
-    const data = parsed.data;
-    const playersFromTeams =
-      data.variant === "TEAM" && data.teams && data.teams.length > 0
-        ? data.teams.flatMap((team) => [team.playerA, team.playerB])
-        : data.players;
 
     try {
       await ensureOrganizerUser({
@@ -43,14 +39,7 @@ export function registerTournamentCreateRoutes(server: FastifyInstance, deps: To
       });
       const tournament = await createTournament(deps, {
         organizerId: organizerId(request),
-        config: {
-          ...data,
-          players: playersFromTeams,
-          teams: data.variant === "TEAM" ? data.teams : undefined,
-          scoringMode: data.scoringMode,
-          regularScoring: data.regularScoring,
-          pointsPerMatch: data.pointsPerMatch ?? 24
-        }
+        config: toTournamentConfig(parsed.data)
       });
       request.log.info({ id: tournament.id }, "POST /tournaments created");
       return { data: tournament };

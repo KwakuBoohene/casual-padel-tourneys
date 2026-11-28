@@ -1,6 +1,7 @@
 import { createId } from "@padel/shared";
 import type { FixedPair, Player, Round, TournamentConfig } from "@padel/shared";
 
+import { refineClassicRounds } from "./classicScheduleRefiner.js";
 import { buildRound } from "./constraintSolver.js";
 import { createClassicPairingMatrices, seedClassicMatricesFromRounds } from "./pairingMatrices.js";
 import { classicScheduleShape, courtsPerRound } from "./scheduleMath.js";
@@ -127,6 +128,7 @@ function buildRounds(
     rounds.push(round);
   }
 
+  refineClassicRounds({ rounds, lockedRounds: seedRounds, players, variant: config.variant });
   return rounds;
 }
 

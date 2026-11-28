@@ -1,5 +1,4 @@
 import { router } from "expo-router";
-import { useState } from "react";
 import { isKohDraftPayload } from "@padel/shared";
 
 import { getDraft, type DraftDetail } from "../../api/drafts";
@@ -8,6 +7,8 @@ import { useOrganizerGa4 } from "../../components/analytics/OrganizerGa4";
 import type { KohCreateStep } from "../../types/koh/create";
 import { fromKohDraftPayload, hasKohDraftContent, kohResumeStep, toKohDraftPayload } from "../../utilities/koh/kohDraftPayload";
 import { useDraftAutosave } from "../organizer/drafts/useDraftAutosave";
+import { useDraftFlush } from "../organizer/drafts/useDraftFlush";
+import { useDraftLeave } from "../organizer/drafts/useDraftLeave";
 import type { useKohCreateWizard } from "./useKohCreateWizard";
 
 type Wizard = ReturnType<typeof useKohCreateWizard>;
@@ -23,25 +24,10 @@ interface Options {
 export function useKohCreateDraft(wizard: Wizard, { markEmailVerifyRequired, setErrorText, exit }: Options) {
   const sendAnalytics = useOrganizerGa4();
   const autosave = useDraftAutosave({ payload: toKohDraftPayload(wizard.draft), markEmailVerifyRequired });
-  const [leaveOpen, setLeaveOpen] = useState(false);
-  const [leaving, setLeaving] = useState(false);
+  useDraftFlush(autosave.flush);
   const hasContent = hasKohDraftContent(wizard.draft);
-
-  const leave = () => {
-    setLeaveOpen(false);
-    exit();
-  };
-
-  const requestLeave = () => {
-    if (autosave.draftId) {
-      setLeaving(true);
-      void autosave.saveNow().finally(() => {
-        setLeaving(false);
-        leave();
-      });
-    } else if (hasContent) setLeaveOpen(true);
-    else leave();
-  };
+  // Same leave rules as the Americano/Mexicano wizard: never drop edits a failed save didn't keep.
+  const leaving = useDraftLeave(autosave, { hasContent, exit });
 
   /** Show a server version in the wizard; `keepLocal` keeps my edits on top (re-saved next). */
   const restore = (draft: DraftDetail, step: KohCreateStep, keepLocal = false) => {
@@ -75,28 +61,15 @@ export function useKohCreateDraft(wizard: Wizard, { markEmailVerifyRequired, set
       void autosave.saveNow();
       sendAnalytics({ event: "draft_action", action: "saved" });
     },
-    requestLeave,
+    requestLeave: leaving.requestLeave,
     loadDraft,
     finish: autosave.draftId
       ? async () => {
           const id = autosave.draftId;
-          if (id && (await autosave.saveNow())) router.replace({ pathname: "/drafts/[id]", params: { id, start: "1" } });
+          if (id && (await autosave.saveNow()) === "saved") router.replace({ pathname: "/drafts/[id]", params: { id, start: "1" } });
         }
       : null,
-    leaveSheet: {
-      visible: leaveOpen,
-      busy: leaving,
-      failed: autosave.status === "error",
-      onSave: () => {
-        setLeaving(true);
-        void autosave.saveNow().then((ok) => {
-          setLeaving(false);
-          if (ok) leave();
-        });
-      },
-      onKeepEditing: () => setLeaveOpen(false),
-      onDiscard: leave
-    },
+    leaveSheet: leaving.leaveSheet,
     // KOH setups aren't diffed field by field: keep mine as a whole, or take theirs.
     conflictSheet: {
       visible: autosave.status === "conflict" && Boolean(latest),

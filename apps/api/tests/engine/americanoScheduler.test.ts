@@ -92,7 +92,7 @@ test("generateTournament TARGET_GAMES calculates correct rounds", () => {
   assert.ok(Math.abs(avgGamesPlayed - 4) <= 1, "Average games should be close to target");
 });
 
-test("generateTournament ROUND_ROBIN creates N-1 rounds", () => {
+test("generateTournament ROUND_ROBIN gives everyone enough games to face the whole field", () => {
   const config: TournamentConfig = {
     name: "Round Robin",
     mode: "AMERICANO",
@@ -105,8 +105,8 @@ test("generateTournament ROUND_ROBIN creates N-1 rounds", () => {
 
   const { rounds } = generateTournament(config);
 
-  // Round robin for 8 players = 7 rounds (N-1)
-  assert.equal(rounds.length, 7);
+  // 8 players face 7 others, two per match => 4 games each => 8 matches over 2 courts.
+  assert.equal(rounds.length, 4);
 });
 
 test("generateTournament with minimum 4 players", () => {

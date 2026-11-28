@@ -1,4 +1,4 @@
-import type { Match } from "@padel/shared";
+import type { Match, Round } from "@padel/shared";
 
 /** Facing the same opposing pair again is the one thing Americano must never do. */
 const REMATCH_WEIGHT = 1_000_000;
@@ -65,4 +65,12 @@ export class RepeatLedger {
     this.cost += sign * weight * repeats * repeats;
     counts.set(key, current + sign);
   }
+}
+
+/** Total repeat cost of a schedule; zero means no pairing of any kind ever repeats. */
+export function repeatCost(rounds: Round[]): number {
+  const matches = rounds.flatMap((round) => round.matches);
+  const ledger = new RepeatLedger(matches.flatMap((match) => [...match.teamA, ...match.teamB]));
+  matches.forEach((match) => ledger.apply(match, 1));
+  return ledger.cost;
 }

@@ -211,10 +211,10 @@ test("classic round robin gives everyone the same number of games", () => {
   const { players, rounds } = generateTournament(config);
   const report = assertNoRematches(rounds, "Classic ROUND_ROBIN");
 
-  // C(8,2) = 28 partnerships, two per match => 14 matches.
-  assert.equal(rounds.reduce((sum, round) => sum + round.matches.length, 0), 14);
+  // 7 opponents each, two per match => 4 games each => 8 matches.
+  assert.equal(rounds.reduce((sum, round) => sum + round.matches.length, 0), 8);
   for (const player of players) {
-    assert.equal(report.gamesPlayed.get(player.id), 7, "everyone plays the same number of games");
+    assert.equal(report.gamesPlayed.get(player.id), 4, "everyone plays the same number of games");
   }
 });
 

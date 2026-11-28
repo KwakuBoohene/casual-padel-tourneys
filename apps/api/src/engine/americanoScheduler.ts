@@ -3,8 +3,9 @@ import type { FixedPair, Player, Round, TournamentConfig } from "@padel/shared";
 
 import { refineClassicRounds } from "./classicScheduleRefiner.js";
 import { buildRound } from "./constraintSolver.js";
+import { buildCyclicRounds, preferCyclic } from "./cyclicSchedule.js";
 import { createClassicPairingMatrices, seedClassicMatricesFromRounds } from "./pairingMatrices.js";
-import { classicScheduleShape, courtsPerRound } from "./scheduleMath.js";
+import { classicScheduleShape, courtsPerRound, type ScheduleShape } from "./scheduleMath.js";
 import {
   generateTeamAmericano,
   recalculateTeamAmericanoRemaining
@@ -92,12 +93,37 @@ function buildRounds(
   seedRounds: Round[] = [],
   roundLimit?: number
 ): Round[] {
+  const shape = classicScheduleShape(config, players.length);
+  const searched = searchRounds(config, players, shape, seedRounds, roundLimit);
+
+  // A cyclic design needs a clean slate: the full field, nothing played, nobody joining late.
+  const freshStart =
+    config.variant === "CLASSIC" &&
+    seedRounds.length === 0 &&
+    roundLimit === undefined &&
+    players.every((player) => !player.handicap);
+  const cyclic = freshStart ? buildCyclicRounds(players, shape) : null;
+  if (cyclic && preferCyclic(cyclic, searched, players)) {
+    for (const player of players) {
+      player.gamesPlayed += countGamesInRounds(player.id, cyclic) - countGamesInRounds(player.id, searched);
+    }
+    return cyclic;
+  }
+  return searched;
+}
+
+function searchRounds(
+  config: TournamentConfig,
+  players: Player[],
+  shape: ScheduleShape,
+  seedRounds: Round[],
+  roundLimit?: number
+): Round[] {
   const matrices = createClassicPairingMatrices();
   seedClassicMatricesFromRounds(seedRounds, matrices);
   const { teammateMatrix, opponentMatrix, opponentTeamMatrix, coPlayerMatrix } = matrices;
   const rounds: Round[] = [];
 
-  const shape = classicScheduleShape(config, players.length);
   const roundsToBuild = Math.min(shape.totalRounds, roundLimit ?? shape.totalRounds);
   // Take the tail of the plan so a short final round stays last when regenerating a remainder.
   const courts = courtsPerRound(shape).slice(shape.totalRounds - roundsToBuild);

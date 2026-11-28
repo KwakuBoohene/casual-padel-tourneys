@@ -28,6 +28,14 @@ export function estimateTournament(config: TournamentConfig): EstimatedTournamen
 }
 
 /**
+ * Classic round robin: everyone faces everyone else once. Each match gives a player two
+ * opponents, so that takes about half as many games as there are other players.
+ */
+export function classicRoundRobinGames(playersCount: number): number {
+  return Math.max(1, Math.ceil((playersCount - 1) / 2));
+}
+
+/**
  * A round robin is defined by how many matchups exist, not by player count: with fewer courts
  * than the field can fill at once it simply takes more rounds to play them all.
  */
@@ -39,8 +47,8 @@ export function roundRobinRounds(config: TournamentConfig, playersCount: number)
     return Math.max(1, Math.ceil(totalMatches / matchesPerRound));
   }
   const matchesPerRound = Math.max(1, Math.min(config.courts, Math.floor(playersCount / 4)));
-  const partnerships = playersCount < 2 ? 2 : (playersCount * (playersCount - 1)) / 2;
-  return Math.max(1, Math.ceil(Math.ceil(partnerships / 2) / matchesPerRound));
+  const totalMatches = Math.ceil((playersCount * classicRoundRobinGames(playersCount)) / 4);
+  return Math.max(1, Math.ceil(totalMatches / matchesPerRound));
 }
 
 export function matchDurationMinutes(config: TournamentConfig): number {

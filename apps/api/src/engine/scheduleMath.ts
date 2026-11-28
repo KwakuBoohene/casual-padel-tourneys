@@ -1,6 +1,6 @@
 import type { TournamentConfig } from "@padel/shared";
 
-import { estimateTournament } from "./timeEstimator.js";
+import { classicRoundRobinGames, estimateTournament } from "./timeEstimator.js";
 
 /**
  * Americano never repeats an opponent team, so the schedule length is bounded by how many
@@ -58,9 +58,9 @@ export function classicScheduleShape(config: TournamentConfig, playerCount: numb
   const matchesPerRound = Math.max(1, Math.min(config.courts, Math.floor(playerCount / 4)));
 
   if (config.schedulingMode === "ROUND_ROBIN") {
-    // "Everyone plays everyone": every partnership happens once, and each match burns two of them.
-    const partnerships = combinations2(playerCount);
-    return shapeFromMatches(Math.ceil(partnerships / 2), matchesPerRound);
+    // "Everyone faces everyone": enough games each to meet every other player across the net once.
+    const games = classicRoundRobinGames(playerCount);
+    return shapeFromMatches(Math.ceil((playerCount * games) / 4), matchesPerRound);
   }
   if (config.schedulingMode === "TARGET_GAMES") {
     const target = Math.min(

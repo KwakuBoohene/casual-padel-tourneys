@@ -108,7 +108,7 @@ export function EstimatorFormFields(props: EstimatorFormFieldsProps) {
       ) : null}
       {props.schedulingMode === "ROUND_ROBIN" && showAmericanoScheduling ? (
         <Text style={{ color: colors.muted, fontSize: 13 }}>
-          Regular scheduling uses player count only — no target games or time limit.
+          Regular scheduling aims for everyone to face everyone once — no target games or time limit.
         </Text>
       ) : null}
     </View>

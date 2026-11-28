@@ -19,8 +19,10 @@ export function roundRobinRounds(input: {
     return Math.max(1, Math.ceil(totalMatches / matchesPerRound));
   }
   const matchesPerRound = Math.max(1, Math.min(input.courts, Math.floor(input.playersCount / 4)));
-  const partnerships = input.playersCount < 2 ? 2 : (input.playersCount * (input.playersCount - 1)) / 2;
-  return Math.max(1, Math.ceil(Math.ceil(partnerships / 2) / matchesPerRound));
+  // Classic round robin: everyone faces everyone once, which takes about (players - 1) / 2 games each.
+  const gamesEach = Math.max(1, Math.ceil((input.playersCount - 1) / 2));
+  const totalMatches = Math.ceil((input.playersCount * gamesEach) / 4);
+  return Math.max(1, Math.ceil(totalMatches / matchesPerRound));
 }
 
 export function computeEstimate(input: {

@@ -32,10 +32,10 @@ test("computeEstimate round robin counts matchups, not players", () => {
     playersCount: 8,
     scoringMode: "AMERICANO_POINTS"
   });
-  // C(8,2) = 28 partnerships, two per match => 14 matches over 2 courts = 7 rounds.
+  // 7 opponents each, two per match => 4 games each => 8 matches over 2 courts = 4 rounds.
   assert.ok(classic);
-  assert.equal(classic.rounds, 7);
-  assert.equal(classic.gamesPerPlayer, 7);
+  assert.equal(classic.rounds, 4);
+  assert.equal(classic.gamesPerPlayer, 4);
 
   const team = computeEstimate({
     courtsText: "2",

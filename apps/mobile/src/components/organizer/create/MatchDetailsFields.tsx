@@ -119,7 +119,7 @@ export function MatchDetailsFields(props: MatchDetailsFieldsProps) {
       ) : null}
       {!isMexicano && props.schedulingMode === "ROUND_ROBIN" ? (
         <Text style={{ color: colors.muted, fontSize: 13 }}>
-          Regular scheduling plays every pairing automatically — no games-per-player target.
+          Regular scheduling aims for everyone to face everyone once — no games-per-player target.
         </Text>
       ) : null}
 

@@ -122,7 +122,7 @@ export function TournamentOptionsStepView(props: TournamentOptionsStepViewProps)
             "Regular",
             props.variant === "TEAM"
               ? "Every team plays every team — no target games"
-              : "Everyone plays everyone — no target games",
+              : "Everyone faces everyone once — no target games",
             props.schedulingMode === "ROUND_ROBIN",
             () => props.onChangeSchedulingMode("ROUND_ROBIN")
           )}

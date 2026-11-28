@@ -9,6 +9,8 @@ export interface CreateDraftContextValue {
   canSave: boolean;
   saveDraft: () => void;
   requestLeave: () => void;
+  /** Set once the wizard is a saved draft: Create goes to the draft's start confirmation. */
+  finish: (() => Promise<void>) | null;
 }
 
 export const CreateDraftContext = createContext<CreateDraftContextValue | null>(null);

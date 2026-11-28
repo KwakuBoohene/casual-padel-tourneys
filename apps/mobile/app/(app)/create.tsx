@@ -1,14 +1,15 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { ActivityIndicator, BackHandler, View } from "react-native";
-import { Redirect, useLocalSearchParams } from "expo-router";
+import { Redirect, router, useLocalSearchParams } from "expo-router";
 import type { TournamentMode } from "@padel/shared";
 
 import { CreateDraftContext } from "../../src/components/organizer/create/CreateDraftContext";
 import { LeaveWizardSheet } from "../../src/components/organizer/create/LeaveWizardSheet";
+import { DraftConflictSheet } from "../../src/components/organizer/drafts/DraftConflictSheet";
 import { OrganizerCreateWizard } from "../../src/components/organizer/create/OrganizerCreateWizard";
 import { useOrganizerGa4 } from "../../src/components/analytics/OrganizerGa4";
 import { useCreateDraft } from "../../src/hooks/organizer/drafts/useCreateDraft";
-import { useCreateTournament } from "../../src/hooks/organizer/useCreateTournament";
+import { useCreateTournament, type CreateWizardStep } from "../../src/hooks/organizer/useCreateTournament";
 import { PageShell } from "../../src/layout";
 import { useOrganizerSession } from "../../src/providers/OrganizerSessionProvider";
 import { useTheme } from "../../src/theme/ThemeProvider";
@@ -21,11 +22,21 @@ function parseMode(value: string | string[] | undefined): TournamentMode | null 
   return null;
 }
 
+const STEPS: CreateWizardStep[] = ["NAME", "OPTIONS", "PLAYERS", "SETTINGS"];
+const parseStep = (value: string | string[] | undefined) => STEPS.find((step) => step === first(value));
+
 export default function CreateTournamentRoute() {
   const { colors } = useTheme();
   const org = useOrganizerSession();
   const sendAnalytics = useOrganizerGa4();
-  const params = useLocalSearchParams<{ mode?: string | string[]; draft?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    mode?: string | string[];
+    draft?: string | string[];
+    step?: string | string[];
+    from?: string | string[];
+  }>();
+  const draftParam = first(params.draft);
+  const fromOverview = Boolean(draftParam) && first(params.from) === "overview";
   const [boot, setBoot] = useState<"pending" | "ready" | "reject">("pending");
 
   const create = useCreateTournament({
@@ -40,14 +51,15 @@ export default function CreateTournamentRoute() {
   });
   const draft = useCreateDraft(create, {
     markEmailVerifyRequired: org.markEmailVerifyRequired,
-    setErrorText: org.setErrorText
+    setErrorText: org.setErrorText,
+    // Editing a section from the draft overview returns there (the overview refetches on focus).
+    exit: fromOverview && draftParam ? () => router.replace({ pathname: "/drafts/[id]", params: { id: draftParam } }) : undefined
   });
 
   useLayoutEffect(() => {
     org.setErrorText("");
-    const draftId = first(params.draft);
-    if (draftId) {
-      void draft.loadDraft(draftId).then((ok) => setBoot(ok ? "ready" : "reject"));
+    if (draftParam) {
+      void draft.loadDraft(draftParam, parseStep(params.step)).then((ok) => setBoot(ok ? "ready" : "reject"));
       return;
     }
     const intent = org.consumeCreateIntent();
@@ -81,9 +93,10 @@ export default function CreateTournamentRoute() {
       lastSavedAt: draft.lastSavedAt,
       canSave: draft.canSave,
       saveDraft: draft.saveDraft,
-      requestLeave: draft.requestLeave
+      requestLeave: draft.requestLeave,
+      finish: draft.finish
     }),
-    [draft.status, draft.lastSavedAt, draft.canSave, draft.saveDraft, draft.requestLeave]
+    [draft.status, draft.lastSavedAt, draft.canSave, draft.saveDraft, draft.requestLeave, draft.finish]
   );
 
   if (boot === "reject") {
@@ -104,6 +117,7 @@ export default function CreateTournamentRoute() {
         <OrganizerCreateWizard create={create} />
       </CreateDraftContext.Provider>
       <LeaveWizardSheet {...draft.leaveSheet} />
+      <DraftConflictSheet {...draft.conflictSheet} />
     </PageShell>
   );
 }

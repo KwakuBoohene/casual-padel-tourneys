@@ -1,10 +1,13 @@
 import type {
+  DraftPeople,
   DraftReadiness,
   DraftRole,
   TournamentDraftPayload,
   TournamentDraftSummary
 } from "@padel/shared";
 
+import type { KohTournamentHub } from "../types/koh/create";
+import type { LiveTournamentState } from "../types/organizer/tournament";
 import { apiDelete, apiGet, apiPatch, apiPost } from "./client";
 
 export interface DraftDetail {
@@ -36,3 +39,15 @@ export const updateDraft = (id: string, payload: TournamentDraftPayload, expecte
   );
 
 export const deleteDraft = (id: string) => apiDelete<{ ok: true }>(`/drafts/${encodeURIComponent(id)}`);
+
+/** Same `{ data }` as `POST /tournaments` (KOH: the hub), plus `alreadyStarted` for retries. */
+export interface StartDraftResponse {
+  data: LiveTournamentState | KohTournamentHub;
+  alreadyStarted: boolean;
+}
+
+export const startDraft = (id: string, expectedVersion: number) =>
+  apiPost<StartDraftResponse>(`/drafts/${encodeURIComponent(id)}/start`, { expectedVersion });
+
+export const getDraftPeople = (id: string) =>
+  apiGet<{ data: DraftPeople }>(`/drafts/${encodeURIComponent(id)}/people`).then((response) => response.data);

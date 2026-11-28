@@ -43,7 +43,10 @@ export default function TournamentsListRoute() {
         drafts={{
           own: drafts.own,
           shared: drafts.shared,
-          onOpen: (draft) => openDraft(draft.id),
+          onOpen: (draft) => {
+            org.setErrorText("");
+            router.push({ pathname: "/drafts/[id]", params: { id: draft.id } });
+          },
           onOpenOptions: drafts.options.open
         }}
         refreshing={org.listRefreshing}

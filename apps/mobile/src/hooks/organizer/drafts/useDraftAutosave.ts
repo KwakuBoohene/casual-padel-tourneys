@@ -85,5 +85,6 @@ export function useDraftAutosave({ payload, markEmailVerifyRequired }: Options) 
     return () => clearTimeout(timer);
   }, [draftId, dirty, json, status, saveNow]);
 
-  return { draftId, status, lastSavedAt, conflict, dirty, saveNow, adopt };
+  /** `baselineJson`: the payload as last saved or loaded — the "base" for conflict diffs. */
+  return { draftId, status, lastSavedAt, conflict, dirty, baselineJson: savedJson, saveNow, adopt };
 }

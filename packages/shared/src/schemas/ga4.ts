@@ -6,6 +6,8 @@ export const organizerGa4Feature = z.enum([
   "profile", "estimator", "organizer_access", "historical_results"
 ]);
 export const ga4Acquisition = z.enum(["direct", "google", "bing", "facebook", "instagram", "whatsapp", "other_referral"]);
+/** Draft lifecycle (epic 28). Counts only; never names, ids or payload contents. */
+export const ga4DraftAction = z.enum(["saved", "opened", "started", "conflict_reapplied", "conflict_dropped"]);
 export const ga4CreationStep = z.enum(["name", "options", "players", "scoring_mode", "settings", "pairing", "format", "deuce", "courts", "promotion", "assign", "review"]);
 const transport = {
   consent: z.literal(true),
@@ -20,13 +22,15 @@ const organizerActions = {
   page: { event: z.literal("page_view"), feature: organizerGa4Feature },
   start: { event: z.literal("creation_started") },
   step: { event: z.literal("creation_step_reached"), step: ga4CreationStep },
-  success: { event: z.literal("creation_succeeded") }
+  success: { event: z.literal("creation_succeeded") },
+  draft: { event: z.literal("draft_action"), action: ga4DraftAction }
 };
 export const organizerGa4Event = z.discriminatedUnion("event", [
   z.strictObject({ ...transport, ...organizerActions.page }),
   z.strictObject({ ...transport, ...organizerActions.start }),
   z.strictObject({ ...transport, ...organizerActions.step }),
-  z.strictObject({ ...transport, ...organizerActions.success })
+  z.strictObject({ ...transport, ...organizerActions.success }),
+  z.strictObject({ ...transport, ...organizerActions.draft })
 ]);
 export type ViewerGa4Event = z.infer<typeof viewerGa4Event>;
 export type OrganizerGa4Event = z.infer<typeof organizerGa4Event>;
@@ -35,6 +39,7 @@ export type OrganizerGa4Action = Action<OrganizerGa4Event>;
 export type ViewerGa4Action = Action<ViewerGa4Event>;
 export type Ga4Envelope = Pick<ViewerGa4Event, keyof typeof transport>;
 export type Ga4CreationStep = z.infer<typeof ga4CreationStep>;
+export type Ga4DraftAction = z.infer<typeof ga4DraftAction>;
 
 export function ga4Device(agent: string, touchPoints: number): ViewerGa4Event["device"] {
   if (/iPad|Tablet/i.test(agent) || (/Macintosh/i.test(agent) && touchPoints > 1)) return "tablet";

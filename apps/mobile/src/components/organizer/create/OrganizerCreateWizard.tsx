@@ -101,7 +101,7 @@ export function OrganizerCreateWizard({
       onBackToPlayers={() => create.setWizardStep("PLAYERS")}
       onBackToMode={() => create.setSettingsPhase("MODE")}
       onNextFromMode={() => create.setSettingsPhase("DETAILS")}
-      onCreate={() => void create.createTournament()}
+      onCreate={() => void (draft?.finish ? draft.finish() : create.createTournament())}
     />
   );
 }

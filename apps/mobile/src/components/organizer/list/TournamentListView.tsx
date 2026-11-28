@@ -1,18 +1,30 @@
 import { FlashList } from "@shopify/flash-list";
 import { RefreshControl, Text, View } from "react-native";
+import type { TournamentDraftSummary } from "@padel/shared";
 
 import { useBreakpoint } from "../../../layout";
-import { spacing } from "../../../theme";
+import { spacing, typography } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
 import type { LiveTournamentState } from "../../../types/organizer/tournament";
+import { buildTournamentListRows } from "../../../utilities/organizer/tournamentListRows";
 
+import { DraftListCard } from "./DraftListCard";
 import { TournamentListCard } from "./TournamentListCard";
 import { TournamentListCreateActions } from "./TournamentListCreateActions";
 import { TournamentListHeader } from "./TournamentListHeader";
 
+/** Draft rows above the tournaments; omitted while drafts haven't loaded. */
+export interface DraftListSection {
+  own: TournamentDraftSummary[];
+  shared: TournamentDraftSummary[];
+  onOpen: (draft: TournamentDraftSummary) => void;
+  onOpenOptions: (draft: TournamentDraftSummary) => void;
+}
+
 interface TournamentListViewProps {
   tournaments: LiveTournamentState[];
+  drafts?: DraftListSection;
   refreshing: boolean;
   onRefresh: () => void;
   onCreateAmericano: () => void;
@@ -25,39 +37,20 @@ interface TournamentListViewProps {
   onOpenAccountPlayers?: () => void;
 }
 
-type TournamentListRow = {
-  id: string;
-  tournament: LiveTournamentState;
-  status: "LIVE" | "COMPLETED";
-};
-
-function isActiveTournament(tournament: LiveTournamentState): boolean {
-  if (tournament.config.mode === "KING_OF_THE_COURT") return !tournament.endedAt;
-  if (tournament.config.mode === "MEXICANO") return !tournament.endedAt;
-  return !tournament.rounds.every((round) => round.matches.every((match) => match.completed));
-}
-
 export function TournamentListView(props: TournamentListViewProps) {
   const { colors } = useTheme();
   const { formMaxWidth } = useBreakpoint();
-
-  const rows: TournamentListRow[] = [
-    ...props.tournaments.filter(isActiveTournament).map((tournament) => ({
-      id: tournament.id,
-      tournament,
-      status: "LIVE" as const
-    })),
-    ...props.tournaments.filter((tournament) => !isActiveTournament(tournament)).map((tournament) => ({
-      id: tournament.id,
-      tournament,
-      status: "COMPLETED" as const
-    }))
-  ];
+  const rows = buildTournamentListRows({
+    tournaments: props.tournaments,
+    ownDrafts: props.drafts?.own ?? [],
+    sharedDrafts: props.drafts?.shared ?? []
+  });
 
   return (
     <FlashList
       data={rows}
       keyExtractor={(item) => item.id}
+      getItemType={(item) => item.type}
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={{
         paddingHorizontal: spacing.xl,
@@ -90,14 +83,32 @@ export function TournamentListView(props: TournamentListViewProps) {
         </View>
       }
       ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
-      renderItem={({ item }) => (
-        <TournamentListCard
-          tournament={item.tournament}
-          status={item.status}
-          onOpen={() => props.onOpenTournament(item.tournament.id)}
-          onOpenOptions={() => props.onOpenOptions(item.tournament.id)}
-        />
-      )}
+      renderItem={({ item }) => {
+        if (item.type === "label") {
+          return (
+            <Text style={[typography.label, { color: colors.muted, marginTop: spacing.sm }]} accessibilityRole="header">
+              {item.label}
+            </Text>
+          );
+        }
+        if (item.type === "draft") {
+          return (
+            <DraftListCard
+              draft={item.draft}
+              onOpen={() => props.drafts?.onOpen(item.draft)}
+              onOpenOptions={() => props.drafts?.onOpenOptions(item.draft)}
+            />
+          );
+        }
+        return (
+          <TournamentListCard
+            tournament={item.tournament}
+            status={item.status}
+            onOpen={() => props.onOpenTournament(item.tournament.id)}
+            onOpenOptions={() => props.onOpenOptions(item.tournament.id)}
+          />
+        );
+      }}
     />
   );
 }

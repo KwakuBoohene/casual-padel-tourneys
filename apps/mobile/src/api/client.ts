@@ -56,7 +56,8 @@ async function request<T>(path: string, method: string, payload?: unknown): Prom
         message: body.message ?? response.statusText,
         code: body.code,
         verifyBy: body.verifyBy,
-        status: response.status
+        status: response.status,
+        body
       });
       notifyAuthFailure(path, response.status, Boolean(token));
       if (body.code === "ORGANIZER_ACCESS_REVOKED") notifyOrganizerAccessLost();

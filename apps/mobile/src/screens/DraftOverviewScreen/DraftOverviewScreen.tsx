@@ -9,12 +9,11 @@ import { AlertSheet } from "../../components/sheets";
 import { useDraftOverview } from "../../hooks/organizer/drafts/useDraftOverview";
 import { useDraftSharing } from "../../hooks/organizer/drafts/useDraftSharing";
 import { useStartDraft } from "../../hooks/organizer/drafts/useStartDraft";
-import type { CreateWizardStep } from "../../hooks/organizer/useCreateTournament";
 import { useBreakpoint } from "../../layout";
 import { spacing, typography } from "../../theme";
 import { useTheme } from "../../theme/ThemeProvider";
 import { relativeTime } from "../../utilities/organizer/draftListLabels";
-import { draftOverviewSections } from "../../utilities/organizer/draftOverviewSections";
+import { draftOverviewSections, type DraftOverviewSection } from "../../utilities/organizer/draftOverviewSections";
 import { draftStartSummary, keepAccessLine } from "../../utilities/organizer/draftStart";
 
 import { DraftActions } from "./components/DraftActions";
@@ -32,7 +31,8 @@ export interface DraftOverviewScreenProps {
   sharingEnabled: boolean;
   viewer: { id?: string; email?: string | null };
   onBack: () => void;
-  onEditStep: (step: CreateWizardStep) => void;
+  /** Open the wizard (Americano/Mexicano or King of the Court) at this section. */
+  onEditSection: (section: DraftOverviewSection, kingOfTheCourt: boolean) => void;
   onStarted: (response: StartDraftResponse, draft: DraftDetail) => void;
   onOpenTournament: (tournamentId: string) => void;
 }
@@ -79,7 +79,7 @@ export function DraftOverviewScreen(props: DraftOverviewScreenProps) {
     );
   }
 
-  const editable = !isKohDraftPayload(draft.payload);
+  const kingOfTheCourt = isKohDraftPayload(draft.payload);
   const name = draft.name.trim() || "Untitled draft";
   const startedBy = draft.startedTournamentId;
   const canOpenStarted = draft.role !== "EDITOR" || draft.keepAccessAfterStart;
@@ -119,14 +119,9 @@ export function DraftOverviewScreen(props: DraftOverviewScreenProps) {
           <DraftSectionRow
             key={section.key}
             section={section}
-            onPress={editable ? () => props.onEditStep(section.step) : undefined}
+            onPress={startedBy ? undefined : () => props.onEditSection(section, kingOfTheCourt)}
           />
         ))}
-        {!editable ? (
-          <Text style={{ fontSize: 13, color: colors.muted }}>
-            Editing King of the Court drafts in the app is coming soon. You can still start it here.
-          </Text>
-        ) : null}
         <DraftCollaboratorsRow editors={overview.editors} onPress={openShare} />
       </ScrollView>
 

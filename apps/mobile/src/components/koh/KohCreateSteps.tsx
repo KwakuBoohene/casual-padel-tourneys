@@ -1,4 +1,5 @@
 import type { useKohCreateWizard } from "../../hooks/koh/useKohCreateWizard";
+import { useCreateDraftContext } from "../organizer/create/CreateDraftContext";
 
 import { KohAssignStep } from "./KohAssignStep";
 import { KohCourtsStep } from "./KohCourtsStep";
@@ -18,6 +19,8 @@ interface KohCreateStepsProps {
 export function KohCreateSteps(props: KohCreateStepsProps) {
   const { wizard } = props;
   const { draft, setDraft, stepIndex, stepCount } = wizard;
+  // Saved drafts finish on the overview's start confirmation instead of creating a second copy.
+  const drafts = useCreateDraftContext();
 
   if (wizard.step === "NAME") {
     return (
@@ -31,7 +34,7 @@ export function KohCreateSteps(props: KohCreateStepsProps) {
         onChangeContributeToCareerLeaderboard={(contributeToCareerLeaderboard) =>
           setDraft((prev) => ({ ...prev, contributeToCareerLeaderboard }))
         }
-        onBack={wizard.goBack}
+        onBack={drafts?.requestLeave ?? wizard.goBack}
         onNext={wizard.goNext}
       />
     );
@@ -124,7 +127,7 @@ export function KohCreateSteps(props: KohCreateStepsProps) {
       canStart={wizard.canStart}
       submitting={wizard.submitting}
       onBack={wizard.goBack}
-      onStart={() => void wizard.startTournament()}
+      onStart={() => void (drafts?.finish ? drafts.finish() : wizard.startTournament())}
     />
   );
 }

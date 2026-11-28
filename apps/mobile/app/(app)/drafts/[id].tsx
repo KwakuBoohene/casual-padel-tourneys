@@ -36,9 +36,13 @@ export default function DraftOverviewRoute() {
         sharingEnabled={account.enabled && !auth.currentUser?.isGuest}
         viewer={{ id: auth.currentUser?.id, email: auth.currentUser?.email }}
         onBack={backToList}
-        onEditStep={(step) => {
+        onEditSection={(section, kingOfTheCourt) => {
           org.setErrorText("");
-          router.replace({ pathname: "/create", params: { draft: draftId, step, from: "overview" } });
+          router.replace(
+            kingOfTheCourt
+              ? { pathname: "/koh", params: { draft: draftId, step: section.kohStep, from: "overview" } }
+              : { pathname: "/create", params: { draft: draftId, step: section.step, from: "overview" } }
+          );
         }}
         onStarted={(response, draft) => {
           // Same hand-off as the create flows, so the live screens open with the tournament cached.

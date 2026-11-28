@@ -1,5 +1,6 @@
 import { useOrganizerAccount } from "../../../src/providers/OrganizerAccountProvider";
 import { router } from "expo-router";
+import { isKingOfTheCourtMode } from "@padel/shared";
 
 import { DraftOptionsSheets } from "../../../src/components/organizer/list/DraftOptionsSheets";
 import { OrganizerListScreen } from "../../../src/components/organizer/list/OrganizerListScreen";
@@ -18,9 +19,10 @@ export default function TournamentsListRoute() {
   const auth = useAuthSessionContext();
   const drafts = useDraftList(auth.ready && Boolean(auth.authToken));
   const openDraft = (id: string) => {
+    const koh = isKingOfTheCourtMode(drafts.options.draft?.mode);
     drafts.options.close();
     org.setErrorText("");
-    router.push({ pathname: "/create", params: { draft: id } });
+    router.push({ pathname: koh ? "/koh" : "/create", params: { draft: id } });
   };
 
   const openListedTournament = (id: string, edit = false) => {

@@ -1,6 +1,7 @@
 import type { DraftReadiness, DraftReadinessItem } from "@padel/shared";
 
 import type { CreateWizardStep } from "../../hooks/organizer/useCreateTournament";
+import type { KohCreateStep } from "../../types/koh/create";
 
 export interface DraftOverviewSection {
   key: "setup" | "players" | "settings";
@@ -9,12 +10,16 @@ export interface DraftOverviewSection {
   value: string;
   missing: boolean;
   step: CreateWizardStep;
+  /** The King of the Court wizard step for the same section. */
+  kohStep: KohCreateStep;
 }
 
-const SECTIONS: { key: DraftOverviewSection["key"]; title: string; step: CreateWizardStep; items: DraftReadinessItem["key"][] }[] = [
-  { key: "setup", title: "Setup", step: "NAME", items: ["name", "format"] },
-  { key: "players", title: "Players", step: "PLAYERS", items: ["players"] },
-  { key: "settings", title: "Match settings", step: "SETTINGS", items: ["courts", "scoring"] }
+type SectionSpec = Pick<DraftOverviewSection, "key" | "title" | "step" | "kohStep"> & { items: DraftReadinessItem["key"][] };
+
+const SECTIONS: SectionSpec[] = [
+  { key: "setup", title: "Setup", step: "NAME", kohStep: "NAME", items: ["name", "format"] },
+  { key: "players", title: "Players", step: "PLAYERS", kohStep: "ASSIGN", items: ["players"] },
+  { key: "settings", title: "Match settings", step: "SETTINGS", kohStep: "FORMAT", items: ["courts", "scoring"] }
 ];
 
 /** Overview rows (Figma 04): each opens the wizard step that edits it. */
@@ -26,6 +31,7 @@ export function draftOverviewSections(readiness: DraftReadiness): DraftOverviewS
       key: section.key,
       title: section.title,
       step: section.step,
+      kohStep: section.kohStep,
       missing: Boolean(firstMissing),
       value: firstMissing ? firstMissing.label : items.map((item) => item.label).join(" · ")
     };

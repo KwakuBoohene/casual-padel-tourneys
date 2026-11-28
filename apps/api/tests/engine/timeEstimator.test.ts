@@ -169,9 +169,9 @@ test("estimateTournament ROUND_ROBIN mode - 8 players", () => {
 
   const result = estimateTournament(config);
 
-  // ROUND_ROBIN: rounds = players - 1 = 8 - 1 = 7
-  assert.equal(result.rounds, 7);
-  assert.equal(result.durationMinutes, 7 * 14);
+  // ROUND_ROBIN: 7 opponents, two per match => 4 games each => 8 matches over 2 courts.
+  assert.equal(result.rounds, 4);
+  assert.equal(result.durationMinutes, 4 * 14);
 });
 
 test("estimateTournament ROUND_ROBIN mode - 4 players", () => {
@@ -187,8 +187,8 @@ test("estimateTournament ROUND_ROBIN mode - 4 players", () => {
 
   const result = estimateTournament(config);
 
-  // ROUND_ROBIN: rounds = 4 - 1 = 3
-  assert.equal(result.rounds, 3);
+  // ROUND_ROBIN: 3 opponents, two per match => 2 games each => 2 matches on 1 court.
+  assert.equal(result.rounds, 2);
 });
 
 test("estimateTournament ROUND_ROBIN mode - minimum 1 round", () => {
@@ -221,11 +221,11 @@ test("estimateTournament ROUND_ROBIN mode - 16 players", () => {
 
   const result = estimateTournament(config);
 
-  // ROUND_ROBIN plays every partnership once: C(16,2) / 2 = 60 matches.
-  // Only 3 courts run at a time (the field could fill 4), so 60 / 3 = 20 rounds.
-  assert.equal(result.rounds, 20);
-  assert.equal(result.gamesPerPlayer, 15);
-  assert.equal(result.durationMinutes, Math.ceil(20 * matchTimeMinutes(32)));
+  // ROUND_ROBIN has everyone face the 15 others once: 8 games each = 32 matches.
+  // Only 3 courts run at a time (the field could fill 4), so ceil(32 / 3) = 11 rounds.
+  assert.equal(result.rounds, 11);
+  assert.equal(result.gamesPerPlayer, 8);
+  assert.equal(result.durationMinutes, Math.ceil(11 * matchTimeMinutes(32)));
 });
 
 test("estimateTournament ROUND_ROBIN needs more rounds when courts are scarce", () => {
@@ -239,10 +239,10 @@ test("estimateTournament ROUND_ROBIN needs more rounds when courts are scarce", 
     pointsPerMatch: 32
   };
 
-  // 60 matches either way; fewer courts just stretches them over more rounds.
-  assert.equal(estimateTournament(base).rounds, 15);
-  assert.equal(estimateTournament({ ...base, courts: 2 }).rounds, 30);
-  assert.equal(estimateTournament({ ...base, courts: 1 }).rounds, 60);
+  // 32 matches either way; fewer courts just stretches them over more rounds.
+  assert.equal(estimateTournament(base).rounds, 8);
+  assert.equal(estimateTournament({ ...base, courts: 2 }).rounds, 16);
+  assert.equal(estimateTournament({ ...base, courts: 1 }).rounds, 32);
 });
 
 test("estimateTournament ROUND_ROBIN counts pair matchups for TEAM variant", () => {

@@ -20,6 +20,8 @@ interface PairingReport {
   repeatedPartners: string[];
   repeatedOpponents: string[];
   mostMeetings: number;
+  /** Distinct pairs of players who meet across the net at least once. */
+  opponentPairs: number;
   matches: number;
 }
 
@@ -51,8 +53,13 @@ function pairingReport(rounds: Round[]): PairingReport {
     repeatedPartners: repeated(partners),
     repeatedOpponents: repeated(opponents),
     mostMeetings: Math.max(0, ...opponents.values()),
+    opponentPairs: opponents.size,
     matches
   };
+}
+
+function roundRobinConfig(playerCount: number, courts: number): TournamentConfig {
+  return { ...classicConfig(playerCount, courts, 4), schedulingMode: "ROUND_ROBIN", targetGamesPerPlayer: undefined };
 }
 
 function classicConfig(playerCount: number, courts: number, targetGamesPerPlayer: number): TournamentConfig {
@@ -87,17 +94,15 @@ test("16 players, 2 courts, 8 games: nobody partners the same person twice", () 
   }
 });
 
-test("16 players, 2 courts, 8 games: repeat opponents stay close to the unavoidable minimum", () => {
+test("16 players, 2 courts, 8 games: only the 8 unavoidable repeat opponents remain", () => {
   const { players, rounds } = generateTournament(classicConfig(16, 2, 8));
   const report = pairingReport(rounds);
 
-  // 16 opponent slots each but only 15 other players => at least 8 repeated pairs. The old
-  // scheduler produced 17.
-  assert.ok(report.mostMeetings <= 2, "no two players may face each other three times");
-  assert.ok(
-    report.repeatedOpponents.length <= 14,
-    `expected at most 14 repeated opponent pairs, got ${report.repeatedOpponents.length}`
-  );
+  // 16 opponent slots each but only 15 other players => exactly 8 repeated pairs is the
+  // mathematical minimum. The old scheduler produced 17.
+  assert.equal(report.mostMeetings, 2, "no two players may face each other three times");
+  assert.equal(report.repeatedOpponents.length, 8, "repeat opponents must hit the minimum");
+  assert.equal(report.opponentPairs, 120, "everyone must face everyone else at least once");
 
   const streaks = worstStreaks(rounds, players.map((player) => player.id));
   assert.ok(streaks.rest <= 2, "nobody sits out more than two rounds in a row");
@@ -144,5 +149,53 @@ test("recalculating after locked rounds keeps them intact and avoids repeat part
   assert.ok(maxGamesDelta(generated.players) <= 1, "games must stay balanced");
   for (const player of generated.players) {
     assert.equal(player.gamesPlayed, 8);
+  }
+});
+
+test("round robin for 16 players on 2 courts is 16 rounds with everyone facing everyone", () => {
+  const { players, rounds } = generateTournament(roundRobinConfig(16, 2));
+  const report = pairingReport(rounds);
+
+  assert.equal(rounds.length, 16);
+  assert.deepEqual(report.repeatedPartners, []);
+  assert.equal(report.opponentPairs, 120, "all 120 pairs of players must face each other");
+  assert.equal(report.repeatedOpponents.length, 8);
+  for (const player of players) {
+    assert.equal(player.gamesPlayed, 8);
+  }
+});
+
+test("round robin for 17 players on 2 courts has every pair face each other exactly once", () => {
+  const { players, rounds } = generateTournament(roundRobinConfig(17, 2));
+  const report = pairingReport(rounds);
+
+  assert.deepEqual(report.repeatedPartners, []);
+  assert.deepEqual(report.repeatedOpponents, []);
+  assert.equal(report.opponentPairs, (17 * 16) / 2);
+  assert.ok(maxGamesDelta(players) === 0);
+});
+
+for (const [playerCount, courts] of [[8, 1], [8, 2], [12, 2], [12, 3], [16, 3], [16, 4], [20, 5], [24, 3]]) {
+  test(`round robin for ${playerCount} players on ${courts} courts keeps games equal with no repeat partners`, () => {
+    const { players, rounds } = generateTournament(roundRobinConfig(playerCount, courts));
+    const report = pairingReport(rounds);
+    const expectedGames = Math.ceil((playerCount - 1) / 2);
+
+    assert.deepEqual(report.repeatedPartners, []);
+    assert.ok(report.mostMeetings <= 2, "nobody faces the same opponent three times");
+    for (const player of players) {
+      assert.equal(player.gamesPlayed, expectedGames);
+    }
+  });
+}
+
+test("every round of a cyclic schedule seats each player at most once", () => {
+  for (const [playerCount, courts, target] of [[16, 2, 8], [17, 2, 8], [20, 2, 8], [24, 3, 12], [16, 1, 4], [32, 4, 8]]) {
+    const { rounds } = generateTournament(classicConfig(playerCount, courts, target));
+    for (const round of rounds) {
+      const seated = round.matches.flatMap((match) => [...match.teamA, ...match.teamB]);
+      assert.equal(new Set(seated).size, seated.length, `round ${round.roundNumber} double-books a player`);
+      assert.equal(round.matches.length, courts);
+    }
   }
 });

@@ -134,3 +134,58 @@ test("with keep-access off, editors lose access once the draft starts", async ()
     assert.equal(rows, 0);
   });
 });
+
+test("a tournament editor cannot create tournaments in the owner's account", async () => {
+  await withApp(async (app) => {
+    const owner = await verifiedUser("plant-owner");
+    const editor = await verifiedUser("plant-editor");
+    const tournament = await startSharedDraft(app, owner, editor, true);
+    // Naming the shared tournament in an unrelated create body must not switch accounts.
+    const planted = await app.inject({
+      method: "POST",
+      url: "/tournaments",
+      headers: editor.auth,
+      payload: { ...DRAFT, name: "Planted", tournamentId: tournament.id, expectedVersion: tournament.version }
+    });
+    assert.equal(planted.statusCode, 200, planted.body);
+    assert.equal(planted.json().data.organizerId, editor.id);
+    const ownerList = await app.inject({ method: "GET", url: "/tournaments", headers: owner.auth });
+    assert.equal(
+      ownerList.json().data.some((entry: { id: string }) => entry.id === planted.json().data.id),
+      false
+    );
+  });
+});
+
+test("removing a co-organizer after start ends their access to the live tournament", async () => {
+  await withApp(async (app) => {
+    const owner = await verifiedUser("revoke-owner");
+    const editor = await verifiedUser("revoke-editor");
+    const other = await verifiedUser("revoke-other");
+    const tournament = await startSharedDraft(app, owner, editor, true);
+    const draft = await prisma.tournamentDraft.findFirstOrThrow({
+      where: { startedTournamentId: tournament.id }
+    });
+    const remove = (actor: User, userId: string) =>
+      app.inject({
+        method: "DELETE",
+        url: `/drafts/${draft.id}/collaborators/${userId}`,
+        headers: actor.auth
+      });
+
+    assert.equal((await remove(other, editor.id)).statusCode, 404, "strangers cannot revoke");
+    assert.equal((await remove(owner, editor.id)).statusCode, 200);
+    const read = await app.inject({
+      method: "GET",
+      url: `/tournaments/${tournament.id}`,
+      headers: editor.auth
+    });
+    assert.equal(read.statusCode, 404);
+    const list = await app.inject({ method: "GET", url: "/tournaments", headers: editor.auth });
+    assert.equal(
+      list.json().data.some((entry: { id: string }) => entry.id === tournament.id),
+      false
+    );
+    assert.equal((await remove(owner, editor.id)).statusCode, 404, "already removed");
+  });
+});

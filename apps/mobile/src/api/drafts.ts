@@ -8,7 +8,7 @@ import type {
 
 import type { KohTournamentHub } from "../types/koh/create";
 import type { LiveTournamentState } from "../types/organizer/tournament";
-import { apiDelete, apiGet, apiPatch, apiPost } from "./client";
+import { apiDelete, apiGet, apiPatch, apiPost, type RequestOptions } from "./client";
 
 export interface DraftDetail {
   id: string;
@@ -33,8 +33,13 @@ export const getDraft = (id: string) =>
 export const createDraft = (payload: TournamentDraftPayload) =>
   apiPost<{ data: DraftDetail }>("/drafts", { payload }).then((response) => response.data);
 
-export const updateDraft = (id: string, payload: TournamentDraftPayload, expectedVersion: number) =>
-  apiPatch<{ data: DraftDetail }>(`/drafts/${encodeURIComponent(id)}`, { payload, expectedVersion }).then(
+export const updateDraft = (
+  id: string,
+  payload: TournamentDraftPayload,
+  expectedVersion: number,
+  options?: RequestOptions
+) =>
+  apiPatch<{ data: DraftDetail }>(`/drafts/${encodeURIComponent(id)}`, { payload, expectedVersion }, options).then(
     (response) => response.data
   );
 

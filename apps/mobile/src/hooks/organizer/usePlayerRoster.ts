@@ -127,6 +127,8 @@ export function usePlayerRoster({
 
   return {
     players: teamMode ? sanitizedPlayers : players,
+    /** The individual roster as typed, whatever the variant (`players` is team members in Team mode). */
+    individualPlayers: players,
     playerGenders,
     teams,
     isFixedTeamMode: teamMode,

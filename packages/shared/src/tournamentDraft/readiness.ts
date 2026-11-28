@@ -4,6 +4,7 @@ import type { DraftRole, TournamentDraftPayload } from "../schemas/tournamentDra
 import type { TournamentMode, TournamentVariant } from "../types/domain.js";
 import { draftToCreateBodies, isKohDraftPayload } from "./createBodies.js";
 import {
+  americanoMexicanoCourtsItem,
   americanoMexicanoFormatItem,
   americanoMexicanoPlayersItem,
   americanoMexicanoScoringItem,
@@ -22,6 +23,8 @@ export interface DraftReadiness {
   blockingReason?: string;
 }
 
+const BLOCKING_ORDER: DraftReadinessItem["key"][] = ["name", "format", "players", "courts", "scoring"];
+
 function readinessItems(payload: TournamentDraftPayload): DraftReadinessItem[] {
   if (isKohDraftPayload(payload)) {
     return [
@@ -35,7 +38,7 @@ function readinessItems(payload: TournamentDraftPayload): DraftReadinessItem[] {
   return [
     nameItem(payload.name),
     americanoMexicanoFormatItem(payload),
-    courtsItem(payload.courts),
+    americanoMexicanoCourtsItem(payload),
     americanoMexicanoScoringItem(payload),
     americanoMexicanoPlayersItem(payload)
   ];
@@ -57,7 +60,10 @@ export function fullSchemaIssue(payload: TournamentDraftPayload): string | null 
 /** Pure: what's missing before this draft can start. */
 export function getDraftReadiness(payload: TournamentDraftPayload): DraftReadiness {
   const items = readinessItems(payload);
-  const firstMissing = items.find((item) => item.status === "missing");
+  // Report what's missing in the order the wizard asks for it (players before match settings).
+  const firstMissing = BLOCKING_ORDER.map((key) => items.find((item) => item.key === key && item.status === "missing")).find(
+    Boolean
+  );
   if (firstMissing) return { ready: false, items, blockingReason: firstMissing.label };
   const issue = fullSchemaIssue(payload);
   return issue ? { ready: false, items, blockingReason: issue } : { ready: true, items };

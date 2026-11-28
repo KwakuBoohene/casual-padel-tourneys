@@ -3,6 +3,7 @@ import type { Match, Player, Round } from "@padel/shared";
 import type { AmericanoVariant } from "./classicRoundSearch.js";
 import { RepeatLedger } from "./repeatLedger.js";
 import { withinStreakLimits, worstStreaks } from "./restStreaks.js";
+import { seededRandom } from "./seededRandom.js";
 
 /**
  * Rounds are built greedily, one court at a time, so late rounds inherit whatever pairings are
@@ -130,16 +131,4 @@ function restore(rounds: Round[], teams: Teams[]): void {
       match.teamA = teams[index].teamA;
       match.teamB = teams[index].teamB;
     });
-}
-
-/** Fixed-seed generator (mulberry32) so the same inputs always produce the same schedule. */
-function seededRandom(seed: number): () => number {
-  let state = seed >>> 0;
-  return () => {
-    state = (state + 0x6d2b79f5) >>> 0;
-    let t = state;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
 }

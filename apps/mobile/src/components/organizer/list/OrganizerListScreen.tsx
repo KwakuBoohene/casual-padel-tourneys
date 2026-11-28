@@ -22,6 +22,7 @@ interface OrganizerListScreenProps {
   onCreateMexicano: () => void;
   onCreateKingOfTheCourt: () => void;
   onOpenEstimator: () => void;
+  onImportPadelMix?: () => void;
   onOpenTournament: (id: string) => void;
   onOpenOptions: (id: string) => void;
   onOpenProfile: () => void;
@@ -51,6 +52,7 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
         onCreateMexicano={props.onCreateMexicano}
         onCreateKingOfTheCourt={props.onCreateKingOfTheCourt}
         onOpenEstimator={props.onOpenEstimator}
+        onImportPadelMix={props.onImportPadelMix}
         onOpenTournament={props.onOpenTournament}
         onOpenOptions={props.onOpenOptions}
         onOpenProfile={props.onOpenProfile}

@@ -31,6 +31,7 @@ interface TournamentListViewProps {
   onCreateMexicano: () => void;
   onCreateKingOfTheCourt: () => void;
   onOpenEstimator: () => void;
+  onImportPadelMix?: () => void;
   onOpenTournament: (id: string) => void;
   onOpenOptions: (id: string) => void;
   onOpenProfile?: () => void;
@@ -70,6 +71,7 @@ export function TournamentListView(props: TournamentListViewProps) {
             onCreateMexicano={props.onCreateMexicano}
             onCreateKingOfTheCourt={props.onCreateKingOfTheCourt}
             onOpenEstimator={props.onOpenEstimator}
+            onImportPadelMix={props.onImportPadelMix}
             onOpenAccountPlayers={props.onOpenAccountPlayers}
           />
         </View>

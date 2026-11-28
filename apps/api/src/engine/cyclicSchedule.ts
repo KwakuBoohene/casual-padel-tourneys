@@ -3,10 +3,10 @@ import type { Match, Player, Round } from "@padel/shared";
 
 import { findCyclicBase } from "./cyclicBase.js";
 import { repeatCost } from "./repeatLedger.js";
-import { worstStreaks } from "./restStreaks.js";
+import { gamesGaps, worstStreaks } from "./restStreaks.js";
 import type { ScheduleShape } from "./scheduleMath.js";
 
-/** At most this many games may separate two players part-way through a cyclic schedule. */
+/** A designed schedule may let two players drift this many games apart part-way through. */
 const MAX_PREFIX_DELTA = 2;
 
 /**
@@ -25,7 +25,7 @@ export function buildCyclicRounds(players: Player[], shape: ScheduleShape): Roun
   }
   const copiesPerRound = courts / baseMatches;
   const found = findCyclicBase({ playerCount: n, baseMatches, copiesPerRound });
-  if (!found || found.quality.prefixDelta > MAX_PREFIX_DELTA) {
+  if (!found) {
     return null;
   }
 
@@ -52,11 +52,21 @@ export function buildCyclicRounds(players: Player[], shape: ScheduleShape): Roun
   });
 }
 
-/** The cyclic design wins only when it repeats fewer pairings and nobody sits out longer. */
-export function preferCyclic(cyclic: Round[], searched: Round[], players: Player[]): boolean {
+/**
+ * A designed schedule wins outright when it is the only one of the two that finishes with
+ * everyone on the same number of games. Otherwise it must repeat fewer pairings without making
+ * anyone sit out longer or letting game counts drift further apart along the way.
+ */
+export function preferDesigned(designed: Round[], searched: Round[], players: Player[]): boolean {
   const playerIds = players.map((player) => player.id);
+  const designedGaps = gamesGaps(designed, playerIds);
+  const searchedGaps = gamesGaps(searched, playerIds);
+  if (searchedGaps.final > 1 && designedGaps.final === 0) {
+    return true;
+  }
   return (
-    repeatCost(cyclic) < repeatCost(searched) &&
-    worstStreaks(cyclic, playerIds).rest <= worstStreaks(searched, playerIds).rest
+    repeatCost(designed) < repeatCost(searched) &&
+    worstStreaks(designed, playerIds).rest <= worstStreaks(searched, playerIds).rest &&
+    designedGaps.worst <= Math.max(MAX_PREFIX_DELTA, searchedGaps.worst)
   );
 }

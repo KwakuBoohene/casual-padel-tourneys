@@ -69,6 +69,10 @@ export default function TournamentsListRoute() {
           router.push("/koh");
         }}
         onOpenEstimator={() => router.push("/estimator")}
+        onImportPadelMix={() => {
+          org.setErrorText("");
+          router.push("/import-padelmix");
+        }}
         onOpenTournament={(id) => openListedTournament(id)}
         onOpenOptions={org.openTournamentOptions}
         onOpenProfile={() => router.push("/profile")}

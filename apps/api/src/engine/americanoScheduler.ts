@@ -3,7 +3,8 @@ import type { FixedPair, Player, Round, TournamentConfig } from "@padel/shared";
 
 import { refineClassicRounds } from "./classicScheduleRefiner.js";
 import { buildRound } from "./constraintSolver.js";
-import { buildCyclicRounds, preferCyclic } from "./cyclicSchedule.js";
+import { buildMixedBlockRounds } from "./mixedBlockSchedule.js";
+import { buildCyclicRounds, preferDesigned } from "./cyclicSchedule.js";
 import { createClassicPairingMatrices, seedClassicMatricesFromRounds } from "./pairingMatrices.js";
 import { classicScheduleShape, courtsPerRound, type ScheduleShape } from "./scheduleMath.js";
 import {
@@ -96,18 +97,19 @@ function buildRounds(
   const shape = classicScheduleShape(config, players.length);
   const searched = searchRounds(config, players, shape, seedRounds, roundLimit);
 
-  // A cyclic design needs a clean slate: the full field, nothing played, nobody joining late.
+  // A designed schedule needs a clean slate: the full field, nothing played, nobody joining late.
   const freshStart =
-    config.variant === "CLASSIC" &&
-    seedRounds.length === 0 &&
-    roundLimit === undefined &&
-    players.every((player) => !player.handicap);
-  const cyclic = freshStart ? buildCyclicRounds(players, shape) : null;
-  if (cyclic && preferCyclic(cyclic, searched, players)) {
+    seedRounds.length === 0 && roundLimit === undefined && players.every((player) => !player.handicap);
+  const designed = !freshStart
+    ? null
+    : config.variant === "MIXED"
+      ? buildMixedBlockRounds(players, shape)
+      : buildCyclicRounds(players, shape);
+  if (designed && preferDesigned(designed, searched, players)) {
     for (const player of players) {
-      player.gamesPlayed += countGamesInRounds(player.id, cyclic) - countGamesInRounds(player.id, searched);
+      player.gamesPlayed += countGamesInRounds(player.id, designed) - countGamesInRounds(player.id, searched);
     }
-    return cyclic;
+    return designed;
   }
   return searched;
 }

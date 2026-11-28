@@ -19,10 +19,22 @@ export function roundRobinRounds(input: {
     return Math.max(1, Math.ceil(totalMatches / matchesPerRound));
   }
   const matchesPerRound = Math.max(1, Math.min(input.courts, Math.floor(input.playersCount / 4)));
-  // Classic round robin: everyone faces everyone once, which takes about (players - 1) / 2 games each.
-  const gamesEach = Math.max(1, Math.ceil((input.playersCount - 1) / 2));
+  const gamesEach = roundRobinGames(input.variant, input.playersCount);
   const totalMatches = Math.ceil((input.playersCount * gamesEach) / 4);
   return Math.max(1, Math.ceil(totalMatches / matchesPerRound));
+}
+
+/**
+ * Classic: everyone faces everyone once, about (players - 1) / 2 games each. Mixed: everyone
+ * partners each player of the opposite gender once (one fewer when that count is odd, so the
+ * matches divide evenly). Keep in sync with the API's `roundRobinGames`.
+ */
+function roundRobinGames(variant: TournamentVariant, playersCount: number): number {
+  if (variant === "MIXED") {
+    const perGender = Math.floor(playersCount / 2);
+    return Math.max(1, perGender % 2 === 0 ? perGender : perGender - 1);
+  }
+  return Math.max(1, Math.ceil((playersCount - 1) / 2));
 }
 
 export function computeEstimate(input: {

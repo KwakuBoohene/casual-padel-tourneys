@@ -199,3 +199,139 @@ test("every round of a cyclic schedule seats each player at most once", () => {
     }
   }
 });
+
+// ========== Mixed Americano ==========
+
+function mixedConfig(
+  perGender: number,
+  courts: number,
+  target: number | "ROUND_ROBIN"
+): TournamentConfig {
+  const players = [
+    ...Array.from({ length: perGender }, (_, i) => ({ name: `M${i + 1}`, gender: "MALE" as const })),
+    ...Array.from({ length: perGender }, (_, i) => ({ name: `F${i + 1}`, gender: "FEMALE" as const }))
+  ];
+  return {
+    name: "Mixed repeat pairings",
+    mode: "AMERICANO",
+    variant: "MIXED",
+    schedulingMode: target === "ROUND_ROBIN" ? "ROUND_ROBIN" : "TARGET_GAMES",
+    players,
+    courts,
+    pointsPerMatch: 16,
+    targetGamesPerPlayer: target === "ROUND_ROBIN" ? undefined : target
+  };
+}
+
+function assertEveryTeamIsMixed(generated: ReturnType<typeof generateTournament>): void {
+  const genderById = new Map(generated.players.map((player) => [player.id, player.gender]));
+  for (const round of generated.rounds) {
+    const seated = round.matches.flatMap((match) => [...match.teamA, ...match.teamB]);
+    assert.equal(new Set(seated).size, seated.length, `round ${round.roundNumber} double-books a player`);
+    for (const match of round.matches) {
+      for (const team of [match.teamA, match.teamB]) {
+        assert.notEqual(genderById.get(team[0]), genderById.get(team[1]), "each team is one man and one woman");
+      }
+    }
+  }
+}
+
+test("mixed 8 men + 8 women, 2 courts, 8 games: everyone partners all 8 of the opposite gender once", () => {
+  const generated = generateTournament(mixedConfig(8, 2, 8));
+  const report = pairingReport(generated.rounds);
+
+  assertEveryTeamIsMixed(generated);
+  assert.deepEqual(report.repeatedPartners, []);
+  assert.equal(report.mostMeetings, 2, "nobody faces the same opponent three times");
+  // The old scheduler repeated 34 opponent meetings here; 8 is the mathematical minimum.
+  assert.ok(report.repeatedOpponents.length <= 14, `got ${report.repeatedOpponents.length} repeated opponent pairs`);
+  for (const player of generated.players) {
+    assert.equal(player.gamesPlayed, 8);
+  }
+});
+
+for (const perGender of [4, 6, 8, 10, 12]) {
+  for (const courts of [1, 2, 3, 4]) {
+    for (const target of [4, 6, 8, "ROUND_ROBIN"] as const) {
+      const games = target === "ROUND_ROBIN" ? perGender : target;
+      if (games > perGender || courts * 2 > perGender) {
+        continue;
+      }
+      test(`mixed ${perGender}+${perGender}, ${courts} courts, ${target} games: no repeat partners, equal games`, () => {
+        const generated = generateTournament(mixedConfig(perGender, courts, target));
+        const report = pairingReport(generated.rounds);
+
+        assertEveryTeamIsMixed(generated);
+        assert.deepEqual(report.repeatedPartners, []);
+        assert.ok(report.mostMeetings <= 2, "nobody faces the same opponent three times");
+        for (const player of generated.players) {
+          assert.equal(player.gamesPlayed, games);
+        }
+      });
+    }
+  }
+}
+
+for (const perGender of [5, 7, 9, 11]) {
+  for (const courts of [1, 2]) {
+    test(`mixed round robin with ${perGender}+${perGender} on ${courts} courts skips one partner each and never repeats`, () => {
+      const generated = generateTournament(mixedConfig(perGender, courts, "ROUND_ROBIN"));
+      const report = pairingReport(generated.rounds);
+
+      assertEveryTeamIsMixed(generated);
+      assert.deepEqual(report.repeatedPartners, []);
+      for (const player of generated.players) {
+        assert.equal(player.gamesPlayed, perGender - 1);
+      }
+    });
+  }
+}
+
+test("mixed schedules are deterministic", () => {
+  const first = shapeOf(generateTournament(mixedConfig(8, 2, 8)));
+  const second = shapeOf(generateTournament(mixedConfig(8, 2, 8)));
+  assert.deepEqual(first, second);
+});
+
+// ========== Team Americano ==========
+
+function teamConfig(teamCount: number, courts: number, target: number | "ROUND_ROBIN"): TournamentConfig {
+  const teams = Array.from({ length: teamCount }, (_, index) => ({
+    playerA: { name: `T${index + 1}a` },
+    playerB: { name: `T${index + 1}b` },
+    name: `Team ${index + 1}`
+  }));
+  return {
+    name: "Team repeat pairings",
+    mode: "AMERICANO",
+    variant: "TEAM",
+    schedulingMode: target === "ROUND_ROBIN" ? "ROUND_ROBIN" : "TARGET_GAMES",
+    players: teams.flatMap((team) => [team.playerA, team.playerB]),
+    teams,
+    courts,
+    pointsPerMatch: 16,
+    targetGamesPerPlayer: target === "ROUND_ROBIN" ? undefined : target
+  };
+}
+
+for (const teamCount of [4, 5, 6, 7, 8, 9, 10, 12, 16]) {
+  for (const courts of [1, 2, 3, 4]) {
+    for (const target of [3, 5, 7, "ROUND_ROBIN"] as const) {
+      if (courts * 2 > teamCount || (target !== "ROUND_ROBIN" && target > teamCount - 1)) {
+        continue;
+      }
+      test(`team ${teamCount} teams, ${courts} courts, ${target} games: no team meets another twice`, () => {
+        const { players, rounds } = generateTournament(teamConfig(teamCount, courts, target));
+        const meetings = new Map<string, number>();
+        for (const round of rounds) {
+          for (const match of round.matches) {
+            const key = [[...match.teamA].sort().join("+"), [...match.teamB].sort().join("+")].sort().join(" v ");
+            meetings.set(key, (meetings.get(key) ?? 0) + 1);
+          }
+        }
+        assert.deepEqual([...meetings].filter(([, count]) => count > 1), []);
+        assert.ok(maxGamesDelta(players) <= 1, "teams finish within one game of each other");
+      });
+    }
+  }
+}

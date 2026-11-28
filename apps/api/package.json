@@ -41,6 +41,6 @@
     "eslint-plugin-boundaries": "7.4.2",
     "prisma": "6.19.2",
     "tsx": "4.23.15",
-    "typescript-eslint": "8.72.1"
+    "typescript-eslint": "8.74.0"
   }
 }

@@ -21,6 +21,11 @@ export interface TournamentEvents {
   publish(event: TournamentEvent): Promise<void>;
 }
 
+/** Reads a public PadelMix tournament by its share code. Returns the raw, unvalidated payload. */
+export interface PadelMixSource {
+  fetchTournament(code: string): Promise<unknown>;
+}
+
 export type TournamentModuleDeps = {
   repo: TournamentRepository;
   events: TournamentEvents;

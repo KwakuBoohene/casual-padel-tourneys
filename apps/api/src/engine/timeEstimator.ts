@@ -36,6 +36,19 @@ export function classicRoundRobinGames(playersCount: number): number {
 }
 
 /**
+ * Mixed round robin: partner everyone of the opposite gender once. With an odd number of men
+ * and women the matches would not divide evenly, so everyone skips one partner instead.
+ */
+export function mixedRoundRobinGames(playersCount: number): number {
+  const perGender = Math.floor(playersCount / 2);
+  return Math.max(1, perGender % 2 === 0 ? perGender : perGender - 1);
+}
+
+export function roundRobinGames(variant: TournamentConfig["variant"], playersCount: number): number {
+  return variant === "MIXED" ? mixedRoundRobinGames(playersCount) : classicRoundRobinGames(playersCount);
+}
+
+/**
  * A round robin is defined by how many matchups exist, not by player count: with fewer courts
  * than the field can fill at once it simply takes more rounds to play them all.
  */
@@ -47,7 +60,7 @@ export function roundRobinRounds(config: TournamentConfig, playersCount: number)
     return Math.max(1, Math.ceil(totalMatches / matchesPerRound));
   }
   const matchesPerRound = Math.max(1, Math.min(config.courts, Math.floor(playersCount / 4)));
-  const totalMatches = Math.ceil((playersCount * classicRoundRobinGames(playersCount)) / 4);
+  const totalMatches = Math.ceil((playersCount * roundRobinGames(config.variant, playersCount)) / 4);
   return Math.max(1, Math.ceil(totalMatches / matchesPerRound));
 }
 

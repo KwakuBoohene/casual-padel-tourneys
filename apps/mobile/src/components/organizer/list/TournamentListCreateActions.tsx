@@ -8,6 +8,7 @@ interface TournamentListCreateActionsProps {
   onCreateMexicano: () => void;
   onCreateKingOfTheCourt: () => void;
   onOpenEstimator: () => void;
+  onImportPadelMix?: () => void;
   onOpenAccountPlayers?: () => void;
 }
 
@@ -85,6 +86,16 @@ export function TournamentListCreateActions(props: TournamentListCreateActionsPr
       >
         <Text style={{ color: colors.text, fontWeight: "600", fontSize: 15 }}>Game Estimator</Text>
       </Pressable>
+      {props.onImportPadelMix ? (
+        <Pressable
+          onPress={props.onImportPadelMix}
+          style={{ ...secondary, minHeight: touch.minSecondary }}
+          accessibilityRole="button"
+          accessibilityLabel="Import from PadelMix"
+        >
+          <Text style={{ color: colors.text, fontWeight: "600", fontSize: 15 }}>Import from PadelMix</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }

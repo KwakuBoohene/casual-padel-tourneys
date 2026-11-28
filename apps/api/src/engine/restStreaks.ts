@@ -40,3 +40,20 @@ export function withinStreakLimits(rounds: Round[], playerIds: string[], limits:
     return streaks.rest <= limits.rest && streaks.play <= limits.play;
   });
 }
+
+/** Largest gap in games played between any two players after any round, and after the last one. */
+export function gamesGaps(rounds: Round[], playerIds: string[]): { worst: number; final: number } {
+  const games = new Map(playerIds.map((playerId) => [playerId, 0]));
+  let worst = 0;
+  let final = 0;
+  for (const round of rounds) {
+    for (const match of round.matches) {
+      for (const playerId of [...match.teamA, ...match.teamB]) {
+        games.set(playerId, (games.get(playerId) ?? 0) + 1);
+      }
+    }
+    final = Math.max(...games.values()) - Math.min(...games.values());
+    worst = Math.max(worst, final);
+  }
+  return { worst, final };
+}

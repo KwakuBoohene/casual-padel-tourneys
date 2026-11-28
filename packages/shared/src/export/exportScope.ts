@@ -17,3 +17,18 @@ export function parseExportScope(value: string | undefined): ExportScope {
   }
   return scope;
 }
+
+/**
+ * Tournament exports add `schedule`: the printable round-by-round matchups. Kept apart from
+ * {@link ExportScope} so the career export does not start accepting a scope it cannot serve.
+ */
+export const TOURNAMENT_EXPORT_SCOPES = [...EXPORT_SCOPES, "schedule"] as const;
+export type TournamentExportScope = (typeof TOURNAMENT_EXPORT_SCOPES)[number];
+
+export function parseTournamentExportScope(value: string | undefined): TournamentExportScope {
+  const scope = (value ?? "full").toLowerCase();
+  if (!(TOURNAMENT_EXPORT_SCOPES as readonly string[]).includes(scope)) {
+    throw new Error(`Unsupported export scope. Supported: ${TOURNAMENT_EXPORT_SCOPES.join(", ")}.`);
+  }
+  return scope as TournamentExportScope;
+}

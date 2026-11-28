@@ -81,6 +81,11 @@ model User {
   magicLinkTokens        MagicLinkToken[]
   opaqueRecord           OpaqueRecord?
   organizerPlayers       OrganizerPlayer[]
+  ownedDrafts            TournamentDraft[] @relation("DraftOwner")
+  createdDrafts          TournamentDraft[] @relation("DraftCreatedBy")
+  updatedDrafts          TournamentDraft[] @relation("DraftUpdatedBy")
+  draftCollaborations    DraftCollaborator[]
+  tournamentCollaborations TournamentCollaborator[]
   @@index([createdAt, id])
 }
 
@@ -154,6 +159,7 @@ model Tournament {
   pendingPlayers        PendingPlayer[]
   kohCourts             KohCourt[]
   kohPromotionRules     KohPromotionRule[]
+  collaborators         TournamentCollaborator[]
   @@index([createdAt, id])
   @@index([organizerId, createdAt, id])
 }
@@ -562,4 +568,88 @@ model UsageDay {
 model UsageCoverage {
   source    String @id
   startedAt DateTime @default(now())
+}
+
+/**
+ * Tournament setup saved before start. Payload = partial create body (`tournamentDraftPayloadSchema`).
+ * Never visible on /public routes; starting it runs the normal create path.
+ */
+model TournamentDraft {
+  id                   String         @id @default(cuid())
+  organizerId          String
+  /** Denormalized from payload for list queries. */
+  name                 String         @default("")
+  mode                 TournamentMode
+  payload              Json
+  version              Int            @default(0)
+  keepAccessAfterStart Boolean        @default(true)
+  createdById          String?
+  updatedById          String?
+  startedTournamentId  String?        @unique
+  deletedAt            DateTime?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  organizer            User           @relation("DraftOwner", fields: [organizerId], references: [id], onDelete: Cascade)
+  createdBy            User?          @relation("DraftCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy            User?          @relation("DraftUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  collaborators        DraftCollaborator[]
+  invitations          DraftInvitation[]
+
+  @@index([organizerId, deletedAt, startedTournamentId, updatedAt])
+}
+
+/** Per-draft co-organizer (EDITOR). Account managers don't need a row. */
+model DraftCollaborator {
+  id          String          @id @default(cuid())
+  draftId     String
+  userId      String
+  role        String          @default("EDITOR")
+  invitedById String?
+  createdAt   DateTime        @default(now())
+  revokedAt   DateTime?
+  revokedById String?
+  draft       TournamentDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([draftId, userId])
+  @@index([userId, revokedAt])
+}
+
+/** Email invite to edit one draft. Only the SHA-256 of the token is stored. */
+model DraftInvitation {
+  id                     String          @id @default(cuid())
+  draftId                String
+  invitedEmailNormalized String
+  invitedById            String
+  tokenHash              String          @unique
+  createdAt              DateTime        @default(now())
+  expiresAt              DateTime
+  acceptedAt             DateTime?
+  acceptedByUserId       String?
+  declinedAt             DateTime?
+  revokedAt              DateTime?
+  deliveryStatus         String          @default("PENDING")
+  lastSentAt             DateTime?
+  sendAttempts           Int             @default(0)
+  draft                  TournamentDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  @@index([draftId, invitedEmailNormalized])
+}
+
+/**
+ * Draft editor who kept live-control access after start (`keepAccessAfterStart`).
+ * Grants `manage` on this tournament only — never delete, never other events.
+ */
+model TournamentCollaborator {
+  id            String     @id @default(cuid())
+  tournamentId  String
+  userId        String
+  sourceDraftId String?
+  createdAt     DateTime   @default(now())
+  revokedAt     DateTime?
+  tournament    Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, userId])
+  @@index([userId, revokedAt])
 }

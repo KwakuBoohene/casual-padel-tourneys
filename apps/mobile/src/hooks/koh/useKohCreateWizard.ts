@@ -89,6 +89,7 @@ export function useKohCreateWizard(params: UseKohCreateWizardParams) {
     draft,
     setDraft,
     step,
+    setStep,
     steps,
     stepIndex,
     stepCount: steps.length,

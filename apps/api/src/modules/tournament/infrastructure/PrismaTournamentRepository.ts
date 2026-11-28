@@ -52,6 +52,15 @@ export class PrismaTournamentRepository implements TournamentRepository {
     return rows.map((row) => mapDbTournamentToState(row as DbTournamentGraph));
   }
 
+  async listCollaborating(userId: string): Promise<TournamentState[]> {
+    const rows = await prisma.tournament.findMany({
+      where: { collaborators: { some: { userId, revokedAt: null } } },
+      include: tournamentInclude,
+      orderBy: { createdAt: "desc" }
+    });
+    return rows.map((row) => mapDbTournamentToState(row as DbTournamentGraph));
+  }
+
   async create(state: TournamentState): Promise<void> {
     await prisma.tournament.create({
       data: {

@@ -1,7 +1,11 @@
 import { useOrganizerAccount } from "../../../src/providers/OrganizerAccountProvider";
 import { router } from "expo-router";
+import { isKingOfTheCourtMode } from "@padel/shared";
 
+import { DraftOptionsSheets } from "../../../src/components/organizer/list/DraftOptionsSheets";
 import { OrganizerListScreen } from "../../../src/components/organizer/list/OrganizerListScreen";
+import { useDraftList } from "../../../src/hooks/organizer/drafts/useDraftList";
+import { useAuthSessionContext } from "../../../src/providers/AuthSessionProvider";
 import { PageShell } from "../../../src/layout";
 import { useOrganizerSession } from "../../../src/providers/OrganizerSessionProvider";
 import {
@@ -12,6 +16,14 @@ import {
 export default function TournamentsListRoute() {
   const org = useOrganizerSession();
   const account = useOrganizerAccount();
+  const auth = useAuthSessionContext();
+  const drafts = useDraftList(auth.ready && Boolean(auth.authToken));
+  const openDraft = (id: string) => {
+    const koh = isKingOfTheCourtMode(drafts.options.draft?.mode);
+    drafts.options.close();
+    org.setErrorText("");
+    router.push({ pathname: koh ? "/koh" : "/create", params: { draft: id } });
+  };
 
   const openListedTournament = (id: string, edit = false) => {
     const listed = org.tournaments.find((item) => item.id === id);
@@ -30,13 +42,25 @@ export default function TournamentsListRoute() {
       <OrganizerListScreen
         canDelete={account.selected?.capabilities.deleteTournament}
         tournaments={org.tournaments}
+        drafts={{
+          own: drafts.own,
+          shared: drafts.shared,
+          onOpen: (draft) => {
+            org.setErrorText("");
+            router.push({ pathname: "/drafts/[id]", params: { id: draft.id } });
+          },
+          onOpenOptions: drafts.options.open
+        }}
         refreshing={org.listRefreshing}
         actionSaving={org.tournamentActionSaving}
         showTournamentOptionsModal={org.showTournamentOptionsModal}
         showTournamentActionConfirmModal={org.showTournamentActionConfirmModal}
         showCareerDeleteModal={org.showCareerDeleteModal}
         pendingTournamentAction={org.pendingTournamentAction}
-        onRefresh={() => void org.loadTournaments()}
+        onRefresh={() => {
+          void org.loadTournaments();
+          void drafts.refresh();
+        }}
         onCreateAmericano={() => org.beginCreate({ kind: "mode", mode: "AMERICANO" })}
         onCreateMexicano={() => org.beginCreate({ kind: "mode", mode: "MEXICANO" })}
         onCreateKingOfTheCourt={() => {
@@ -75,6 +99,7 @@ export default function TournamentsListRoute() {
         onRemoveFromLeaderboard={() => void org.confirmCareerDelete(true)}
         onKeepOnLeaderboard={() => void org.confirmCareerDelete(false)}
       />
+      <DraftOptionsSheets options={drafts.options} onContinueEditing={openDraft} />
     </PageShell>
   );
 }

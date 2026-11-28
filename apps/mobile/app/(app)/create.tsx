@@ -1,26 +1,42 @@
-import { useLayoutEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
-import { Redirect, useLocalSearchParams } from "expo-router";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { ActivityIndicator, BackHandler, View } from "react-native";
+import { Redirect, router, useLocalSearchParams } from "expo-router";
 import type { TournamentMode } from "@padel/shared";
 
+import { CreateDraftContext } from "../../src/components/organizer/create/CreateDraftContext";
+import { LeaveWizardSheet } from "../../src/components/organizer/create/LeaveWizardSheet";
+import { DraftConflictSheet } from "../../src/components/organizer/drafts/DraftConflictSheet";
 import { OrganizerCreateWizard } from "../../src/components/organizer/create/OrganizerCreateWizard";
 import { useOrganizerGa4 } from "../../src/components/analytics/OrganizerGa4";
-import { useCreateTournament } from "../../src/hooks/organizer/useCreateTournament";
+import { useCreateDraft } from "../../src/hooks/organizer/drafts/useCreateDraft";
+import { useCreateTournament, type CreateWizardStep } from "../../src/hooks/organizer/useCreateTournament";
 import { PageShell } from "../../src/layout";
 import { useOrganizerSession } from "../../src/providers/OrganizerSessionProvider";
 import { useTheme } from "../../src/theme/ThemeProvider";
 
+const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
+
 function parseMode(value: string | string[] | undefined): TournamentMode | null {
-  const raw = Array.isArray(value) ? value[0] : value;
+  const raw = first(value);
   if (raw === "AMERICANO" || raw === "MEXICANO") return raw;
   return null;
 }
+
+const STEPS: CreateWizardStep[] = ["NAME", "OPTIONS", "PLAYERS", "SETTINGS"];
+const parseStep = (value: string | string[] | undefined) => STEPS.find((step) => step === first(value));
 
 export default function CreateTournamentRoute() {
   const { colors } = useTheme();
   const org = useOrganizerSession();
   const sendAnalytics = useOrganizerGa4();
-  const params = useLocalSearchParams<{ mode?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    mode?: string | string[];
+    draft?: string | string[];
+    step?: string | string[];
+    from?: string | string[];
+  }>();
+  const draftParam = first(params.draft);
+  const fromOverview = Boolean(draftParam) && first(params.from) === "overview";
   const [boot, setBoot] = useState<"pending" | "ready" | "reject">("pending");
 
   const create = useCreateTournament({
@@ -33,9 +49,19 @@ export default function CreateTournamentRoute() {
       sendAnalytics({ event: "creation_succeeded" });
     }
   });
+  const draft = useCreateDraft(create, {
+    markEmailVerifyRequired: org.markEmailVerifyRequired,
+    setErrorText: org.setErrorText,
+    // Editing a section from the draft overview returns there (the overview refetches on focus).
+    exit: fromOverview && draftParam ? () => router.replace({ pathname: "/drafts/[id]", params: { id: draftParam } }) : undefined
+  });
 
   useLayoutEffect(() => {
     org.setErrorText("");
+    if (draftParam) {
+      void draft.loadDraft(draftParam, parseStep(params.step)).then((ok) => setBoot(ok ? "ready" : "reject"));
+      return;
+    }
     const intent = org.consumeCreateIntent();
     const mode = parseMode(params.mode);
     let started = true;
@@ -47,9 +73,31 @@ export default function CreateTournamentRoute() {
     // initializer (Strict Mode would consume it twice). A layout effect commits before paint.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setBoot(started ? "ready" : "reject");
-    // Boot once from intent / ?mode= on mount.
+    // Boot once from draft / intent / ?mode= on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Android hardware back: offer "Save as draft?" instead of silently dropping the wizard.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (!draft.canSave) return false;
+      draft.requestLeave();
+      return true;
+    });
+    return () => sub.remove();
+  }, [draft]);
+
+  const context = useMemo(
+    () => ({
+      status: draft.status,
+      lastSavedAt: draft.lastSavedAt,
+      canSave: draft.canSave,
+      saveDraft: draft.saveDraft,
+      requestLeave: draft.requestLeave,
+      finish: draft.finish
+    }),
+    [draft.status, draft.lastSavedAt, draft.canSave, draft.saveDraft, draft.requestLeave, draft.finish]
+  );
 
   if (boot === "reject") {
     return <Redirect href="/tournaments" />;
@@ -65,7 +113,11 @@ export default function CreateTournamentRoute() {
 
   return (
     <PageShell>
-      <OrganizerCreateWizard create={create} />
+      <CreateDraftContext.Provider value={context}>
+        <OrganizerCreateWizard create={create} />
+      </CreateDraftContext.Provider>
+      <LeaveWizardSheet {...draft.leaveSheet} />
+      <DraftConflictSheet {...draft.conflictSheet} />
     </PageShell>
   );
 }

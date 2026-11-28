@@ -127,6 +127,8 @@ export function usePlayerRoster({
 
   return {
     players: teamMode ? sanitizedPlayers : players,
+    /** The individual roster as typed, whatever the variant (`players` is team members in Team mode). */
+    individualPlayers: players,
     playerGenders,
     teams,
     isFixedTeamMode: teamMode,
@@ -143,6 +145,12 @@ export function usePlayerRoster({
     updatePlayer,
     removePlayerInput,
     selectSuggestion,
+    /** Restore a saved draft's roster in one step. */
+    replaceRoster: (next: { players: string[]; playerGenders: (PlayerGender | undefined)[]; teams: TeamPairDraft[] }) => {
+      setPlayers(next.players);
+      setPlayerGenders(next.playerGenders);
+      setTeams(next.teams);
+    },
     updatePlayerName: (index: number, value: string) =>
       setPlayers((previous) => previous.map((item, i) => (i === index ? value : item))),
     updatePlayerGender: (index: number, value: PlayerGender) =>

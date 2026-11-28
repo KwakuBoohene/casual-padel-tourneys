@@ -46,7 +46,8 @@ export async function sendGa4(config: NonNullable<ReturnType<typeof ga4Config>>,
       feature_area: event.feature
     } : {
       feature_area: "setup",
-      ...("step" in event ? { creation_step: event.step } : {})
+      ...("step" in event ? { creation_step: event.step } : {}),
+      ...("action" in event ? { draft_action: event.action } : {})
     })
   };
   const url = new URL("https://www.google-analytics.com/mp/collect");

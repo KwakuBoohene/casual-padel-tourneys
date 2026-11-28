@@ -1,11 +1,13 @@
 import { KohCreateFlow } from "../components/koh/KohCreateFlow";
-import type { KohTournamentHub } from "../types/koh/create";
+import type { KohCreateStep, KohTournamentHub } from "../types/koh/create";
 
 interface KohScreenProps {
   setErrorText: (value: string) => void;
   markEmailVerifyRequired: (dueAt?: number) => void;
   onCancel: () => void;
   onStarted: (hub: KohTournamentHub) => void;
+  draftId?: string;
+  initialStep?: KohCreateStep;
 }
 
 /** Thin KOH create entry — wizard UI lives in components/koh. */
@@ -16,6 +18,8 @@ export function KohScreen(props: KohScreenProps) {
       markEmailVerifyRequired={props.markEmailVerifyRequired}
       onCancel={props.onCancel}
       onStarted={props.onStarted}
+      draftId={props.draftId}
+      initialStep={props.initialStep}
     />
   );
 }

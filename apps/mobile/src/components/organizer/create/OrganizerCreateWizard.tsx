@@ -2,6 +2,7 @@ import { useGa4Wizard } from "../../../hooks/analytics/useGa4Wizard";
 import { formatTournamentMode } from "../../../utilities/organizer/formatLabels";
 import type { useCreateTournament } from "../../../hooks/organizer/useCreateTournament";
 
+import { useCreateDraftContext } from "./CreateDraftContext";
 import { CreatePlayersWizardStep } from "./CreatePlayersWizardStep";
 import { MatchSettingsStepView } from "./MatchSettingsStepView";
 import { NameStepView } from "./NameStepView";
@@ -21,6 +22,7 @@ export function OrganizerCreateWizard({
     SETTINGS: create.settingsPhase === "MODE" ? "scoring_mode" : "settings"
   } as const;
   useGa4Wizard(step[create.wizardStep]);
+  const draft = useCreateDraftContext();
   const modeLabel = formatTournamentMode(create.mode);
 
   if (create.wizardStep === "NAME") {
@@ -33,7 +35,7 @@ export function OrganizerCreateWizard({
         contributeToCareerLeaderboard={create.contributeToCareerLeaderboard}
         onChangeName={create.setName}
         onChangeContributeToCareerLeaderboard={create.setContributeToCareerLeaderboard}
-        onBack={create.cancelCreateToList}
+        onBack={draft?.requestLeave ?? create.cancelCreateToList}
         onNext={() => create.setWizardStep("OPTIONS")}
       />
     );
@@ -99,7 +101,7 @@ export function OrganizerCreateWizard({
       onBackToPlayers={() => create.setWizardStep("PLAYERS")}
       onBackToMode={() => create.setSettingsPhase("MODE")}
       onNextFromMode={() => create.setSettingsPhase("DETAILS")}
-      onCreate={() => void create.createTournament()}
+      onCreate={() => void (draft?.finish ? draft.finish() : create.createTournament())}
     />
   );
 }

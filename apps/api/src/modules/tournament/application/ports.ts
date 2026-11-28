@@ -5,6 +5,8 @@ export interface TournamentRepository {
   getById(id: string): Promise<TournamentState | null>;
   getByPublicToken(token: string): Promise<TournamentState | null>;
   listByOrganizer(organizerId: string): Promise<TournamentState[]>;
+  /** Tournaments the user co-organizes (kept access after a shared draft started). */
+  listCollaborating(userId: string): Promise<TournamentState[]>;
   /** Insert a brand-new aggregate (create path). */
   create(state: TournamentState): Promise<void>;
   /**

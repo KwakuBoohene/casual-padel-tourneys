@@ -8,7 +8,7 @@ export async function createObservedActivity(
   const activity = await tx.organizerActivity.create(input);
   await recordUsageEvent(tx, {
     id: `activity:${activity.id}`,
-    kind: ["POST /tournaments", "POST /koh/tournaments"].includes(activity.action)
+    kind: ["POST /tournaments", "POST /koh/tournaments", "POST /drafts/:id/start"].includes(activity.action)
       ? "tournament.created"
       : "business.action",
     surface: "organizer",

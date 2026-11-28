@@ -6,10 +6,11 @@ import { spacing } from "../../../theme";
 import type { LiveTournamentState } from "../../../types/organizer/tournament";
 
 import { CareerDeleteSheet } from "./CareerDeleteSheet";
-import { TournamentListView } from "./TournamentListView";
+import { TournamentListView, type DraftListSection } from "./TournamentListView";
 
 interface OrganizerListScreenProps {
   tournaments: LiveTournamentState[];
+  drafts?: DraftListSection;
   canDelete?: boolean;
   refreshing: boolean;
   actionSaving?: boolean;
@@ -43,6 +44,7 @@ export function OrganizerListScreen(props: OrganizerListScreenProps) {
     <>
       <TournamentListView
         tournaments={props.tournaments}
+        drafts={props.drafts}
         refreshing={props.refreshing}
         onRefresh={props.onRefresh}
         onCreateAmericano={props.onCreateAmericano}

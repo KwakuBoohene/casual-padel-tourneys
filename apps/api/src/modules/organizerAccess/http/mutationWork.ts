@@ -6,6 +6,7 @@ import { databaseClient } from "../../../lib/prisma.js";
 import { databaseWork } from "../../../lib/databaseContext.js";
 import { AppError } from "../../../shared/kernel/appError.js";
 import { sharedOrganizerAccessEnabled } from "../domain/policy.js";
+import { isThrottledDraftAutosave } from "../infrastructure/draftActivityThrottle.js";
 
 class RejectedMutation {
   constructor(readonly result: unknown) {}
@@ -19,7 +20,7 @@ export function registerOrganizerMutationWork(server: FastifyInstance): void {
     );
     if (
       !mutation ||
-      !/^\/(tournaments|koh\/tournaments|me\/(players|career-share)|organizers\/:organizerId\/(players|career-share))/.test(
+      !/^\/(tournaments|koh\/tournaments|drafts(\/|$)|me\/(players|career-share)|organizers\/:organizerId\/(players|career-share))/.test(
         route.url
       )
     )
@@ -49,9 +50,12 @@ export function registerOrganizerMutationWork(server: FastifyInstance): void {
                 beforeVersion = rows[0]?.version;
                 const shared =
                   sharedOrganizerAccessEnabled() &&
-                  (context.role === "MANAGER" ||
+                  (context.role !== "OWNER" ||
                     (await tx.organizerMembership.count({
                       where: { organizerId: context.organizerId, revokedAt: null }
+                    })) > 0 ||
+                    (await tx.tournamentCollaborator.count({
+                      where: { tournamentId: eventId, revokedAt: null }
                     })) > 0);
                 if (shared && request.method !== "DELETE" && !Number.isInteger(body?.expectedVersion)) {
                   throw new AppError("CONFLICT", 409, "Refresh your app to use shared editing safely.", {
@@ -112,13 +116,17 @@ export function registerOrganizerMutationWork(server: FastifyInstance): void {
                 beforeVersion,
                 beforeScore
               });
+              const action = `${request.method} ${route.url}`;
+              const targetId = eventId ?? data?.data?.id ?? params.id ?? null;
+              if (await isThrottledDraftAutosave(tx, { action, targetId, actorUserId: context.actorUserId }))
+                return value;
               await createObservedActivity(tx, {
                 data: {
                   organizerId: context.organizerId,
                   actorUserId: context.actorUserId,
                   actorName: request.user?.name ?? "Organizer",
-                  action: `${request.method} ${route.url}`,
-                  targetId: eventId ?? data?.data?.id ?? params.id ?? null,
+                  action,
+                  targetId,
                   requestId: request.id,
                   metadata: metadata as Prisma.InputJsonValue
                 }

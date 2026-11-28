@@ -1,5 +1,5 @@
 import type { FastifyRequest } from "fastify";
-import type { OrganizerRole } from "@padel/shared";
+import type { DraftRole } from "@padel/shared";
 import { prisma } from "../../../lib/prisma.js";
 import { AppError, forbidden, notFound } from "../../../shared/kernel/appError.js";
 import {
@@ -7,12 +7,14 @@ import {
   sharedOrganizerAccessEnabled,
   type OrganizerOperation
 } from "../domain/policy.js";
+import { resolveDraftEditor, resolveTournamentEditor } from "./draftEditorAccess.js";
 
 export interface OrganizerContext {
   actorUserId: string;
   organizerId: string;
   ownerName: string;
-  role: OrganizerRole;
+  /** EDITOR only appears on `/drafts/:id…` routes (per-draft collaborator). */
+  role: DraftRole;
 }
 declare module "fastify" {
   interface FastifyRequest {
@@ -69,11 +71,13 @@ export function organizerId(request: FastifyRequest): string {
   return request.organizerContext?.organizerId ?? request.user.id;
 }
 
+const ACCOUNT_LEVEL_TOURNAMENT_ROUTES = new Set(["/tournaments", "/koh/tournaments", "/tournaments/career-leaderboard"]);
+
 export async function resolveOrganizerRequest(request: FastifyRequest): Promise<void> {
   if (!request.user) return;
   const url = request.routeOptions.url ?? "";
   if (
-    !/^\/(tournaments|koh\/tournaments|players\/suggestions|me\/(players|career-share)|organizers\/[^/]+\/(players|career-share|result-imports))/.test(
+    !/^\/(tournaments|koh\/tournaments|drafts(\/|$)|players\/suggestions|me\/(players|career-share)|organizers\/[^/]+\/(players|career-share|result-imports))/.test(
       url
     )
   )
@@ -86,29 +90,80 @@ export async function resolveOrganizerRequest(request: FastifyRequest): Promise<
   const isPersonal = url.startsWith("/me/");
   let selected = isPersonal ? request.user.id : (params.organizerId ?? header ?? request.user.id);
   const isTournament = url.startsWith("/tournaments") || url.startsWith("/koh/tournaments");
-  const tournamentId = isTournament
-    ? (params.id ?? (typeof body?.tournamentId === "string" ? body.tournamentId : undefined))
-    : undefined;
-  if (tournamentId) {
-    const row = await prisma.tournament.findUnique({
-      where: { id: tournamentId },
-      select: { organizerId: true }
-    });
-    if (!row?.organizerId) throw notFound("Tournament not found.");
-    await resolveAccess(request.user.id, row.organizerId);
-    if (header && header !== row.organizerId)
-      throw new AppError("CONFLICT", 409, "Selected organizer does not own this tournament.", {
+  const isDraft = url.startsWith("/drafts");
+  // Account-level routes (create, list, career leaderboard) never name a tournament: a stray
+  // body `tournamentId` there must not pull the request into that tournament's owner account.
+  const bodyTournamentId =
+    ACCOUNT_LEVEL_TOURNAMENT_ROUTES.has(url) || typeof body?.tournamentId !== "string" ? undefined : body.tournamentId;
+  const tournamentId = isTournament ? (params.id ?? bodyTournamentId) : undefined;
+  const resourceOwner = tournamentId
+    ? await tournamentOwner(tournamentId)
+    : isDraft && params.id
+      ? await draftOwner(params.id)
+      : undefined;
+  if (resourceOwner) {
+    try {
+      await resolveAccess(request.user.id, resourceOwner.organizerId);
+    } catch (error) {
+      const editor =
+        isDraft && params.id
+          ? await resolveDraftEditor({
+              actorUserId: request.user.id,
+              draftId: params.id,
+              organizerId: resourceOwner.organizerId,
+              url,
+              method: request.method
+            })
+          : tournamentId
+            ? await resolveTournamentEditor({
+                actorUserId: request.user.id,
+                tournamentId,
+                organizerId: resourceOwner.organizerId,
+                method: request.method
+              })
+            : null;
+      if (!editor) throw error;
+      // An editor's app may still have their own account selected.
+      if (header && header !== resourceOwner.organizerId && header !== request.user.id)
+        throw new AppError("CONFLICT", 409, `Selected organizer does not own this ${resourceOwner.label}.`, {
+          code: "ORGANIZER_CONTEXT_MISMATCH"
+        });
+      request.organizerContext = editor;
+      return;
+    }
+    if (header && header !== resourceOwner.organizerId)
+      throw new AppError("CONFLICT", 409, `Selected organizer does not own this ${resourceOwner.label}.`, {
         code: "ORGANIZER_CONTEXT_MISMATCH"
       });
-    selected = row.organizerId;
+    selected = resourceOwner.organizerId;
   } else if (!isPersonal && params.organizerId && header && params.organizerId !== header) {
     throw new AppError("CONFLICT", 409, "Organizer context does not match the requested account.", {
       code: "ORGANIZER_CONTEXT_MISMATCH"
     });
   }
-  request.organizerContext = await resolveAccess(
-    request.user.id,
-    selected,
-    isTournament && request.method === "DELETE" ? "deleteTournament" : "manage"
-  );
+  const operation: OrganizerOperation =
+    request.method !== "DELETE"
+      ? "manage"
+      : url === "/drafts/:id"
+        ? "deleteDraft"
+        : isTournament
+          ? "deleteTournament"
+          : "manage";
+  request.organizerContext = await resolveAccess(request.user.id, selected, operation);
+}
+
+async function tournamentOwner(id: string) {
+  const row = await prisma.tournament.findUnique({ where: { id }, select: { organizerId: true } });
+  if (!row?.organizerId) throw notFound("Tournament not found.");
+  return { organizerId: row.organizerId, label: "tournament" };
+}
+
+/** Deleted drafts are invisible; started drafts stay readable (their routes reject edits). */
+async function draftOwner(id: string) {
+  const row = await prisma.tournamentDraft.findFirst({
+    where: { id, deletedAt: null },
+    select: { organizerId: true }
+  });
+  if (!row) throw notFound("Draft not found.");
+  return { organizerId: row.organizerId, label: "draft" };
 }

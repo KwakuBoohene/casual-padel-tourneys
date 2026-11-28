@@ -5,6 +5,8 @@ import { useBreakpoint } from "../../../layout";
 import { radius, spacing, touch, typography } from "../../../theme";
 import { useTheme } from "../../../theme/ThemeProvider";
 
+import { DraftSaveAction } from "./DraftSaveAction";
+
 export interface WizardChromeProps {
   modeLabel: string;
   stepIndex: number;
@@ -46,7 +48,10 @@ export function WizardChrome(props: WizardChromeProps) {
         }}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={{ fontSize: 13, fontWeight: "500", color: colors.primary }}>{progress}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm }}>
+          <Text style={{ flexShrink: 1, fontSize: 13, fontWeight: "500", color: colors.primary }}>{progress}</Text>
+          <DraftSaveAction />
+        </View>
         <Text style={[typography.title, { color: colors.text }]}>{props.title}</Text>
         {props.subtitle ? (
           <Text style={{ fontSize: 13, color: colors.muted }}>{props.subtitle}</Text>

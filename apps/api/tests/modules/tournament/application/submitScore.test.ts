@@ -17,6 +17,9 @@ function memoryRepo(initial: TournamentState): TournamentRepository {
     async getByPublicToken() {
       return null;
     },
+    async listCollaborating() {
+      return [];
+    },
     async listByOrganizer() {
       return [];
     },

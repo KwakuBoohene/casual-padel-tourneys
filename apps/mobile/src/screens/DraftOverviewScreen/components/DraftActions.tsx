@@ -7,7 +7,7 @@ interface DraftActionsProps {
   formMaxWidth: number;
   ready: boolean;
   blockingReason?: string;
-  /** Wired by the share ticket (07); hidden until then. */
+  /** Hidden when draft sharing is off for this deployment. */
   onShare?: () => void;
   onStart: () => void;
 }

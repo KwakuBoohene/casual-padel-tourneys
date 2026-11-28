@@ -4,8 +4,10 @@ import { isKohDraftPayload } from "@padel/shared";
 
 import type { DraftDetail, StartDraftResponse } from "../../api/drafts";
 import { DraftConflictSheet } from "../../components/organizer/drafts/DraftConflictSheet";
+import { DraftShareSheet } from "../../components/organizer/drafts/share/DraftShareSheet";
 import { AlertSheet } from "../../components/sheets";
 import { useDraftOverview } from "../../hooks/organizer/drafts/useDraftOverview";
+import { useDraftSharing } from "../../hooks/organizer/drafts/useDraftSharing";
 import { useStartDraft } from "../../hooks/organizer/drafts/useStartDraft";
 import type { CreateWizardStep } from "../../hooks/organizer/useCreateTournament";
 import { useBreakpoint } from "../../layout";
@@ -26,6 +28,9 @@ export interface DraftOverviewScreenProps {
   /** Opened from the wizard's Create button: show the start confirmation once the draft loads. */
   openStart: boolean;
   markEmailVerifyRequired: (dueAt?: number) => void;
+  /** `SHARED_ORGANIZER_ACCESS_ENABLED` (from `GET /organizers`); hides sharing entirely when off. */
+  sharingEnabled: boolean;
+  viewer: { id?: string; email?: string | null };
   onBack: () => void;
   onEditStep: (step: CreateWizardStep) => void;
   onStarted: (response: StartDraftResponse, draft: DraftDetail) => void;
@@ -38,6 +43,7 @@ export function DraftOverviewScreen(props: DraftOverviewScreenProps) {
   const { formMaxWidth } = useBreakpoint();
   const overview = useDraftOverview(props.draftId, { markEmailVerifyRequired: props.markEmailVerifyRequired });
   const { draft } = overview;
+  const sharing = useDraftSharing(props.draftId, props.viewer.email);
   const start = useStartDraft(draft, {
     onStarted: props.onStarted,
     onGone: () => void overview.refresh(),
@@ -77,6 +83,7 @@ export function DraftOverviewScreen(props: DraftOverviewScreenProps) {
   const name = draft.name.trim() || "Untitled draft";
   const startedBy = draft.startedTournamentId;
   const canOpenStarted = draft.role !== "EDITOR" || draft.keepAccessAfterStart;
+  const openShare = props.sharingEnabled && !startedBy ? sharing.open : undefined;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -120,13 +127,14 @@ export function DraftOverviewScreen(props: DraftOverviewScreenProps) {
             Editing King of the Court drafts in the app is coming soon. You can still start it here.
           </Text>
         ) : null}
-        <DraftCollaboratorsRow editors={overview.editors} />
+        <DraftCollaboratorsRow editors={overview.editors} onPress={openShare} />
       </ScrollView>
 
       <DraftActions
         formMaxWidth={formMaxWidth}
         ready={draft.readiness.ready}
         blockingReason={draft.readiness.blockingReason}
+        onShare={openShare}
         onStart={start.open}
       />
 
@@ -137,6 +145,7 @@ export function DraftOverviewScreen(props: DraftOverviewScreenProps) {
         accessLine={keepAccessLine(overview.editors.map((editor) => editor.name), draft.keepAccessAfterStart)}
       />
       <DraftConflictSheet {...start.conflict} />
+      {props.sharingEnabled ? <DraftShareSheet sharing={sharing} draftName={name} viewerUserId={props.viewer.id} /> : null}
       <AlertSheet
         visible={Boolean(startedBy)}
         variant="info"

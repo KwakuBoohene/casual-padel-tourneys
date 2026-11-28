@@ -3,6 +3,8 @@ import { isKingOfTheCourtMode } from "@padel/shared";
 
 import { useOrganizerGa4 } from "../../../src/components/analytics/OrganizerGa4";
 import { PageShell } from "../../../src/layout";
+import { useAuthSessionContext } from "../../../src/providers/AuthSessionProvider";
+import { useOrganizerAccount } from "../../../src/providers/OrganizerAccountProvider";
 import { useOrganizerSession } from "../../../src/providers/OrganizerSessionProvider";
 import { DraftOverviewScreen } from "../../../src/screens/DraftOverviewScreen";
 import type { KohTournamentHub } from "../../../src/types/koh/create";
@@ -14,6 +16,8 @@ const first = (value: string | string[] | undefined) => (Array.isArray(value) ? 
 export default function DraftOverviewRoute() {
   const org = useOrganizerSession();
   const sendAnalytics = useOrganizerGa4();
+  const auth = useAuthSessionContext();
+  const account = useOrganizerAccount();
   const params = useLocalSearchParams<{ id?: string | string[]; start?: string | string[] }>();
   const draftId = first(params.id);
   if (!draftId) return <Redirect href="/tournaments" />;
@@ -29,6 +33,8 @@ export default function DraftOverviewRoute() {
         draftId={draftId}
         openStart={first(params.start) === "1"}
         markEmailVerifyRequired={org.markEmailVerifyRequired}
+        sharingEnabled={account.enabled && !auth.currentUser?.isGuest}
+        viewer={{ id: auth.currentUser?.id, email: auth.currentUser?.email }}
         onBack={backToList}
         onEditStep={(step) => {
           org.setErrorText("");

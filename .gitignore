@@ -20,3 +20,6 @@ casual-padel-tourneys.code-workspace
 .claude/
 deploy.sh
 deployment-l4qihmqdkkzfarfmb8bxpxdq-all-logs-2026-10-16-19-39-28.txt
+
+# Local-only Playwright end-to-end tests (never committed, never run in CI)
+e2e/

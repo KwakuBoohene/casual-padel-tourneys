@@ -54,7 +54,34 @@ export function americanoMexicanoScoringItem(payload: AmericanoMexicanoDraftPayl
   return ok("scoring", `To ${payload.pointsPerMatch} points${games}`);
 }
 
+/** Names of everyone who would play, from the roster the variant uses. */
+function activeNames(payload: AmericanoMexicanoDraftPayload): string[] {
+  if (payload.variant === "TEAM") {
+    return startedPairs(payload.teams)
+      .flatMap((pair) => [pair.playerA.name, pair.playerB.name])
+      .filter(Boolean);
+  }
+  return namedPlayers(payload.players).map((player) => player.name);
+}
+
+/** Same rule as the create wizard: every court needs four players. */
+export function americanoMexicanoCourtsItem(payload: AmericanoMexicanoDraftPayload): DraftReadinessItem {
+  const item = courtsItem(payload.courts);
+  const courts = payload.courts ?? 0;
+  const players = activeNames(payload).length;
+  // With too few players to start at all, the players item already says so.
+  if (item.status === "missing" || players < AMERICANO_MIN_PLAYERS || players >= courts * 4) return item;
+  return missing("courts", `${plural(courts, "court")} need at least ${courts * 4} players`);
+}
+
 export function americanoMexicanoPlayersItem(payload: AmericanoMexicanoDraftPayload): DraftReadinessItem {
+  const names = activeNames(payload).map((name) => name.toLowerCase());
+  const duplicate = names.find((name, index) => names.indexOf(name) !== index);
+  if (duplicate) return missing("players", "No two players can have the same name");
+  return rosterSizeItem(payload);
+}
+
+function rosterSizeItem(payload: AmericanoMexicanoDraftPayload): DraftReadinessItem {
   const isMexicano = payload.mode === "MEXICANO";
   if (payload.variant === "TEAM") {
     const pairs = startedPairs(payload.teams);

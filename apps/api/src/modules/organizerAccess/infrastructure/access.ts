@@ -71,6 +71,8 @@ export function organizerId(request: FastifyRequest): string {
   return request.organizerContext?.organizerId ?? request.user.id;
 }
 
+const ACCOUNT_LEVEL_TOURNAMENT_ROUTES = new Set(["/tournaments", "/koh/tournaments", "/tournaments/career-leaderboard"]);
+
 export async function resolveOrganizerRequest(request: FastifyRequest): Promise<void> {
   if (!request.user) return;
   const url = request.routeOptions.url ?? "";
@@ -89,9 +91,11 @@ export async function resolveOrganizerRequest(request: FastifyRequest): Promise<
   let selected = isPersonal ? request.user.id : (params.organizerId ?? header ?? request.user.id);
   const isTournament = url.startsWith("/tournaments") || url.startsWith("/koh/tournaments");
   const isDraft = url.startsWith("/drafts");
-  const tournamentId = isTournament
-    ? (params.id ?? (typeof body?.tournamentId === "string" ? body.tournamentId : undefined))
-    : undefined;
+  // Account-level routes (create, list, career leaderboard) never name a tournament: a stray
+  // body `tournamentId` there must not pull the request into that tournament's owner account.
+  const bodyTournamentId =
+    ACCOUNT_LEVEL_TOURNAMENT_ROUTES.has(url) || typeof body?.tournamentId !== "string" ? undefined : body.tournamentId;
+  const tournamentId = isTournament ? (params.id ?? bodyTournamentId) : undefined;
   const resourceOwner = tournamentId
     ? await tournamentOwner(tournamentId)
     : isDraft && params.id

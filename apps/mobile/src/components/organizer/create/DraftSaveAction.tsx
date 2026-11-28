@@ -19,12 +19,14 @@ export function DraftSaveAction() {
       ? { text: "Saving…", color: colors.muted }
       : draft.status === "error"
         ? { text: "Not saved · retry", color: colors.danger }
-        : draft.status === "conflict"
-          ? { text: "Updated elsewhere", color: colors.statusNext }
-          : draft.lastSavedAt
-            ? { text: `✓ Draft saved · ${timeOf(draft.lastSavedAt)}`, color: colors.statusCompleted }
-            : null;
-  const showButton = !draft.lastSavedAt || draft.status === "error";
+        : draft.status === "gone"
+          ? { text: "This draft was deleted or already started", color: colors.danger }
+          : draft.status === "conflict"
+            ? { text: "Updated elsewhere", color: colors.statusNext }
+            : draft.lastSavedAt
+              ? { text: `✓ Draft saved · ${timeOf(draft.lastSavedAt)}`, color: colors.statusCompleted }
+              : null;
+  const showButton = draft.status !== "gone" && (!draft.lastSavedAt || draft.status === "error");
 
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>

@@ -1,4 +1,9 @@
-import { parseExportScope, type ExportScope } from "@padel/shared";
+import {
+  parseExportScope,
+  parseTournamentExportScope,
+  type ExportScope,
+  type TournamentExportScope
+} from "@padel/shared";
 
 import { validation } from "../../../shared/kernel/appError.js";
 
@@ -25,6 +30,15 @@ export function parseExportFormat(value: string | undefined): SupportedExportFor
 export function parseScope(value: string | undefined): ExportScope {
   try {
     return parseExportScope(value);
+  } catch (error) {
+    throw validation((error as Error).message);
+  }
+}
+
+/** Tournament exports also accept `schedule` (the printable matchups). */
+export function parseTournamentScope(value: string | undefined): TournamentExportScope {
+  try {
+    return parseTournamentExportScope(value);
   } catch (error) {
     throw validation((error as Error).message);
   }

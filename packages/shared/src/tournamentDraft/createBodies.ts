@@ -50,13 +50,15 @@ function withoutUndefined<T extends Record<string, unknown>>(value: T): T {
 }
 
 function americanoMexicanoBody(payload: AmericanoMexicanoDraftPayload): DraftCreateBodies {
-  const teams = startedPairs(payload.teams);
+  // A draft keeps both rosters so switching variant never loses names; only the active one starts.
+  const teamMode = payload.variant === "TEAM";
+  const teams = teamMode ? startedPairs(payload.teams) : [];
   const create = withoutUndefined({
     name: (payload.name ?? "").trim(),
     mode: payload.mode,
     variant: payload.variant,
     schedulingMode: payload.schedulingMode,
-    players: namedPlayers(payload.players),
+    players: teamMode ? [] : namedPlayers(payload.players),
     teams: teams.length > 0 ? teams : undefined,
     courts: payload.courts,
     pointsPerMatch: payload.pointsPerMatch,

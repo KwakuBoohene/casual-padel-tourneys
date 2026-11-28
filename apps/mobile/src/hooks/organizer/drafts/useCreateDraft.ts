@@ -9,11 +9,14 @@ import {
   fromDraftPayload,
   hasDraftContent,
   resumeStepFor,
-  toDraftPayload
+  toDraftPayload,
+  type DraftWizardSnapshot
 } from "../../../utilities/organizer/draftPayload";
 import type { CreateWizardStep, useCreateTournament } from "../useCreateTournament";
 import { useDraftAutosave } from "./useDraftAutosave";
 import { useDraftConflict } from "./useDraftConflict";
+import { useDraftFlush } from "./useDraftFlush";
+import { useDraftLeave } from "./useDraftLeave";
 
 type Create = ReturnType<typeof useCreateTournament>;
 
@@ -27,40 +30,26 @@ interface Options {
 /** Save / autosave / resume / leave-prompt for the Americano/Mexicano create wizard. */
 export function useCreateDraft(create: Create, { markEmailVerifyRequired, setErrorText, exit }: Options) {
   const sendAnalytics = useOrganizerGa4();
-  const snapshot = snapshotFromCreate(create);
+  // Match settings only count as chosen once the organizer has seen them (Mexicano has no
+  // scoring question, so reaching the step is enough).
+  const [settingsChosen, setSettingsChosen] = useState(false);
+  const onSettings =
+    create.wizardStep === "SETTINGS" && (create.mode === "MEXICANO" || create.settingsPhase === "DETAILS");
+  if (onSettings && !settingsChosen) setSettingsChosen(true);
+
+  const snapshot = snapshotFromCreate(create, settingsChosen || onSettings);
   const payload = toDraftPayload(snapshot);
   const autosave = useDraftAutosave({ payload, markEmailVerifyRequired });
-  const conflictSheet = useDraftConflict(create, autosave, payload);
-  const [leaveOpen, setLeaveOpen] = useState(false);
-  const [leaving, setLeaving] = useState(false);
+  useDraftFlush(autosave.flush);
+
+  /** Put a saved payload into the wizard (resume, or after resolving a conflict). */
+  const restore = (restored: DraftWizardSnapshot, step: CreateWizardStep) => {
+    applyDraftSnapshot(create, restored, step);
+    setSettingsChosen(restored.settingsChosen);
+  };
+  const conflictSheet = useDraftConflict({ step: create.wizardStep, restore }, autosave, payload);
   const hasContent = hasDraftContent(snapshot);
-
-  const leave = () => {
-    setLeaveOpen(false);
-    if (exit) exit();
-    else create.cancelCreateToList();
-  };
-
-  /** Back out of the wizard: saved drafts flush silently; unsaved work asks first. */
-  const requestLeave = () => {
-    if (autosave.draftId) {
-      setLeaving(true);
-      void autosave.saveNow().finally(() => {
-        setLeaving(false);
-        leave();
-      });
-      return;
-    }
-    if (hasContent) setLeaveOpen(true);
-    else leave();
-  };
-
-  const saveAndLeave = async () => {
-    setLeaving(true);
-    const ok = await autosave.saveNow();
-    setLeaving(false);
-    if (ok) leave();
-  };
+  const leaving = useDraftLeave(autosave, { hasContent, exit: exit ?? create.cancelCreateToList });
 
   /** Load an existing draft into the wizard. Returns false for drafts this wizard can't edit. */
   const loadDraft = async (id: string, step?: CreateWizardStep): Promise<boolean> => {
@@ -68,7 +57,7 @@ export function useCreateDraft(create: Create, { markEmailVerifyRequired, setErr
       const draft = await getDraft(id);
       if (draft.payload.mode !== "AMERICANO" && draft.payload.mode !== "MEXICANO") return false;
       const restored = fromDraftPayload(draft.payload);
-      applyDraftSnapshot(create, restored, step ?? resumeStepFor(draft.readiness));
+      restore(restored, step ?? resumeStepFor(draft.readiness));
       autosave.adopt(draft, JSON.stringify(toDraftPayload(restored)));
       return true;
     } catch (error) {
@@ -92,20 +81,15 @@ export function useCreateDraft(create: Create, { markEmailVerifyRequired, setErr
     finish: autosave.draftId
       ? async () => {
           const id = autosave.draftId;
-          if (id && (await autosave.saveNow())) router.replace({ pathname: "/drafts/[id]", params: { id, start: "1" } });
+          if (id && (await autosave.saveNow()) === "saved") {
+            router.replace({ pathname: "/drafts/[id]", params: { id, start: "1" } });
+          }
         }
       : null,
     conflictSheet,
-    requestLeave,
+    requestLeave: leaving.requestLeave,
     loadDraft,
-    leaveSheet: {
-      visible: leaveOpen,
-      busy: leaving,
-      failed: autosave.status === "error",
-      onSave: () => void saveAndLeave(),
-      onKeepEditing: () => setLeaveOpen(false),
-      onDiscard: leave
-    }
+    leaveSheet: leaving.leaveSheet
   };
 }
 

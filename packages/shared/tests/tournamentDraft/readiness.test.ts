@@ -79,3 +79,41 @@ test("full schema issues block start even when items look ok", () => {
   assert.equal(result.items.every((entry) => entry.status === "ok"), true);
   assert.equal(result.blockingReason, "Provide promotionRules when courts ≥ 2.");
 });
+
+test("a court needs four players, as in the create wizard", () => {
+  const result = readiness({ ...FULL_AMERICANO, courts: 3, players: FULL_AMERICANO.players.slice(0, 4) });
+  assert.equal(result.ready, false);
+  assert.equal(
+    item({ ...FULL_AMERICANO, courts: 3, players: FULL_AMERICANO.players.slice(0, 4) }, "courts")?.status,
+    "missing"
+  );
+  assert.equal(result.blockingReason, "3 courts need at least 12 players");
+  assert.equal(
+    readiness({ ...FULL_AMERICANO, courts: 1, players: FULL_AMERICANO.players.slice(0, 4) }).ready,
+    true
+  );
+});
+
+test("duplicate player names block the start, ignoring case", () => {
+  const players = [{ name: "Alex" }, { name: "alex " }, { name: "Ben" }, { name: "Cleo" }];
+  const result = readiness({ ...FULL_AMERICANO, courts: 1, players });
+  assert.equal(result.ready, false);
+  assert.equal(result.blockingReason, "No two players can have the same name");
+});
+
+test("the inactive roster is kept in the draft but never started or counted", () => {
+  const both = { ...FULL_TEAM_AMERICANO, players: [{ name: "Solo" }, { name: "Solo" }] };
+  assert.equal(readiness(both).ready, true, JSON.stringify(readiness(both)));
+  const classic = { ...FULL_AMERICANO, teams: [{ playerA: { name: "Half" }, playerB: { name: "" } }] };
+  assert.equal(readiness(classic).ready, true, JSON.stringify(readiness(classic)));
+});
+
+test("the blocking reason follows wizard order: players before match settings", () => {
+  const result = readiness({
+    mode: "AMERICANO",
+    name: "Name only",
+    variant: "CLASSIC",
+    schedulingMode: "TARGET_GAMES"
+  });
+  assert.equal(result.blockingReason, "Add 4 more players to start");
+});

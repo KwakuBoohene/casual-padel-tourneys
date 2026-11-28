@@ -28,6 +28,11 @@ export interface DraftWizardSnapshot {
   scoringMode: ScoringMode;
   regularScoring: RegularScoringConfig;
   contributeToCareerLeaderboard: boolean;
+  /**
+   * False until the organizer has reached the match settings (scoring, courts, length). Until
+   * then those are wizard defaults, not choices, and are left out of the draft.
+   */
+  settingsChosen: boolean;
 }
 
 const positiveInt = (text: string): number | undefined => {
@@ -37,30 +42,41 @@ const positiveInt = (text: string): number | undefined => {
 
 /** Wizard state → draft payload. Text fields that aren't valid numbers are simply left out. */
 export function toDraftPayload(state: DraftWizardSnapshot): AmericanoMexicanoDraftPayload {
-  const teamMode = state.variant === "TEAM";
-  const regular = state.scoringMode === "REGULAR";
   const payload: AmericanoMexicanoDraftPayload = {
     name: state.name,
     mode: state.mode,
     variant: state.variant,
     schedulingMode: state.schedulingMode,
-    players: teamMode
-      ? []
-      : state.players.map((name, index) => {
-          const gender = state.playerGenders[index];
-          return gender ? { name, gender } : { name };
-        }),
-    ...(teamMode
-      ? { teams: state.teams.map((team) => ({ playerA: { name: team.playerA }, playerB: { name: team.playerB } })) }
+    // Both rosters are saved whatever the variant, so switching variant never loses names.
+    players: state.players.map((name, index) => {
+      const gender = state.playerGenders[index];
+      return gender ? { name, gender } : { name };
+    }),
+    ...(state.teams.length > 0 || state.variant === "TEAM"
+      ? {
+          teams: state.teams.map((team) => ({
+            playerA: { name: team.playerA },
+            playerB: { name: team.playerB }
+          }))
+        }
       : {}),
-    courts: positiveInt(state.courtsText),
-    scoringMode: state.scoringMode,
-    ...(regular ? { regularScoring: withoutUndefined(state.regularScoring) } : { pointsPerMatch: positiveInt(state.pointsText) }),
-    ...(state.schedulingMode === "TARGET_GAMES" ? { targetGamesPerPlayer: positiveInt(state.targetGamesText) } : {}),
-    ...(state.schedulingMode === "TOTAL_TIME" ? { tournamentTimeMinutes: positiveInt(state.tournamentTimeText) } : {}),
+    ...(state.settingsChosen ? settingsPayload(state) : {}),
     contributeToCareerLeaderboard: state.contributeToCareerLeaderboard
   };
   return withoutUndefined(payload);
+}
+
+function settingsPayload(state: DraftWizardSnapshot): Partial<AmericanoMexicanoDraftPayload> {
+  const regular = state.scoringMode === "REGULAR";
+  return {
+    courts: positiveInt(state.courtsText),
+    scoringMode: state.scoringMode,
+    ...(regular
+      ? { regularScoring: withoutUndefined(state.regularScoring) }
+      : { pointsPerMatch: positiveInt(state.pointsText) }),
+    ...(state.schedulingMode === "TARGET_GAMES" ? { targetGamesPerPlayer: positiveInt(state.targetGamesText) } : {}),
+    ...(state.schedulingMode === "TOTAL_TIME" ? { tournamentTimeMinutes: positiveInt(state.tournamentTimeText) } : {})
+  };
 }
 
 function withoutUndefined<T extends object>(value: T): T {
@@ -88,7 +104,6 @@ const DEFAULTS = { courtsText: "2", pointsText: "24", targetGamesText: "4", tour
 
 /** Draft payload → wizard state, filling the wizard's usual defaults for anything missing. */
 export function fromDraftPayload(payload: AmericanoMexicanoDraftPayload): DraftWizardSnapshot {
-  const teamMode = payload.variant === "TEAM";
   const scoringMode = payload.scoringMode ?? (payload.regularScoring ? "REGULAR" : "AMERICANO_POINTS");
   const scoring = payload.regularScoring ?? {};
   return {
@@ -96,29 +111,34 @@ export function fromDraftPayload(payload: AmericanoMexicanoDraftPayload): DraftW
     mode: payload.mode,
     variant: payload.variant ?? "CLASSIC",
     schedulingMode: payload.schedulingMode ?? (payload.mode === "MEXICANO" ? "TOTAL_TIME" : "TARGET_GAMES"),
-    players: teamMode ? [] : (payload.players ?? []).map((player) => player.name),
-    playerGenders: teamMode ? [] : (payload.players ?? []).map((player) => player.gender),
-    teams: teamMode ? (payload.teams ?? []).map((team) => ({ playerA: team.playerA.name, playerB: team.playerB.name })) : [],
+    players: (payload.players ?? []).map((player) => player.name),
+    playerGenders: (payload.players ?? []).map((player) => player.gender),
+    teams: (payload.teams ?? []).map((team) => ({ playerA: team.playerA.name, playerB: team.playerB.name })),
     courtsText: payload.courts ? String(payload.courts) : DEFAULTS.courtsText,
     pointsText: payload.pointsPerMatch ? String(payload.pointsPerMatch) : DEFAULTS.pointsText,
     targetGamesText: payload.targetGamesPerPlayer ? String(payload.targetGamesPerPlayer) : DEFAULTS.targetGamesText,
-    tournamentTimeText: payload.tournamentTimeMinutes ? String(payload.tournamentTimeMinutes) : DEFAULTS.tournamentTimeText,
+    tournamentTimeText: payload.tournamentTimeMinutes
+      ? String(payload.tournamentTimeMinutes)
+      : DEFAULTS.tournamentTimeText,
     scoringMode,
     regularScoring: wizardRegularScoring(scoring),
-    contributeToCareerLeaderboard: payload.contributeToCareerLeaderboard ?? true
+    contributeToCareerLeaderboard: payload.contributeToCareerLeaderboard ?? true,
+    settingsChosen: payload.scoringMode !== undefined || payload.courts !== undefined
   };
 }
 
 /** Where to reopen the wizard: the first section the readiness check flags. */
 export function resumeStepFor(readiness: DraftReadiness): CreateWizardStep {
-  const missing = readiness.items.find((item) => item.status === "missing")?.key;
-  if (missing === "name") return "NAME";
-  if (missing === "format") return "OPTIONS";
-  if (missing === "players") return "PLAYERS";
-  return readiness.ready ? "SETTINGS" : missing ? "SETTINGS" : "NAME";
+  const missing = new Set(readiness.items.filter((item) => item.status === "missing").map((item) => item.key));
+  // Wizard order, not checklist order: players come before the match settings.
+  if (missing.has("name")) return "NAME";
+  if (missing.has("format")) return "OPTIONS";
+  if (missing.has("players")) return "PLAYERS";
+  return readiness.ready || missing.size > 0 ? "SETTINGS" : "NAME";
 }
 
 /** Worth offering "Save as draft?" when leaving: something beyond the defaults was entered. */
-export function hasDraftContent(state: Pick<DraftWizardSnapshot, "name" | "players" | "teams">): boolean {
-  return state.name.trim().length > 0 || state.players.some((name) => name.trim()) || state.teams.length > 0;
+export function hasDraftContent(state: Pick<DraftWizardSnapshot, "name" | "players" | "teams" | "variant">): boolean {
+  const roster = state.variant === "TEAM" ? state.teams.length > 0 : state.players.some((name) => name.trim());
+  return state.name.trim().length > 0 || roster;
 }

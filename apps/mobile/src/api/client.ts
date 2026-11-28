@@ -25,11 +25,20 @@ export function getApiBaseUrl(): string {
   return apiBaseUrl;
 }
 
-async function request<T>(path: string, method: string, payload?: unknown): Promise<T> {
+/** `keepalive` lets a save outlive the page (tab close / reload). */
+export interface RequestOptions {
+  keepalive?: boolean;
+}
+
+async function request<T>(path: string, method: string, payload?: unknown, options: RequestOptions = {}): Promise<T> {
   const context = captureOrganizerContext();
   const token = authToken;
   const personal =
-    /^\/auth\//.test(path) || path === "/organizers" || path.startsWith("/organizer-invitations/");
+    /^\/auth\//.test(path) ||
+    path === "/organizers" ||
+    path.startsWith("/organizer-invitations/") ||
+    // Invitation links are opened before an organizer account is selected (or while it loads).
+    path.startsWith("/draft-invitations/");
   const resolvedPath = personal ? path : context.path(path);
   const controller = new AbortController();
   const finish = personal ? () => {} : trackOrganizerRequest(controller, method !== "GET");
@@ -37,6 +46,7 @@ async function request<T>(path: string, method: string, payload?: unknown): Prom
     const response = await monitoredFetch(`${apiBaseUrl}${resolvedPath}`, {
       method,
       signal: controller.signal,
+      ...(options.keepalive ? { keepalive: true } : {}),
       headers: {
         ...(payload !== undefined ? { "Content-Type": "application/json" } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -76,4 +86,5 @@ export const apiGet = <T>(path: string) => request<T>(path, "GET");
 export const apiPost = <T>(path: string, payload: unknown) => request<T>(path, "POST", payload);
 export const apiPut = <T>(path: string, payload: unknown) => request<T>(path, "PUT", payload);
 export const apiDelete = <T>(path: string) => request<T>(path, "DELETE");
-export const apiPatch = <T>(path: string, payload: unknown) => request<T>(path, "PATCH", payload);
+export const apiPatch = <T>(path: string, payload: unknown, options?: RequestOptions) =>
+  request<T>(path, "PATCH", payload, options);

@@ -2,12 +2,7 @@ import type { DraftPeople } from "@padel/shared";
 
 import { prisma } from "../../../lib/prisma.js";
 import { forbidden, notFound } from "../../../shared/kernel/appError.js";
-import {
-  loadEditableDraft,
-  loadOpenDraft,
-  pendingInvitationWhere,
-  type DraftPeopleActor
-} from "./draftAccessRows.js";
+import { loadEditableDraft, loadOpenDraft, pendingInvitationWhere, type DraftPeopleActor } from "./draftAccessRows.js";
 import { toPendingInvitation } from "./draftInvitations.js";
 
 /** Who can open this draft. Pending invitations are listed for every role that can manage people. */
@@ -51,14 +46,28 @@ export async function getDraftPeople(actor: DraftPeopleActor, draftId: string): 
   };
 }
 
-/** Owner, managers and editors may remove an editor (editors may also remove themselves). */
+/**
+ * Owner, managers and editors may remove an editor (editors may also remove themselves).
+ * Once the draft has started this also ends the person's kept access to the live tournament;
+ * at that point only the owner side (or the person themselves) may do it.
+ */
 export async function removeDraftEditor(actor: DraftPeopleActor, draftId: string, userId: string) {
-  await loadOpenDraft(actor, draftId);
-  const result = await prisma.draftCollaborator.updateMany({
-    where: { draftId, userId, revokedAt: null },
-    data: { revokedAt: new Date(), revokedById: actor.actorUserId }
-  });
-  if (result.count === 0) throw notFound("Co-organizer not found.");
+  const draft = await loadOpenDraft(actor, draftId);
+  const tournamentId = draft.startedTournamentId;
+  if (tournamentId && actor.role === "EDITOR" && actor.actorUserId !== userId)
+    throw forbidden("Only the owner can remove a co-organizer from a started tournament.");
+  const now = new Date();
+  const [draftAccess, tournamentAccess] = await prisma.$transaction([
+    prisma.draftCollaborator.updateMany({
+      where: { draftId, userId, revokedAt: null },
+      data: { revokedAt: now, revokedById: actor.actorUserId }
+    }),
+    prisma.tournamentCollaborator.updateMany({
+      where: { tournamentId: tournamentId ?? "", sourceDraftId: draftId, userId, revokedAt: null },
+      data: { revokedAt: now }
+    })
+  ]);
+  if (draftAccess.count + tournamentAccess.count === 0) throw notFound("Co-organizer not found.");
 }
 
 export async function updateDraftSettings(

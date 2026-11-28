@@ -5,23 +5,23 @@ import type { DraftWizardSnapshot } from "./draftPayload";
 type Create = ReturnType<typeof useCreateTournament>;
 
 /** Read the Americano/Mexicano wizard into a draft snapshot. */
-export function snapshotFromCreate(create: Create): DraftWizardSnapshot {
-  const teamMode = create.isFixedTeamMode;
+export function snapshotFromCreate(create: Create, settingsChosen: boolean): DraftWizardSnapshot {
   return {
     name: create.name,
     mode: create.mode === "MEXICANO" ? "MEXICANO" : "AMERICANO",
     variant: create.variant,
     schedulingMode: create.effectiveSchedulingMode,
-    players: teamMode ? [] : create.players,
-    playerGenders: teamMode ? [] : create.playerGenders,
-    teams: teamMode ? create.teams : [],
+    players: create.individualPlayers,
+    playerGenders: create.playerGenders,
+    teams: create.teams,
     courtsText: create.courtsText,
     pointsText: create.pointsText,
     targetGamesText: create.targetGamesText,
     tournamentTimeText: create.tournamentTimeText,
     scoringMode: create.scoringMode,
     regularScoring: create.regularScoring,
-    contributeToCareerLeaderboard: create.contributeToCareerLeaderboard
+    contributeToCareerLeaderboard: create.contributeToCareerLeaderboard,
+    settingsChosen
   };
 }
 
@@ -35,7 +35,16 @@ export function applyDraftSnapshot(create: Create, snapshot: DraftWizardSnapshot
   create.setName(snapshot.name);
   create.setVariant(snapshot.variant);
   create.setSchedulingMode(snapshot.schedulingMode);
-  create.replaceRoster({ players: snapshot.players, playerGenders: snapshot.playerGenders, teams: snapshot.teams });
+  create.replaceRoster({
+    players: snapshot.players,
+    playerGenders: snapshot.playerGenders,
+    teams: snapshot.teams
+  });
+  create.setContributeToCareerLeaderboard(snapshot.contributeToCareerLeaderboard);
+  create.setWizardStep(step);
+  // Settings the organizer never chose stay at the wizard's defaults, including the scoring
+  // question itself (`startCreateWithMode` reset them above).
+  if (!snapshot.settingsChosen) return;
   create.applySettings({
     courtsText: snapshot.courtsText,
     pointsText: snapshot.pointsText,
@@ -51,7 +60,7 @@ export function applyDraftSnapshot(create: Create, snapshot: DraftWizardSnapshot
   create.setSetsToWin(scoring.setsToWin);
   if (scoring.setTiebreakTo) create.setSetTiebreakTo(scoring.setTiebreakTo);
   create.setMatchTiebreak(scoring.matchTiebreak ?? false);
+  // `applySettings` resets this to its default.
   create.setContributeToCareerLeaderboard(snapshot.contributeToCareerLeaderboard);
-  if (step === "SETTINGS") create.setSettingsPhase("DETAILS");
-  create.setWizardStep(step);
+  create.setSettingsPhase("DETAILS");
 }
